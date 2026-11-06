@@ -9,6 +9,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css">
   <link rel="stylesheet" href="./styles.css">
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
 </head>
@@ -24,7 +26,7 @@
       <button class="nav-item active" data-nav="dashboard"><span class="nav-icon">⌂</span>Главная</button>
       <button class="nav-item" data-nav="roadmap"><span class="nav-icon">◎</span>Дорожная карта</button>
       <button class="nav-item" data-nav="study"><span class="nav-icon">▤</span>Учебник</button>
-      <button class="nav-item" data-nav="practice"><span class="nav-icon">⌘</span>Практика <span class="nav-count" id="exercise-count">60</span></button>
+      <button class="nav-item" data-nav="practice"><span class="nav-icon">⌘</span>Практика <span class="nav-count" id="exercise-count">71</span></button>
     </nav>
     <div class="sidebar-label">ИНСТРУМЕНТЫ</div>
     <nav class="nav-list">
@@ -59,6 +61,8 @@
     <footer class="app-footer"><span>SQL Academy · Учись понимать данные, а не просто запоминать команды</span><span>Локальная учебная база · Прогресс хранится в браузере</span></footer>
   </main>
 </div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/sql/sql.min.js"></script>
 <script type="module" src="./app.js"></script>
 </body>
 </html>
