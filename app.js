@@ -138,7 +138,7 @@ function renderPlayground() {
 function renderSchema() {
   return `
     ${pageHead('DATASET · УЧЕБНАЯ МОДЕЛЬ','Учебная база данных','Учебная система интернет-магазина с заказами, магазинами, сотрудниками, клиентами, товарами и событиями заказов. Схема специально содержит NULL, магазин без заказов, клиентов без покупок и связь один-ко-многим.')}
-    <div class="callout" style="margin-bottom:16px"><strong>Важное зерно:</strong> orders — одна строка на заказ; order_items — одна строка на товарную позицию; payments — одна строка на операцию оплаты; delivery_events — одна строка на событие. При JOIN этих таблиц строки могут размножаться.</div>
+    <div class="callout" style="margin-bottom:16px"><strong>Важное зерно:</strong> orders — одна строка на заказ; order_items — одна строка на товарную позицию; payments — одна строка на операцию оплаты; order_events — одна строка на событие. При JOIN этих таблиц строки могут размножаться.</div>
     <div class="schema-grid">${schema.map(t=>`<div class="schema-card"><div class="schema-card-head"><strong>${esc(t.name)}</strong><small>${t.columns.length} поля</small></div><p>${esc(t.grain)}</p><div class="schema-cols">${t.columns.map(c=>`<div class="schema-col"><strong>${esc(c[0])}</strong><span>${esc(c[1])}</span><em>${esc(c[2])}</em></div>`).join('')}</div></div>`).join('')}</div>
     <div class="section-row"><h2>Быстрые исследовательские запросы</h2><span>Откроются в песочнице</span></div>
     <div class="module-list"><div class="module-row" data-sample="SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name;"><div class="module-number">01</div><div class="module-info"><strong>Посмотреть таблицы</strong><small>information_schema.tables</small></div><span>→</span></div><div class="module-row" data-sample="SELECT o.order_id, s.store_name, c.employee_name, o.status, o.total_amount FROM orders o JOIN stores s ON s.store_id = o.store_id LEFT JOIN employees c ON c.employee_id = o.employee_id ORDER BY o.order_id;"><div class="module-number">02</div><div class="module-info"><strong>Заказы с магазинами и сотрудниками</strong><small>INNER JOIN + LEFT JOIN</small></div><span>→</span></div><div class="module-row" data-sample="SELECT o.order_id, o.total_amount, SUM(oi.quantity * oi.unit_price) AS items_amount FROM orders o JOIN order_items oi ON oi.order_id = o.order_id GROUP BY o.order_id, o.total_amount ORDER BY o.order_id;"><div class="module-number">03</div><div class="module-info"><strong>Сравнить сумму заказа и товарные позиции</strong><small>Опасность двойного счёта</small></div><span>→</span></div></div>`;
@@ -212,13 +212,20 @@ async function checkExercise() {
     let result, observed, passed;
     if(ex.mode==='mutation') {
       if(!/^\\s*(INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|MERGE)\\b/i.test(parts[0])) throw new Error('Для этой задачи нужна команда изменения данных или структуры: INSERT, UPDATE, DELETE, CREATE, ALTER, DROP либо MERGE.');
-      await state.db.exec('SAVEPOINT academy_user_check;');
+      const {PGlite}=await import('https://cdn.jsdelivr.net/npm/@electric-sql/pglite@0.5.15/dist/index.js');
+      const isolatedDb=new PGlite();
       try {
-        result=await state.db.query(parts[0]);
-        observed=await state.db.query(ex.checkQuery);
-        passed=JSON.stringify(normalizeResult(observed))===JSON.stringify(expected);
+        await isolatedDb.exec(seedSQL);
+        await isolatedDb.exec('BEGIN;');
+        try {
+          result=await isolatedDb.query(parts[0]);
+          observed=await isolatedDb.query(ex.checkQuery);
+          passed=JSON.stringify(normalizeResult(observed))===JSON.stringify(expected);
+        } finally {
+          await isolatedDb.exec('ROLLBACK;');
+        }
       } finally {
-        await state.db.exec('ROLLBACK TO SAVEPOINT academy_user_check; RELEASE SAVEPOINT academy_user_check;');
+        await isolatedDb.close();
       }
     } else {
       if(ex.mode==='query' && !/^\\s*EXPLAIN\\s+(SELECT|WITH)\\b/i.test(parts[0])) throw new Error('Для этой задачи используй EXPLAIN перед SELECT или WITH ... SELECT.');
@@ -229,7 +236,7 @@ async function checkExercise() {
     }
     const elapsed=Math.round(performance.now()-started);
     results.innerHTML=renderResult(result,elapsed)+(ex.mode==='mutation'?renderResult(observed,elapsed):'');
-    if(passed){state.completedExercises.add(ex.id);saveProgress();feedback.innerHTML='<div class="feedback success"><strong>Верно!</strong> Изменение соответствует условию. Для проверки оно было выполнено внутри savepoint и затем отменено, поэтому общая учебная база не изменилась.</div>';}
+    if(passed){state.completedExercises.add(ex.id);saveProgress();feedback.innerHTML='<div class="feedback success"><strong>Верно!</strong> Изменение соответствует условию. Для проверки оно было выполнено в отдельной временной базе и затем отменено, поэтому общая учебная база не изменилась.</div>';}
     else{feedback.innerHTML='<div class="feedback fail"><strong>Пока не совпало.</strong> Запрос выполнился, но фактическое состояние таблицы отличается от ожидаемого. Проверь условие WHERE, нужные столбцы, ограничения и число изменённых строк.</div>';}
   }catch(err){feedback.innerHTML='<div class="feedback fail"><strong>Ошибка SQL:</strong> '+esc(err.message)+'</div>';results.innerHTML='';}
 }
@@ -271,13 +278,13 @@ async function prepareExpected() {
   for(const ex of exercises){
     try{
       if(ex.mode==='mutation'){
-        await state.db.exec('SAVEPOINT academy_expected;');
+        await state.db.exec('BEGIN;');
         try {
           await state.db.query(ex.solution);
           const observed=await state.db.query(ex.checkQuery);
           state.expected.set(ex.id,normalizeResult(observed));
         } finally {
-          await state.db.exec('ROLLBACK TO SAVEPOINT academy_expected; RELEASE SAVEPOINT academy_expected;');
+          await state.db.exec('ROLLBACK;');
         }
       } else {
         const result=await state.db.query(ex.solution);
