@@ -2451,6 +2451,7 @@ export const exercises = [
   },
   {
     "id": "e10",
+    "orderMatters": true,
     "mode": "select",
     "m": "sorting",
     "title": "Пять самых дорогих",
@@ -2459,6 +2460,7 @@ export const exercises = [
   },
   {
     "id": "e11",
+    "orderMatters": true,
     "mode": "select",
     "m": "sorting",
     "title": "Последние заказы",
@@ -2467,6 +2469,7 @@ export const exercises = [
   },
   {
     "id": "e12",
+    "orderMatters": true,
     "mode": "select",
     "m": "sorting",
     "title": "Вторая страница",
@@ -2651,6 +2654,7 @@ export const exercises = [
   },
   {
     "id": "e35",
+    "orderMatters": true,
     "mode": "select",
     "m": "windows",
     "title": "Нумерация заказов клиента",
@@ -2667,6 +2671,7 @@ export const exercises = [
   },
   {
     "id": "e37",
+    "orderMatters": true,
     "mode": "select",
     "m": "windows",
     "title": "Предыдущий заказ клиента",
@@ -2675,6 +2680,7 @@ export const exercises = [
   },
   {
     "id": "e38",
+    "orderMatters": true,
     "mode": "select",
     "m": "windows",
     "title": "Накопительная выручка",
@@ -2699,6 +2705,7 @@ export const exercises = [
   },
   {
     "id": "e41",
+    "orderMatters": true,
     "mode": "select",
     "m": "analytics",
     "title": "Дневная выручка",
@@ -2787,6 +2794,7 @@ export const exercises = [
   },
   {
     "id": "e52",
+    "orderMatters": true,
     "mode": "select",
     "m": "joins",
     "title": "Последнее событие каждого заказа",
@@ -2795,6 +2803,7 @@ export const exercises = [
   },
   {
     "id": "e53",
+    "orderMatters": true,
     "mode": "select",
     "m": "select",
     "title": "Последний заказ каждого клиента",
@@ -2819,6 +2828,7 @@ export const exercises = [
   },
   {
     "id": "e56",
+    "orderMatters": true,
     "mode": "select",
     "m": "analytics",
     "title": "Календарь без пропущенных дней",
@@ -2843,6 +2853,7 @@ export const exercises = [
   },
   {
     "id": "e59",
+    "orderMatters": true,
     "mode": "select",
     "m": "cte",
     "title": "Рекурсивная последовательность",
