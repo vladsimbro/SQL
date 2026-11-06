@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#0a0d14">
+  <meta name="description" content="Полный интерактивный курс SQL и PostgreSQL: теория, дорожная карта, упражнения, редактор запросов и проверка решений.">
+  <title>SQL Academy — полный интерактивный курс</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css">
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar">
+    <a class="brand" href="#" data-nav="dashboard">
+      <span class="brand-mark">S<span>Q</span></span>
+      <span class="brand-text"><strong>SQL</strong><small>ACADEMY</small></span>
+    </a>
+    <div class="sidebar-label">ОБУЧЕНИЕ</div>
+    <nav class="nav-list">
+      <button class="nav-item active" data-nav="dashboard"><span class="nav-icon">⌂</span>Главная</button>
+      <button class="nav-item" data-nav="roadmap"><span class="nav-icon">◎</span>Дорожная карта</button>
+      <button class="nav-item" data-nav="study"><span class="nav-icon">▤</span>Учебник</button>
+      <button class="nav-item" data-nav="practice"><span class="nav-icon">⌘</span>Практика <span class="nav-count" id="exercise-count">50</span></button>
+    </nav>
+    <div class="sidebar-label">ИНСТРУМЕНТЫ</div>
+    <nav class="nav-list">
+      <button class="nav-item" data-nav="playground"><span class="nav-icon">›_</span>SQL-песочница</button>
+      <button class="nav-item" data-nav="schema"><span class="nav-icon">▦</span>Учебная база</button>
+      <button class="nav-item" data-nav="reference"><span class="nav-icon">⌕</span>Шпаргалка</button>
+      <button class="nav-item" data-nav="glossary"><span class="nav-icon">A</span>Глоссарий</button>
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="side-progress">
+        <div class="side-progress-top"><span>Твой прогресс</span><strong id="side-progress-label">0%</strong></div>
+        <div class="progress-track"><span id="side-progress-bar"></span></div>
+        <small id="side-progress-detail">0 из 0 уроков</small>
+      </div>
+      <div class="sidebar-note">PostgreSQL · от нуля до уверенной практики</div>
+    </div>
+  </aside>
+
+  <main class="main-area">
+    <header class="topbar">
+      <div class="mobile-brand"><span class="brand-mark">S<span>Q</span></span><strong>SQL Academy</strong></div>
+      <button class="mobile-menu" id="mobile-menu" aria-label="Открыть меню">☰</button>
+      <div class="breadcrumb"><span>SQL Academy</span><b>/</b><strong id="breadcrumb-current">Главная</strong></div>
+      <div class="topbar-right">
+        <div class="engine-pill"><i></i><span id="engine-status">Подключаем PostgreSQL…</span></div>
+        <button class="icon-button" id="theme-toggle" title="Сменить тему">◐</button>
+      </div>
+    </header>
+    <div id="app-content" class="content-wrap">
+      <div class="loading-screen"><div class="loader"></div><h2>Поднимаем учебную базу</h2><p>PostgreSQL запускается прямо в браузере. Первый старт может занять немного времени.</p></div>
+    </div>
+    <footer class="app-footer"><span>SQL Academy · Учись понимать данные, а не просто запоминать команды</span><span>Локальная учебная база · Прогресс хранится в браузере</span></footer>
+  </main>
+</div>
+<script type="module" src="./app.js"></script>
+</body>
+</html>
