@@ -206,7 +206,7 @@ function renderGlossary() {
     <div class="glossary-list" id="glossary-list">${glossary.map(g=>`<div class="glossary-item" data-term="${esc((g[0]+' '+g[1]).toLowerCase())}"><strong>${esc(g[0])}</strong><span>${esc(g[1])}</span></div>`).join('')}</div>`;
 }
 function bindPage(){
- $$$('.sql-editor').forEach(textarea=>{
+ $$('.sql-editor').forEach(textarea=>{
   if(window.CodeMirror){
    const cm=window.CodeMirror.fromTextArea(textarea,{mode:'text/x-pgsql',theme:'material-darker',lineNumbers:true,indentUnit:4,tabSize:4,indentWithTabs:false,lineWrapping:false,matchBrackets:true,viewportMargin:Infinity,extraKeys:{'Ctrl-Enter':()=>handleAction(textarea.id==='exercise-editor'?'run-exercise':'run-playground'),'Cmd-Enter':()=>handleAction(textarea.id==='exercise-editor'?'run-exercise':'run-playground'),'Tab':'indentMore','Shift-Tab':'indentLess'}});
    state.editors.set(textarea.id,cm);
@@ -214,8 +214,8 @@ function bindPage(){
    requestAnimationFrame(()=>cm.refresh());
   }else{textarea.addEventListener('keydown',editorKeys);if(textarea.id==='playground-editor')textarea.addEventListener('input',()=>localStorage.setItem(EDITOR_KEY,textarea.value));}
  });
- const exSearch=$('#exercise-search');if(exSearch)exSearch.addEventListener('input',()=>{$$$('.exercise-item').forEach(b=>b.style.display=b.textContent.toLowerCase().includes(exSearch.value.toLowerCase())?'flex':'none');});
- const glSearch=$('#glossary-search');if(glSearch)glSearch.addEventListener('input',()=>{$$$('.glossary-item').forEach(b=>b.style.display=b.dataset.term.includes(glSearch.value.toLowerCase())?'grid':'none');});
+ const exSearch=$('#exercise-search');if(exSearch)exSearch.addEventListener('input',()=>{$$('.exercise-item').forEach(b=>b.style.display=b.textContent.toLowerCase().includes(exSearch.value.toLowerCase())?'flex':'none');});
+ const glSearch=$('#glossary-search');if(glSearch)glSearch.addEventListener('input',()=>{$$('.glossary-item').forEach(b=>b.style.display=b.dataset.term.includes(glSearch.value.toLowerCase())?'grid':'none');});
 }
 function editorKeys(e) {
   if(e.key==='Tab'){e.preventDefault();const a=e.target.selectionStart,b=e.target.selectionEnd;e.target.setRangeText('  ',a,b,'end');}
