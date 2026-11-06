@@ -337,7 +337,7 @@ function explainStatementKeyword(sql){
  return firstSqlKeyword(rest);
 }
 function splitStatements(sql) {
- const out=[];let cur='',single=false,dbl=false,line=false,blockDepth=0,dollarTag=null;
+ const out=[];let cur='',single=false,dbl=false,line=false,blockDepth=0,dollarTag=null,escapeString=false;
  for(let i=0;i<sql.length;i++){
   const c=sql[i],n=sql[i+1];
   if(line){cur+=c;if(c==='\n')line=false;continue;}
@@ -349,7 +349,13 @@ function splitStatements(sql) {
    const match=sql.slice(i).match(/^\$[a-z_][a-z0-9_]*\$|^\$\$/i);
    if(match){dollarTag=match[0];cur+=dollarTag;i+=dollarTag.length-1;continue;}
   }
-  if(c==="'"&&!dbl){if(single&&n==="'"){cur+=c+n;i++;continue;}single=!single;}
+  if(single&&escapeString&&c==='\\\\'){cur+=c;if(i+1<sql.length)cur+=sql[++i];continue;}
+  if(c==="'"&&!dbl){
+   if(single&&n==="'"){cur+=c+n;i++;continue;}
+   if(!single){const prev=sql[i-1]||'',before=sql[i-2]||'';escapeString=(prev==='e'||prev==='E')&&(!before||!/[a-z0-9_$]/i.test(before));}
+   else escapeString=false;
+   single=!single;
+  }
   else if(c==='"'&&!single){if(dbl&&n==='"'){cur+=c+n;i++;continue;}dbl=!dbl;}
   if(c===';'&&!single&&!dbl){if(cur.trim())out.push(cur.trim());cur='';}
   else cur+=c;
