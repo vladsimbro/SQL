@@ -200,6 +200,7 @@ async function checkExercise() {
     const started=performance.now();
     if(ex.mode==='query') {
       if(!/^\\s*EXPLAIN\\s+(SELECT|WITH)\\b/i.test(parts[0])) throw new Error('Для этой задачи используй EXPLAIN перед SELECT или WITH ... SELECT.');
+      if(ex.id==='e46' && (!/\\bFROM\\s+orders\\b/i.test(parts[0]) || !/\\bWHERE\\s+customer_id\\s*=\\s*1\\b/i.test(parts[0]))) throw new Error('Построй план именно для выборки из orders с фильтром customer_id = 1.');
       const plan=await state.db.query(parts[0]);
       const elapsed=Math.round(performance.now()-started);
       state.completedExercises.add(ex.id);saveProgress();
