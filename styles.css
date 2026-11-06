@@ -21,3 +21,8 @@
 .CodeMirror{height:300px;max-height:560px;background:#090f18;color:#d5f4e7;font:13px/1.75 var(--mono);padding:7px 0}.CodeMirror-scroll{min-height:280px}.CodeMirror-gutters{background:#0d1520;border-right:1px solid #263448}.CodeMirror-linenumber{color:#64758b;padding:0 12px 0 8px}.CodeMirror-cursor{border-left:2px solid #8f83ff}.CodeMirror-selected,.CodeMirror-focused .CodeMirror-selected{background:#33445e!important}.CodeMirror pre{font:inherit}.editor-card .CodeMirror{border:0}
 .lesson-sidebar,.exercise-list{overscroll-behavior:contain;scrollbar-gutter:stable}
 @media(max-width:760px){.CodeMirror{height:240px;font-size:12px}.CodeMirror-scroll{min-height:220px}.quiz-panel{padding:13px}.quiz-option{font-size:12px;min-height:42px}.lesson-sidebar{max-height:38vh}}
+
+.exercise-quiz{margin:0 0 13px;padding:15px;border:1px solid var(--line);border-radius:14px;background:var(--panel2)}
+.exercise-quiz-question{display:block;margin:7px 0 10px;font-size:12px;line-height:1.6;color:var(--text)}
+.exercise-quiz .quiz-options{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media(max-width:760px){.exercise-quiz .quiz-options{grid-template-columns:1fr}}
