@@ -571,7 +571,7 @@ export const modules = [
   },
   {
     "id": "dml",
-    "title": "DML: вставка, изменение и удаление",
+    "title": "DML: изменение и удаление данных",
     "stage": "16 · Изменение данных",
     "desc": "Освоить INSERT, UPDATE, DELETE, RETURNING, UPSERT и безопасный порядок действий.",
     "lessons": [
