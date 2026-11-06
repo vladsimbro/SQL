@@ -12,6 +12,9 @@ assert.ok(Array.isArray(reference) && reference.length >= 8, 'SQL quick referenc
 assert.ok(exercises.every(exercise => ['select','explain','mutation','transaction'].includes(exercise.mode)), 'Every exercise must have a supported explicit mode');
 assert.equal(exercises.filter(exercise => exercise.mode === 'select').length, 59, 'Expected 59 SELECT exercises');
 assert.equal(exercises.filter(exercise => exercise.mode === 'explain').length, 1, 'Expected one EXPLAIN exercise');
+assert.equal(exercises.filter(exercise => exercise.mode === 'mutation').length, 8, 'Expected eight mutation exercises');
+assert.equal(exercises.filter(exercise => exercise.mode === 'transaction').length, 3, 'Expected three transaction exercises');
+assert.ok(exercises.every(exercise => modules.some(module => module.id === exercise.m)), 'Every exercise must belong to a real module');
 assert.ok(appSource.includes("from './sql-utils.js'"), 'Application must use the shared SQL parser module');
 const sqlLexer = new Function(sqlUtilsSource.replaceAll('export function ', 'function ') + '; return { firstSqlKeyword, sqlAfterKeyword, explainStatementKeyword, readOnlyQueryKeyword, splitStatements };')();
 assert.equal(sqlLexer.firstSqlKeyword("-- leading comment\nSELECT 1"), 'SELECT', 'Leading line comments must be ignored');
@@ -28,12 +31,16 @@ assert.equal(sqlLexer.splitStatements("SELECT ';'; SELECT 2;").length, 2, 'Semic
 assert.deepEqual(sqlLexer.splitStatements(String.raw`SELECT E'it\'s; still text'; SELECT 2;`).map(sqlLexer.firstSqlKeyword), ['SELECT','SELECT'], 'Escaped E-string quotes must not split statements');
 assert.equal(exercises.filter(exercise => exercise.orderMatters).length, 11, 'Ordering-sensitive tasks must compare row order');
 assert.equal(sqlLexer.splitStatements('DO $body$ BEGIN PERFORM 1; PERFORM 2; END $body$; SELECT 3;').length, 2, 'Dollar-quoted procedural blocks must remain a single statement');
+for (const exercise of exercises.filter(e => e.mode === 'select')) assert.equal(sqlLexer.readOnlyQueryKeyword(exercise.solution), 'SELECT', `Exercise ${exercise.id} must be a read-only SELECT`);
+for (const exercise of exercises.filter(e => e.mode === 'explain')) assert.equal(sqlLexer.explainStatementKeyword(exercise.solution), 'SELECT', `Exercise ${exercise.id} must EXPLAIN a SELECT`);
 assert.ok(appSource.includes("if(ex.mode==='explain')"), 'EXPLAIN mode must be handled separately from normal SELECT exercises');
-assert.ok(appSource.includes('firstSqlKeyword(parts[0])'), 'Exercise validation must use the SQL lexer');
+assert.ok(appSource.includes('readOnlyQueryKeyword(parts[0])'), 'SELECT exercises must validate read-only SELECT/CTE statements');
+assert.ok(appSource.includes('explainStatementKeyword(parts[0])'), 'EXPLAIN exercises must parse EXPLAIN options and CTEs');
+assert.ok(appSource.includes('reference.map(g=>') && appSource.includes('glossary.map(g=>'), 'Reference and glossary views must render their datasets');
 assert.ok(appSource.includes('preserveOrder=false'), 'Result normalization must support order-sensitive exercises');
 assert.ok(appSource.includes('meta[name="theme-color"]'), 'Theme toggle must update browser theme color');
 assert.ok(htmlSource.includes('data-nav="reference"') && htmlSource.includes('data-nav="glossary"'), 'Reference and glossary navigation buttons must exist');
-assert.ok(cssSource.includes(':root.light .CodeMirror'), 'Light theme must style the SQL editor');
+assert.ok(cssSource.includes(':root.light .CodeMirror') && cssSource.includes(':root.light .reference-card') && cssSource.includes(':root.light .glossary-item'), 'Light theme must style the editor, reference and glossary');
 
 const ids = new Set(modules.map(module => module.id));
 assert.equal(modules.reduce((sum, module) => sum + module.lessons.length, 0), 148, 'Expected 148 lessons');
