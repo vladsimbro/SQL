@@ -249,7 +249,7 @@ async function checkExercise() {
     if(ex.mode==='transaction' && parts.length<2) throw new Error('Задание на транзакцию должно содержать несколько команд, разделённых точкой с запятой.');
     const started=performance.now();
     if(ex.mode==='explain') {
-      if(firstSqlKeyword(parts[0])!=='EXPLAIN' || !['SELECT','WITH'].includes(firstSqlKeyword(sqlAfterKeyword(parts[0],'EXPLAIN')))) throw new Error('Для этой задачи используй EXPLAIN перед SELECT или WITH ... SELECT.');
+      if(firstSqlKeyword(parts[0])!=='EXPLAIN' || !['SELECT','WITH'].includes(explainStatementKeyword(parts[0]))) throw new Error('Для этой задачи используй EXPLAIN перед SELECT или WITH ... SELECT.');
       if(ex.id==='e46' && (!/\\bFROM\\s+orders\\b/i.test(parts[0]) || !/\\bWHERE\\s+customer_id\\s*=\\s*1\\b/i.test(parts[0]))) throw new Error('Построй план именно для выборки из orders с фильтром customer_id = 1.');
       const plan=await state.db.query(parts[0]);
       const elapsed=Math.round(performance.now()-started);
@@ -314,6 +314,27 @@ function firstSqlKeyword(sql){
 function sqlAfterKeyword(sql,keyword){
  const i=skipSqlTrivia(sql),match=sql.slice(i).match(new RegExp('^'+keyword+'\\b','i'));
  return match?sql.slice(i+match[0].length):'';
+}
+function explainStatementKeyword(sql){
+ let rest=sqlAfterKeyword(sql,'EXPLAIN'),i=skipSqlTrivia(rest);
+ if(rest[i]==='('){
+  let depth=0,inSingle=false;
+  for(;i<rest.length;i++){
+   const ch=rest[i];
+   if(ch==="'" ){if(inSingle&&rest[i+1]==="'"){i++;continue;}inSingle=!inSingle;}
+   if(!inSingle&&ch==='(')depth++;
+   if(!inSingle&&ch===')'&&--depth===0){i++;break;}
+  }
+  rest=rest.slice(i);
+ }else{
+  while(true){
+   const key=firstSqlKeyword(rest);
+   if(['ANALYZE','VERBOSE','COSTS','SETTINGS','BUFFERS','WAL','TIMING','SUMMARY'].includes(key)){rest=sqlAfterKeyword(rest,key);continue;}
+   if(key==='FORMAT'){rest=sqlAfterKeyword(rest,'FORMAT');rest=sqlAfterKeyword(rest,firstSqlKeyword(rest));continue;}
+   break;
+  }
+ }
+ return firstSqlKeyword(rest);
 }
 function splitStatements(sql) {
  const out=[];let cur='',single=false,dbl=false,line=false,blockDepth=0,dollarTag=null;
