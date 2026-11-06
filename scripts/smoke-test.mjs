@@ -33,6 +33,16 @@ assert.ok(htmlSource.includes('data-nav="reference"') && htmlSource.includes('da
 assert.ok(cssSource.includes(':root.light .CodeMirror'), 'Light theme must style the SQL editor');
 
 const ids = new Set(modules.map(module => module.id));
+assert.equal(modules.reduce((sum, module) => sum + module.lessons.length, 0), 148, 'Expected 148 lessons');
+assert.equal(glossary.length, 72, 'Expected 72 glossary terms');
+assert.equal(reference.length, 13, 'Expected 13 reference groups');
+const normalizeStart = appSource.indexOf('function normalizeResult');
+const normalizeEnd = appSource.indexOf('function skipSqlTrivia', normalizeStart);
+const normalize = new Function(appSource.slice(normalizeStart, normalizeEnd) + '; return normalizeResult;')();
+const orderedA = { rows: [{id:1},{id:2}], fields: [{name:'id'}] };
+const orderedB = { rows: [{id:2},{id:1}], fields: [{name:'id'}] };
+assert.deepEqual(normalize(orderedA), normalize(orderedB), 'Unordered tasks must ignore row order');
+assert.notDeepEqual(normalize(orderedA, true), normalize(orderedB, true), 'Ordering-sensitive tasks must compare row order');
 assert.equal(modules.length, 24, 'Expected 24 ordered modules');
 assert.ok(modules.every(module => module.lessons.length > 0), 'Every module must have lessons');
 assert.ok(modules.every(module => module.lessons.every(lesson => lesson.title && lesson.body && lesson.example && lesson.note)), 'Every lesson must contain title, theory, example and note');
