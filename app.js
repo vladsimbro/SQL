@@ -1,5 +1,5 @@
 import { modules, exercises, glossary, reference, schema, seedSQL } from './curriculum.js';
-import { firstSqlKeyword, explainStatementKeyword, splitStatements } from './sql-utils.js';
+import { firstSqlKeyword, explainStatementKeyword, splitStatements, readOnlyQueryKeyword } from './sql-utils.js';
 
 const $ = (s, root=document) => root.querySelector(s);
 const $$ = (s, root=document) => [...root.querySelectorAll(s)];
@@ -281,7 +281,7 @@ async function checkExercise() {
         await isolatedDb.close();
       }
     } else {
-      if(!['SELECT','WITH'].includes(firstSqlKeyword(parts[0]))) throw new Error('Это задание ожидает запрос, начинающийся с SELECT или WITH. Комментарии перед запросом разрешены.');
+      if(readOnlyQueryKeyword(parts[0])!=='SELECT') throw new Error('Это задание ожидает SELECT или WITH ... SELECT. Комментарии перед запросом разрешены; изменяющие команды внутри CTE не допускаются.');
       result=await state.db.query(parts[0]);
       observed=result;
       passed=JSON.stringify(normalizeResult(observed,ex.orderMatters))===JSON.stringify(expected);
