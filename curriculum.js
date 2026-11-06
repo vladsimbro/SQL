@@ -1448,6 +1448,47 @@ export const exercises = [
     "solution": "CREATE INDEX idx_practice_orders_status ON orders (status);",
     "mode": "mutation",
     "checkQuery": "SELECT indexname, indexdef FROM pg_indexes WHERE tablename = 'orders' AND indexname = 'idx_practice_orders_status';"
+  },
+  {
+    "id": "e69",
+    "m": "constraints",
+    "title": "Две операции в одной транзакции",
+    "task": "Открой транзакцию, увеличь цену товара с product_id = 1 на 5%, уменьши цену товара с product_id = 2 на 10% и зафиксируй обе операции одной командой COMMIT. Проверка сравнит итоговые цены.",
+    "solution": "BEGIN;\nUPDATE products SET price = price * 1.05 WHERE product_id = 1;\nUPDATE products SET price = price * 0.90 WHERE product_id = 2;\nCOMMIT;",
+    "mode": "transaction",
+    "requiredPatterns": [
+      "\\bBEGIN\\b",
+      "\\bCOMMIT\\b"
+    ],
+    "checkQuery": "SELECT product_id, price FROM products WHERE product_id IN (1, 2) ORDER BY product_id;"
+  },
+  {
+    "id": "e70",
+    "m": "constraints",
+    "title": "Отмени транзакцию",
+    "task": "Начни транзакцию, удали товар с product_id = 7, затем отмени всю транзакцию командой ROLLBACK. После отмены товар должен остаться в таблице.",
+    "solution": "BEGIN;\nDELETE FROM products WHERE product_id = 7;\nROLLBACK;",
+    "mode": "transaction",
+    "requiredPatterns": [
+      "\\bBEGIN\\b",
+      "\\bROLLBACK\\b"
+    ],
+    "checkQuery": "SELECT product_id, product_name FROM products WHERE product_id = 7;"
+  },
+  {
+    "id": "e71",
+    "m": "constraints",
+    "title": "Откатись к SAVEPOINT",
+    "task": "Начни транзакцию. Установи цену товара 1 равной 2600. Создай SAVEPOINT. Измени цену товара 2 на 999, затем выполни ROLLBACK TO SAVEPOINT и зафиксируй транзакцию. В итоге должен измениться только товар 1.",
+    "solution": "BEGIN;\nUPDATE products SET price = 2600 WHERE product_id = 1;\nSAVEPOINT after_first_update;\nUPDATE products SET price = 999 WHERE product_id = 2;\nROLLBACK TO SAVEPOINT after_first_update;\nCOMMIT;",
+    "mode": "transaction",
+    "requiredPatterns": [
+      "\\bBEGIN\\b",
+      "\\bSAVEPOINT\\b",
+      "\\bROLLBACK\\s+TO\\s+SAVEPOINT\\b",
+      "\\bCOMMIT\\b"
+    ],
+    "checkQuery": "SELECT product_id, price FROM products WHERE product_id IN (1, 2) ORDER BY product_id;"
   }
 ];
 
