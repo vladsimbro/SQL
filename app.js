@@ -262,7 +262,7 @@ function renderResult(result,elapsed) {
 }
 async function resetDatabase() {
   const button=$('[data-action="reset-db"]');if(button){button.disabled=true;button.textContent='Сброс…';}
-  try{if(state.db)await state.db.close();const {PGlite}=await import('https://cdn.jsdelivr.net/npm/@electric-sql/pglite/dist/index.js');state.db=new PGlite();await state.db.exec(seedSQL);await prepareExpected();toast('Учебная база пересоздана.');}
+  try{if(state.db)await state.db.close();const {PGlite}=await import('https://cdn.jsdelivr.net/npm/@electric-sql/pglite@0.5.15/dist/index.js');state.db=new PGlite();await state.db.exec(seedSQL);await prepareExpected();toast('Учебная база пересоздана.');}
   catch(err){console.error(err);toast('Не удалось пересоздать базу: '+err.message);}
   finally{if(button){button.disabled=false;button.textContent='Сбросить базу';}}
 }
@@ -289,7 +289,7 @@ async function prepareExpected() {
 async function initDatabase() {
   const status=$('#engine-status'),pill=$('.engine-pill');
   try{
-    const {PGlite}=await import('https://cdn.jsdelivr.net/npm/@electric-sql/pglite/dist/index.js');
+    const {PGlite}=await import('https://cdn.jsdelivr.net/npm/@electric-sql/pglite@0.5.15/dist/index.js');
     state.db=new PGlite();
     await state.db.exec(seedSQL);
     await prepareExpected();
