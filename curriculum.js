@@ -2323,7 +2323,7 @@ export const modules = [
 export const exercises = [
   {
     "id": "e01",
-    "mode": "query",
+    "mode": "select",
     "m": "select",
     "title": "Посмотри на таблицу заказов",
     "task": "Выведи все столбцы и все строки таблицы orders. Это разведочный запрос: пока не сокращай результат.",
@@ -2331,7 +2331,7 @@ export const exercises = [
   },
   {
     "id": "e02",
-    "mode": "query",
+    "mode": "select",
     "m": "select",
     "title": "Нужны только три поля",
     "task": "Выведи номер заказа, статус и сумму заказа. Не используй SELECT *.",
@@ -2339,7 +2339,7 @@ export const exercises = [
   },
   {
     "id": "e03",
-    "mode": "query",
+    "mode": "select",
     "m": "select",
     "title": "Уникальные статусы",
     "task": "Получи список различных статусов заказов. Повторы должны исчезнуть.",
@@ -2347,7 +2347,7 @@ export const exercises = [
   },
   {
     "id": "e04",
-    "mode": "query",
+    "mode": "select",
     "m": "select",
     "title": "Вычисляемый столбец",
     "task": "Покажи order_id и сумму заказа с условной наценкой 10%. Назови вычисляемый столбец amount_with_fee.",
@@ -2355,7 +2355,7 @@ export const exercises = [
   },
   {
     "id": "e05",
-    "mode": "query",
+    "mode": "select",
     "m": "where",
     "title": "Дорогие заказы",
     "task": "Найди заказы дороже 2 000. Верни order_id и total_amount.",
@@ -2363,7 +2363,7 @@ export const exercises = [
   },
   {
     "id": "e06",
-    "mode": "query",
+    "mode": "select",
     "m": "where",
     "title": "Два статуса",
     "task": "Найди заказы со статусом delivered или shipped. Выведи order_id и status.",
@@ -2371,7 +2371,7 @@ export const exercises = [
   },
   {
     "id": "e07",
-    "mode": "query",
+    "mode": "select",
     "m": "where",
     "title": "Диапазон суммы",
     "task": "Найди заказы стоимостью от 900 до 2 000 включительно. Выведи order_id и total_amount.",
@@ -2379,7 +2379,7 @@ export const exercises = [
   },
   {
     "id": "e08",
-    "mode": "query",
+    "mode": "select",
     "m": "where",
     "title": "Заказы без сотрудника",
     "task": "Найди все заказы, у которых employee_id отсутствует. Не используй сравнение с = NULL.",
@@ -2387,7 +2387,7 @@ export const exercises = [
   },
   {
     "id": "e09",
-    "mode": "query",
+    "mode": "select",
     "m": "where",
     "title": "Сложное условие",
     "task": "Найди доставленные заказы дороже 1 000 либо отправленные заказы дороже 2 000. Выведи ID и статус.",
@@ -2395,7 +2395,7 @@ export const exercises = [
   },
   {
     "id": "e10",
-    "mode": "query",
+    "mode": "select",
     "m": "sorting",
     "title": "Пять самых дорогих",
     "task": "Покажи пять самых дорогих заказов. При одинаковой сумме более новый order_id должен идти первым.",
@@ -2403,7 +2403,7 @@ export const exercises = [
   },
   {
     "id": "e11",
-    "mode": "query",
+    "mode": "select",
     "m": "sorting",
     "title": "Последние заказы",
     "task": "Покажи три самых новых заказа, сортируя сначала по дате, затем по ID по убыванию.",
@@ -2411,7 +2411,7 @@ export const exercises = [
   },
   {
     "id": "e12",
-    "mode": "query",
+    "mode": "select",
     "m": "sorting",
     "title": "Вторая страница",
     "task": "Выведи вторую страницу по 4 заказа. Сортировка: order_id по возрастанию.",
@@ -2419,7 +2419,7 @@ export const exercises = [
   },
   {
     "id": "e13",
-    "mode": "query",
+    "mode": "select",
     "m": "expressions",
     "title": "Нормализуй имена",
     "task": "Покажи имена клиентов в верхнем регистре. Назови столбец customer_upper.",
@@ -2427,7 +2427,7 @@ export const exercises = [
   },
   {
     "id": "e14",
-    "mode": "query",
+    "mode": "select",
     "m": "expressions",
     "title": "Категории суммы",
     "task": "Для каждого заказа выведи order_id и категорию суммы: high от 3000, medium от 1000, иначе low. Используй CASE.",
@@ -2435,7 +2435,7 @@ export const exercises = [
   },
   {
     "id": "e15",
-    "mode": "query",
+    "mode": "select",
     "m": "expressions",
     "title": "Подставь подпись вместо NULL",
     "task": "Покажи ID заказа и employee_id. Если сотрудник не назначен, выведи текст 'not assigned'. Назови поле employee.",
@@ -2443,7 +2443,7 @@ export const exercises = [
   },
   {
     "id": "e16",
-    "mode": "query",
+    "mode": "select",
     "m": "aggregates",
     "title": "Сколько всего заказов?",
     "task": "Верни одно число с общим количеством строк в orders. Назови столбец orders_count.",
@@ -2451,7 +2451,7 @@ export const exercises = [
   },
   {
     "id": "e17",
-    "mode": "query",
+    "mode": "select",
     "m": "aggregates",
     "title": "Сумма доставленных заказов",
     "task": "Посчитай общую сумму только доставленных заказов. Назови столбец delivered_revenue.",
@@ -2459,7 +2459,7 @@ export const exercises = [
   },
   {
     "id": "e18",
-    "mode": "query",
+    "mode": "select",
     "m": "aggregates",
     "title": "Средний чек",
     "task": "Найди среднюю сумму заказа по всем заказам. Назови поле average_order_amount.",
@@ -2467,7 +2467,7 @@ export const exercises = [
   },
   {
     "id": "e19",
-    "mode": "query",
+    "mode": "select",
     "m": "aggregates",
     "title": "Количество по статусам",
     "task": "Для каждого статуса посчитай число заказов. Выведи status и orders_count.",
@@ -2475,7 +2475,7 @@ export const exercises = [
   },
   {
     "id": "e20",
-    "mode": "query",
+    "mode": "select",
     "m": "aggregates",
     "title": "Статусы с несколькими заказами",
     "task": "Посчитай количество заказов по статусам, но оставь только группы, в которых больше двух заказов.",
@@ -2483,7 +2483,7 @@ export const exercises = [
   },
   {
     "id": "e21",
-    "mode": "query",
+    "mode": "select",
     "m": "aggregates",
     "title": "Две метрики в одном запросе",
     "task": "В одной строке посчитай общее количество заказов и количество доставленных. Используй FILTER.",
@@ -2491,7 +2491,7 @@ export const exercises = [
   },
   {
     "id": "e22",
-    "mode": "query",
+    "mode": "select",
     "m": "joins",
     "title": "Добавь имя сотрудника",
     "task": "Соедини заказы с сотрудниками. Выведи order_id и employee_name. Оставь только заказы с назначенным сотрудником.",
@@ -2499,7 +2499,7 @@ export const exercises = [
   },
   {
     "id": "e23",
-    "mode": "query",
+    "mode": "select",
     "m": "joins",
     "title": "Не теряй заказы без сотрудника",
     "task": "Выведи все заказы и имя сотрудника, если он назначен. Заказы без сотрудника должны остаться в результате.",
@@ -2507,7 +2507,7 @@ export const exercises = [
   },
   {
     "id": "e24",
-    "mode": "query",
+    "mode": "select",
     "m": "joins",
     "title": "Магазины и количество заказов",
     "task": "Покажи каждый магазин и количество его заказов. Магазин без заказов тоже должен присутствовать с числом 0.",
@@ -2515,7 +2515,7 @@ export const exercises = [
   },
   {
     "id": "e25",
-    "mode": "query",
+    "mode": "select",
     "m": "joins",
     "title": "Позиции в заказе",
     "task": "Для каждого заказа посчитай общее количество единиц товаров по order_items. Выведи order_id и units_count.",
@@ -2523,7 +2523,7 @@ export const exercises = [
   },
   {
     "id": "e26",
-    "mode": "query",
+    "mode": "select",
     "m": "joins",
     "title": "Выручка по магазинам",
     "task": "Посчитай сумму заказов по каждому магазину. Выведи название магазина и revenue. Учитывай магазины без заказов.",
@@ -2531,7 +2531,7 @@ export const exercises = [
   },
   {
     "id": "e27",
-    "mode": "query",
+    "mode": "select",
     "m": "subqueries",
     "title": "Выше среднего",
     "task": "Найди заказы, сумма которых выше средней суммы всех заказов. Верни order_id и total_amount.",
@@ -2539,7 +2539,7 @@ export const exercises = [
   },
   {
     "id": "e28",
-    "mode": "query",
+    "mode": "select",
     "m": "subqueries",
     "title": "Клиенты с заказами",
     "task": "Найди клиентов, у которых есть хотя бы один заказ. Используй EXISTS. Верни customer_id и customer_name.",
@@ -2547,7 +2547,7 @@ export const exercises = [
   },
   {
     "id": "e29",
-    "mode": "query",
+    "mode": "select",
     "m": "subqueries",
     "title": "Клиенты без заказов",
     "task": "Найди клиентов, у которых нет ни одного заказа. Используй NOT EXISTS.",
@@ -2555,7 +2555,7 @@ export const exercises = [
   },
   {
     "id": "e30",
-    "mode": "query",
+    "mode": "select",
     "m": "subqueries",
     "title": "Выше среднего по магазину",
     "task": "Найди заказы, сумма которых выше среднего чека своего магазина. Используй коррелированный подзапрос.",
@@ -2563,7 +2563,7 @@ export const exercises = [
   },
   {
     "id": "e31",
-    "mode": "query",
+    "mode": "select",
     "m": "cte",
     "title": "Вынеси фильтр в CTE",
     "task": "Через CTE с именем delivered_orders получи доставленные заказы, затем выведи их order_id и total_amount.",
@@ -2571,7 +2571,7 @@ export const exercises = [
   },
   {
     "id": "e32",
-    "mode": "query",
+    "mode": "select",
     "m": "cte",
     "title": "Выручка по статусу через два этапа",
     "task": "Сначала посчитай количество и сумму заказов по каждому статусу в CTE status_stats, затем выведи только группы с выручкой выше 3 000.",
@@ -2579,7 +2579,7 @@ export const exercises = [
   },
   {
     "id": "e33",
-    "mode": "query",
+    "mode": "select",
     "m": "setops",
     "title": "Клиенты из двух наборов",
     "task": "Объедини список customer_id из customers и orders, не оставляя повторов.",
@@ -2587,7 +2587,7 @@ export const exercises = [
   },
   {
     "id": "e34",
-    "mode": "query",
+    "mode": "select",
     "m": "setops",
     "title": "Клиенты без заказов через EXCEPT",
     "task": "Найди идентификаторы клиентов, которые есть в customers, но отсутствуют среди customer_id заказов. Используй EXCEPT.",
@@ -2595,7 +2595,7 @@ export const exercises = [
   },
   {
     "id": "e35",
-    "mode": "query",
+    "mode": "select",
     "m": "windows",
     "title": "Нумерация заказов клиента",
     "task": "Для каждого заказа выведи order_id, customer_id и порядковый номер заказа клиента по дате. Используй ROW_NUMBER и PARTITION BY.",
@@ -2603,7 +2603,7 @@ export const exercises = [
   },
   {
     "id": "e36",
-    "mode": "query",
+    "mode": "select",
     "m": "windows",
     "title": "Рейтинг заказов",
     "task": "Выведи ID и сумму заказа, а также ранг заказа по сумме от самой большой к меньшей. Используй RANK.",
@@ -2611,7 +2611,7 @@ export const exercises = [
   },
   {
     "id": "e37",
-    "mode": "query",
+    "mode": "select",
     "m": "windows",
     "title": "Предыдущий заказ клиента",
     "task": "Для каждого заказа покажи сумму предыдущего заказа этого клиента. Используй LAG, сортировку по дате и ID.",
@@ -2619,7 +2619,7 @@ export const exercises = [
   },
   {
     "id": "e38",
-    "mode": "query",
+    "mode": "select",
     "m": "windows",
     "title": "Накопительная выручка",
     "task": "Выведи order_id, дату и сумму заказа, а также накопительную сумму по всем заказам в порядке даты и ID. Явно задай рамку ROWS.",
@@ -2627,7 +2627,7 @@ export const exercises = [
   },
   {
     "id": "e39",
-    "mode": "query",
+    "mode": "select",
     "m": "windows",
     "title": "Топ-1 заказ каждого магазина",
     "task": "Найди самый дорогой заказ в каждом магазине. Используй ROW_NUMBER в CTE и оставь rn = 1.",
@@ -2635,7 +2635,7 @@ export const exercises = [
   },
   {
     "id": "e40",
-    "mode": "query",
+    "mode": "select",
     "m": "analytics",
     "title": "Доля доставленных",
     "task": "Посчитай долю доставленных заказов от общего числа в процентах. Используй FILTER и приведение типа к numeric, чтобы не получить целочисленное деление.",
@@ -2643,7 +2643,7 @@ export const exercises = [
   },
   {
     "id": "e41",
-    "mode": "query",
+    "mode": "select",
     "m": "analytics",
     "title": "Дневная выручка",
     "task": "Посчитай сумму заказов по каждому дню. Выведи дату и revenue, отсортируй по дате.",
@@ -2651,7 +2651,7 @@ export const exercises = [
   },
   {
     "id": "e42",
-    "mode": "query",
+    "mode": "select",
     "m": "analytics",
     "title": "Нагрузка сотрудников",
     "task": "Для каждого сотрудника посчитай количество назначенных ему заказов и общую сумму этих заказов. Сотрудников без заказов не теряй.",
@@ -2659,7 +2659,7 @@ export const exercises = [
   },
   {
     "id": "e43",
-    "mode": "query",
+    "mode": "select",
     "m": "analytics",
     "title": "Сверка заказов и позиций",
     "task": "Сравни для каждого заказа сумму, записанную в orders, с суммой строк заказа quantity * unit_price из order_items. Выведи order_id, total_amount и items_amount.",
@@ -2667,7 +2667,7 @@ export const exercises = [
   },
   {
     "id": "e44",
-    "mode": "query",
+    "mode": "select",
     "m": "advanced",
     "title": "Извлеки значение из JSONB",
     "task": "В учебной таблице customer_profiles есть поле attributes JSONB. Выведи customer_id и значение ключа segment как текст с помощью ->>.",
@@ -2675,7 +2675,7 @@ export const exercises = [
   },
   {
     "id": "e45",
-    "mode": "query",
+    "mode": "select",
     "m": "advanced",
     "title": "Разверни массив",
     "task": "В таблице customer_profiles разверни массив tags в отдельные строки. Выведи customer_id и tag с помощью unnest.",
@@ -2687,11 +2687,11 @@ export const exercises = [
     "title": "Прочитай план запроса",
     "task": "Напиши EXPLAIN для выборки заказов customer_id = 1. Проверка оценивает выполнение запроса, а не конкретный текст плана.",
     "solution": "EXPLAIN SELECT order_id, total_amount FROM orders WHERE customer_id = 1;",
-    "mode": "query"
+    "mode": "explain"
   },
   {
     "id": "e47",
-    "mode": "query",
+    "mode": "select",
     "m": "workflow",
     "title": "Комплексный отчёт по магазинам",
     "task": "Покажи магазины с количеством заказов, числом доставленных заказов и выручкой по доставленным заказам. Сохрани магазины без заказов.",
@@ -2699,7 +2699,7 @@ export const exercises = [
   },
   {
     "id": "e48",
-    "mode": "query",
+    "mode": "select",
     "m": "workflow",
     "title": "Найди подозрительные заказы",
     "task": "Найди заказы, где сумма заказа отличается от суммы позиций более чем на 0.01. Учитывай заказы без позиций.",
@@ -2707,7 +2707,7 @@ export const exercises = [
   },
   {
     "id": "e49",
-    "mode": "query",
+    "mode": "select",
     "m": "aggregates",
     "title": "Средний чек по городу магазина",
     "task": "Посчитай среднюю сумму заказа по городу магазина. Выведи city и average_amount.",
@@ -2715,7 +2715,7 @@ export const exercises = [
   },
   {
     "id": "e50",
-    "mode": "query",
+    "mode": "select",
     "m": "joins",
     "title": "Сумма товаров по продуктам",
     "task": "Для каждого продукта покажи общее количество проданных единиц. Продукты без продаж тоже должны быть в результате с нулём.",
@@ -2723,7 +2723,7 @@ export const exercises = [
   },
   {
     "id": "e51",
-    "mode": "query",
+    "mode": "select",
     "m": "aggregates",
     "title": "Итоги по статусам и общий итог",
     "task": "Сформируй количество заказов по каждому статусу и добавь отдельную строку с общим количеством. Используй GROUPING SETS.",
@@ -2731,7 +2731,7 @@ export const exercises = [
   },
   {
     "id": "e52",
-    "mode": "query",
+    "mode": "select",
     "m": "joins",
     "title": "Последнее событие каждого заказа",
     "task": "Для каждого заказа найди последнее событие заказа. Заказы без событий тоже должны остаться. Используй LATERAL.",
@@ -2739,7 +2739,7 @@ export const exercises = [
   },
   {
     "id": "e53",
-    "mode": "query",
+    "mode": "select",
     "m": "select",
     "title": "Последний заказ каждого клиента",
     "task": "Для каждого клиента, у которого есть заказы, оставь только самую новую запись. Используй PostgreSQL DISTINCT ON.",
@@ -2747,7 +2747,7 @@ export const exercises = [
   },
   {
     "id": "e54",
-    "mode": "query",
+    "mode": "select",
     "m": "advanced",
     "title": "Клиенты с тегом coffee",
     "task": "Найди клиентов, у которых в массиве тегов присутствует coffee. Выведи customer_id.",
@@ -2755,7 +2755,7 @@ export const exercises = [
   },
   {
     "id": "e55",
-    "mode": "query",
+    "mode": "select",
     "m": "advanced",
     "title": "VIP-клиенты по JSONB",
     "task": "Найди профили, у которых JSON-атрибут segment равен vip. Выведи customer_id.",
@@ -2763,7 +2763,7 @@ export const exercises = [
   },
   {
     "id": "e56",
-    "mode": "query",
+    "mode": "select",
     "m": "analytics",
     "title": "Календарь без пропущенных дней",
     "task": "Покажи каждый день с 10 по 17 января 2026 года и число заказов в этот день. Дни без заказов должны выводиться с нулём. Используй generate_series и LEFT JOIN.",
@@ -2771,7 +2771,7 @@ export const exercises = [
   },
   {
     "id": "e57",
-    "mode": "query",
+    "mode": "select",
     "m": "aggregates",
     "title": "Сводка по магазинам и статусам",
     "task": "Посчитай количество заказов по комбинациям магазина и статуса, итоги по магазинам и общий итог. Используй ROLLUP.",
@@ -2779,7 +2779,7 @@ export const exercises = [
   },
   {
     "id": "e58",
-    "mode": "query",
+    "mode": "select",
     "m": "subqueries",
     "title": "Найди товары, которые не продавались",
     "task": "Найди товары, для которых не существует ни одной позиции заказа. В учебной базе есть как минимум один такой товар. Используй NOT EXISTS.",
@@ -2787,7 +2787,7 @@ export const exercises = [
   },
   {
     "id": "e59",
-    "mode": "query",
+    "mode": "select",
     "m": "cte",
     "title": "Рекурсивная последовательность",
     "task": "Создай рекурсивный CTE, который возвращает числа от 1 до 10 включительно.",
@@ -2795,7 +2795,7 @@ export const exercises = [
   },
   {
     "id": "e60",
-    "mode": "query",
+    "mode": "select",
     "m": "workflow",
     "title": "Сверка оплат с заказами",
     "task": "Для каждого заказа сравни сумму платежей со стоимостью заказа. Покажи только заказы, где суммы отличаются. Не теряй заказы без платежей.",
