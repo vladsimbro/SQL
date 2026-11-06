@@ -41,6 +41,9 @@ try {
         await isolated.exec(exercise.solution);
         const observed = await isolated.query(exercise.checkQuery);
         assert.ok(observed.rows.length > 0, `Transaction exercise ${exercise.id} did not produce a checkable state`);
+        for (const [column, expectedValue] of Object.entries(exercise.expectedCheck || {})) {
+          assert.equal(observed.rows[0][column], expectedValue, `Transaction exercise ${exercise.id} failed final-state assertion: ${column}`);
+        }
       } finally {
         await isolated.close();
       }
