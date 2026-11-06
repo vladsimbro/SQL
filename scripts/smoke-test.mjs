@@ -31,6 +31,19 @@ try {
       } finally {
         await db.exec('ROLLBACK;');
       }
+    } else if (exercise.mode === 'transaction') {
+      const isolated = new PGlite();
+      try {
+        await isolated.exec(seedSQL);
+        for (const pattern of exercise.requiredPatterns || []) {
+          assert.ok(new RegExp(pattern, 'i').test(exercise.solution), `Transaction exercise ${exercise.id} is missing a required transaction command`);
+        }
+        await isolated.exec(exercise.solution);
+        const observed = await isolated.query(exercise.checkQuery);
+        assert.ok(observed.rows.length > 0, `Transaction exercise ${exercise.id} did not produce a checkable state`);
+      } finally {
+        await isolated.close();
+      }
     } else {
       const result = await db.query(exercise.solution);
       assert.ok(result && Array.isArray(result.rows), `Exercise ${exercise.id} did not return a query result`);
