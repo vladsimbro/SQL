@@ -150,10 +150,14 @@ function editor(value,id,placeholder='') {
 function getEditorValue(id){return state.editors.get(id)?.getValue()??$('#'+id)?.value??'';}
 function setEditorValue(id,value){const cm=state.editors.get(id);if(cm){cm.setValue(value);cm.focus();}else{const el=$('#'+id);if(el)el.value=value;}}
 function formatSql(sql){
- let text=String(sql||'').trim().replace(/[ \\t]+/g,' ');if(!text)return '';
+ let text=String(sql||'').trim().replace(/[ \\t]+/g,' ');
+ if(!text)return '';
  const clauses=['UNION ALL','LEFT JOIN','RIGHT JOIN','FULL JOIN','INNER JOIN','CROSS JOIN','GROUP BY','ORDER BY','UNION','INTERSECT','EXCEPT','RETURNING','FROM','WHERE','HAVING','JOIN','ON','SET','VALUES','LIMIT','OFFSET'];
- const pattern=new RegExp('\\\\s+('+clauses.map(x=>x.replace(/ /g,'\\\\s+')).join('|')+')\\\\b','gi');
- text=text.replace(pattern,(_,kw)=>'\\n'+kw.toUpperCase()).replace(/,\\\\s*/g,',\\n    ').replace(/^SELECT\\\\s+/i,'SELECT\\n    ').replace(/\\\\s+(AND|OR)\\\\s+/gi,(_,kw)=>'\\n    '+kw.toUpperCase()+' ');
+ const pattern=new RegExp('\\s+('+clauses.map(x=>x.replace(/ /g,'\\s+')).join('|')+')\\b','gi');
+ text=text.replace(pattern,(_,kw)=>'\n'+kw.toUpperCase());
+ text=text.replace(/,\s*/g,',\n    ');
+ text=text.replace(/^SELECT\s+/i,'SELECT\n    ');
+ text=text.replace(/\s+(AND|OR)\s+/gi,(_,kw)=>'\n    '+kw.toUpperCase()+' ');
  return text;
 }
 function renderPlayground() {
