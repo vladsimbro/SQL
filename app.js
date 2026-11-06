@@ -349,7 +349,7 @@ function splitStatements(sql) {
    const match=sql.slice(i).match(/^\$[a-z_][a-z0-9_]*\$|^\$\$/i);
    if(match){dollarTag=match[0];cur+=dollarTag;i+=dollarTag.length-1;continue;}
   }
-  if(single&&escapeString&&c==='\\\\'){cur+=c;if(i+1<sql.length)cur+=sql[++i];continue;}
+  if(single&&escapeString&&c==='\\'){cur+=c;if(i+1<sql.length)cur+=sql[++i];continue;}
   if(c==="'"&&!dbl){
    if(single&&n==="'"){cur+=c+n;i++;continue;}
    if(!single){const prev=sql[i-1]||'',before=sql[i-2]||'';escapeString=(prev==='e'||prev==='E')&&(!before||!/[a-z0-9_$]/i.test(before));}
