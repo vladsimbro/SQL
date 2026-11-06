@@ -14,10 +14,13 @@ assert.equal(exercises.filter(exercise => exercise.mode === 'explain').length, 1
 const parserStart = appSource.indexOf('function skipSqlTrivia');
 const parserEnd = appSource.indexOf('\nasync function runEditorQuery', parserStart);
 assert.ok(parserStart >= 0 && parserEnd > parserStart, 'SQL lexer functions must exist');
-const sqlLexer = new Function(appSource.slice(parserStart, parserEnd) + '; return { firstSqlKeyword, sqlAfterKeyword, splitStatements };')();
+const sqlLexer = new Function(appSource.slice(parserStart, parserEnd) + '; return { firstSqlKeyword, sqlAfterKeyword, explainStatementKeyword, splitStatements };')();
 assert.equal(sqlLexer.firstSqlKeyword("-- leading comment\nSELECT 1"), 'SELECT', 'Leading line comments must be ignored');
 assert.equal(sqlLexer.firstSqlKeyword('/* outer /* nested */ comment */ WITH q AS (SELECT 1) SELECT * FROM q'), 'WITH', 'Nested block comments must be ignored');
 assert.equal(sqlLexer.firstSqlKeyword(sqlLexer.sqlAfterKeyword('EXPLAIN /* comment */ SELECT 1', 'EXPLAIN')), 'SELECT', 'Comments after EXPLAIN must be ignored');
+assert.equal(sqlLexer.explainStatementKeyword('EXPLAIN ANALYZE SELECT 1'), 'SELECT', 'EXPLAIN ANALYZE must be accepted');
+assert.equal(sqlLexer.explainStatementKeyword('EXPLAIN (ANALYZE, BUFFERS) SELECT 1'), 'SELECT', 'EXPLAIN options must be accepted');
+assert.equal(sqlLexer.explainStatementKeyword('EXPLAIN (FORMAT JSON) WITH q AS (SELECT 1) SELECT * FROM q'), 'WITH', 'EXPLAIN FORMAT JSON with CTE must be accepted');
 assert.equal(sqlLexer.splitStatements("SELECT ';'; SELECT 2;").length, 2, 'Semicolons inside string literals must not split statements');
 assert.equal(sqlLexer.splitStatements('DO $body$ BEGIN PERFORM 1; PERFORM 2; END $body$; SELECT 3;').length, 2, 'Dollar-quoted procedural blocks must remain a single statement');
 assert.ok(appSource.includes("if(ex.mode==='explain')"), 'EXPLAIN mode must be handled separately from normal SELECT exercises');
