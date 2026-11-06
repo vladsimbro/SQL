@@ -161,6 +161,7 @@ function formatSql(sql){
  const pattern=new RegExp('\\s+('+clauses.map(x=>x.replace(/ /g,'\\s+')).join('|')+')\\b','gi');
  text=text.replace(pattern,(_,kw)=>'\n'+kw.toUpperCase());
  text=text.replace(/,\s*/g,',\n    ');
+ text=text.replace(/\nON\b/g,'\n  ON');
  text=text.replace(/^SELECT\s+/i,'SELECT\n    ');
  text=text.replace(/\s+(AND|OR)\s+/gi,(_,kw)=>'\n    '+kw.toUpperCase()+' ');
  return text;
