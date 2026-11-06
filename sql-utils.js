@@ -16,6 +16,56 @@ function sqlAfterKeyword(sql,keyword){
  const i=skipSqlTrivia(sql),match=sql.slice(i).match(new RegExp('^'+keyword+'\\b','i'));
  return match?sql.slice(i+match[0].length):'';
 }
+function readIdentifier(sql,start){
+ let i=skipSqlTrivia(sql,start);
+ if(sql[i]==='"'){i++;while(i<sql.length){if(sql[i]==='"'){if(sql[i+1]==='"'){i+=2;continue;}return i+1;}i++;}return -1;}
+ const m=sql.slice(i).match(/^[a-z_][a-z0-9_$]*/i);
+ return m?i+m[0].length:-1;
+}
+function skipBalanced(sql,start){
+ let i=skipSqlTrivia(sql,start);if(sql[i]!=='(')return -1;
+ let depth=0,single=false,dbl=false,line=false,block=0,dollar=null;
+ for(;i<sql.length;i++){
+  const c=sql[i],n=sql[i+1];
+  if(line){if(c==='\\n')line=false;continue;}
+  if(block){if(c==='/'&&n==='*'){block++;i++;}else if(c==='*'&&n==='/'){block--;i++;}continue;}
+  if(dollar){if(sql.startsWith(dollar,i)){i+=dollar.length-1;dollar=null;}continue;}
+  if(!single&&!dbl&&c==='-'&&n==='-'){line=true;i++;continue;}
+  if(!single&&!dbl&&c==='/'&&n==='*'){block=1;i++;continue;}
+  if(!single&&!dbl&&c==='$'){const m=sql.slice(i).match(/^\\$[a-z_][a-z0-9_]*\\$|^\\$\\$/i);if(m){dollar=m[0];i+=dollar.length-1;continue;}}
+  if(c==="'"&&!dbl){if(single&&n==="'"){i++;continue;}single=!single;continue;}
+  if(c==='"'&&!single){if(dbl&&n==='"'){i++;continue;}dbl=!dbl;continue;}
+  if(single||dbl)continue;
+  if(c==='(')depth++;
+  if(c===')'&&--depth===0)return i+1;
+ }
+ return -1;
+}
+export function readOnlyQueryKeyword(sql,depth=0){
+ if(depth>20)return '';
+ const first=firstSqlKeyword(sql);
+ if(first!=='WITH')return first;
+ let i=skipSqlTrivia(sql);
+ i=skipSqlTrivia(sql,i+4);
+ if(firstSqlKeyword(sql.slice(i))==='RECURSIVE')i=skipSqlTrivia(sql,i+8);
+ while(i<sql.length){
+  i=readIdentifier(sql,i);if(i<0)return '';
+  i=skipSqlTrivia(sql,i);
+  if(sql[i]==='('){i=skipBalanced(sql,i);if(i<0)return '';i=skipSqlTrivia(sql,i);}
+  if(firstSqlKeyword(sql.slice(i))!=='AS')return '';
+  i=skipSqlTrivia(sql,i+2);
+  if(firstSqlKeyword(sql.slice(i))==='NOT'){i=skipSqlTrivia(sql,i+3);if(firstSqlKeyword(sql.slice(i))!=='MATERIALIZED')return '';i=skipSqlTrivia(sql,i+10);}
+  else if(firstSqlKeyword(sql.slice(i))==='MATERIALIZED')i=skipSqlTrivia(sql,i+10);
+  if(sql[i]!=='(')return '';
+  const close=skipBalanced(sql,i);if(close<0)return '';
+  const body=sql.slice(i+1,close-1);
+  if(readOnlyQueryKeyword(body,depth+1)!=='SELECT')return '';
+  i=skipSqlTrivia(sql,close);
+  if(sql[i]===','){i=skipSqlTrivia(sql,i+1);continue;}
+  return firstSqlKeyword(sql.slice(i));
+ }
+ return '';
+}
 export function explainStatementKeyword(sql){
  let rest=sqlAfterKeyword(sql,'EXPLAIN'),i=skipSqlTrivia(rest);
  if(rest[i]==='('){
@@ -35,7 +85,7 @@ export function explainStatementKeyword(sql){
    break;
   }
  }
- return firstSqlKeyword(rest);
+ return readOnlyQueryKeyword(rest);
 }
 export function splitStatements(sql) {
  const out=[];let cur='',single=false,dbl=false,line=false,blockDepth=0,dollarTag=null,escapeString=false;
