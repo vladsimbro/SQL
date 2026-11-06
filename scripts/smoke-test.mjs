@@ -22,6 +22,8 @@ assert.equal(sqlLexer.explainStatementKeyword('EXPLAIN ANALYZE SELECT 1'), 'SELE
 assert.equal(sqlLexer.explainStatementKeyword('EXPLAIN (ANALYZE, BUFFERS) SELECT 1'), 'SELECT', 'EXPLAIN options must be accepted');
 assert.equal(sqlLexer.explainStatementKeyword('EXPLAIN (FORMAT JSON) WITH q AS (SELECT 1) SELECT * FROM q'), 'WITH', 'EXPLAIN FORMAT JSON with CTE must be accepted');
 assert.equal(sqlLexer.splitStatements("SELECT ';'; SELECT 2;").length, 2, 'Semicolons inside string literals must not split statements');
+assert.equal(sqlLexer.splitStatements(String.raw`SELECT E'it\\'s; still text'; SELECT 2;`).length, 2, 'Escaped E-string quotes must not split statements');
+assert.equal(exercises.filter(exercise => exercise.orderMatters).length, 11, 'Ordering-sensitive tasks must compare row order');
 assert.equal(sqlLexer.splitStatements('DO $body$ BEGIN PERFORM 1; PERFORM 2; END $body$; SELECT 3;').length, 2, 'Dollar-quoted procedural blocks must remain a single statement');
 assert.ok(appSource.includes("if(ex.mode==='explain')"), 'EXPLAIN mode must be handled separately from normal SELECT exercises');
 assert.ok(appSource.includes('firstSqlKeyword(parts[0])'), 'Exercise validation must use the SQL lexer');
