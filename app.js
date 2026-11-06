@@ -119,7 +119,7 @@ function renderPractice() {
   <div class="exercise-layout"><aside><input class="exercise-filter" id="exercise-search" placeholder="Найти задачу по названию…"><div class="exercise-list" id="exercise-list">${list}</div></aside>
   <section><div class="task-card"><div class="task-meta">ЗАДАНИЕ ${exercises.indexOf(active)+1} ИЗ ${exercises.length} · ${esc(m.title)}</div><h2>${esc(active.title)} ${state.completedExercises.has(active.id)?'✓':''}</h2><p>${esc(active.task)}</p><details class="hint"><summary>Показать подсказку</summary><p>Сначала определи зерно результата: что означает одна строка? Затем выбери нужные таблицы, условия, группировку и сортировку. Не копируй решение целиком, пока не попробовал сам.</p></details></div>
   ${editor(active.solution,'exercise-editor','Здесь напиши свой SQL-запрос…')}
-  <div class="editor-actions" style="margin-top:10px"><button class="btn primary" data-action="check-exercise">Проверить решение</button>${active.mode==='mutation'?'':'<button class="btn" data-action="run-exercise">Выполнить запрос</button>'}<button class="btn" data-action="show-solution">Показать решение</button><button class="btn" data-action="reset-db">Сбросить базу</button></div>
+  <div class="editor-actions" style="margin-top:10px"><button class="btn primary" data-action="check-exercise">Проверить решение</button>${(active.mode==='mutation'||active.mode==='transaction')?'':'<button class="btn" data-action="run-exercise">Выполнить запрос</button>'}<button class="btn" data-action="show-solution">Показать решение</button><button class="btn" data-action="reset-db">Сбросить базу</button></div>
   <div id="exercise-feedback"></div><div id="exercise-results"></div>
   <div class="lesson-footer" style="margin-top:16px"><button class="btn" data-action="prev-exercise">← Предыдущее</button><button class="btn" data-action="next-exercise">Следующее →</button></div></section></div>`;
 }
@@ -196,7 +196,8 @@ async function checkExercise() {
   if(!sql){feedback.innerHTML='<div class="feedback fail">Напиши SQL-запрос перед проверкой.</div>';return;}
   try{
     const parts=splitStatements(sql);
-    if(parts.length!==1) throw new Error('В проверяемом упражнении используй один SQL-запрос.');
+    if(ex.mode!=='transaction' && parts.length!==1) throw new Error('В этом задании используй один SQL-запрос.');
+    if(ex.mode==='transaction' && parts.length<2) throw new Error('Задание на транзакцию должно содержать несколько команд, разделённых точкой с запятой.');
     const started=performance.now();
     if(ex.mode==='query') {
       if(!/^\\s*EXPLAIN\\s+(SELECT|WITH)\\b/i.test(parts[0])) throw new Error('Для этой задачи используй EXPLAIN перед SELECT или WITH ... SELECT.');
@@ -205,40 +206,40 @@ async function checkExercise() {
       const elapsed=Math.round(performance.now()-started);
       state.completedExercises.add(ex.id);saveProgress();
       results.innerHTML=renderResult(plan,elapsed);
-      feedback.innerHTML='<div class="feedback success"><strong>План построен!</strong> EXPLAIN успешно разобрал запрос и вернул план PostgreSQL. Обрати внимание на тип узла, оценку строк и стоимость выполнения.</div>';
+      feedback.innerHTML='<div class="feedback success"><strong>План построен!</strong> EXPLAIN успешно разобрал заданный запрос. Изучи тип узла, оценку строк и стоимость выполнения.</div>';
       return;
     }
     const expected=state.expected.get(ex.id);
     if(!expected) throw new Error('Эталонный результат для задания не подготовлен.');
     let result, observed, passed;
-    if(ex.mode==='mutation') {
-      if(!/^\\s*(INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|MERGE)\\b/i.test(parts[0])) throw new Error('Для этой задачи нужна команда изменения данных или структуры: INSERT, UPDATE, DELETE, CREATE, ALTER, DROP либо MERGE.');
+    if(ex.mode==='mutation' || ex.mode==='transaction') {
+      if(ex.mode==='mutation' && !/^\\s*(INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|MERGE)\\b/i.test(parts[0])) throw new Error('Для этой задачи нужна команда изменения данных или структуры: INSERT, UPDATE, DELETE, CREATE, ALTER, DROP либо MERGE.');
+      if(ex.mode==='transaction' && (ex.requiredPatterns||[]).some(pattern=>!new RegExp(pattern,'i').test(sql))) throw new Error('В запросе отсутствует одна из обязательных команд транзакции. Сверься с условием задания.');
       const {PGlite}=await import('https://cdn.jsdelivr.net/npm/@electric-sql/pglite@0.5.15/dist/index.js');
       const isolatedDb=new PGlite();
       try {
         await isolatedDb.exec(seedSQL);
-        await isolatedDb.exec('BEGIN;');
-        try {
+        if(ex.mode==='transaction') {
+          await isolatedDb.exec(sql);
+          result={rows:[],fields:[]};
+        } else {
           result=await isolatedDb.query(parts[0]);
-          observed=await isolatedDb.query(ex.checkQuery);
-          passed=JSON.stringify(normalizeResult(observed))===JSON.stringify(expected);
-        } finally {
-          await isolatedDb.exec('ROLLBACK;');
         }
+        observed=await isolatedDb.query(ex.checkQuery);
+        passed=JSON.stringify(normalizeResult(observed))===JSON.stringify(expected);
       } finally {
         await isolatedDb.close();
       }
     } else {
-      if(ex.mode==='query' && !/^\\s*EXPLAIN\\s+(SELECT|WITH)\\b/i.test(parts[0])) throw new Error('Для этой задачи используй EXPLAIN перед SELECT или WITH ... SELECT.');
-      if(ex.mode!=='query' && !/^\\s*(SELECT|WITH)\\b/i.test(parts[0])) throw new Error('Автопроверка этого задания принимает SELECT или WITH ... SELECT.');
+      if(!/^\\s*(SELECT|WITH)\\b/i.test(parts[0])) throw new Error('Автопроверка этого задания принимает SELECT или WITH ... SELECT.');
       result=await state.db.query(parts[0]);
       observed=result;
       passed=JSON.stringify(normalizeResult(observed))===JSON.stringify(expected);
     }
     const elapsed=Math.round(performance.now()-started);
-    results.innerHTML=renderResult(result,elapsed)+(ex.mode==='mutation'?renderResult(observed,elapsed):'');
-    if(passed){state.completedExercises.add(ex.id);saveProgress();feedback.innerHTML='<div class="feedback success"><strong>Верно!</strong> Изменение соответствует условию. Для проверки оно было выполнено в отдельной временной базе и затем отменено, поэтому общая учебная база не изменилась.</div>';}
-    else{feedback.innerHTML='<div class="feedback fail"><strong>Пока не совпало.</strong> Запрос выполнился, но фактическое состояние таблицы отличается от ожидаемого. Проверь условие WHERE, нужные столбцы, ограничения и число изменённых строк.</div>';}
+    results.innerHTML=renderResult(result,elapsed)+((ex.mode==='mutation'||ex.mode==='transaction')?renderResult(observed,elapsed):'');
+    if(passed){state.completedExercises.add(ex.id);saveProgress();feedback.innerHTML='<div class="feedback success"><strong>Верно!</strong> Результат соответствует условию. Изменения проверялись в отдельной временной базе, поэтому основная учебная база не затронута.</div>';}
+    else{feedback.innerHTML='<div class="feedback fail"><strong>Пока не совпало.</strong> Запрос выполнился, но фактический результат отличается от ожидаемого. Проверь условия, столбцы, ограничения, порядок команд и итоговое состояние таблиц.</div>';}
   }catch(err){feedback.innerHTML='<div class="feedback fail"><strong>Ошибка SQL:</strong> '+esc(err.message)+'</div>';results.innerHTML='';}
 }
 function normalizeResult(result) {
@@ -286,6 +287,17 @@ async function prepareExpected() {
           state.expected.set(ex.id,normalizeResult(observed));
         } finally {
           await state.db.exec('ROLLBACK;');
+        }
+      } else if(ex.mode==='transaction') {
+        const {PGlite}=await import('https://cdn.jsdelivr.net/npm/@electric-sql/pglite@0.5.15/dist/index.js');
+        const isolatedDb=new PGlite();
+        try {
+          await isolatedDb.exec(seedSQL);
+          await isolatedDb.exec(ex.solution);
+          const observed=await isolatedDb.query(ex.checkQuery);
+          state.expected.set(ex.id,normalizeResult(observed));
+        } finally {
+          await isolatedDb.close();
         }
       } else {
         const result=await state.db.query(ex.solution);
