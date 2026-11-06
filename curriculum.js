@@ -19,7 +19,7 @@ export const modules = [
       },
       {
         "title": "Клиент, сервер и запрос",
-        "body": "Клиентом может быть DBeaver, Metabase, приложение или скрипт. Он отправляет SQL-серверу запрос по соединению. Сервер разбирает синтаксис, проверяет объекты и права, строит план выполнения, исполняет его и возвращает результат. В нашем тренажёре PostgreSQL запускается локально внутри браузера в WebAssembly, поэтому отдельный сервер не нужен.",
+        "body": "Клиентом может быть SQL-клиент, BI-система, приложение или скрипт. Он отправляет SQL-серверу запрос по соединению. Сервер разбирает синтаксис, проверяет объекты и права, строит план выполнения, исполняет его и возвращает результат. В нашем тренажёре PostgreSQL запускается локально внутри браузера в WebAssembly, поэтому отдельный сервер не нужен.",
         "example": "SELECT COUNT(*) AS orders_count\nFROM orders;",
         "note": "В реальной работе не вставляй в запросы секреты и не отправляй чувствительные данные в неизвестные онлайн-песочницы."
       },
@@ -58,7 +58,7 @@ export const modules = [
       {
         "title": "NULL и неизвестное значение",
         "body": "NULL означает отсутствие или неизвестность значения, а не ноль и не пустую строку. SQL использует трёхзначную логику: TRUE, FALSE и UNKNOWN. Сравнение NULL обычным оператором вроде = не даёт TRUE. Проверка отсутствия значения выполняется через IS NULL или IS NOT NULL. Агрегаты обычно игнорируют NULL, кроме COUNT(*), который считает строки.",
-        "example": "SELECT order_id\nFROM orders\nWHERE courier_id IS NULL;",
+        "example": "SELECT order_id\nFROM orders\nWHERE employee_id IS NULL;",
         "note": "NULL меняет логику фильтрации, агрегатов, соединений и вычислений. Эту тему нужно освоить до сложных запросов."
       },
       {
@@ -72,6 +72,12 @@ export const modules = [
         "body": "Функциональная зависимость X → Y означает, что значение X однозначно определяет Y. Первая нормальная форма требует атомарных значений в рамках реляционной модели. Вторая убирает зависимости неключевых атрибутов от части составного ключа. Третья устраняет транзитивные зависимости неключевых атрибутов. BCNF усиливает требования к детерминантам. На практике анализируй ключи и зависимости, а не применяй разложение механически.",
         "example": "-- Если store_id определяет store_name,\n-- имя магазина относится к stores, а не к каждой позиции заказа.",
         "note": "Нормализация помогает избежать аномалий, но схема зависит от требований и нагрузки."
+      },
+      {
+        "title": "Связи многие-ко-многим и таблицы-связки",
+        "body": "Связь многие-ко-многим означает, что одна запись первой сущности может быть связана со многими записями второй, и наоборот. Например, один заказ содержит много товаров, а один товар встречается во многих заказах. В реляционной модели такую связь обычно представляют отдельной таблицей order_items с двумя внешними ключами. Составной первичный ключ (order_id, product_id) запрещает дублирование товара в одном заказе; отдельный item_id нужен, если один товар может появиться несколькими строками или у позиции есть самостоятельная идентичность.",
+        "example": "CREATE TABLE order_items (\n  order_id BIGINT REFERENCES orders(order_id),\n  product_id BIGINT REFERENCES products(product_id),\n  quantity INTEGER NOT NULL CHECK (quantity > 0),\n  PRIMARY KEY (order_id, product_id)\n);",
+        "note": "Многие-ко-многим не хранят списком ID в одном столбце. Обычно нужна таблица-связка с внешними ключами."
       }
     ]
   },
@@ -178,7 +184,7 @@ export const modules = [
       {
         "title": "DISTINCT ON в PostgreSQL",
         "body": "DISTINCT ON (expression) оставляет по одной строке для каждого значения выражения. Какая строка останется, определяется ORDER BY. Выражения DISTINCT ON должны соответствовать левым выражениям ORDER BY. Это удобное расширение PostgreSQL, но оно не является универсальным переносимым SQL.",
-        "example": "SELECT DISTINCT ON (courier_id)\n       courier_id, order_id, created_at\nFROM orders\nWHERE courier_id IS NOT NULL\nORDER BY courier_id, created_at DESC;",
+        "example": "SELECT DISTINCT ON (employee_id)\n       employee_id, order_id, created_at\nFROM orders\nWHERE employee_id IS NOT NULL\nORDER BY employee_id, created_at DESC;",
         "note": "Без подходящего ORDER BY выбор сохранённой строки не определён."
       }
     ]
@@ -218,6 +224,12 @@ export const modules = [
         "body": "Для дат применяй типизированные литералы DATE и TIMESTAMP. Сравнивая TIMESTAMPTZ, помни о часовом поясе. Не включай конец суток значением 23:59:59: там может быть дробная доля секунды. Гораздо безопаснее задать начало периода включительно и начало следующего периода исключительно.",
         "example": "SELECT order_id, created_at\nFROM orders\nWHERE created_at >= DATE '2026-01-10'\n  AND created_at < DATE '2026-01-15';",
         "note": "Полуоткрытый интервал [start, end) предотвращает пропуски и двойной учёт границ."
+      },
+      {
+        "title": "IS DISTINCT FROM и сравнение с NULL",
+        "body": "Обычные операторы сравнения с NULL возвращают UNKNOWN. PostgreSQL и ряд других СУБД поддерживают IS DISTINCT FROM и IS NOT DISTINCT FROM: они сравнивают значения так, будто NULL является сравнимым маркером. Два NULL считаются одинаковыми для IS NOT DISTINCT FROM; NULL и ненулевое значение различаются. Это удобно для поиска изменившихся значений и сравнения полей, когда NULL должен трактоваться как отдельное состояние.",
+        "example": "SELECT NULL IS NOT DISTINCT FROM NULL AS same_null,\n       NULL IS DISTINCT FROM 0 AS different;",
+        "note": "Не заменяй IS DISTINCT FROM обычным <> там, где NULL должен участвовать в сравнении."
       }
     ]
   },
@@ -236,7 +248,7 @@ export const modules = [
       {
         "title": "NULLS FIRST и NULLS LAST",
         "body": "Положение NULL при сортировке зависит от направления и СУБД. В PostgreSQL для явного поведения используют NULLS FIRST или NULLS LAST. Это важно для рейтингов, дат последнего события и необязательных полей. Явное указание делает запрос понятнее и защищает от переноса между диалектами.",
-        "example": "SELECT order_id, courier_id\nFROM orders\nORDER BY courier_id NULLS LAST, order_id;",
+        "example": "SELECT order_id, employee_id\nFROM orders\nORDER BY employee_id NULLS LAST, order_id;",
         "note": "Не считай NULL равным нулю или пустой строке при сортировке."
       },
       {
@@ -292,7 +304,7 @@ export const modules = [
       {
         "title": "COALESCE, NULLIF и NULLIF для безопасных вычислений",
         "body": "COALESCE возвращает первое не-NULL значение. NULLIF(a,b) возвращает NULL, если значения равны; иначе возвращает a. Вместе они помогают задавать значения по умолчанию и избегать деления на ноль: numerator / NULLIF(denominator, 0). COALESCE не исправляет качество данных, а лишь задаёт поведение запроса при отсутствии значения.",
-        "example": "SELECT order_id,\n       COALESCE(courier_id, -1) AS courier_or_unknown,\n       total_amount / NULLIF(delivery_days, 0) AS amount_per_day\nFROM orders;",
+        "example": "SELECT order_id,\n       COALESCE(employee_id, -1) AS employee_or_unknown,\n       total_amount / NULLIF(delivery_days, 0) AS amount_per_day\nFROM orders;",
         "note": "Подстановка фиктивного ID может исказить смысл модели. Иногда лучше оставить NULL."
       }
     ]
@@ -306,12 +318,12 @@ export const modules = [
       {
         "title": "Агрегатные функции",
         "body": "COUNT(*) считает строки, COUNT(column) считает строки с ненулевым значением в column, COUNT(DISTINCT column) — уникальные ненулевые значения. SUM складывает, AVG усредняет, MIN и MAX находят границы. Большинство агрегатов игнорируют NULL. Если входная группа пуста, COUNT возвращает 0, а SUM и AVG могут вернуть NULL.",
-        "example": "SELECT COUNT(*) AS rows,\n       COUNT(courier_id) AS assigned,\n       COUNT(DISTINCT courier_id) AS unique_couriers\nFROM orders;",
+        "example": "SELECT COUNT(*) AS rows,\n       COUNT(employee_id) AS assigned,\n       COUNT(DISTINCT employee_id) AS unique_employees\nFROM orders;",
         "note": "COUNT(*) и COUNT(column) отвечают на разные вопросы."
       },
       {
         "title": "GROUP BY и зерно результата",
-        "body": "GROUP BY разделяет строки на группы с одинаковыми значениями группировочных выражений и вычисляет агрегаты отдельно для каждой группы. Зерно результата — что представляет одна строка результата: один статус, один курьер, один месяц или одна комбинация. Все неагрегированные выражения в SELECT должны быть совместимы с GROUP BY.",
+        "body": "GROUP BY разделяет строки на группы с одинаковыми значениями группировочных выражений и вычисляет агрегаты отдельно для каждой группы. Зерно результата — что представляет одна строка результата: один статус, один сотрудник, один месяц или одна комбинация. Все неагрегированные выражения в SELECT должны быть совместимы с GROUP BY.",
         "example": "SELECT status, COUNT(*) AS orders_count\nFROM orders\nGROUP BY status;",
         "note": "Перед агрегацией сформулируй: «одна строка результата — это ...». Это защищает от неверного GROUP BY."
       },
@@ -350,14 +362,14 @@ export const modules = [
       {
         "title": "Что делает JOIN",
         "body": "JOIN формирует строки результата из строк двух источников по условию ON. INNER JOIN оставляет только совпавшие пары. LEFT JOIN сохраняет все строки слева и добавляет совпадения справа; если их нет, правые столбцы становятся NULL. JOIN не «подтягивает поле» в вакууме: он строит новое отношение, которое может содержать больше строк, чем каждая исходная таблица.",
-        "example": "SELECT o.order_id, c.courier_name\nFROM orders o\nJOIN couriers c ON c.courier_id = o.courier_id;",
+        "example": "SELECT o.order_id, c.employee_name\nFROM orders o\nJOIN employees c ON c.employee_id = o.employee_id;",
         "note": "Всегда спрашивай: сколько строк может соответствовать одной строке слева?"
       },
       {
         "title": "INNER JOIN и LEFT JOIN",
         "body": "INNER JOIN удаляет строки без пары. LEFT JOIN сохраняет каждую строку левой таблицы, даже если совпадения справа нет. Правую таблицу после LEFT JOIN можно фильтровать в ON или WHERE, но смысл различается: фильтр в WHERE может удалить NULL-строки и фактически превратить LEFT JOIN в INNER JOIN.",
-        "example": "SELECT o.order_id, c.courier_name\nFROM orders o\nLEFT JOIN couriers c\n  ON c.courier_id = o.courier_id;",
-        "note": "Если нужно сохранить всех курьеров/клиентов/магазины, начинай запрос с таблицы, полный список которой должен остаться."
+        "example": "SELECT o.order_id, c.employee_name\nFROM orders o\nLEFT JOIN employees c\n  ON c.employee_id = o.employee_id;",
+        "note": "Если нужно сохранить всех сотрудников/клиентов/магазины, начинай запрос с таблицы, полный список которой должен остаться."
       },
       {
         "title": "FULL, CROSS и SELF JOIN",
@@ -368,7 +380,7 @@ export const modules = [
       {
         "title": "Соединение трёх и более таблиц",
         "body": "К запросу можно последовательно добавлять JOIN. У каждой связи должно быть понятное условие. Алиасы делают происхождение полей явным. Не соединяй таблицы по похожим названиям столбцов без понимания бизнес-связи: одинаковый тип или название не гарантирует, что ключи взаимозаменяемы.",
-        "example": "SELECT o.order_id, s.store_name, c.courier_name\nFROM orders o\nJOIN stores s ON s.store_id = o.store_id\nLEFT JOIN couriers c ON c.courier_id = o.courier_id;",
+        "example": "SELECT o.order_id, s.store_name, c.employee_name\nFROM orders o\nJOIN stores s ON s.store_id = o.store_id\nLEFT JOIN employees c ON c.employee_id = o.employee_id;",
         "note": "Читай цепочку JOIN как описание маршрута по модели данных."
       },
       {
@@ -386,7 +398,7 @@ export const modules = [
       {
         "title": "JOIN ... USING, NATURAL JOIN и LATERAL",
         "body": "USING(column) сокращает запись, если обе стороны соединяются по одноимённому столбцу; общий ключ выводится один раз. NATURAL JOIN автоматически использует все одноимённые столбцы и потому хрупок: добавление такого поля меняет смысл запроса. LATERAL позволяет подзапросу в FROM ссылаться на предыдущие источники строк; удобно для top-N событий на каждый заказ.",
-        "example": "SELECT o.order_id, latest.event_type, latest.event_at FROM orders o LEFT JOIN LATERAL (SELECT event_type, event_at FROM delivery_events d WHERE d.order_id = o.order_id ORDER BY event_at DESC, event_id DESC LIMIT 1) latest ON true;",
+        "example": "SELECT o.order_id, latest.event_type, latest.event_at FROM orders o LEFT JOIN LATERAL (SELECT event_type, event_at FROM order_events d WHERE d.order_id = o.order_id ORDER BY event_at DESC, event_id DESC LIMIT 1) latest ON true;",
         "note": "Предпочитай явный ON в сложной модели. NATURAL JOIN редко подходит для устойчивого рабочего SQL."
       }
     ]
@@ -494,53 +506,9 @@ export const modules = [
     ]
   },
   {
-    "id": "dml",
-    "title": "DML: вставка, изменение и удаление",
-    "stage": "14 · Изменение данных",
-    "desc": "Освоить INSERT, UPDATE, DELETE, RETURNING, UPSERT и безопасный порядок действий.",
-    "lessons": [
-      {
-        "title": "INSERT",
-        "body": "INSERT INTO добавляет строки в таблицу. Явно перечисляй столбцы, чтобы не зависеть от порядка в схеме и не сломаться при добавлении нового столбца. Можно вставить одну или несколько строк через VALUES, либо результат SELECT. Пропущенные столбцы получают DEFAULT или NULL, если это разрешено.",
-        "example": "INSERT INTO example_notes (note_id, body)\nVALUES (1, 'Проверить отчёт');",
-        "note": "Перед массовым INSERT проверь набор данных и ограничения таблицы."
-      },
-      {
-        "title": "UPDATE",
-        "body": "UPDATE изменяет существующие строки. SET задаёт новые значения, WHERE ограничивает целевые строки. Если забыть WHERE, изменятся все строки таблицы. В выражениях SET можно использовать старое значение столбца. PostgreSQL поддерживает FROM для обновления по данным других таблиц.",
-        "example": "UPDATE example_notes\nSET body = 'Отчёт проверен'\nWHERE note_id = 1;",
-        "note": "Перед UPDATE выполни SELECT с тем же WHERE и убедись, что целевых строк столько, сколько ожидаешь."
-      },
-      {
-        "title": "DELETE и TRUNCATE",
-        "body": "DELETE удаляет строки и поддерживает WHERE и RETURNING. TRUNCATE быстро очищает всю таблицу, имеет отдельную семантику блокировок, внешних ключей и сброса identity. DROP TABLE удаляет сам объект. Эти команды нельзя путать. Для осторожной работы используй транзакцию и сначала проверяй выборку, которую собираешься удалить.",
-        "example": "DELETE FROM example_notes\nWHERE note_id = 1\nRETURNING note_id;",
-        "note": "DELETE без WHERE удаляет все строки. TRUNCATE тоже очищает таблицу целиком."
-      },
-      {
-        "title": "RETURNING",
-        "body": "RETURNING возвращает изменённые строки после INSERT, UPDATE или DELETE. Это позволяет получить сгенерированный идентификатор или проверить фактическое изменение без отдельного SELECT. Можно возвращать отдельные столбцы или *. В PostgreSQL также есть расширенный синтаксис для сравнения старых и новых значений в поддерживаемых версиях.",
-        "example": "INSERT INTO example_notes (body)\nVALUES ('Новая запись')\nRETURNING note_id, body;",
-        "note": "RETURNING — расширение PostgreSQL, а не универсальная конструкция каждого диалекта."
-      },
-      {
-        "title": "UPSERT: ON CONFLICT",
-        "body": "INSERT ... ON CONFLICT определяет поведение при конфликте уникальности. DO NOTHING игнорирует конфликт, DO UPDATE обновляет существующую строку. Конфликт должен опираться на уникальный индекс или ограничение. EXCLUDED содержит значения, которые пытались вставить. Это атомарный способ реализовать вставку или обновление, а не самодельную последовательность SELECT + INSERT.",
-        "example": "INSERT INTO example_settings (key, value)\nVALUES ('theme', 'dark')\nON CONFLICT (key)\nDO UPDATE SET value = EXCLUDED.value;",
-        "note": "Для конкурентных приложений ON CONFLICT надёжнее логики «сначала проверить, потом вставить»."
-      },
-      {
-        "title": "MERGE: синхронизация двух наборов",
-        "body": "MERGE сопоставляет целевые строки с источником по ON и выполняет действия для MATCHED и NOT MATCHED. Можно обновить существующую строку, вставить новую или удалить строку. MERGE полезен при загрузке справочников и синхронизации источников. Требует чёткого ключа сопоставления и понимания поведения при нескольких совпадениях.",
-        "example": "MERGE INTO target_table t USING source_table s ON s.id = t.id WHEN MATCHED THEN UPDATE SET value = s.value WHEN NOT MATCHED THEN INSERT (id, value) VALUES (s.id, s.value);",
-        "note": "MERGE поддерживается PostgreSQL начиная с версии 15. Проверяй версию и правила конфликтов источника."
-      }
-    ]
-  },
-  {
     "id": "ddl",
     "title": "DDL: создание и изменение структуры",
-    "stage": "15 · Схема базы",
+    "stage": "14 · Структура базы",
     "desc": "Создавать таблицы, столбцы, схемы, ограничения, последовательности и управлять объектами.",
     "lessons": [
       {
@@ -578,7 +546,7 @@ export const modules = [
   {
     "id": "constraints",
     "title": "Транзакции и согласованность изменений",
-    "stage": "16 · Надёжность",
+    "stage": "15 · Целостность и транзакции",
     "desc": "Понять ACID, COMMIT, ROLLBACK, уровни изоляции, блокировки и конкурентное выполнение.",
     "lessons": [
       {
@@ -620,6 +588,50 @@ export const modules = [
     ]
   },
   {
+    "id": "dml",
+    "title": "DML: вставка, изменение и удаление",
+    "stage": "16 · Изменение данных",
+    "desc": "Освоить INSERT, UPDATE, DELETE, RETURNING, UPSERT и безопасный порядок действий.",
+    "lessons": [
+      {
+        "title": "INSERT",
+        "body": "INSERT INTO добавляет строки в таблицу. Явно перечисляй столбцы, чтобы не зависеть от порядка в схеме и не сломаться при добавлении нового столбца. Можно вставить одну или несколько строк через VALUES, либо результат SELECT. Пропущенные столбцы получают DEFAULT или NULL, если это разрешено.",
+        "example": "INSERT INTO example_notes (note_id, body)\nVALUES (1, 'Проверить отчёт');",
+        "note": "Перед массовым INSERT проверь набор данных и ограничения таблицы."
+      },
+      {
+        "title": "UPDATE",
+        "body": "UPDATE изменяет существующие строки. SET задаёт новые значения, WHERE ограничивает целевые строки. Если забыть WHERE, изменятся все строки таблицы. В выражениях SET можно использовать старое значение столбца. PostgreSQL поддерживает FROM для обновления по данным других таблиц.",
+        "example": "UPDATE example_notes\nSET body = 'Отчёт проверен'\nWHERE note_id = 1;",
+        "note": "Перед UPDATE выполни SELECT с тем же WHERE и убедись, что целевых строк столько, сколько ожидаешь."
+      },
+      {
+        "title": "DELETE и TRUNCATE",
+        "body": "DELETE удаляет строки и поддерживает WHERE и RETURNING. TRUNCATE быстро очищает всю таблицу, имеет отдельную семантику блокировок, внешних ключей и сброса identity. DROP TABLE удаляет сам объект. Эти команды нельзя путать. Для осторожной работы используй транзакцию и сначала проверяй выборку, которую собираешься удалить.",
+        "example": "DELETE FROM example_notes\nWHERE note_id = 1\nRETURNING note_id;",
+        "note": "DELETE без WHERE удаляет все строки. TRUNCATE тоже очищает таблицу целиком."
+      },
+      {
+        "title": "RETURNING",
+        "body": "RETURNING возвращает изменённые строки после INSERT, UPDATE или DELETE. Это позволяет получить сгенерированный идентификатор или проверить фактическое изменение без отдельного SELECT. Можно возвращать отдельные столбцы или *. В PostgreSQL также есть расширенный синтаксис для сравнения старых и новых значений в поддерживаемых версиях.",
+        "example": "INSERT INTO example_notes (body)\nVALUES ('Новая запись')\nRETURNING note_id, body;",
+        "note": "RETURNING — расширение PostgreSQL, а не универсальная конструкция каждого диалекта."
+      },
+      {
+        "title": "UPSERT: ON CONFLICT",
+        "body": "INSERT ... ON CONFLICT определяет поведение при конфликте уникальности. DO NOTHING игнорирует конфликт, DO UPDATE обновляет существующую строку. Конфликт должен опираться на уникальный индекс или ограничение. EXCLUDED содержит значения, которые пытались вставить. Это атомарный способ реализовать вставку или обновление, а не самодельную последовательность SELECT + INSERT.",
+        "example": "INSERT INTO example_settings (key, value)\nVALUES ('theme', 'dark')\nON CONFLICT (key)\nDO UPDATE SET value = EXCLUDED.value;",
+        "note": "Для конкурентных приложений ON CONFLICT надёжнее логики «сначала проверить, потом вставить»."
+      },
+      {
+        "title": "MERGE: синхронизация двух наборов",
+        "body": "MERGE сопоставляет целевые строки с источником по ON и выполняет действия для MATCHED и NOT MATCHED. Можно обновить существующую строку, вставить новую или удалить строку. MERGE полезен при загрузке справочников и синхронизации источников. Требует чёткого ключа сопоставления и понимания поведения при нескольких совпадениях.",
+        "example": "MERGE INTO target_table t USING source_table s ON s.id = t.id WHEN MATCHED THEN UPDATE SET value = s.value WHEN NOT MATCHED THEN INSERT (id, value) VALUES (s.id, s.value);",
+        "note": "MERGE поддерживается PostgreSQL начиная с версии 15. Проверяй версию и правила конфликтов источника."
+      }
+    ]
+  },
+  {
     "id": "windows",
     "title": "Оконные функции",
     "stage": "17 · Аналитика",
@@ -639,7 +651,7 @@ export const modules = [
       },
       {
         "title": "LAG и LEAD",
-        "body": "LAG читает значение из предыдущей строки окна, LEAD — из следующей. Они полезны для сравнения с предыдущей покупкой, расчёта изменения цены и поиска разрывов. Можно указать смещение и значение по умолчанию. Без правильной PARTITION BY можно случайно сравнить события разных клиентов или курьеров.",
+        "body": "LAG читает значение из предыдущей строки окна, LEAD — из следующей. Они полезны для сравнения с предыдущей покупкой, расчёта изменения цены и поиска разрывов. Можно указать смещение и значение по умолчанию. Без правильной PARTITION BY можно случайно сравнить события разных клиентов или сотрудников.",
         "example": "SELECT order_id, created_at, total_amount,\n       LAG(total_amount) OVER (\n         PARTITION BY customer_id ORDER BY created_at, order_id\n       ) AS previous_amount\nFROM orders;",
         "note": "Окно должно отражать бизнес-последовательность: кто сравнивается с кем и в каком порядке."
       },
@@ -651,8 +663,8 @@ export const modules = [
       },
       {
         "title": "Оконные функции после группировки",
-        "body": "Оконные функции можно применять к уже агрегированным результатам. Это позволяет сравнивать месяц с общей суммой, ранжировать курьеров по выполненным заказам или вычислять долю группы в общем итоге. Часто сначала делают GROUP BY в CTE, затем оконное вычисление над агрегатами.",
-        "example": "WITH courier_stats AS (\n  SELECT courier_id, COUNT(*) AS orders_count\n  FROM orders\n  WHERE courier_id IS NOT NULL\n  GROUP BY courier_id\n)\nSELECT courier_id, orders_count,\n       SUM(orders_count) OVER () AS all_orders\nFROM courier_stats;",
+        "body": "Оконные функции можно применять к уже агрегированным результатам. Это позволяет сравнивать месяц с общей суммой, ранжировать сотрудников по выполненным заказам или вычислять долю группы в общем итоге. Часто сначала делают GROUP BY в CTE, затем оконное вычисление над агрегатами.",
+        "example": "WITH employee_stats AS (\n  SELECT employee_id, COUNT(*) AS orders_count\n  FROM orders\n  WHERE employee_id IS NOT NULL\n  GROUP BY employee_id\n)\nSELECT employee_id, orders_count,\n       SUM(orders_count) OVER () AS all_orders\nFROM employee_stats;",
         "note": "Не смешивай уровень сырых строк с уровнем агрегированных групп в одной голове: разделяй этапы."
       }
     ]
@@ -797,7 +809,7 @@ export const modules = [
   },
   {
     "id": "analytics",
-    "title": "SQL для аналитика данных",
+    "title": "SQL для анализа данных",
     "stage": "21 · Практика аналитики",
     "desc": "Применить SQL к реальным вопросам: метрики, воронки, когорты, дедупликация и временные ряды.",
     "lessons": [
@@ -879,9 +891,9 @@ export const modules = [
   },
   {
     "id": "workflow",
-    "title": "Рабочий процесс аналитика и отладка",
+    "title": "Рабочий процесс и отладка SQL",
     "stage": "23 · Инструменты",
-    "desc": "Организовать работу в DBeaver и Metabase, разбирать ошибки, проверять гипотезы и читать документацию.",
+    "desc": "Организовать работу с SQL-клиентом и BI-системой, разбирать ошибки, проверять гипотезы и читать документацию.",
     "lessons": [
       {
         "title": "Как читать ошибку PostgreSQL",
@@ -896,10 +908,10 @@ export const modules = [
         "note": "Не добавляй пять новых конструкций за один раз, если пытаешься найти ошибку."
       },
       {
-        "title": "DBeaver и Metabase",
-        "body": "DBeaver — SQL-клиент для подключения к базам, просмотра схем, запуска запросов и работы с результатами. Metabase строит вопросы и дашборды; SQL-вопросы могут использовать параметры шаблона, фильтры и переменные. Проверь тип подключения, схему, права и таймзону. Не путай переменную Metabase с синтаксисом чистого PostgreSQL.",
-        "example": "-- В чистом PostgreSQL нет синтаксиса {{city}}\nSELECT * FROM orders WHERE store_id = 1;",
-        "note": "Шаблоны {{...}} обрабатываются Metabase до отправки запроса в СУБД."
+        "title": "SQL-клиент и BI-система",
+        "body": "SQL-клиент — приложение для подключения к базам, просмотра схем, запуска запросов и анализа результатов. BI-система помогает строить отчёты и дашборды; SQL-вопросы могут использовать параметры шаблона, фильтры и переменные. Проверь тип подключения, схему, права и часовой пояс. Не путай шаблонные конструкции BI-инструмента с синтаксисом чистого PostgreSQL.",
+        "example": "-- Чистый PostgreSQL получает обычный SQL\nSELECT * FROM orders WHERE store_id = 1;",
+        "note": "Шаблонные переменные конкретного BI-инструмента обрабатываются приложением до отправки запроса в СУБД."
       },
       {
         "title": "Документация и версия сервера",
@@ -908,8 +920,8 @@ export const modules = [
         "note": "Лучший вопрос к поиску содержит конкретный симптом и версию, а не только «почему SQL не работает»."
       },
       {
-        "title": "Финальный проект: логистическая аналитика",
-        "body": "Финальный проект связывает таблицы заказов, магазинов, курьеров, клиентов, позиций и платежей. Нужно определить зерно, посчитать доставленные заказы, выручку, средний чек, нагрузку курьеров, просрочки и динамику по дням. Затем проверить метрики на крайних случаях: NULL-курьер, пустой магазин, отменённый заказ, несколько товаров в заказе и повторный платёж.",
+        "title": "Финальный проект: аналитика интернет-магазина",
+        "body": "Финальный проект связывает таблицы заказов, магазинов, сотрудников, клиентов, товаров, позиций и платежей. Нужно определить зерно, посчитать число заказов, выручку, средний чек, продажи по товарам и магазинам, возвраты и динамику по дням. Затем проверить метрики на крайних случаях: заказ без назначенного сотрудника, магазин без заказов, отменённый заказ, несколько товаров в заказе, частичный возврат и повторный платёж.",
         "example": "-- Сначала проверь зерно заказа\nSELECT COUNT(*) AS order_rows,\n       COUNT(DISTINCT order_id) AS unique_orders\nFROM orders;",
         "note": "Финальный критерий — не сложность SQL, а доказанная корректность метрик."
       },
@@ -976,9 +988,9 @@ export const exercises = [
   {
     "id": "e08",
     "m": "where",
-    "title": "Заказы без курьера",
-    "task": "Найди все заказы, у которых courier_id отсутствует. Не используй сравнение с = NULL.",
-    "solution": "SELECT order_id, courier_id FROM orders WHERE courier_id IS NULL;"
+    "title": "Заказы без сотрудника",
+    "task": "Найди все заказы, у которых employee_id отсутствует. Не используй сравнение с = NULL.",
+    "solution": "SELECT order_id, employee_id FROM orders WHERE employee_id IS NULL;"
   },
   {
     "id": "e09",
@@ -1026,8 +1038,8 @@ export const exercises = [
     "id": "e15",
     "m": "expressions",
     "title": "Подставь подпись вместо NULL",
-    "task": "Покажи ID заказа и courier_id. Если курьер не назначен, выведи текст 'not assigned'. Назови поле courier.",
-    "solution": "SELECT order_id, COALESCE(courier_id::text, 'not assigned') AS courier FROM orders;"
+    "task": "Покажи ID заказа и employee_id. Если сотрудник не назначен, выведи текст 'not assigned'. Назови поле employee.",
+    "solution": "SELECT order_id, COALESCE(employee_id::text, 'not assigned') AS employee FROM orders;"
   },
   {
     "id": "e16",
@@ -1074,16 +1086,16 @@ export const exercises = [
   {
     "id": "e22",
     "m": "joins",
-    "title": "Добавь имя курьера",
-    "task": "Соедини заказы с курьерами. Выведи order_id и courier_name. Оставь только заказы с назначенным курьером.",
-    "solution": "SELECT o.order_id, c.courier_name FROM orders o INNER JOIN couriers c ON c.courier_id = o.courier_id;"
+    "title": "Добавь имя сотрудника",
+    "task": "Соедини заказы с сотрудниками. Выведи order_id и employee_name. Оставь только заказы с назначенным сотрудником.",
+    "solution": "SELECT o.order_id, c.employee_name FROM orders o INNER JOIN employees c ON c.employee_id = o.employee_id;"
   },
   {
     "id": "e23",
     "m": "joins",
-    "title": "Не теряй заказы без курьера",
-    "task": "Выведи все заказы и имя курьера, если он назначен. Заказы без курьера должны остаться в результате.",
-    "solution": "SELECT o.order_id, c.courier_name FROM orders o LEFT JOIN couriers c ON c.courier_id = o.courier_id;"
+    "title": "Не теряй заказы без сотрудника",
+    "task": "Выведи все заказы и имя сотрудника, если он назначен. Заказы без сотрудника должны остаться в результате.",
+    "solution": "SELECT o.order_id, c.employee_name FROM orders o LEFT JOIN employees c ON c.employee_id = o.employee_id;"
   },
   {
     "id": "e24",
@@ -1214,9 +1226,9 @@ export const exercises = [
   {
     "id": "e42",
     "m": "analytics",
-    "title": "Нагрузка курьеров",
-    "task": "Для каждого курьера посчитай количество назначенных ему заказов и общую сумму этих заказов. Курьеров без заказов не теряй.",
-    "solution": "SELECT c.courier_name, COUNT(o.order_id) AS orders_count, COALESCE(SUM(o.total_amount), 0) AS order_amount FROM couriers c LEFT JOIN orders o ON o.courier_id = c.courier_id GROUP BY c.courier_id, c.courier_name;"
+    "title": "Нагрузка сотрудников",
+    "task": "Для каждого сотрудника посчитай количество назначенных ему заказов и общую сумму этих заказов. Курьеров без заказов не теряй.",
+    "solution": "SELECT c.employee_name, COUNT(o.order_id) AS orders_count, COALESCE(SUM(o.total_amount), 0) AS order_amount FROM employees c LEFT JOIN orders o ON o.employee_id = c.employee_id GROUP BY c.employee_id, c.employee_name;"
   },
   {
     "id": "e43",
@@ -1244,7 +1256,7 @@ export const exercises = [
     "m": "performance",
     "title": "Прочитай план запроса",
     "task": "Напиши EXPLAIN для выборки заказов customer_id = 1. Проверка оценивает выполнение запроса, а не конкретный текст плана.",
-    "solution": "SELECT order_id, total_amount FROM orders WHERE customer_id = 1;",
+    "solution": "EXPLAIN SELECT order_id, total_amount FROM orders WHERE customer_id = 1;",
     "mode": "query"
   },
   {
@@ -1286,8 +1298,8 @@ export const exercises = [
     "id": "e52",
     "m": "joins",
     "title": "Последнее событие каждого заказа",
-    "task": "Для каждого заказа найди последнее событие доставки. Заказы без событий тоже должны остаться. Используй LATERAL.",
-    "solution": "SELECT o.order_id, latest.event_type, latest.event_at FROM orders o LEFT JOIN LATERAL (SELECT event_type, event_at FROM delivery_events d WHERE d.order_id = o.order_id ORDER BY event_at DESC, event_id DESC LIMIT 1) latest ON true ORDER BY o.order_id;"
+    "task": "Для каждого заказа найди последнее событие заказа. Заказы без событий тоже должны остаться. Используй LATERAL.",
+    "solution": "SELECT o.order_id, latest.event_type, latest.event_at FROM orders o LEFT JOIN LATERAL (SELECT event_type, event_at FROM order_events d WHERE d.order_id = o.order_id ORDER BY event_at DESC, event_id DESC LIMIT 1) latest ON true ORDER BY o.order_id;"
   },
   {
     "id": "e53",
@@ -1314,8 +1326,8 @@ export const exercises = [
     "id": "e56",
     "m": "analytics",
     "title": "Календарь без пропущенных дней",
-    "task": "Покажи каждый день с 10 по 15 января 2026 года и число заказов в этот день. Дни без заказов должны выводиться с нулём. Используй generate_series и LEFT JOIN.",
-    "solution": "WITH days AS (SELECT generate_series(DATE '2026-01-10', DATE '2026-01-15', INTERVAL '1 day')::date AS day), daily AS (SELECT created_at, COUNT(*) AS orders_count FROM orders GROUP BY created_at) SELECT days.day, COALESCE(daily.orders_count, 0) AS orders_count FROM days LEFT JOIN daily ON daily.created_at = days.day ORDER BY days.day;"
+    "task": "Покажи каждый день с 10 по 17 января 2026 года и число заказов в этот день. Дни без заказов должны выводиться с нулём. Используй generate_series и LEFT JOIN.",
+    "solution": "WITH days AS (SELECT generate_series(DATE '2026-01-10', DATE '2026-01-17', INTERVAL '1 day')::date AS day), daily AS (SELECT created_at, COUNT(*) AS orders_count FROM orders GROUP BY created_at) SELECT days.day, COALESCE(daily.orders_count, 0) AS orders_count FROM days LEFT JOIN daily ON daily.created_at = days.day ORDER BY days.day;"
   },
   {
     "id": "e57",
@@ -1328,7 +1340,7 @@ export const exercises = [
     "id": "e58",
     "m": "subqueries",
     "title": "Найди товары, которые не продавались",
-    "task": "Найди товары, для которых не существует ни одной позиции заказа. Используй NOT EXISTS.",
+    "task": "Найди товары, для которых не существует ни одной позиции заказа. В учебной базе есть как минимум один такой товар. Используй NOT EXISTS.",
     "solution": "SELECT p.product_id, p.product_name FROM products p WHERE NOT EXISTS (SELECT 1 FROM order_items oi WHERE oi.product_id = p.product_id);"
   },
   {
@@ -1711,16 +1723,16 @@ export const schema = [
     ]
   },
   {
-    "name": "couriers",
-    "grain": "Одна строка = один курьер",
+    "name": "employees",
+    "grain": "Одна строка = один сотрудник",
     "columns": [
       [
-        "courier_id",
+        "employee_id",
         "bigint",
         "PK"
       ],
       [
-        "courier_name",
+        "employee_name",
         "text",
         "имя"
       ],
@@ -1798,9 +1810,9 @@ export const schema = [
         "FK → stores"
       ],
       [
-        "courier_id",
+        "employee_id",
         "bigint",
-        "FK → couriers, NULL"
+        "FK → employees, NULL"
       ],
       [
         "customer_id",
@@ -1882,8 +1894,8 @@ export const schema = [
     ]
   },
   {
-    "name": "delivery_events",
-    "grain": "Одна строка = одно событие доставки",
+    "name": "order_events",
+    "grain": "Одна строка = одно событие заказа",
     "columns": [
       [
         "event_id",
@@ -1932,29 +1944,29 @@ export const schema = [
 
 export const seedSQL = String.raw`
 CREATE TABLE stores(store_id BIGINT PRIMARY KEY, store_name TEXT NOT NULL, city TEXT NOT NULL);
-CREATE TABLE couriers(courier_id BIGINT PRIMARY KEY, courier_name TEXT NOT NULL, hired_at DATE NOT NULL);
+CREATE TABLE employees(employee_id BIGINT PRIMARY KEY, employee_name TEXT NOT NULL, hired_at DATE NOT NULL);
 CREATE TABLE customers(customer_id BIGINT PRIMARY KEY, customer_name TEXT NOT NULL, city TEXT NOT NULL, registered_at DATE NOT NULL);
 CREATE TABLE products(product_id BIGINT PRIMARY KEY, product_name TEXT NOT NULL, category TEXT NOT NULL, price NUMERIC(10,2) NOT NULL);
-CREATE TABLE orders(order_id BIGINT PRIMARY KEY, store_id BIGINT NOT NULL REFERENCES stores, courier_id BIGINT REFERENCES couriers, customer_id BIGINT NOT NULL REFERENCES customers, status TEXT NOT NULL, total_amount NUMERIC(12,2) NOT NULL, created_at DATE NOT NULL);
+CREATE TABLE orders(order_id BIGINT PRIMARY KEY, store_id BIGINT NOT NULL REFERENCES stores, employee_id BIGINT REFERENCES employees, customer_id BIGINT NOT NULL REFERENCES customers, status TEXT NOT NULL, total_amount NUMERIC(12,2) NOT NULL, created_at DATE NOT NULL);
 CREATE TABLE order_items(item_id BIGINT PRIMARY KEY, order_id BIGINT NOT NULL REFERENCES orders, product_id BIGINT NOT NULL REFERENCES products, quantity INTEGER NOT NULL CHECK(quantity > 0), unit_price NUMERIC(10,2) NOT NULL);
 CREATE TABLE payments(payment_id BIGINT PRIMARY KEY, order_id BIGINT NOT NULL REFERENCES orders, amount NUMERIC(12,2) NOT NULL, payment_status TEXT NOT NULL);
-CREATE TABLE delivery_events(event_id BIGINT PRIMARY KEY, order_id BIGINT NOT NULL REFERENCES orders, event_type TEXT NOT NULL, event_at TIMESTAMP NOT NULL);
+CREATE TABLE order_events(event_id BIGINT PRIMARY KEY, order_id BIGINT NOT NULL REFERENCES orders, event_type TEXT NOT NULL, event_at TIMESTAMP NOT NULL);
 CREATE TABLE customer_profiles(customer_id BIGINT PRIMARY KEY REFERENCES customers, attributes JSONB NOT NULL, tags TEXT[] NOT NULL);
 INSERT INTO stores VALUES
 (1,'Центральный','Москва'),(2,'Северный','Санкт-Петербург'),(3,'Волжский','Казань'),(4,'Уральский','Пермь'),(5,'Запасной','Омск');
-INSERT INTO couriers VALUES
+INSERT INTO employees VALUES
 (1,'Иван','2023-04-10'),(2,'Анна','2022-09-15'),(3,'Пётр','2024-01-20'),(4,'Мария','2023-11-03'),(5,'Олег','2025-02-01');
 INSERT INTO customers VALUES
 (1,'Алексей','Москва','2024-01-10'),(2,'Мария','Казань','2024-02-12'),(3,'Ирина','Пермь','2024-03-18'),(4,'Дмитрий','Санкт-Петербург','2024-04-01'),(5,'Ольга','Москва','2024-04-22'),(6,'Сергей','Тверь','2024-05-06'),(7,'Наталья','Казань','2024-06-12'),(8,'Андрей','Пермь','2024-07-03'),(9,'Екатерина','Омск','2024-08-15');
 INSERT INTO products VALUES
-(1,'Кофемашина','Техника',2500),(2,'Фильтр','Аксессуары',500),(3,'Чайник','Техника',1500),(4,'Кружка','Посуда',300),(5,'Термос','Посуда',900),(6,'Кофе','Продукты',400);
+(1,'Кофемашина','Техника',2500),(2,'Фильтр','Аксессуары',500),(3,'Чайник','Техника',1500),(4,'Кружка','Посуда',300),(5,'Термос','Посуда',900),(6,'Кофе','Продукты',400),(7,'Подарочный набор','Подарки',1200);
 INSERT INTO orders VALUES
 (101,1,1,1,'delivered',1250,'2026-01-10'),(102,1,2,2,'delivered',890,'2026-01-10'),(103,2,1,3,'shipped',2400,'2026-01-11'),(104,2,NULL,4,'new',560,'2026-01-11'),(105,3,3,1,'delivered',1800,'2026-01-12'),(106,3,2,2,'cancelled',3200,'2026-01-12'),(107,4,4,3,'delivered',1500,'2026-01-13'),(108,4,NULL,2,'new',750,'2026-01-13'),(109,1,1,4,'delivered',4200,'2026-01-14'),(110,2,2,1,'shipped',990,'2026-01-14'),(111,3,3,2,'delivered',1100,'2026-01-15'),(112,4,4,3,'shipped',2750,'2026-01-15');
 INSERT INTO order_items VALUES
 (1,101,2,1,500),(2,101,6,1,400),(3,101,4,1,300),(4,102,6,1,400),(5,102,4,1,300),(6,103,1,1,2500),(7,104,2,1,500),(8,105,3,1,1500),(9,105,4,1,300),(10,106,1,1,2500),(11,107,3,1,1500),(12,108,5,1,900),(13,109,1,1,2500),(14,109,5,1,900),(15,110,6,2,400),(16,111,2,1,500),(17,111,6,1,400),(18,112,1,1,2500),(19,112,4,1,300);
 INSERT INTO payments VALUES
 (1,101,1250,'paid'),(2,102,890,'paid'),(3,103,2400,'paid'),(4,105,1800,'paid'),(5,106,3200,'refunded'),(6,107,1500,'paid'),(7,109,4200,'paid'),(8,110,990,'paid'),(9,111,1100,'paid'),(10,112,2750,'paid');
-INSERT INTO delivery_events VALUES
+INSERT INTO order_events VALUES
 (1,101,'created','2026-01-10 09:00'),(2,101,'delivered','2026-01-10 13:00'),(3,102,'created','2026-01-10 10:00'),(4,102,'delivered','2026-01-10 15:00'),(5,103,'created','2026-01-11 08:30'),(6,103,'shipped','2026-01-11 12:00'),(7,105,'created','2026-01-12 09:00'),(8,105,'delivered','2026-01-12 17:00');
 INSERT INTO customer_profiles VALUES
 (1,'{"segment":"vip","source":"web"}'::jsonb,ARRAY['regular','coffee']),
