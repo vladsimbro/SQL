@@ -262,7 +262,7 @@ async function checkExercise() {
     if(!expected) throw new Error('Эталонный результат для задания не подготовлен.');
     let result, observed, passed;
     if(ex.mode==='mutation' || ex.mode==='transaction') {
-      if(ex.mode==='mutation' && !/^\\s*(INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|MERGE)\\b/i.test(parts[0])) throw new Error('Для этой задачи нужна команда изменения данных или структуры: INSERT, UPDATE, DELETE, CREATE, ALTER, DROP либо MERGE.');
+      if(ex.mode==='mutation' && !['INSERT','UPDATE','DELETE','CREATE','ALTER','DROP','MERGE'].includes(firstSqlKeyword(parts[0]))) throw new Error('Для этой задачи нужна команда изменения данных или структуры: INSERT, UPDATE, DELETE, CREATE, ALTER, DROP либо MERGE.');
       if(ex.mode==='transaction' && (ex.requiredPatterns||[]).some(pattern=>!new RegExp(pattern,'i').test(sql))) throw new Error('В запросе отсутствует одна из обязательных команд транзакции. Сверься с условием задания.');
       const {PGlite}=await import('https://cdn.jsdelivr.net/npm/@electric-sql/pglite@0.5.15/dist/index.js');
       const isolatedDb=new PGlite();
@@ -275,7 +275,7 @@ async function checkExercise() {
           result=await isolatedDb.query(parts[0]);
         }
         observed=await isolatedDb.query(ex.checkQuery);
-        passed=JSON.stringify(normalizeResult(observed))===JSON.stringify(expected);
+        passed=JSON.stringify(normalizeResult(observed,ex.orderMatters))===JSON.stringify(expected);
       } finally {
         await isolatedDb.close();
       }
@@ -283,7 +283,7 @@ async function checkExercise() {
       if(!['SELECT','WITH'].includes(firstSqlKeyword(parts[0]))) throw new Error('Это задание ожидает запрос, начинающийся с SELECT или WITH. Комментарии перед запросом разрешены.');
       result=await state.db.query(parts[0]);
       observed=result;
-      passed=JSON.stringify(normalizeResult(observed))===JSON.stringify(expected);
+      passed=JSON.stringify(normalizeResult(observed,ex.orderMatters))===JSON.stringify(expected);
     }
     const elapsed=Math.round(performance.now()-started);
     results.innerHTML=renderResult(result,elapsed)+((ex.mode==='mutation'||ex.mode==='transaction')?renderResult(observed,elapsed):'');
@@ -291,10 +291,10 @@ async function checkExercise() {
     else{feedback.innerHTML='<div class="feedback fail"><strong>Пока не совпало.</strong> Запрос выполнился, но фактический результат отличается от ожидаемого. Проверь условия, столбцы, ограничения, порядок команд и итоговое состояние таблиц.</div>';}
   }catch(err){feedback.innerHTML='<div class="feedback fail"><strong>Ошибка SQL:</strong> '+esc(err.message)+'</div>';results.innerHTML='';}
 }
-function normalizeResult(result) {
+function normalizeResult(result,preserveOrder=false) {
   const rows=(result.rows||[]).map(row=>Object.fromEntries(Object.entries(row).map(([k,v])=>[k,v instanceof Date?v.toISOString():typeof v==='bigint'?String(v):v])));
   const columns=rows.length?Object.keys(rows[0]):(result.fields||[]).map(f=>f.name);
-  rows.sort((a,b)=>JSON.stringify(a).localeCompare(JSON.stringify(b)));
+  if(!preserveOrder)rows.sort((a,b)=>JSON.stringify(a).localeCompare(JSON.stringify(b)));
   return {columns,rows};
 }
 function skipSqlTrivia(sql,start=0){
@@ -384,7 +384,7 @@ async function prepareExpected() {
         }
       } else {
         const result=await state.db.query(ex.solution);
-        state.expected.set(ex.id,normalizeResult(result));
+        state.expected.set(ex.id,normalizeResult(result,ex.orderMatters));
       }
     } catch(err){console.warn('Could not prepare exercise',ex.id,err.message);}
   }
