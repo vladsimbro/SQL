@@ -24,20 +24,29 @@ function readIdentifier(sql,start){
 }
 function skipBalanced(sql,start){
  let i=skipSqlTrivia(sql,start);if(sql[i]!=='(')return -1;
- let depth=0,single=false,dbl=false,line=false,block=0,dollar=null;
+ let depth=0,single=false,dbl=false,line=false,block=0,dollar=null,escapeString=false;
  for(;i<sql.length;i++){
   const c=sql[i],n=sql[i+1];
-  if(line){if(c==='\\n')line=false;continue;}
+  if(line){if(c==='\n')line=false;continue;}
   if(block){if(c==='/'&&n==='*'){block++;i++;}else if(c==='*'&&n==='/'){block--;i++;}continue;}
   if(dollar){if(sql.startsWith(dollar,i)){i+=dollar.length-1;dollar=null;}continue;}
   if(!single&&!dbl&&c==='-'&&n==='-'){line=true;i++;continue;}
   if(!single&&!dbl&&c==='/'&&n==='*'){block=1;i++;continue;}
-  if(!single&&!dbl&&c==='$'){const m=sql.slice(i).match(/^\\$[a-z_][a-z0-9_]*\\$|^\\$\\$/i);if(m){dollar=m[0];i+=dollar.length-1;continue;}}
-  if(c==="'"&&!dbl){if(single&&n==="'"){i++;continue;}single=!single;continue;}
+  if(!single&&!dbl&&c==='$'){
+   const m=sql.slice(i).match(/^\$[a-z_][a-z0-9_]*\$|^\$\$/i);
+   if(m){dollar=m[0];i+=dollar.length-1;continue;}
+  }
+  if(single&&escapeString&&c==='\\'){i++;continue;}
+  if(c==="'"&&!dbl){
+   if(single&&n==="'"){i++;continue;}
+   if(!single){const prev=sql[i-1]||'',before=sql[i-2]||'';escapeString=(prev==='e'||prev==='E')&&(!before||!/[a-z0-9_$]/i.test(before));}
+   else escapeString=false;
+   single=!single;continue;
+  }
   if(c==='"'&&!single){if(dbl&&n==='"'){i++;continue;}dbl=!dbl;continue;}
   if(single||dbl)continue;
   if(c==='(')depth++;
-  if(c===')'&&--depth===0)return i+1;
+  else if(c===')'){depth--;if(depth===0)return i+1;}
  }
  return -1;
 }
@@ -59,7 +68,7 @@ export function readOnlyQueryKeyword(sql,depth=0){
   if(sql[i]!=='(')return '';
   const close=skipBalanced(sql,i);if(close<0)return '';
   const body=sql.slice(i+1,close-1);
-  if(readOnlyQueryKeyword(body,depth+1)!=='SELECT')return '';
+  if(!['SELECT','VALUES','TABLE'].includes(readOnlyQueryKeyword(body,depth+1)))return '';
   i=skipSqlTrivia(sql,close);
   if(sql[i]===','){i=skipSqlTrivia(sql,i+1);continue;}
   return firstSqlKeyword(sql.slice(i));
