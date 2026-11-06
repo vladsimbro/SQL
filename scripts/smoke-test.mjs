@@ -1,10 +1,32 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { PGlite } from '@electric-sql/pglite';
-import { modules, exercises, schema, seedSQL } from '../curriculum.js';
+import { modules, exercises, schema, seedSQL, glossary, reference } from '../curriculum.js';
 
 const appSource = await readFile(new URL('../app.js', import.meta.url), 'utf8');
 const htmlSource = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+const cssSource = await readFile(new URL('../styles.css', import.meta.url), 'utf8');
+assert.ok(Array.isArray(glossary) && glossary.length >= 30, 'Glossary must contain at least 30 usable terms');
+assert.ok(Array.isArray(reference) && reference.length >= 8, 'SQL quick reference must contain usable topic groups');
+assert.ok(exercises.every(exercise => ['select','explain','mutation','transaction'].includes(exercise.mode)), 'Every exercise must have a supported explicit mode');
+assert.equal(exercises.filter(exercise => exercise.mode === 'select').length, 59, 'Expected 59 SELECT exercises');
+assert.equal(exercises.filter(exercise => exercise.mode === 'explain').length, 1, 'Expected one EXPLAIN exercise');
+const parserStart = appSource.indexOf('function skipSqlTrivia');
+const parserEnd = appSource.indexOf('\nasync function runEditorQuery', parserStart);
+assert.ok(parserStart >= 0 && parserEnd > parserStart, 'SQL lexer functions must exist');
+const sqlLexer = new Function(appSource.slice(parserStart, parserEnd) + '; return { firstSqlKeyword, sqlAfterKeyword, splitStatements };')();
+assert.equal(sqlLexer.firstSqlKeyword("-- leading comment\nSELECT 1"), 'SELECT', 'Leading line comments must be ignored');
+assert.equal(sqlLexer.firstSqlKeyword('/* outer /* nested */ comment */ WITH q AS (SELECT 1) SELECT * FROM q'), 'WITH', 'Nested block comments must be ignored');
+assert.equal(sqlLexer.firstSqlKeyword(sqlLexer.sqlAfterKeyword('EXPLAIN /* comment */ SELECT 1', 'EXPLAIN')), 'SELECT', 'Comments after EXPLAIN must be ignored');
+assert.equal(sqlLexer.splitStatements("SELECT ';'; SELECT 2;").length, 2, 'Semicolons inside string literals must not split statements');
+assert.equal(sqlLexer.splitStatements('DO $body$ BEGIN PERFORM 1; PERFORM 2; END $body$; SELECT 3;').length, 2, 'Dollar-quoted procedural blocks must remain a single statement');
+assert.ok(appSource.includes("if(ex.mode==='explain')"), 'EXPLAIN mode must be handled separately from normal SELECT exercises');
+assert.ok(appSource.includes('firstSqlKeyword(parts[0])'), 'Exercise validation must use the SQL lexer');
+assert.ok(appSource.includes('preserveOrder=false'), 'Result normalization must support order-sensitive exercises');
+assert.ok(appSource.includes('meta[name="theme-color"]'), 'Theme toggle must update browser theme color');
+assert.ok(htmlSource.includes('data-nav="reference"') && htmlSource.includes('data-nav="glossary"'), 'Reference and glossary navigation buttons must exist');
+assert.ok(cssSource.includes(':root.light .CodeMirror'), 'Light theme must style the SQL editor');
+
 const ids = new Set(modules.map(module => module.id));
 assert.equal(modules.length, 24, 'Expected 24 ordered modules');
 assert.ok(modules.every(module => module.lessons.length > 0), 'Every module must have lessons');
@@ -67,7 +89,7 @@ try {
     }
     checked++;
   }
-  console.log(`SQL Academy smoke test passed: ${modules.length} modules, ${modules.reduce((sum, module) => sum + module.lessons.length, 0)} lessons, ${quizQuestions.length} knowledge checks, ${checked} runnable exercises, ${tables.rows.length} seed tables.`);
+  console.log(`SQL Academy smoke test passed: ${modules.length} modules, ${modules.reduce((sum, module) => sum + module.lessons.length, 0)} lessons, ${quizQuestions.length} knowledge checks, ${glossary.length} glossary terms, ${reference.length} reference groups, ${checked} runnable exercises, ${tables.rows.length} seed tables.`);
 } finally {
   await db.close();
 }
