@@ -312,7 +312,7 @@ function firstSqlKeyword(sql){
  return match?match[1].toUpperCase():'';
 }
 function sqlAfterKeyword(sql,keyword){
- const i=skipSqlTrivia(sql),match=sql.slice(i).match(new RegExp('^'+keyword+'\\\\b','i'));
+ const i=skipSqlTrivia(sql),match=sql.slice(i).match(new RegExp('^'+keyword+'\\b','i'));
  return match?sql.slice(i+match[0].length):'';
 }
 function splitStatements(sql) {
