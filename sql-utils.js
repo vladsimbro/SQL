@@ -55,7 +55,7 @@ export function readOnlyQueryKeyword(sql,depth=0){
   if(firstSqlKeyword(sql.slice(i))!=='AS')return '';
   i=skipSqlTrivia(sql,i+2);
   if(firstSqlKeyword(sql.slice(i))==='NOT'){i=skipSqlTrivia(sql,i+3);if(firstSqlKeyword(sql.slice(i))!=='MATERIALIZED')return '';i=skipSqlTrivia(sql,i+'MATERIALIZED'.length);}
-  else if(firstSqlKeyword(sql.slice(i))==='MATERIALIZED')i=skipSqlTrivia(sql,i+10);
+  else if(firstSqlKeyword(sql.slice(i))==='MATERIALIZED')i=skipSqlTrivia(sql,i+'MATERIALIZED'.length);
   if(sql[i]!=='(')return '';
   const close=skipBalanced(sql,i);if(close<0)return '';
   const body=sql.slice(i+1,close-1);
