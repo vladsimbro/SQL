@@ -248,8 +248,8 @@ async function checkExercise() {
     if(ex.mode!=='transaction' && parts.length!==1) throw new Error('В этом задании используй один SQL-запрос.');
     if(ex.mode==='transaction' && parts.length<2) throw new Error('Задание на транзакцию должно содержать несколько команд, разделённых точкой с запятой.');
     const started=performance.now();
-    if(ex.mode==='query') {
-      if(!/^\\s*EXPLAIN\\s+(SELECT|WITH)\\b/i.test(parts[0])) throw new Error('Для этой задачи используй EXPLAIN перед SELECT или WITH ... SELECT.');
+    if(ex.mode==='explain') {
+      if(firstSqlKeyword(parts[0])!=='EXPLAIN' || !['SELECT','WITH'].includes(firstSqlKeyword(sqlAfterKeyword(parts[0],'EXPLAIN')))) throw new Error('Для этой задачи используй EXPLAIN перед SELECT или WITH ... SELECT.');
       if(ex.id==='e46' && (!/\\bFROM\\s+orders\\b/i.test(parts[0]) || !/\\bWHERE\\s+customer_id\\s*=\\s*1\\b/i.test(parts[0]))) throw new Error('Построй план именно для выборки из orders с фильтром customer_id = 1.');
       const plan=await state.db.query(parts[0]);
       const elapsed=Math.round(performance.now()-started);
@@ -280,7 +280,7 @@ async function checkExercise() {
         await isolatedDb.close();
       }
     } else {
-      if(!/^\\s*(SELECT|WITH)\\b/i.test(parts[0])) throw new Error('Автопроверка этого задания принимает SELECT или WITH ... SELECT.');
+      if(!['SELECT','WITH'].includes(firstSqlKeyword(parts[0]))) throw new Error('Это задание ожидает запрос, начинающийся с SELECT или WITH. Комментарии перед запросом разрешены.');
       result=await state.db.query(parts[0]);
       observed=result;
       passed=JSON.stringify(normalizeResult(observed))===JSON.stringify(expected);
@@ -297,10 +297,44 @@ function normalizeResult(result) {
   rows.sort((a,b)=>JSON.stringify(a).localeCompare(JSON.stringify(b)));
   return {columns,rows};
 }
+function skipSqlTrivia(sql,start=0){
+ let i=start;
+ while(i<sql.length){
+  if(/\\s/.test(sql[i])){i++;continue;}
+  if(sql.startsWith('--',i)){const end=sql.indexOf('\\n',i+2);i=end<0?sql.length:end+1;continue;}
+  if(sql.startsWith('/*',i)){let depth=1;i+=2;while(i<sql.length&&depth){if(sql.startsWith('/*',i)){depth++;i+=2;}else if(sql.startsWith('*/',i)){depth--;i+=2;}else i++;}continue;}
+  break;
+ }
+ return i;
+}
+function firstSqlKeyword(sql){
+ const i=skipSqlTrivia(sql),match=sql.slice(i).match(/^([a-z_]+)/i);
+ return match?match[1].toUpperCase():'';
+}
+function sqlAfterKeyword(sql,keyword){
+ const i=skipSqlTrivia(sql),match=sql.slice(i).match(new RegExp('^'+keyword+'\\\\b','i'));
+ return match?sql.slice(i+match[0].length):'';
+}
 function splitStatements(sql) {
-  const out=[];let cur='',single=false,dbl=false,line=false,block=false;
-  for(let i=0;i<sql.length;i++){const c=sql[i],n=sql[i+1];if(line){cur+=c;if(c==='\n')line=false;continue;}if(block){cur+=c;if(c==='*'&&n==='/'){cur+=n;i++;block=false;}continue;}if(!single&&!dbl&&c==='-'&&n==='-'){cur+=c+n;i++;line=true;continue;}if(!single&&!dbl&&c==='/'&&n==='*'){cur+=c+n;i++;block=true;continue;}if(c==="'"&&!dbl){if(single&&n==="'"){cur+=c+n;i++;continue;}single=!single;}else if(c==='"'&&!single)dbl=!dbl;if(c===';'&&!single&&!dbl){if(cur.trim())out.push(cur.trim());cur='';}else cur+=c;}
-  if(cur.trim())out.push(cur.trim());return out;
+ const out=[];let cur='',single=false,dbl=false,line=false,blockDepth=0,dollarTag=null;
+ for(let i=0;i<sql.length;i++){
+  const c=sql[i],n=sql[i+1];
+  if(line){cur+=c;if(c==='\\n')line=false;continue;}
+  if(blockDepth){cur+=c;if(c==='/'&&n==='*'){cur+=n;i++;blockDepth++;}else if(c==='*'&&n==='/'){cur+=n;i++;blockDepth--;}continue;}
+  if(dollarTag){if(sql.startsWith(dollarTag,i)){cur+=dollarTag;i+=dollarTag.length-1;dollarTag=null;}else cur+=c;continue;}
+  if(!single&&!dbl&&c==='-'&&n==='-'){cur+=c+n;i++;line=true;continue;}
+  if(!single&&!dbl&&c==='/'&&n==='*'){cur+=c+n;i++;blockDepth=1;continue;}
+  if(!single&&!dbl&&c==='$'){
+   const match=sql.slice(i).match(/^\\$[a-z_][a-z0-9_]*\\$|^\\$\\$/i);
+   if(match){dollarTag=match[0];cur+=dollarTag;i+=dollarTag.length-1;continue;}
+  }
+  if(c==="'"&&!dbl){if(single&&n==="'"){cur+=c+n;i++;continue;}single=!single;}
+  else if(c==='"'&&!single){if(dbl&&n==='"'){cur+=c+n;i++;continue;}dbl=!dbl;}
+  if(c===';'&&!single&&!dbl){if(cur.trim())out.push(cur.trim());cur='';}
+  else cur+=c;
+ }
+ if(cur.trim())out.push(cur.trim());
+ return out;
 }
 async function runEditorQuery(sql,target) {
   const host=$('#'+target);if(!host)return;if(!state.db){host.innerHTML='<div class="feedback fail">PostgreSQL ещё загружается.</div>';return;}
