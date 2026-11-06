@@ -155,7 +155,7 @@ function editor(value,id,placeholder='') {
 function getEditorValue(id){return state.editors.get(id)?.getValue()??$('#'+id)?.value??'';}
 function setEditorValue(id,value){const cm=state.editors.get(id);if(cm){cm.setValue(value);cm.focus();}else{const el=$('#'+id);if(el)el.value=value;}}
 function formatSql(sql){
- let text=String(sql||'').trim().replace(/[ \\t]+/g,' ');
+ let text=String(sql||'').trim().replace(/[ \t]+/g,' ');
  if(!text)return '';
  const clauses=['UNION ALL','LEFT JOIN','RIGHT JOIN','FULL JOIN','INNER JOIN','CROSS JOIN','GROUP BY','ORDER BY','UNION','INTERSECT','EXCEPT','RETURNING','FROM','WHERE','HAVING','JOIN','ON','SET','VALUES','LIMIT','OFFSET'];
  const pattern=new RegExp('\\s+('+clauses.map(x=>x.replace(/ /g,'\\s+')).join('|')+')\\b','gi');
