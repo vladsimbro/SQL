@@ -1458,9 +1458,14 @@ export const exercises = [
     "mode": "transaction",
     "requiredPatterns": [
       "\\bBEGIN\\b",
+      "\\bUPDATE\\s+products\\b",
       "\\bCOMMIT\\b"
     ],
-    "checkQuery": "SELECT product_id, price FROM products WHERE product_id IN (1, 2) ORDER BY product_id;"
+    "checkQuery": "SELECT (SELECT price FROM products WHERE product_id = 1) = 2625::numeric AS product_1_ok, (SELECT price FROM products WHERE product_id = 2) = 450::numeric AS product_2_ok;",
+    "expectedCheck": {
+      "product_1_ok": true,
+      "product_2_ok": true
+    }
   },
   {
     "id": "e70",
@@ -1471,9 +1476,13 @@ export const exercises = [
     "mode": "transaction",
     "requiredPatterns": [
       "\\bBEGIN\\b",
+      "\\bDELETE\\s+FROM\\s+products\\s+WHERE\\s+product_id\\s*=\\s*7\\b",
       "\\bROLLBACK\\b"
     ],
-    "checkQuery": "SELECT product_id, product_name FROM products WHERE product_id = 7;"
+    "checkQuery": "SELECT EXISTS (SELECT 1 FROM products WHERE product_id = 7) AS rollback_preserved;",
+    "expectedCheck": {
+      "rollback_preserved": true
+    }
   },
   {
     "id": "e71",
@@ -1484,11 +1493,16 @@ export const exercises = [
     "mode": "transaction",
     "requiredPatterns": [
       "\\bBEGIN\\b",
+      "\\bUPDATE\\s+products\\b",
       "\\bSAVEPOINT\\b",
       "\\bROLLBACK\\s+TO\\s+SAVEPOINT\\b",
       "\\bCOMMIT\\b"
     ],
-    "checkQuery": "SELECT product_id, price FROM products WHERE product_id IN (1, 2) ORDER BY product_id;"
+    "checkQuery": "SELECT (SELECT price FROM products WHERE product_id = 1) = 2600::numeric AS product_1_committed, (SELECT price FROM products WHERE product_id = 2) = 500::numeric AS product_2_rolled_back;",
+    "expectedCheck": {
+      "product_1_committed": true,
+      "product_2_rolled_back": true
+    }
   }
 ];
 
