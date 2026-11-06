@@ -47,14 +47,14 @@ export function readOnlyQueryKeyword(sql,depth=0){
  if(first!=='WITH')return first;
  let i=skipSqlTrivia(sql);
  i=skipSqlTrivia(sql,i+4);
- if(firstSqlKeyword(sql.slice(i))==='RECURSIVE')i=skipSqlTrivia(sql,i+8);
+ if(firstSqlKeyword(sql.slice(i))==='RECURSIVE')i=skipSqlTrivia(sql,i+'RECURSIVE'.length);
  while(i<sql.length){
   i=readIdentifier(sql,i);if(i<0)return '';
   i=skipSqlTrivia(sql,i);
   if(sql[i]==='('){i=skipBalanced(sql,i);if(i<0)return '';i=skipSqlTrivia(sql,i);}
   if(firstSqlKeyword(sql.slice(i))!=='AS')return '';
   i=skipSqlTrivia(sql,i+2);
-  if(firstSqlKeyword(sql.slice(i))==='NOT'){i=skipSqlTrivia(sql,i+3);if(firstSqlKeyword(sql.slice(i))!=='MATERIALIZED')return '';i=skipSqlTrivia(sql,i+10);}
+  if(firstSqlKeyword(sql.slice(i))==='NOT'){i=skipSqlTrivia(sql,i+3);if(firstSqlKeyword(sql.slice(i))!=='MATERIALIZED')return '';i=skipSqlTrivia(sql,i+'MATERIALIZED'.length);}
   else if(firstSqlKeyword(sql.slice(i))==='MATERIALIZED')i=skipSqlTrivia(sql,i+10);
   if(sql[i]!=='(')return '';
   const close=skipBalanced(sql,i);if(close<0)return '';
