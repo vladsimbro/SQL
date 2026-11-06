@@ -109,13 +109,16 @@ function lessonBody(l,m) {
   return `<p>${esc(l.body)}</p>${simple}<h2>Пример</h2><div class="code-block"><div class="code-head"><span>POSTGRESQL</span><button class="btn small" data-copy-code>Копировать</button></div><pre>${esc(l.example)}</pre></div><div class="note-box"><strong>Запомни:</strong> ${esc(l.note)}</div><div class="lesson-sources"><strong>Первоисточники:</strong> ${sources}</div>`;
 }
 function renderModuleQuiz(m) {
- const questions=m.quiz||[];
- if(!questions.length)return '';
- return `<section class="quiz-panel"><div class="eyebrow">МИНИ-ТЕСТ · ПРОВЕРКА ПОНИМАНИЯ</div><h2>Проверь себя</h2><p class="quiz-intro">Выбери ответ. После выбора появится объяснение.</p>
- ${questions.map((q,qi)=>{const key=state.moduleId+':'+state.lessonIndex+':'+qi,selected=state.quizAnswers[key],answered=selected!==undefined,correct=selected===q.answer;
- return `<div class="quiz-question"><div class="quiz-question-title"><span>ВОПРОС ${qi+1}</span><strong>${esc(q.question)}</strong></div><div class="quiz-options">${q.options.map((opt,oi)=>`<button class="quiz-option ${answered&&oi===selected?(correct?'correct':'incorrect'):''} ${answered&&oi===q.answer?'answer-key':''}" data-quiz-answer="${qi}:${oi}" ${answered&&correct?'disabled':''}><span class="quiz-radio">${String.fromCharCode(65+oi)}</span><span>${esc(opt)}</span></button>`).join('')}</div>${answered?`<div class="quiz-feedback ${correct?'correct':'incorrect'}"><strong>${correct?'Верно!':'Пока нет.'}</strong> ${esc(correct?q.explanation:'Попробуй ещё раз. Подумай над правилом и выбери другой вариант.')}</div>`:''}</div>`;}).join('')}
- <div class="quiz-summary">${questions.every((q,qi)=>state.quizAnswers[state.moduleId+':'+state.lessonIndex+':'+qi]===q.answer)?'<strong>Отлично! Все ответы верны.</strong>':'Ответь на вопросы, чтобы закрепить материал.'}</div></section>`;
+ const bank=m.quiz||[];
+ if(!bank.length)return '';
+ const first=(state.lessonIndex*2)%bank.length;
+ const questions=[{q:bank[first],index:first},{q:bank[(first+1)%bank.length],index:(first+1)%bank.length}];
+ return `<section class="quiz-panel"><div class="eyebrow">МИНИ-ТЕСТ · ПРОВЕРКА ПОНИМАНИЯ</div><h2>Проверь себя</h2><p class="quiz-intro">В каждом уроке — два вопроса из банка модуля. Выбери ответ и прочитай объяснение.</p>
+ ${questions.map(({q, index})=>{const key=state.moduleId+':'+state.lessonIndex+':'+index,selected=state.quizAnswers[key],answered=selected!==undefined,correct=selected===q.answer;
+ return `<div class="quiz-question"><div class="quiz-question-title"><span>ВОПРОС ${index+1} ИЗ ${bank.length}</span><strong>${esc(q.question)}</strong></div><div class="quiz-options">${q.options.map((opt,oi)=>`<button class="quiz-option ${answered&&oi===selected?(correct?'correct':'incorrect'):''} ${answered&&oi===q.answer?'answer-key':''}" data-quiz-answer="${index}:${oi}" ${answered&&correct?'disabled':''}><span class="quiz-radio">${String.fromCharCode(65+oi)}</span><span>${esc(opt)}</span></button>`).join('')}</div>${answered?`<div class="quiz-feedback ${correct?'correct':'incorrect'}"><strong>${correct?'Верно!':'Пока нет.'}</strong> ${esc(correct?q.explanation:'Попробуй ещё раз. Подумай над правилом и выбери другой вариант.')}</div>`:''}</div>`;}).join('')}
+ <div class="quiz-summary">${questions.every(({q,index})=>state.quizAnswers[state.moduleId+':'+state.lessonIndex+':'+index]===q.answer)?'<strong>Отлично! Оба ответа верны.</strong>':'Ответь на вопросы, чтобы закрепить материал.'}</div></section>`;
 }
+
 function renderStudy() {
   const m=moduleById(state.moduleId)||modules[0];
   state.lessonIndex=Math.max(0,Math.min(state.lessonIndex,m.lessons.length-1));
