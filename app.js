@@ -7,7 +7,7 @@ const EDITOR_KEY = 'sql-academy-editor-v1';
 const state = {
   view:'dashboard', moduleId:modules[0].id, lessonIndex:0, exerciseId:exercises[0].id,
   completedLessons:new Set(), completedExercises:new Set(), db:null, expected:new Map(),
-  engineReady:false, currentRows:[], quizAnswers:{}, editors:new Map(), theme:localStorage.getItem('sql-academy-theme') || 'dark'
+  engineReady:false, currentRows:[], quizAnswers:{}, editors:new Map(), navigationScrollReset:false, theme:localStorage.getItem('sql-academy-theme') || 'dark'
 };
 const moduleById = id => modules.find(m=>m.id===id);
 const lessonTotal = modules.reduce((n,m)=>n+m.lessons.length,0);
@@ -37,6 +37,7 @@ const toast = message => {
   const el=document.createElement('div'); el.className='toast'; el.textContent=message; document.body.append(el); setTimeout(()=>el.remove(),2200);
 };
 const go = view => {
+  state.navigationScrollReset=true;
   state.view=view; render();
   if(innerWidth<760) $('#sidebar').classList.remove('open');
   window.scrollTo({top:0,behavior:'smooth'});
@@ -46,8 +47,8 @@ const modulePct = m => Math.round(progressForModule(m)/m.lessons.length*100);
 const getModuleForExercise = ex => moduleById(ex.m);
 
 function render() {
-  const host=$('#app-content'),windowY=window.scrollY;
-  const sidebarScroll=$('.lesson-sidebar')?.scrollTop||0,exerciseScroll=$('.exercise-list')?.scrollTop||0;
+  const host=$('#app-content'),preserveScroll=!state.navigationScrollReset,windowY=preserveScroll?window.scrollY:0;
+  const sidebarScroll=preserveScroll?($('.lesson-sidebar')?.scrollTop||0):0,exerciseScroll=preserveScroll?($('.exercise-list')?.scrollTop||0):0;
   for(const cm of state.editors.values()){try{cm.toTextArea();}catch{}}
   state.editors.clear();
   $('.nav-item').forEach(b=>b.classList.toggle('active',b.dataset.nav===state.view));
@@ -60,6 +61,7 @@ function render() {
     if(state.view==='study')$('.lesson-sidebar')?.scrollTo({top:sidebarScroll,behavior:'instant'});
     if(state.view==='practice')$('.exercise-list')?.scrollTo({top:exerciseScroll,behavior:'instant'});
     window.scrollTo({top:windowY,behavior:'instant'});
+    state.navigationScrollReset=false;
     for(const cm of state.editors.values())cm.refresh();
   });
 }
@@ -115,7 +117,7 @@ function renderModuleQuiz(m) {
  const questions=[{q:bank[first],index:first},{q:bank[(first+1)%bank.length],index:(first+1)%bank.length}];
  return `<section class="quiz-panel"><div class="eyebrow">МИНИ-ТЕСТ · ПРОВЕРКА ПОНИМАНИЯ</div><h2>Проверь себя</h2><p class="quiz-intro">В каждом уроке — два вопроса из банка модуля. Выбери ответ и прочитай объяснение.</p>
  ${questions.map(({q, index})=>{const key=state.moduleId+':'+state.lessonIndex+':'+index,selected=state.quizAnswers[key],answered=selected!==undefined,correct=selected===q.answer;
- return `<div class="quiz-question"><div class="quiz-question-title"><span>ВОПРОС ${index+1} ИЗ ${bank.length}</span><strong>${esc(q.question)}</strong></div><div class="quiz-options">${q.options.map((opt,oi)=>`<button class="quiz-option ${answered&&oi===selected?(correct?'correct':'incorrect'):''} ${answered&&oi===q.answer?'answer-key':''}" data-quiz-answer="${index}:${oi}" ${answered&&correct?'disabled':''}><span class="quiz-radio">${String.fromCharCode(65+oi)}</span><span>${esc(opt)}</span></button>`).join('')}</div>${answered?`<div class="quiz-feedback ${correct?'correct':'incorrect'}"><strong>${correct?'Верно!':'Пока нет.'}</strong> ${esc(correct?q.explanation:'Попробуй ещё раз. Подумай над правилом и выбери другой вариант.')}</div>`:''}</div>`;}).join('')}
+ return `<div class="quiz-question"><div class="quiz-question-title"><span>ВОПРОС ${index+1} ИЗ ${bank.length}</span><strong>${esc(q.question)}</strong></div><div class="quiz-options">${q.options.map((opt,oi)=>`<button class="quiz-option ${answered&&oi===selected?(correct?'correct':'incorrect'):''} ${answered&&correct&&oi===q.answer?'answer-key':''}" data-quiz-answer="${index}:${oi}" ${answered&&correct?'disabled':''}><span class="quiz-radio">${String.fromCharCode(65+oi)}</span><span>${esc(opt)}</span></button>`).join('')}</div>${answered?`<div class="quiz-feedback ${correct?'correct':'incorrect'}"><strong>${correct?'Верно!':'Пока нет.'}</strong> ${esc(correct?q.explanation:'Попробуй ещё раз. Подумай над правилом и выбери другой вариант.')}</div>`:''}</div>`;}).join('')}
  <div class="quiz-summary">${questions.every(({q,index})=>state.quizAnswers[state.moduleId+':'+state.lessonIndex+':'+index]===q.answer)?'<strong>Отлично! Оба ответа верны.</strong>':'Ответь на вопросы, чтобы закрепить материал.'}</div></section>`;
 }
 
