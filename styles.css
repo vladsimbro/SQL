@@ -26,3 +26,43 @@
 .exercise-quiz-question{display:block;margin:7px 0 10px;font-size:12px;line-height:1.6;color:var(--text)}
 .exercise-quiz .quiz-options{grid-template-columns:repeat(2,minmax(0,1fr))}
 @media(max-width:760px){.exercise-quiz .quiz-options{grid-template-columns:1fr}}
+
+
+/* Light theme: keep code, editors and data-heavy panels readable. */
+:root.light .sidebar-label{color:var(--muted)}
+:root.light .code-block{background:#f5f7fc;border-color:var(--line)}
+:root.light .code-head{background:#eef1f8;color:#526178;border-color:var(--line)}
+:root.light .code-block pre{color:#25334a}
+:root.light .editor-card{background:#fff;border-color:var(--line)}
+:root.light .editor-top,:root.light .editor-bottom{background:#eef1f8;color:#526178;border-color:var(--line)}
+:root.light .sql-editor{background:#fff;color:#243247}
+:root.light .CodeMirror{background:#fff;color:#243247}
+:root.light .CodeMirror-gutters{background:#f1f3f8;border-right:1px solid #d9dfeb}
+:root.light .CodeMirror-linenumber{color:#8793a6}
+:root.light .CodeMirror-cursor{border-left-color:#5c4fe0}
+:root.light .CodeMirror-selected,:root.light .CodeMirror-focused .CodeMirror-selected{background:#dce3fb}
+:root.light .cm-s-material-darker .cm-keyword{color:#6945c5}
+:root.light .cm-s-material-darker .cm-operator{color:#485b78}
+:root.light .cm-s-material-darker .cm-number{color:#a34d12}
+:root.light .cm-s-material-darker .cm-string{color:#16734f}
+:root.light .cm-s-material-darker .cm-comment{color:#78869b}
+:root.light .cm-s-material-darker .cm-variable,:root.light .cm-s-material-darker .cm-variable-2{color:#285f9d}
+:root.light .cm-s-material-darker .cm-builtin{color:#8a4b91}
+:root.light .feedback.success{background:#e8f7f0;border-color:#b8e4d1;color:#176b4f}
+:root.light .feedback.fail{background:#fff0f0;border-color:#f1c7c7;color:#a52e36}
+:root.light .result-table th{background:#eef1f8;color:#46566e}
+:root.light .result-table td{border-color:var(--line);color:#26364d}
+:root.light .result-table tr:nth-child(even){background:#f8f9fc}
+:root.light .result-head{background:#f8f9fc}
+:root.light .nav-item.active{background:#ecebff;box-shadow:inset 2px 0 var(--accent)}
+:root.light .brand-mark{color:#152033}
+:root.light .brand-mark span{color:#fff}
+:root.light .continue-icon{background:#ecebff}
+:root.light .module-status.done{box-shadow:none}
+:root.light .toast{box-shadow:0 8px 28px #1c2b441c}
+:root.light input,:root.light textarea,:root.light select{color:var(--text)}
+:root.light input::placeholder,:root.light textarea::placeholder{color:#8793a6}
+@media(max-width:760px){
+ :root.light .sidebar{box-shadow:8px 0 28px #1c2b4418}
+ :root.light .topbar{background:#f3f5faee}
+}
