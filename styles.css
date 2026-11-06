@@ -74,3 +74,79 @@
 :root.light .hero p{color:#526178}
 :root.light .btn.ghost{background:#ffffffb8;border-color:#d7deea;color:#34445c}
 :root.light .btn.ghost:hover{background:#fff;border-color:var(--accent)}
+
+
+/* Consistent light palette for every learning surface. */
+:root.light .lesson-card,
+:root.light .task-card,
+:root.light .reference-card,
+:root.light .glossary-item,
+:root.light .quiz-panel,
+:root.light .exercise-quiz,
+:root.light .schema-card,
+:root.light .result-panel,
+:root.light .card,
+:root.light .stat-card{background:var(--panel);border-color:var(--line);color:var(--text)}
+:root.light .lesson-card p,
+:root.light .lesson-card li,
+:root.light .task-card p,
+:root.light .glossary-item span,
+:root.light .reference-row span{color:var(--soft)}
+:root.light .lesson-card code,
+:root.light .reference-row code,
+:root.light .glossary-item strong{color:#08785e}
+:root.light .note-box{background:#eaf6f1;border-color:#168568;color:#34594f}
+:root.light .callout{background:#f0f3fa;border-color:#dce3ef;color:#526178}
+:root.light .code-block{box-shadow:0 2px 8px #26364a0a}
+:root.light .code-block pre{color:#24364e}
+:root.light .editor-card{background:#fff;box-shadow:0 4px 18px #26364a0a}
+:root.light .CodeMirror,
+:root.light .cm-s-material-darker.CodeMirror{background:#fbfcff!important;color:#243247!important}
+:root.light .CodeMirror-gutters{background:#f0f3f9!important;border-right:1px solid #dce3ee!important}
+:root.light .CodeMirror-linenumber{color:#8a96a9!important}
+:root.light .CodeMirror-activeline-background{background:#edf1fb!important}
+:root.light .CodeMirror-cursor{border-left:2px solid #5548cf!important}
+:root.light .CodeMirror-selected,
+:root.light .CodeMirror-focused .CodeMirror-selected{background:#dce5fa!important}
+:root.light .cm-s-material-darker .cm-keyword{color:#6541b5!important}
+:root.light .cm-s-material-darker .cm-operator{color:#445875!important}
+:root.light .cm-s-material-darker .cm-number{color:#a34b13!important}
+:root.light .cm-s-material-darker .cm-string{color:#13724e!important}
+:root.light .cm-s-material-darker .cm-comment{color:#77859a!important}
+:root.light .cm-s-material-darker .cm-variable,
+:root.light .cm-s-material-darker .cm-variable-2,
+:root.light .cm-s-material-darker .cm-def{color:#285f9d!important}
+:root.light .cm-s-material-darker .cm-builtin,
+:root.light .cm-s-material-darker .cm-atom{color:#8a4b91!important}
+:root.light .result-table th{background:#edf1f8;color:#245e50}
+:root.light .result-table td{color:#34445c}
+:root.light .result-table tr:nth-child(even){background:#f7f9fc}
+:root.light .quiz-option{background:#fff;color:#34445c;border-color:#dce3ee}
+:root.light .quiz-option:hover{background:#f2f4ff}
+:root.light .quiz-option.correct,
+:root.light .quiz-option.answer-key{background:#eaf7f1;border-color:#79c9a8;color:#176b4f}
+:root.light .quiz-option.incorrect{background:#fff0f0;border-color:#e6aaaa;color:#a52e36}
+:root.light .quiz-feedback.correct{background:#eaf7f1;color:#176b4f}
+:root.light .quiz-feedback.incorrect{background:#fff7e9;color:#75531a}
+:root.light .exercise-item:hover,
+:root.light .exercise-item.active{background:#f0f2fa;border-color:#dce3ee}
+:root.light .lesson-nav-item:hover,
+:root.light .lesson-nav-item.active{background:#edf0fa}
+:root.light .search-input,
+:root.light .exercise-filter{background:#fff;border-color:#dce3ee;color:#172235}
+:root.light .search-input:focus,
+:root.light .exercise-filter:focus{border-color:#8275e8;box-shadow:0 0 0 3px #8275e81c}
+:root.light .btn.ghost{background:#fff;border-color:#dce3ee;color:#34445c}
+:root.light .btn.ghost:hover{background:#f3f4ff}
+:root.light .nav-item.active{background:#ecebff;color:#352c8a}
+:root.light .topbar{background:#f3f5faed}
+:root.light .feedback.success{background:#eaf7f1;border-color:#b8e4d1;color:#176b4f}
+:root.light .feedback.fail{background:#fff0f0;border-color:#f1c7c7;color:#a52e36}
+
+@media(max-width:760px){
+ :root.light .reference-grid{grid-template-columns:1fr}
+ :root.light .glossary-item{grid-template-columns:1fr;gap:5px}
+ :root.light .reference-row{grid-template-columns:minmax(100px,38%) 1fr;gap:9px}
+ :root.light .lesson-card{padding:18px}
+ :root.light .topbar{padding:0 14px}
+}
