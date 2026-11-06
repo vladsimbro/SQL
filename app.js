@@ -119,7 +119,7 @@ function renderPractice() {
   <div class="exercise-layout"><aside><input class="exercise-filter" id="exercise-search" placeholder="Найти задачу по названию…"><div class="exercise-list" id="exercise-list">${list}</div></aside>
   <section><div class="task-card"><div class="task-meta">ЗАДАНИЕ ${exercises.indexOf(active)+1} ИЗ ${exercises.length} · ${esc(m.title)}</div><h2>${esc(active.title)} ${state.completedExercises.has(active.id)?'✓':''}</h2><p>${esc(active.task)}</p><details class="hint"><summary>Показать подсказку</summary><p>Сначала определи зерно результата: что означает одна строка? Затем выбери нужные таблицы, условия, группировку и сортировку. Не копируй решение целиком, пока не попробовал сам.</p></details></div>
   ${editor(active.solution,'exercise-editor','Здесь напиши свой SQL-запрос…')}
-  <div class="editor-actions" style="margin-top:10px"><button class="btn primary" data-action="check-exercise">Проверить решение</button><button class="btn" data-action="run-exercise">Выполнить запрос</button><button class="btn" data-action="show-solution">Показать решение</button><button class="btn" data-action="reset-db">Сбросить базу</button></div>
+  <div class="editor-actions" style="margin-top:10px"><button class="btn primary" data-action="check-exercise">Проверить решение</button>${active.mode==='mutation'?'':'<button class="btn" data-action="run-exercise">Выполнить запрос</button>'}<button class="btn" data-action="show-solution">Показать решение</button><button class="btn" data-action="reset-db">Сбросить базу</button></div>
   <div id="exercise-feedback"></div><div id="exercise-results"></div>
   <div class="lesson-footer" style="margin-top:16px"><button class="btn" data-action="prev-exercise">← Предыдущее</button><button class="btn" data-action="next-exercise">Следующее →</button></div></section></div>`;
 }
@@ -207,16 +207,30 @@ async function checkExercise() {
       feedback.innerHTML='<div class="feedback success"><strong>План построен!</strong> EXPLAIN успешно разобрал запрос и вернул план PostgreSQL. Обрати внимание на тип узла, оценку строк и стоимость выполнения.</div>';
       return;
     }
-    if(!/^\\s*(SELECT|WITH)\\b/i.test(parts[0])) throw new Error('Автопроверка упражнений принимает SELECT или WITH ... SELECT. Для команд изменения данных используй песочницу.');
     const expected=state.expected.get(ex.id);
     if(!expected) throw new Error('Эталонный результат для задания не подготовлен.');
-    const result=await state.db.query(parts[0]);
+    let result, observed, passed;
+    if(ex.mode==='mutation') {
+      if(!/^\\s*(INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|MERGE)\\b/i.test(parts[0])) throw new Error('Для этой задачи нужна команда изменения данных или структуры: INSERT, UPDATE, DELETE, CREATE, ALTER, DROP либо MERGE.');
+      await state.db.exec('SAVEPOINT academy_user_check;');
+      try {
+        result=await state.db.query(parts[0]);
+        observed=await state.db.query(ex.checkQuery);
+        passed=JSON.stringify(normalizeResult(observed))===JSON.stringify(expected);
+      } finally {
+        await state.db.exec('ROLLBACK TO SAVEPOINT academy_user_check; RELEASE SAVEPOINT academy_user_check;');
+      }
+    } else {
+      if(ex.mode==='query' && !/^\\s*EXPLAIN\\s+(SELECT|WITH)\\b/i.test(parts[0])) throw new Error('Для этой задачи используй EXPLAIN перед SELECT или WITH ... SELECT.');
+      if(ex.mode!=='query' && !/^\\s*(SELECT|WITH)\\b/i.test(parts[0])) throw new Error('Автопроверка этого задания принимает SELECT или WITH ... SELECT.');
+      result=await state.db.query(parts[0]);
+      observed=result;
+      passed=JSON.stringify(normalizeResult(observed))===JSON.stringify(expected);
+    }
     const elapsed=Math.round(performance.now()-started);
-    const actual=normalizeResult(result);
-    const passed=JSON.stringify(actual)===JSON.stringify(expected);
-    results.innerHTML=renderResult(result,elapsed);
-    if(passed){state.completedExercises.add(ex.id);saveProgress();feedback.innerHTML='<div class="feedback success"><strong>Верно!</strong> Результат совпадает с эталоном. Хорошая работа. Попробуй объяснить, почему запрос вернул именно эти строки.</div>';}
-    else{feedback.innerHTML='<div class="feedback fail"><strong>Пока не совпало.</strong> Запрос выполнился, но набор столбцов или значений отличается от ожидаемого. Сверь зерно результата, фильтры, условия JOIN и агрегаты. Посмотри на таблицу результата выше и проверь, не потерялись ли строки.</div>';}
+    results.innerHTML=renderResult(result,elapsed)+(ex.mode==='mutation'?renderResult(observed,elapsed):'');
+    if(passed){state.completedExercises.add(ex.id);saveProgress();feedback.innerHTML='<div class="feedback success"><strong>Верно!</strong> Изменение соответствует условию. Для проверки оно было выполнено внутри savepoint и затем отменено, поэтому общая учебная база не изменилась.</div>';}
+    else{feedback.innerHTML='<div class="feedback fail"><strong>Пока не совпало.</strong> Запрос выполнился, но фактическое состояние таблицы отличается от ожидаемого. Проверь условие WHERE, нужные столбцы, ограничения и число изменённых строк.</div>';}
   }catch(err){feedback.innerHTML='<div class="feedback fail"><strong>Ошибка SQL:</strong> '+esc(err.message)+'</div>';results.innerHTML='';}
 }
 function normalizeResult(result) {
@@ -255,8 +269,21 @@ async function resetDatabase() {
 async function prepareExpected() {
   state.expected.clear();
   for(const ex of exercises){
-    try{const result=await state.db.query(ex.solution);state.expected.set(ex.id,normalizeResult(result));}
-    catch(err){console.warn('Could not prepare exercise',ex.id,err.message);}
+    try{
+      if(ex.mode==='mutation'){
+        await state.db.exec('SAVEPOINT academy_expected;');
+        try {
+          await state.db.query(ex.solution);
+          const observed=await state.db.query(ex.checkQuery);
+          state.expected.set(ex.id,normalizeResult(observed));
+        } finally {
+          await state.db.exec('ROLLBACK TO SAVEPOINT academy_expected; RELEASE SAVEPOINT academy_expected;');
+        }
+      } else {
+        const result=await state.db.query(ex.solution);
+        state.expected.set(ex.id,normalizeResult(result));
+      }
+    } catch(err){console.warn('Could not prepare exercise',ex.id,err.message);}
   }
 }
 async function initDatabase() {
