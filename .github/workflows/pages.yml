@@ -1,4 +1,4 @@
-name: Deploy SQL Academy to GitHub Pages
+name: Validate and deploy SQL Academy
 on:
   push:
     branches: [main]
@@ -11,7 +11,21 @@ concurrency:
   group: pages
   cancel-in-progress: true
 jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install test dependency
+        run: npm install --no-package-lock
+      - name: Validate curriculum and run all exercise solutions
+        run: npm run test:curriculum
   deploy:
+    needs: validate
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
