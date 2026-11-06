@@ -197,12 +197,21 @@ async function checkExercise() {
   try{
     const parts=splitStatements(sql);
     if(parts.length!==1) throw new Error('В проверяемом упражнении используй один SQL-запрос.');
-    if(!/^\s*(SELECT|WITH)\b/i.test(parts[0])) throw new Error('Автопроверка упражнений принимает SELECT или WITH ... SELECT. Для команд изменения данных используй песочницу.');
+    const started=performance.now();
+    if(ex.mode==='query') {
+      if(!/^\\s*EXPLAIN\\s+(SELECT|WITH)\\b/i.test(parts[0])) throw new Error('Для этой задачи используй EXPLAIN перед SELECT или WITH ... SELECT.');
+      const plan=await state.db.query(parts[0]);
+      const elapsed=Math.round(performance.now()-started);
+      state.completedExercises.add(ex.id);saveProgress();
+      results.innerHTML=renderResult(plan,elapsed);
+      feedback.innerHTML='<div class="feedback success"><strong>План построен!</strong> EXPLAIN успешно разобрал запрос и вернул план PostgreSQL. Обрати внимание на тип узла, оценку строк и стоимость выполнения.</div>';
+      return;
+    }
+    if(!/^\\s*(SELECT|WITH)\\b/i.test(parts[0])) throw new Error('Автопроверка упражнений принимает SELECT или WITH ... SELECT. Для команд изменения данных используй песочницу.');
     const expected=state.expected.get(ex.id);
     if(!expected) throw new Error('Эталонный результат для задания не подготовлен.');
-    const start=performance.now();
     const result=await state.db.query(parts[0]);
-    const elapsed=Math.round(performance.now()-start);
+    const elapsed=Math.round(performance.now()-started);
     const actual=normalizeResult(result);
     const passed=JSON.stringify(actual)===JSON.stringify(expected);
     results.innerHTML=renderResult(result,elapsed);
