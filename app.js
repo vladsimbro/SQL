@@ -52,7 +52,7 @@ function render() {
   const sidebarScroll=preserveScroll?($('.lesson-sidebar')?.scrollTop||0):0,exerciseScroll=preserveScroll?($('.exercise-list')?.scrollTop||0):0;
   for(const cm of state.editors.values()){try{cm.toTextArea();}catch{}}
   state.editors.clear();
-  $('.nav-item').forEach(b=>b.classList.toggle('active',b.dataset.nav===state.view));
+  $$('.nav-item').forEach(b=>b.classList.toggle('active',b.dataset.nav===state.view));
   $('#breadcrumb-current').textContent=label[state.view]||'Учебник';
   updateProgress();
   const pages={dashboard:renderDashboard,roadmap:renderRoadmap,study:renderStudy,practice:renderPractice,playground:renderPlayground,schema:renderSchema,reference:renderReference,glossary:renderGlossary};
