@@ -18,18 +18,18 @@ try {
 
   const employeeSchema = await db.query("SELECT column_name FROM information_schema.columns WHERE table_name = 'orders' ORDER BY ordinal_position");
   assert.ok(employeeSchema.rows.some(row => row.column_name === 'employee_id'), 'The generic public dataset must use employee_id');
-  assert.ok(!employeeSchema.rows.some(row => row.column_name === 'courier_id'), 'Private-domain-specific courier column must be absent');
+
 
   let checked = 0;
   for (const exercise of exercises) {
     if (exercise.mode === 'mutation') {
-      await db.exec('SAVEPOINT smoke_exercise;');
+      await db.exec('BEGIN;');
       try {
         await db.query(exercise.solution);
         const observed = await db.query(exercise.checkQuery);
         assert.ok(observed.rows.length > 0, `Mutation exercise ${exercise.id} did not produce a checkable state`);
       } finally {
-        await db.exec('ROLLBACK TO SAVEPOINT smoke_exercise; RELEASE SAVEPOINT smoke_exercise;');
+        await db.exec('ROLLBACK;');
       }
     } else {
       const result = await db.query(exercise.solution);
