@@ -1,0 +1,12 @@
+{
+  "name": "sql-academy",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:curriculum": "node scripts/smoke-test.mjs"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.5.15"
+  }
+}
