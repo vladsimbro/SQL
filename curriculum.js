@@ -66,6 +66,12 @@ export const modules = [
         "body": "Нормализация — проектирование таблиц так, чтобы каждый факт хранился в подходящем месте и обновлялся последовательно. Если имя магазина копируется в каждую строку заказа, переименование приходится делать во множестве мест. Разделение stores и orders уменьшает аномалии вставки, обновления и удаления. На практике аналитические витрины иногда намеренно денормализуют ради простоты и скорости чтения.",
         "example": "-- Имена хранятся в stores,\n-- заказы ссылаются на магазин по store_id\nSELECT o.order_id, s.store_name\nFROM orders o\nJOIN stores s ON s.store_id = o.store_id;",
         "note": "Нормализация не означает «чем больше таблиц, тем лучше». Важны смысл фактов, функциональные зависимости и рабочая нагрузка."
+      },
+      {
+        "title": "Функциональные зависимости и нормальные формы",
+        "body": "Функциональная зависимость X → Y означает, что значение X однозначно определяет Y. Первая нормальная форма требует атомарных значений в рамках реляционной модели. Вторая убирает зависимости неключевых атрибутов от части составного ключа. Третья устраняет транзитивные зависимости неключевых атрибутов. BCNF усиливает требования к детерминантам. На практике анализируй ключи и зависимости, а не применяй разложение механически.",
+        "example": "-- Если store_id определяет store_name,\n-- имя магазина относится к stores, а не к каждой позиции заказа.",
+        "note": "Нормализация помогает избежать аномалий, но схема зависит от требований и нагрузки."
       }
     ]
   },
@@ -98,6 +104,18 @@ export const modules = [
         "body": "CAST(value AS type) и краткая форма value::type меняют тип выражения. Неявные преобразования могут быть удобны, но иногда вызывают ошибки или мешают использовать индекс. Текст '100' можно превратить в число, но текст 'сто' нельзя корректно преобразовать в INTEGER. Преобразование формата даты зависит от входной строки и настроек, поэтому предпочтительны явные, однозначные форматы.",
         "example": "SELECT '1250.50'::numeric AS amount,\n       42::text AS code;",
         "note": "Тип результата выражения важен для сравнений, вычислений, объединения данных и записи в столбец."
+      },
+      {
+        "title": "BOOLEAN, UUID и специальные типы",
+        "body": "BOOLEAN хранит TRUE, FALSE или NULL. UUID — 128-битный идентификатор, удобный для распределённой генерации и внешних API. BYTEA хранит двоичные данные, хотя большие файлы чаще держат в объектном хранилище. PostgreSQL также поддерживает ENUM, пользовательские домены, диапазоны, сетевые и геометрические типы. Выбирай тип по смыслу значения и операциям над ним.",
+        "example": "SELECT TRUE AS is_active, '550e8400-e29b-41d4-a716-446655440000'::uuid AS public_id;",
+        "note": "Специальные типы дают полезные операции и ограничения, но снижают переносимость между СУБД."
+      },
+      {
+        "title": "ENUM, DOMAIN и пользовательские типы",
+        "body": "CREATE TYPE ... AS ENUM задаёт конечный перечень значений. DOMAIN создаёт тип на основе существующего с дополнительным CHECK, например положительную сумму. Составные типы объединяют несколько полей, но для предметной модели чаще подходят обычные таблицы. Изменение ENUM и зависимых объектов требует осторожных миграций.",
+        "example": "CREATE DOMAIN positive_amount AS NUMERIC(12,2) CHECK (VALUE >= 0);",
+        "note": "ENUM подходит стабильному набору значений. Для часто меняющихся справочников отдельная таблица гибче."
       }
     ]
   },
@@ -314,6 +332,12 @@ export const modules = [
         "body": "COUNT(DISTINCT customer_id) считает уникальных клиентов, а SUM(DISTINCT amount) складывает уникальные числовые значения, а не суммы уникальных заказов. Последняя конструкция часто ошибочно применяется для борьбы с дублями после JOIN. Если у двух разных заказов одинаковая сумма, SUM(DISTINCT amount) потеряет одну из них. Исправлять нужно зерно и структуру соединения.",
         "example": "SELECT COUNT(DISTINCT customer_id) AS customers,\n       COUNT(*) AS orders\nFROM orders;",
         "note": "DISTINCT внутри агрегата не является универсальным лекарством от размножения строк."
+      },
+      {
+        "title": "GROUPING SETS, ROLLUP и CUBE",
+        "body": "GROUPING SETS позволяет в одном запросе вычислить несколько вариантов группировки. ROLLUP создаёт иерархические итоги, например магазин → город → общий итог. CUBE вычисляет комбинации измерений. GROUPING(column) помогает отличить NULL из исходных данных от NULL, обозначающего итоговый уровень.",
+        "example": "SELECT store_id, status, COUNT(*) AS orders_count, GROUPING(store_id) AS all_stores, GROUPING(status) AS all_statuses FROM orders GROUP BY GROUPING SETS ((store_id, status), (store_id), ());",
+        "note": "Сводные итоги имеют несколько уровней зерна. Явно маркируй итоговые строки."
       }
     ]
   },
@@ -358,6 +382,12 @@ export const modules = [
         "body": "EXISTS проверяет, существует ли хотя бы одна строка подзапроса. Он не размножает родительскую строку, даже если совпадений много. NOT EXISTS находит строки, для которых совпадений нет. Это часто чище, чем LEFT JOIN ... IS NULL, особенно при сложных условиях и потенциальных NULL.",
         "example": "SELECT c.customer_id, c.customer_name\nFROM customers c\nWHERE EXISTS (\n  SELECT 1 FROM orders o\n  WHERE o.customer_id = c.customer_id\n);",
         "note": "EXISTS проверяет наличие, а не количество совпавших строк."
+      },
+      {
+        "title": "JOIN ... USING, NATURAL JOIN и LATERAL",
+        "body": "USING(column) сокращает запись, если обе стороны соединяются по одноимённому столбцу; общий ключ выводится один раз. NATURAL JOIN автоматически использует все одноимённые столбцы и потому хрупок: добавление такого поля меняет смысл запроса. LATERAL позволяет подзапросу в FROM ссылаться на предыдущие источники строк; удобно для top-N событий на каждый заказ.",
+        "example": "SELECT o.order_id, latest.event_type, latest.event_at FROM orders o LEFT JOIN LATERAL (SELECT event_type, event_at FROM delivery_events d WHERE d.order_id = o.order_id ORDER BY event_at DESC, event_id DESC LIMIT 1) latest ON true;",
+        "note": "Предпочитай явный ON в сложной модели. NATURAL JOIN редко подходит для устойчивого рабочего SQL."
       }
     ]
   },
@@ -498,6 +528,12 @@ export const modules = [
         "body": "INSERT ... ON CONFLICT определяет поведение при конфликте уникальности. DO NOTHING игнорирует конфликт, DO UPDATE обновляет существующую строку. Конфликт должен опираться на уникальный индекс или ограничение. EXCLUDED содержит значения, которые пытались вставить. Это атомарный способ реализовать вставку или обновление, а не самодельную последовательность SELECT + INSERT.",
         "example": "INSERT INTO example_settings (key, value)\nVALUES ('theme', 'dark')\nON CONFLICT (key)\nDO UPDATE SET value = EXCLUDED.value;",
         "note": "Для конкурентных приложений ON CONFLICT надёжнее логики «сначала проверить, потом вставить»."
+      },
+      {
+        "title": "MERGE: синхронизация двух наборов",
+        "body": "MERGE сопоставляет целевые строки с источником по ON и выполняет действия для MATCHED и NOT MATCHED. Можно обновить существующую строку, вставить новую или удалить строку. MERGE полезен при загрузке справочников и синхронизации источников. Требует чёткого ключа сопоставления и понимания поведения при нескольких совпадениях.",
+        "example": "MERGE INTO target_table t USING source_table s ON s.id = t.id WHEN MATCHED THEN UPDATE SET value = s.value WHEN NOT MATCHED THEN INSERT (id, value) VALUES (s.id, s.value);",
+        "note": "MERGE поддерживается PostgreSQL начиная с версии 15. Проверяй версию и правила конфликтов источника."
       }
     ]
   },
@@ -568,6 +604,18 @@ export const modules = [
         "body": "Для согласования конкурентных изменений СУБД использует блокировки. SELECT ... FOR UPDATE блокирует выбранные строки до завершения транзакции. Deadlock возникает, когда транзакции ждут ресурсы друг друга по циклу; PostgreSQL обнаруживает цикл и отменяет одну транзакцию. Сократить риск помогают короткие транзакции и единый порядок захвата ресурсов.",
         "example": "BEGIN;\nSELECT * FROM orders\nWHERE order_id = 101\nFOR UPDATE;\nCOMMIT;",
         "note": "Не держи транзакцию открытой, пока пользователь думает или приложение ждёт внешний API."
+      },
+      {
+        "title": "SAVEPOINT и частичный откат",
+        "body": "SAVEPOINT создаёт точку внутри транзакции, к которой можно откатиться через ROLLBACK TO SAVEPOINT. RELEASE SAVEPOINT освобождает точку. Это полезно, когда одна транзакция содержит несколько логических этапов и нужно отменить только часть изменений. Savepoint не фиксирует изменения отдельно: окончательный COMMIT завершает всю транзакцию.",
+        "example": "BEGIN; UPDATE orders SET status = 'shipped' WHERE order_id = 103; SAVEPOINT before_note; ROLLBACK TO SAVEPOINT before_note; COMMIT;",
+        "note": "Savepoint помогает частично откатывать работу, но не заменяет короткие и понятные транзакции."
+      },
+      {
+        "title": "Действия внешних ключей и отложенные ограничения",
+        "body": "ON DELETE и ON UPDATE задают поведение при изменении родительской строки: RESTRICT/NO ACTION запрещают нарушение, CASCADE распространяет операцию, SET NULL или SET DEFAULT меняют ссылочное поле. Отложенные ограничения DEFERRABLE можно проверить в конце транзакции, а не после каждой команды. Это полезно при сложных перестановках и связях.",
+        "example": "CREATE TABLE child_rows (parent_id BIGINT REFERENCES parent_rows(id) ON DELETE CASCADE);",
+        "note": "CASCADE может удалить много связанных строк. Применяй его только при осознанной модели владения данными."
       }
     ]
   },
@@ -682,6 +730,18 @@ export const modules = [
         "body": "Оптимизация начинается с вопроса: какой запрос медленный и почему? Смотри фактические строки, расхождение estimates/actual, дорогие сортировки, последовательные чтения, повторные циклы Nested Loop, лишние JOIN и объём возвращаемых данных. Проверяй наличие индекса и его применимость, но сначала оцени форму запроса и зерно. Измеряй до и после на сопоставимых данных.",
         "example": "EXPLAIN (ANALYZE, BUFFERS, VERBOSE)\nSELECT status, COUNT(*)\nFROM orders GROUP BY status;",
         "note": "Нельзя надёжно оптимизировать только по виду SQL или одному замеру."
+      },
+      {
+        "title": "Expression, partial, GIN, GiST и BRIN индексы",
+        "body": "Индекс по выражению ускоряет поиск по функции или вычислению, например LOWER(email). Частичный индекс содержит только строки, удовлетворяющие WHERE. GIN подходит для JSONB, массивов и полнотекстовых векторов. GiST — обобщённый каркас для диапазонов, геометрии и специальных операторных классов. BRIN хранит сводные данные по физическим блокам и полезен для очень больших таблиц, где значения коррелируют с физическим порядком.",
+        "example": "CREATE INDEX idx_profiles_tags ON customer_profiles USING GIN (tags); CREATE INDEX idx_orders_open ON orders (created_at) WHERE status IN ('new','shipped');",
+        "note": "Выбирай тип индекса по данным и операторам. Наличие индекса не гарантирует его использование."
+      },
+      {
+        "title": "Чтение плана: Scan, Join и Aggregate",
+        "body": "Seq Scan читает таблицу целиком; Index Scan получает строки через индекс; Bitmap Scan сначала собирает адреса, затем читает блоки. Nested Loop часто хорош для малого внешнего набора и индексного поиска внутри, Hash Join строит хеш-структуру одной стороны, Merge Join работает с отсортированными потоками. Sort, HashAggregate и GroupAggregate показывают сортировку и группировку. Смотри на actual rows, loops, buffers и расхождение оценок.",
+        "example": "EXPLAIN (ANALYZE, BUFFERS) SELECT o.order_id, c.customer_name FROM orders o JOIN customers c ON c.customer_id = o.customer_id WHERE o.status = 'delivered';",
+        "note": "Не выбирай алгоритм JOIN вручную до изучения плана. Сначала проверяй статистику и форму запроса."
       }
     ]
   },
@@ -720,6 +780,18 @@ export const modules = [
         "body": "Некоторые функции и типы PostgreSQL специфичны: JSONB, ILIKE, DISTINCT ON, FILTER, массивы, RETURNING в некоторых формах, PL/pgSQL и операторы диапазонов. Базовые SELECT, JOIN, GROUP BY, CASE и большинство агрегатов широко распространены. Если запрос должен работать в нескольких СУБД, фиксируй целевой стандарт и тестируй каждую платформу.",
         "example": "-- PostgreSQL-специфичный оператор\nSELECT 'SQL' ILIKE 'sql' AS same_case_insensitive;",
         "note": "Переносимость — отдельное требование, которое нужно учитывать при выборе синтаксиса."
+      },
+      {
+        "title": "Системные каталоги и information_schema",
+        "body": "information_schema предоставляет стандартизированные представления о таблицах, столбцах, ограничениях и правах. pg_catalog содержит специфичные для PostgreSQL системные каталоги и функции: например pg_tables, pg_indexes, pg_class, pg_attribute. Они нужны для исследования неизвестной схемы, автоматизации документации и диагностики.",
+        "example": "SELECT table_schema, table_name FROM information_schema.tables WHERE table_type = 'BASE TABLE' ORDER BY table_schema, table_name;",
+        "note": "Для переносимых запросов к метаданным начинай с information_schema; для деталей PostgreSQL используй pg_catalog."
+      },
+      {
+        "title": "Операторы JSONB: проверка и индексация",
+        "body": "-> возвращает JSON-значение, ->> текст, #> и #>> обращаются по пути. @> проверяет containment. ? проверяет наличие ключа или строки, а jsonb_array_elements разворачивает JSON-массив в строки. Для распространённых фильтров по JSONB можно использовать GIN-индекс; операторный класс определяет поддерживаемые операции.",
+        "example": "SELECT customer_id FROM customer_profiles WHERE attributes @> '{\"segment\":\"vip\"}'::jsonb;",
+        "note": "JSONB удобен для гибких атрибутов, но важные для связей и целостности поля лучше моделировать явно."
       }
     ]
   },
@@ -796,6 +868,12 @@ export const modules = [
         "body": "Резервная копия должна быть проверяемой восстановлением, а не только фактом успешного запуска команды. Миграции фиксируют изменения схемы и порядок их применения. Для больших таблиц миграция может потребовать этапного заполнения, временной совместимости старого и нового приложения и контроля блокировок. Изменения схемы проектируются вместе с релизом приложения.",
         "example": "-- Пример контролируемого изменения\nALTER TABLE example_customers ADD COLUMN phone TEXT;",
         "note": "Перед изменением структуры оцени блокировки, объём данных, откат и совместимость приложения."
+      },
+      {
+        "title": "Row-Level Security и безопасные функции",
+        "body": "Row-Level Security (RLS) ограничивает доступ к строкам через CREATE POLICY. USING задаёт видимые/изменяемые строки, WITH CHECK проверяет новые значения. Владельцы таблиц и роли с BYPASSRLS могут обходить политики, поэтому безопасность проектируется целостно. SECURITY DEFINER функции выполняются с правами владельца и требуют защиты search_path и входных данных.",
+        "example": "ALTER TABLE orders ENABLE ROW LEVEL SECURITY; CREATE POLICY only_store_1 ON orders USING (store_id = 1);",
+        "note": "RLS не заменяет GRANT. Тестируй политики под реальными ролями."
       }
     ]
   },
@@ -834,6 +912,12 @@ export const modules = [
         "body": "Финальный проект связывает таблицы заказов, магазинов, курьеров, клиентов, позиций и платежей. Нужно определить зерно, посчитать доставленные заказы, выручку, средний чек, нагрузку курьеров, просрочки и динамику по дням. Затем проверить метрики на крайних случаях: NULL-курьер, пустой магазин, отменённый заказ, несколько товаров в заказе и повторный платёж.",
         "example": "-- Сначала проверь зерно заказа\nSELECT COUNT(*) AS order_rows,\n       COUNT(DISTINCT order_id) AS unique_orders\nFROM orders;",
         "note": "Финальный критерий — не сложность SQL, а доказанная корректность метрик."
+      },
+      {
+        "title": "Исследование неизвестной схемы",
+        "body": "Когда структура базы неизвестна, начни с information_schema.tables, затем изучи столбцы через information_schema.columns, ключи через table_constraints и key_column_usage. Найди зерно таблицы, PK/FK и связи. Затем проверь небольшую выборку и распределение: COUNT, DISTINCT, NULL-доли, MIN/MAX дат. Только после этого собирай бизнес-отчёт.",
+        "example": "SELECT table_name, column_name, data_type FROM information_schema.columns WHERE table_schema = 'public' ORDER BY table_name, ordinal_position;",
+        "note": "Не угадывай связи по названиям колонок. Подтверждай их ограничениями и содержимым."
       }
     ]
   }
@@ -1190,6 +1274,76 @@ export const exercises = [
     "title": "Сумма товаров по продуктам",
     "task": "Для каждого продукта покажи общее количество проданных единиц. Продукты без продаж тоже должны быть в результате с нулём.",
     "solution": "SELECT p.product_name, COALESCE(SUM(oi.quantity), 0) AS units_sold FROM products p LEFT JOIN order_items oi ON oi.product_id = p.product_id GROUP BY p.product_id, p.product_name;"
+  },
+  {
+    "id": "e51",
+    "m": "aggregates",
+    "title": "Итоги по статусам и общий итог",
+    "task": "Сформируй количество заказов по каждому статусу и добавь отдельную строку с общим количеством. Используй GROUPING SETS.",
+    "solution": "SELECT status, COUNT(*) AS orders_count, GROUPING(status) AS is_total FROM orders GROUP BY GROUPING SETS ((status), ());"
+  },
+  {
+    "id": "e52",
+    "m": "joins",
+    "title": "Последнее событие каждого заказа",
+    "task": "Для каждого заказа найди последнее событие доставки. Заказы без событий тоже должны остаться. Используй LATERAL.",
+    "solution": "SELECT o.order_id, latest.event_type, latest.event_at FROM orders o LEFT JOIN LATERAL (SELECT event_type, event_at FROM delivery_events d WHERE d.order_id = o.order_id ORDER BY event_at DESC, event_id DESC LIMIT 1) latest ON true ORDER BY o.order_id;"
+  },
+  {
+    "id": "e53",
+    "m": "select",
+    "title": "Последний заказ каждого клиента",
+    "task": "Для каждого клиента, у которого есть заказы, оставь только самую новую запись. Используй PostgreSQL DISTINCT ON.",
+    "solution": "SELECT DISTINCT ON (customer_id) customer_id, order_id, created_at FROM orders ORDER BY customer_id, created_at DESC, order_id DESC;"
+  },
+  {
+    "id": "e54",
+    "m": "advanced",
+    "title": "Клиенты с тегом coffee",
+    "task": "Найди клиентов, у которых в массиве тегов присутствует coffee. Выведи customer_id.",
+    "solution": "SELECT customer_id FROM customer_profiles WHERE tags @> ARRAY['coffee']::text[];"
+  },
+  {
+    "id": "e55",
+    "m": "advanced",
+    "title": "VIP-клиенты по JSONB",
+    "task": "Найди профили, у которых JSON-атрибут segment равен vip. Выведи customer_id.",
+    "solution": "SELECT customer_id FROM customer_profiles WHERE attributes ->> 'segment' = 'vip';"
+  },
+  {
+    "id": "e56",
+    "m": "analytics",
+    "title": "Календарь без пропущенных дней",
+    "task": "Покажи каждый день с 10 по 15 января 2026 года и число заказов в этот день. Дни без заказов должны выводиться с нулём. Используй generate_series и LEFT JOIN.",
+    "solution": "WITH days AS (SELECT generate_series(DATE '2026-01-10', DATE '2026-01-15', INTERVAL '1 day')::date AS day), daily AS (SELECT created_at, COUNT(*) AS orders_count FROM orders GROUP BY created_at) SELECT days.day, COALESCE(daily.orders_count, 0) AS orders_count FROM days LEFT JOIN daily ON daily.created_at = days.day ORDER BY days.day;"
+  },
+  {
+    "id": "e57",
+    "m": "aggregates",
+    "title": "Сводка по магазинам и статусам",
+    "task": "Посчитай количество заказов по комбинациям магазина и статуса, итоги по магазинам и общий итог. Используй ROLLUP.",
+    "solution": "SELECT store_id, status, COUNT(*) AS orders_count, GROUPING(store_id) AS all_stores, GROUPING(status) AS all_statuses FROM orders GROUP BY ROLLUP (store_id, status);"
+  },
+  {
+    "id": "e58",
+    "m": "subqueries",
+    "title": "Найди товары, которые не продавались",
+    "task": "Найди товары, для которых не существует ни одной позиции заказа. Используй NOT EXISTS.",
+    "solution": "SELECT p.product_id, p.product_name FROM products p WHERE NOT EXISTS (SELECT 1 FROM order_items oi WHERE oi.product_id = p.product_id);"
+  },
+  {
+    "id": "e59",
+    "m": "cte",
+    "title": "Рекурсивная последовательность",
+    "task": "Создай рекурсивный CTE, который возвращает числа от 1 до 10 включительно.",
+    "solution": "WITH RECURSIVE numbers(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM numbers WHERE n < 10) SELECT n FROM numbers;"
+  },
+  {
+    "id": "e60",
+    "m": "workflow",
+    "title": "Сверка оплат с заказами",
+    "task": "Для каждого заказа сравни сумму платежей со стоимостью заказа. Покажи только заказы, где суммы отличаются. Не теряй заказы без платежей.",
+    "solution": "SELECT o.order_id, o.total_amount, COALESCE(SUM(p.amount), 0) AS paid_amount FROM orders o LEFT JOIN payments p ON p.order_id = o.order_id GROUP BY o.order_id, o.total_amount HAVING ABS(o.total_amount - COALESCE(SUM(p.amount), 0)) > 0.01;"
   }
 ];
 
@@ -1317,25 +1471,463 @@ export const glossary = [
 ];
 
 export const reference = [
-  {group:"Базовый SELECT",items:[["SELECT","Выбирает выражения результата."],["FROM","Задаёт источники строк."],["WHERE","Фильтрует строки до группировки."],["DISTINCT","Удаляет повторяющиеся строки результата."],["ORDER BY","Сортирует строки результата."],["LIMIT / OFFSET","Ограничивает и пропускает строки."]] },
-  {group:"Группировка",items:[["GROUP BY","Объединяет строки в группы по выражениям."],["HAVING","Фильтрует группы после группировки."],["COUNT(*)","Считает строки."],["COUNT(column)","Считает ненулевые значения столбца."],["SUM / AVG","Сумма и среднее."],["FILTER (WHERE)","Условие для отдельного агрегата."]] },
-  {group:"Соединения",items:[["INNER JOIN","Только совпавшие пары."],["LEFT JOIN","Все строки слева и совпадения справа."],["RIGHT JOIN","Все строки справа и совпадения слева."],["FULL OUTER JOIN","Все строки обеих сторон."],["CROSS JOIN","Декартово произведение."],["EXISTS","Проверка существования строки."]] },
-  {group:"Подзапросы и наборы",items:[["WITH","Определяет CTE."],["WITH RECURSIVE","Рекурсивный CTE."],["UNION","Объединяет и удаляет дубли."],["UNION ALL","Объединяет без удаления дублей."],["INTERSECT","Пересечение наборов."],["EXCEPT","Разность наборов."]] },
-  {group:"Запись и структура",items:[["INSERT INTO","Добавляет строки."],["UPDATE ... SET","Изменяет столбцы строк."],["DELETE FROM","Удаляет строки."],["RETURNING","Возвращает изменённые строки в PostgreSQL."],["CREATE TABLE","Создаёт таблицу."],["ALTER TABLE","Изменяет структуру таблицы."],["DROP","Удаляет объект базы данных."]] },
-  {group:"Оконные функции",items:[["OVER","Определяет окно вычисления."],["PARTITION BY","Делит окно на независимые группы."],["ROW_NUMBER","Уникальный номер строки в окне."],["RANK","Ранг с пропусками при равенстве."],["DENSE_RANK","Ранг без пропусков."],["LAG / LEAD","Читает предыдущую или следующую строку окна."],["ROWS BETWEEN","Задаёт построчную рамку окна."]] },
-  {group:"Надёжность и скорость",items:[["BEGIN","Начинает транзакцию."],["COMMIT","Фиксирует транзакцию."],["ROLLBACK","Отменяет транзакцию."],["EXPLAIN","Показывает план выполнения."],["EXPLAIN ANALYZE","Выполняет запрос и показывает фактические показатели."],["CREATE INDEX","Создаёт индекс."],["ANALYZE","Обновляет статистику планировщика."]] }
+  {
+    "group": "Базовый SELECT",
+    "items": [
+      [
+        "SELECT",
+        "Выбирает выражения результата."
+      ],
+      [
+        "FROM",
+        "Задаёт источники строк."
+      ],
+      [
+        "WHERE",
+        "Фильтрует строки до группировки."
+      ],
+      [
+        "DISTINCT",
+        "Удаляет повторяющиеся строки результата."
+      ],
+      [
+        "ORDER BY",
+        "Сортирует строки результата."
+      ],
+      [
+        "LIMIT / OFFSET",
+        "Ограничивает и пропускает строки."
+      ]
+    ]
+  },
+  {
+    "group": "Группировка",
+    "items": [
+      [
+        "GROUP BY",
+        "Объединяет строки в группы по выражениям."
+      ],
+      [
+        "HAVING",
+        "Фильтрует группы после группировки."
+      ],
+      [
+        "COUNT(*)",
+        "Считает строки."
+      ],
+      [
+        "COUNT(column)",
+        "Считает ненулевые значения столбца."
+      ],
+      [
+        "SUM / AVG",
+        "Сумма и среднее."
+      ],
+      [
+        "FILTER (WHERE)",
+        "Условие для отдельного агрегата."
+      ]
+    ]
+  },
+  {
+    "group": "Соединения",
+    "items": [
+      [
+        "INNER JOIN",
+        "Только совпавшие пары."
+      ],
+      [
+        "LEFT JOIN",
+        "Все строки слева и совпадения справа."
+      ],
+      [
+        "RIGHT JOIN",
+        "Все строки справа и совпадения слева."
+      ],
+      [
+        "FULL OUTER JOIN",
+        "Все строки обеих сторон."
+      ],
+      [
+        "CROSS JOIN",
+        "Декартово произведение."
+      ],
+      [
+        "EXISTS",
+        "Проверка существования строки."
+      ]
+    ]
+  },
+  {
+    "group": "Подзапросы и наборы",
+    "items": [
+      [
+        "WITH",
+        "Определяет CTE."
+      ],
+      [
+        "WITH RECURSIVE",
+        "Рекурсивный CTE."
+      ],
+      [
+        "UNION",
+        "Объединяет и удаляет дубли."
+      ],
+      [
+        "UNION ALL",
+        "Объединяет без удаления дублей."
+      ],
+      [
+        "INTERSECT",
+        "Пересечение наборов."
+      ],
+      [
+        "EXCEPT",
+        "Разность наборов."
+      ]
+    ]
+  },
+  {
+    "group": "Запись и структура",
+    "items": [
+      [
+        "INSERT INTO",
+        "Добавляет строки."
+      ],
+      [
+        "UPDATE ... SET",
+        "Изменяет столбцы строк."
+      ],
+      [
+        "DELETE FROM",
+        "Удаляет строки."
+      ],
+      [
+        "RETURNING",
+        "Возвращает изменённые строки в PostgreSQL."
+      ],
+      [
+        "CREATE TABLE",
+        "Создаёт таблицу."
+      ],
+      [
+        "ALTER TABLE",
+        "Изменяет структуру таблицы."
+      ],
+      [
+        "DROP",
+        "Удаляет объект базы данных."
+      ]
+    ]
+  },
+  {
+    "group": "Оконные функции",
+    "items": [
+      [
+        "OVER",
+        "Определяет окно вычисления."
+      ],
+      [
+        "PARTITION BY",
+        "Делит окно на независимые группы."
+      ],
+      [
+        "ROW_NUMBER",
+        "Уникальный номер строки в окне."
+      ],
+      [
+        "RANK",
+        "Ранг с пропусками при равенстве."
+      ],
+      [
+        "DENSE_RANK",
+        "Ранг без пропусков."
+      ],
+      [
+        "LAG / LEAD",
+        "Читает предыдущую или следующую строку окна."
+      ],
+      [
+        "ROWS BETWEEN",
+        "Задаёт построчную рамку окна."
+      ]
+    ]
+  },
+  {
+    "group": "Надёжность и скорость",
+    "items": [
+      [
+        "BEGIN",
+        "Начинает транзакцию."
+      ],
+      [
+        "COMMIT",
+        "Фиксирует транзакцию."
+      ],
+      [
+        "ROLLBACK",
+        "Отменяет транзакцию."
+      ],
+      [
+        "EXPLAIN",
+        "Показывает план выполнения."
+      ],
+      [
+        "EXPLAIN ANALYZE",
+        "Выполняет запрос и показывает фактические показатели."
+      ],
+      [
+        "CREATE INDEX",
+        "Создаёт индекс."
+      ],
+      [
+        "ANALYZE",
+        "Обновляет статистику планировщика."
+      ]
+    ]
+  }
 ];
 
 export const schema = [
-  {name:"stores",grain:"Одна строка = один магазин",columns:[["store_id","bigint","PK"],["store_name","text","название"],["city","text","город"]]},
-  {name:"couriers",grain:"Одна строка = один курьер",columns:[["courier_id","bigint","PK"],["courier_name","text","имя"],["hired_at","date","дата найма"]]},
-  {name:"customers",grain:"Одна строка = один клиент",columns:[["customer_id","bigint","PK"],["customer_name","text","имя"],["city","text","город"],["registered_at","date","регистрация"]]},
-  {name:"products",grain:"Одна строка = один товар",columns:[["product_id","bigint","PK"],["product_name","text","название"],["category","text","категория"],["price","numeric","цена"]]},
-  {name:"orders",grain:"Одна строка = один заказ",columns:[["order_id","bigint","PK"],["store_id","bigint","FK → stores"],["courier_id","bigint","FK → couriers, NULL"],["customer_id","bigint","FK → customers"],["status","text","статус"],["total_amount","numeric","сумма"],["created_at","date","дата"]]},
-  {name:"order_items",grain:"Одна строка = одна товарная позиция заказа",columns:[["item_id","bigint","PK"],["order_id","bigint","FK → orders"],["product_id","bigint","FK → products"],["quantity","integer","количество"],["unit_price","numeric","цена на момент заказа"]]},
-  {name:"payments",grain:"Одна строка = одна операция оплаты",columns:[["payment_id","bigint","PK"],["order_id","bigint","FK → orders"],["amount","numeric","сумма"],["payment_status","text","статус"]]},
-  {name:"delivery_events",grain:"Одна строка = одно событие доставки",columns:[["event_id","bigint","PK"],["order_id","bigint","FK → orders"],["event_type","text","событие"],["event_at","timestamp","время"]]},
-  {name:"customer_profiles",grain:"Одна строка = расширенный профиль клиента",columns:[["customer_id","bigint","PK/FK"],["attributes","jsonb","JSON-поля"],["tags","text[]","массив тегов"]]}
+  {
+    "name": "stores",
+    "grain": "Одна строка = один магазин",
+    "columns": [
+      [
+        "store_id",
+        "bigint",
+        "PK"
+      ],
+      [
+        "store_name",
+        "text",
+        "название"
+      ],
+      [
+        "city",
+        "text",
+        "город"
+      ]
+    ]
+  },
+  {
+    "name": "couriers",
+    "grain": "Одна строка = один курьер",
+    "columns": [
+      [
+        "courier_id",
+        "bigint",
+        "PK"
+      ],
+      [
+        "courier_name",
+        "text",
+        "имя"
+      ],
+      [
+        "hired_at",
+        "date",
+        "дата найма"
+      ]
+    ]
+  },
+  {
+    "name": "customers",
+    "grain": "Одна строка = один клиент",
+    "columns": [
+      [
+        "customer_id",
+        "bigint",
+        "PK"
+      ],
+      [
+        "customer_name",
+        "text",
+        "имя"
+      ],
+      [
+        "city",
+        "text",
+        "город"
+      ],
+      [
+        "registered_at",
+        "date",
+        "регистрация"
+      ]
+    ]
+  },
+  {
+    "name": "products",
+    "grain": "Одна строка = один товар",
+    "columns": [
+      [
+        "product_id",
+        "bigint",
+        "PK"
+      ],
+      [
+        "product_name",
+        "text",
+        "название"
+      ],
+      [
+        "category",
+        "text",
+        "категория"
+      ],
+      [
+        "price",
+        "numeric",
+        "цена"
+      ]
+    ]
+  },
+  {
+    "name": "orders",
+    "grain": "Одна строка = один заказ",
+    "columns": [
+      [
+        "order_id",
+        "bigint",
+        "PK"
+      ],
+      [
+        "store_id",
+        "bigint",
+        "FK → stores"
+      ],
+      [
+        "courier_id",
+        "bigint",
+        "FK → couriers, NULL"
+      ],
+      [
+        "customer_id",
+        "bigint",
+        "FK → customers"
+      ],
+      [
+        "status",
+        "text",
+        "статус"
+      ],
+      [
+        "total_amount",
+        "numeric",
+        "сумма"
+      ],
+      [
+        "created_at",
+        "date",
+        "дата"
+      ]
+    ]
+  },
+  {
+    "name": "order_items",
+    "grain": "Одна строка = одна товарная позиция заказа",
+    "columns": [
+      [
+        "item_id",
+        "bigint",
+        "PK"
+      ],
+      [
+        "order_id",
+        "bigint",
+        "FK → orders"
+      ],
+      [
+        "product_id",
+        "bigint",
+        "FK → products"
+      ],
+      [
+        "quantity",
+        "integer",
+        "количество"
+      ],
+      [
+        "unit_price",
+        "numeric",
+        "цена на момент заказа"
+      ]
+    ]
+  },
+  {
+    "name": "payments",
+    "grain": "Одна строка = одна операция оплаты",
+    "columns": [
+      [
+        "payment_id",
+        "bigint",
+        "PK"
+      ],
+      [
+        "order_id",
+        "bigint",
+        "FK → orders"
+      ],
+      [
+        "amount",
+        "numeric",
+        "сумма"
+      ],
+      [
+        "payment_status",
+        "text",
+        "статус"
+      ]
+    ]
+  },
+  {
+    "name": "delivery_events",
+    "grain": "Одна строка = одно событие доставки",
+    "columns": [
+      [
+        "event_id",
+        "bigint",
+        "PK"
+      ],
+      [
+        "order_id",
+        "bigint",
+        "FK → orders"
+      ],
+      [
+        "event_type",
+        "text",
+        "событие"
+      ],
+      [
+        "event_at",
+        "timestamp",
+        "время"
+      ]
+    ]
+  },
+  {
+    "name": "customer_profiles",
+    "grain": "Одна строка = расширенный профиль клиента",
+    "columns": [
+      [
+        "customer_id",
+        "bigint",
+        "PK/FK"
+      ],
+      [
+        "attributes",
+        "jsonb",
+        "JSON-поля"
+      ],
+      [
+        "tags",
+        "text[]",
+        "массив тегов"
+      ]
+    ]
+  }
 ];
 
 export const seedSQL = String.raw`
