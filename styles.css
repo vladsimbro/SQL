@@ -66,3 +66,11 @@
  :root.light .sidebar{box-shadow:8px 0 28px #1c2b4418}
  :root.light .topbar{background:#f3f5faee}
 }
+
+
+:root.light .hero{background:linear-gradient(120deg,#f0efff,#e8f7f3 75%,#f4f8fc);border-color:#d7d6f7}
+:root.light .hero:after{color:#5147a8;opacity:.055}
+:root.light .hero .eyebrow{color:#16745f}
+:root.light .hero p{color:#526178}
+:root.light .btn.ghost{background:#ffffffb8;border-color:#d7deea;color:#34445c}
+:root.light .btn.ghost:hover{background:#fff;border-color:var(--accent)}
