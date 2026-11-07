@@ -56,7 +56,7 @@ assert.ok(htmlSource.includes('data-nav="reference"') && htmlSource.includes('da
 assert.ok(cssSource.includes(':root.light .CodeMirror') && cssSource.includes(':root.light .reference-card') && cssSource.includes(':root.light .glossary-item'), 'Light theme must style the editor, reference and glossary');
 
 const ids = new Set(modules.map(module => module.id));
-assert.equal(modules.reduce((sum, module) => sum + module.lessons.length, 0), 161, 'Expected 161 lessons');
+assert.equal(modules.reduce((sum, module) => sum + module.lessons.length, 0), 168, 'Expected 168 lessons');
 assert.equal(glossary.length, 72, 'Expected 72 glossary terms');
 assert.equal(reference.length, 13, 'Expected 13 reference groups');
 const normalizeStart = appSource.indexOf('function normalizeResult');
@@ -91,7 +91,7 @@ assert.equal(datetimeModule.lessons.length, 7, 'Date/time module must contain se
 assert.ok(datetimeModule.lessons.every(lesson => (lesson.practiceIds || []).length > 0), 'Every date/time lesson must link to at least one relevant practice task');
 assert.deepEqual(datetimeModule.lessons.flatMap(lesson => lesson.practiceIds || []).sort(), ['e72','e73','e74','e75','e76','e77','e78','e79'].sort(), 'Date/time lessons must link all eight dedicated practice tasks exactly once');
 assert.ok(exercises.filter(exercise => exercise.m === 'datetime').every(exercise => exercise.quiz?.options?.length === 4 && exercise.quiz.explanation), 'Date/time practice tasks must include a concept check');
-assert.ok(appSource.includes("curriculum.js?v=20261107-18") && appSource.includes("sql-utils.js?v=20261107-18") && appSource.includes("sandbox-tasks.js?v=20261107-18"), 'Application module dependencies must use the current cache version');
+assert.ok(appSource.includes("curriculum.js?v=20261107-19") && appSource.includes("sql-utils.js?v=20261107-19") && appSource.includes("sandbox-tasks.js?v=20261107-19"), 'Application module dependencies must use the current cache version');
 
 
 const windowModule = modules.find(module => module.id === 'windows');
