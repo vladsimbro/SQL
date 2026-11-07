@@ -1,6 +1,6 @@
-import { modules, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261107-20';
-import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261107-20';
-import { firstSqlKeyword, explainStatementKeyword, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261107-20';
+import { modules, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261107-21';
+import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261107-21';
+import { firstSqlKeyword, explainStatementKeyword, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261107-21';
 
 const $ = (s, root=document) => root.querySelector(s);
 const $$ = (s, root=document) => [...root.querySelectorAll(s)];
@@ -376,16 +376,26 @@ async function prepareExpected() {
 }
 async function initDatabase() {
   const status=$('#engine-status'),pill=$('.engine-pill');
+  let stage='загрузка библиотеки PGlite';
+  pill.classList.remove('ready','error');
+  status.textContent='Запуск PostgreSQL…';
   try{
     const {PGlite}=await import('https://cdn.jsdelivr.net/npm/@electric-sql/pglite@0.5.15/dist/index.js');
-    state.db=new PGlite();
+    stage='создание временной базы данных';
+    state.db=await PGlite.create({dataDir:'memory://'});
+    stage='создание учебных таблиц и данных';
     await state.db.exec(seedSQL);
+    stage='подготовка эталонных результатов практики';
     await prepareExpected();
     state.engineReady=true;pill.classList.add('ready');status.textContent='PostgreSQL готов';
     render();
   }catch(err){
+    console.error('SQL Academy database initialization failed:',stage,err);
+    state.engineReady=false;
+    if(state.db){try{await state.db.close();}catch{} state.db=null;}
     pill.classList.add('error');status.textContent='Ошибка движка';
-    $('#app-content').innerHTML='<div class="empty-state"><h2>Не удалось запустить PostgreSQL</h2><p>'+esc(err.message)+'</p><p>Проверь интернет-соединение: PGlite загружается с CDN при первом запуске.</p><button class="btn primary" id="retry-engine">Повторить запуск</button></div>';
+    const detail=esc(err?.message||String(err));
+    $('#app-content').innerHTML='<div class="empty-state"><h2>Не удалось запустить PostgreSQL</h2><p><strong>Этап:</strong> '+esc(stage)+'</p><p>'+detail+'</p><p>Проверь подключение к CDN только если не загрузилась библиотека. Если ошибка возникла на другом этапе, это уже проблема инициализации базы, а не интернет-соединения.</p><button class="btn primary" id="retry-engine">Повторить запуск</button></div>';
     $('#retry-engine').addEventListener('click',initDatabase);
   }
 }
