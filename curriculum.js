@@ -1320,10 +1320,6 @@ export const modules = [
               "delivered"
             ],
             [
-              106,
-              "cancelled"
-            ],
-            [
               107,
               "delivered"
             ],
