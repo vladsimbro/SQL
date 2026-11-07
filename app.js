@@ -108,9 +108,10 @@ function renderRoadmap() {
   [...groups.entries()].map(([stage,items])=>`<section class="roadmap-stage"><div class="roadmap-stage-head"><span>${esc(stage)}</span><h2>${esc(items[0].m.title.split(':')[0])}</h2><small>${items.reduce((n,x)=>n+x.m.lessons.length,0)} уроков</small></div><div class="module-list">${items.map(x=>moduleRow(x.m,x.i)).join('')}</div></section>`).join('');
 }
 function lessonBody(l,m) {
-  const simple=l.simple?`<div class="plain-language"><strong>Проще говоря</strong><p>${esc(l.simple)}</p></div>`:'';
+  const simple=l.simple?`<div class="plain-language"><strong>Коротко</strong><p>${esc(l.simple)}</p></div>`:'';
+  const explanation=(l.body||'').split(/\\n\\s*\\n/).filter(Boolean).map(paragraph=>`<p>${esc(paragraph)}</p>`).join('');
   const sources=(m.sources||[]).map((url,i)=>`<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">Документация PostgreSQL ${i+1} ↗</a>`).join(' · ');
-  return `<p>${esc(l.body)}</p>${simple}<h2>Пример</h2><div class="code-block"><div class="code-head"><span>POSTGRESQL</span><button class="btn small" data-copy-code>Копировать</button></div><pre>${esc(l.example)}</pre></div><div class="note-box"><strong>Запомни:</strong> ${esc(l.note)}</div><div class="lesson-sources"><strong>Первоисточники:</strong> ${sources}</div>`;
+  return `<div class="lesson-explanation">${explanation}</div>${simple}<h2>Разберём на примере</h2><div class="code-block"><div class="code-head"><span>POSTGRESQL</span><button class="btn small" data-copy-code>Копировать</button></div><pre>${esc(l.example)}</pre></div><div class="note-box"><strong>Важно:</strong> ${esc(l.note)}</div><div class="lesson-sources"><strong>Первоисточники:</strong> ${sources}</div>`;
 }
 function renderLessonQuiz(l) {
  const bank=l.quiz||[];if(!bank.length)return '';
