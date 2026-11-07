@@ -1,7 +1,7 @@
 name: Validate and deploy SQL Academy
 on:
   push:
-    branches: [main, feature/postgres-optimization-stage-3, work/sql-academy-lessons-stage3, work/sql-academy-lessons-stage3-rebased]
+    branches: [main]
   pull_request:
     branches: [main]
   workflow_dispatch:
