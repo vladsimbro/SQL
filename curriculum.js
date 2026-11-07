@@ -1949,7 +1949,7 @@ export const modules = [
         "title": "Зерно данных и безопасная агрегация",
         "body": "Зерно данных — смысл одной строки набора. В orders это может быть один заказ, а в order_items — одна позиция товара внутри заказа. Если соединить заказ с его позициями, один заказ повторится столько раз, сколько у него позиций.\n\nЭто не обязательно ошибка: зерно результата JOIN стало «одна позиция заказа». Ошибка появляется, когда после такого JOIN суммируют поле заказа, например order_total, и считают его несколько раз.\n\nЧтобы получить корректную выручку, агрегируй заказ до соединения с деталями, считай метрику на правильном уровне или используй отдельный запрос для каждой сущности. SUM(DISTINCT order_total) не является универсальным исправлением: два разных заказа могут иметь одинаковую сумму.",
         "simple": "Перед расчётом выясни зерно каждой таблицы и зерно результата после JOIN. Метрика должна считаться на своём уровне.",
-        "example": "-- Сначала одна строка на заказ:\nWITH order_totals AS (\n  SELECT order_id, MAX(order_total) AS order_total\n  FROM order_items\n  GROUP BY order_id\n)\nSELECT SUM(order_total) AS revenue\nFROM order_totals;",
+        "example": "-- Сначала одна строка на заказ:\nWITH order_totals AS (\n  SELECT order_id,\n         SUM(quantity * unit_price) AS order_total\n  FROM order_items\n  GROUP BY order_id\n)\nSELECT SUM(order_total) AS revenue\nFROM order_totals;",
         "note": "Не суммируй метрику заказа после соединения с позициями без проверки размножения. DISTINCT по сумме может удалить реальные заказы.",
         "practiceIds": [],
         "outcomes": [
