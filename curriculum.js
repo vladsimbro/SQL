@@ -6458,7 +6458,7 @@ export const modules = [
       {
         "title": "Вставка нескольких строк и INSERT ... SELECT",
         "body": "Один INSERT может добавить несколько строк, если перечислить несколько наборов VALUES. Также можно вставить результат SELECT: это полезно для переноса или преобразования данных внутри базы.\n\nINSERT ... SELECT не требует промежуточного CSV. Количество и типы столбцов SELECT должны соответствовать списку столбцов INSERT. Если целевая таблица имеет ограничения, они проверяются так же, как при обычной вставке.\n\nПри копировании данных подумай о повторном запуске. Если ключи могут уже существовать, используй подходящую стратегию: очистку тестовой таблицы, ON CONFLICT или предварительную проверку. Не запускай повторную загрузку без понимания, создаст ли она дубли.",
-        "example": "INSERT INTO archived_orders (order_id, customer_id, total_amount)\nSELECT order_id, customer_id, total_amount\nFROM orders\nWHERE created_at < DATE '2025-01-01';",
+        "example": "CREATE TEMP TABLE archived_orders (\n  order_id BIGINT,\n  customer_id BIGINT,\n  total_amount NUMERIC(12,2)\n);\n\nINSERT INTO archived_orders (order_id, customer_id, total_amount)\nSELECT order_id, customer_id, total_amount\nFROM orders\nWHERE created_at < DATE '2026-01-12';\n\nSELECT *\nFROM archived_orders\nORDER BY order_id;",
         "note": "Число, порядок и типы выражений в SELECT должны соответствовать целевому списку столбцов.",
         "simple": "INSERT ... SELECT переносит результат одного запроса в другую таблицу.",
         "practiceIds": [
@@ -6485,8 +6485,8 @@ export const modules = [
       },
       {
         "title": "DEFAULT, RETURNING и безопасная проверка",
-        "body": "DEFAULT позволяет попросить PostgreSQL применить значение по умолчанию для конкретного столбца. RETURNING возвращает вставленные строки, в том числе сгенерированные ID и значения DEFAULT.\n\nЭто особенно полезно, если ключ генерируется IDENTITY: не нужно отдельным запросом искать последнюю вставленную запись. RETURNING возвращает точный ID той строки, которую создал текущий INSERT.\n\nПроверяй результат вставки до продолжения процесса. Если INSERT выполняется внутри транзакции, можно посмотреть RETURNING и при необходимости откатить операцию. Но RETURNING не заменяет проверки уникальности и бизнес-ограничений.",
-        "example": "INSERT INTO orders (customer_id, status)\nVALUES (42, DEFAULT)\nRETURNING order_id, status, created_at;",
+        "body": "DEFAULT позволяет попросить PostgreSQL применить значение по умолчанию для конкретного столбца. RETURNING возвращает вставленные строки, в том числе сгенерированные ID и значения DEFAULT.\n\nЭто особенно полезно, если ключ генерируется IDENTITY: не нужно отдельным запросом искать последнюю вставленную запись. RETURNING возвращает точный ID той строки, которую создал текущий INSERT.\n\nПроверяй результат вставки до продолжения процесса. Если INSERT выполняется внутри транзакции, можно посмотреть RETURNING и при необходимости откатить операцию. Но RETURNING не заменяет проверки уникальности и бизнес-ограничений.\n\nВ учебной таблице orders обязательны store_id, customer_id, status, total_amount и created_at. Поэтому при INSERT нельзя указывать только customer_id и status: остальные обязательные поля тоже должны получить значение.",
+        "example": "INSERT INTO orders (\n  order_id, store_id, customer_id, status, total_amount, created_at\n)\nVALUES (\n  999, 1, 1, DEFAULT, 1250.00, DATE '2026-11-07'\n)\nRETURNING order_id, status, created_at;",
         "note": "Не ищи последний ID через MAX(id): при параллельной работе это может вернуть чужую запись.",
         "simple": "DEFAULT использует настройку столбца, RETURNING показывает фактически вставленные значения.",
         "practiceIds": [],
@@ -6597,7 +6597,7 @@ export const modules = [
       {
         "title": "UPDATE",
         "body": "UPDATE изменяет значения существующих строк. SET задаёт новые значения столбцов, а WHERE определяет, какие строки будут затронуты. Если WHERE отсутствует, PostgreSQL обновит все строки таблицы.\n\nВ SET можно использовать старые значения строки: например, price = price * 1.05 увеличит цену на 5%. Можно обновлять несколько столбцов одновременно. Условие WHERE нужно проверить отдельно до запуска, особенно в рабочей базе.\n\nRETURNING позволяет получить изменённые строки прямо из UPDATE. Для безопасной проверки в транзакционной среде можно начать BEGIN, выполнить UPDATE с RETURNING, проверить результат и завершить COMMIT или ROLLBACK.",
-        "example": "UPDATE products\nSET price = price * 1.05\nWHERE category = 'coffee'\nRETURNING product_id, price;",
+        "example": "UPDATE products\nSET price = price * 1.05\nWHERE product_id = 1\nRETURNING product_id, price;",
         "note": "Перед UPDATE выполни SELECT с тем же WHERE и проверь число строк. Не запускай изменение наугад.",
         "simple": "UPDATE меняет строки. Самая опасная часть — неверное или отсутствующее WHERE.",
         "practiceIds": [
@@ -6625,7 +6625,7 @@ export const modules = [
       {
         "title": "DELETE и TRUNCATE",
         "body": "DELETE удаляет строки, удовлетворяющие WHERE. Без WHERE будут удалены все строки таблицы, но сама таблица и её структура останутся. TRUNCATE быстро очищает таблицу целиком и имеет особенности блокировок, триггеров и последовательностей.\n\nDELETE можно ограничить условием и получить удалённые строки через RETURNING. TRUNCATE не принимает обычный WHERE. Внешние ключи могут запретить очистку или потребовать CASCADE, если явно разрешено удалить связанные данные.\n\nУдаление данных необратимо без транзакции, резервной копии или другого механизма восстановления. Перед DELETE сначала выполни SELECT с тем же условием и проверь выборку.",
-        "example": "DELETE FROM orders\nWHERE status = 'cancelled'\n  AND created_at < DATE '2025-01-01'\nRETURNING order_id;",
+        "example": "DELETE FROM orders\nWHERE status = 'cancelled'\n  AND created_at < DATE '2026-01-13'\nRETURNING order_id;",
         "note": "Не путай DELETE без WHERE и DROP TABLE: первое удаляет строки, второе удаляет сам объект таблицы.",
         "simple": "DELETE удаляет выбранные строки, TRUNCATE очищает таблицу целиком.",
         "practiceIds": [
@@ -6653,7 +6653,7 @@ export const modules = [
       {
         "title": "RETURNING",
         "body": "RETURNING позволяет получить значения строк, которые были затронуты INSERT, UPDATE или DELETE. Это полезно, когда после изменения нужно узнать сгенерированный ID или проверить новое состояние.\n\nВ INSERT RETURNING часто используют для получения ID, созданных DEFAULT или IDENTITY. В UPDATE можно увидеть обновлённые значения, а в DELETE — данные удалённых строк. Возвращаемые значения не требуют отдельного SELECT после изменения.\n\nRETURNING не делает изменение безопасным само по себе. Он только показывает, какие строки затронуты. Для контроля используй точное условие и транзакцию там, где это уместно.",
-        "example": "INSERT INTO customers (customer_id, customer_name, city, registered_at)\nVALUES (999, 'Anna Petrova', 'Warsaw', DATE '2026-11-07')\nRETURNING customer_id, customer_name;",
+        "example": "UPDATE customers\nSET city = 'Krakow'\nWHERE customer_id = 9\nRETURNING customer_id, customer_name, city;",
         "note": "Если UPDATE или DELETE вернул неожиданное число строк, не подтверждай транзакцию до выяснения причины.",
         "simple": "RETURNING возвращает строки, затронутые изменяющей командой.",
         "practiceIds": [],
@@ -6822,8 +6822,8 @@ export const modules = [
       },
       {
         "title": "ACID",
-        "body": "ACID описывает свойства надёжной транзакционной обработки. Atomicity означает «всё или ничего». Consistency — переход из одного допустимого состояния базы в другое при соблюдении ограничений. Isolation — контроль взаимодействия параллельных транзакций. Durability — сохранность подтверждённых изменений при сбое в рамках гарантий СУБД.\n\nACID не означает, что любая бизнес-логика автоматически корректна. Если запрос неверно посчитал сумму и успешно закоммитился, база надёжно сохранит неправильный результат. Ограничения и проверки приложения должны обеспечивать смысловую корректность.\n\nИзоляция не всегда означает полную последовательность транзакций. Разные уровни изоляции допускают разные эффекты параллельного выполнения.",
-        "example": "BEGIN;\nUPDATE inventory\nSET quantity = quantity - 1\nWHERE product_id = 10 AND quantity > 0;\nCOMMIT;",
+        "body": "ACID описывает свойства надёжной транзакционной обработки. Atomicity означает «всё или ничего». Consistency — переход из одного допустимого состояния базы в другое при соблюдении ограничений. Isolation — контроль взаимодействия параллельных транзакций. Durability — сохранность подтверждённых изменений при сбое в рамках гарантий СУБД.\n\nACID не означает, что любая бизнес-логика автоматически корректна. Если запрос неверно посчитал сумму и успешно закоммитился, база надёжно сохранит неправильный результат. Ограничения и проверки приложения должны обеспечивать смысловую корректность.\n\nИзоляция не всегда означает полную последовательность транзакций. Разные уровни изоляции допускают разные эффекты параллельного выполнения.\n\nACID защищает выполнение транзакции, но не проверяет, правильно ли аналитик выбрал строки и формулу. Успешно зафиксированный неверный UPDATE остаётся неверным бизнес-результатом.",
+        "example": "BEGIN;\nCREATE TEMP TABLE accounts (\n  account_id integer PRIMARY KEY,\n  balance numeric(12,2) NOT NULL CHECK (balance >= 0)\n);\nINSERT INTO accounts VALUES (1, 1000), (2, 500);\nUPDATE accounts SET balance = balance - 100 WHERE account_id = 1;\nUPDATE accounts SET balance = balance + 100 WHERE account_id = 2;\nCOMMIT;\nSELECT account_id, balance FROM accounts ORDER BY account_id;",
         "note": "ACID не спасает от логически ошибочного SQL. Проверяй условия и инварианты отдельно.",
         "simple": "ACID описывает надёжность выполнения транзакций, а не правильность бизнес-формулы в запросе.",
         "practiceIds": [],
@@ -6913,7 +6913,7 @@ export const modules = [
       {
         "title": "SAVEPOINT и частичный откат",
         "body": "SAVEPOINT создаёт точку внутри транзакции, к которой можно откатиться, не отменяя всю транзакцию. ROLLBACK TO SAVEPOINT отменяет команды после точки, а RELEASE SAVEPOINT удаляет саму точку.\n\nЭто полезно, когда часть операции можно отменить, а остальные изменения сохранить. Например, пакетная обработка может попытаться вставить необязательную запись, обработать конфликт и продолжить работу.\n\nSAVEPOINT не заменяет общую транзакционную стратегию. Если ошибка нарушила бизнес-инвариант всей операции, лучше откатить транзакцию полностью. После ROLLBACK TO SAVEPOINT транзакция остаётся активной.",
-        "example": "BEGIN;\nUPDATE orders SET status = 'processing' WHERE order_id = 10;\nSAVEPOINT optional_step;\nINSERT INTO order_notes (order_id, note)\nVALUES (10, 'Автоматическая пометка');\nROLLBACK TO SAVEPOINT optional_step;\nCOMMIT;",
+        "example": "CREATE TEMP TABLE order_notes (\n  order_id BIGINT REFERENCES orders(order_id),\n  note TEXT\n);\n\nBEGIN;\nUPDATE orders SET status = 'processing' WHERE order_id = 101;\nSAVEPOINT optional_step;\nINSERT INTO order_notes (order_id, note)\nVALUES (101, 'Автоматическая пометка');\nROLLBACK TO SAVEPOINT optional_step;\nCOMMIT;",
         "note": "ROLLBACK TO SAVEPOINT не завершает всю транзакцию. После него можно продолжить работу и выполнить COMMIT.",
         "simple": "SAVEPOINT — промежуточная точка отката внутри одной транзакции.",
         "practiceIds": [
@@ -6968,7 +6968,7 @@ export const modules = [
         "title": "SERIALIZABLE и повтор транзакции",
         "body": "SERIALIZABLE — самый строгий стандартный уровень изоляции PostgreSQL. Он допускает параллельное выполнение, но отслеживает зависимости так, чтобы успешный результат был эквивалентен некоторому последовательному порядку транзакций.\n\nЕсли обнаружен конфликт сериализации, PostgreSQL отменяет одну транзакцию с SQLSTATE 40001. Это ожидаемая часть работы уровня SERIALIZABLE, а не обязательно признак ошибки данных. Приложение должно повторить всю транзакцию целиком, а не только последнюю команду.\n\nПовтор безопасен только если операция не вызвала необратимые внешние эффекты до фиксации: например, не отправила письмо или не списала деньги через сторонний сервис. Такие действия требуют отдельной архитектуры, например transactional outbox.",
         "simple": "SERIALIZABLE обеспечивает последовательную семантику, но приложение должно уметь повторять транзакции после конфликта.",
-        "example": "BEGIN ISOLATION LEVEL SERIALIZABLE;\nUPDATE inventory\nSET quantity = quantity - 1\nWHERE product_id = 10 AND quantity > 0;\nCOMMIT;",
+        "example": "BEGIN ISOLATION LEVEL SERIALIZABLE;\nUPDATE products\nSET price = price * 1.05\nWHERE product_id = 1;\nCOMMIT;",
         "note": "При SQLSTATE 40001 повторяй всю транзакцию с самого начала и учитывай внешние побочные эффекты.",
         "practiceIds": [],
         "outcomes": [
