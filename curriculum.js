@@ -1931,8 +1931,7 @@ export const modules = [
         "note": "Перед GROUP BY сформулируй зерно результата одним предложением: «одна строка — это ...».",
         "simple": "GROUP BY задаёт, что означает одна строка результата после агрегации.",
         "practiceIds": [
-          "e19",
-          "e49"
+          "e19"
         ],
         "outcomes": [
           "Выбирать зерно группировки",
@@ -2038,7 +2037,8 @@ export const modules = [
         "note": "NULL в строке ROLLUP может означать итоговую строку, а не отсутствующее значение в исходной записи.",
         "simple": "ROLLUP строит иерархические итоги, CUBE — все комбинации, GROUPING SETS — выбранные наборы.",
         "practiceIds": [
-          "e51"
+          "e51",
+          "e57"
         ],
         "outcomes": [
           "Объяснить уровни итогов",
@@ -2064,9 +2064,7 @@ export const modules = [
         "simple": "Перед расчётом выясни зерно каждой таблицы и зерно результата после JOIN. Метрика должна считаться на своём уровне.",
         "example": "-- Сначала одна строка на заказ:\nWITH order_totals AS (\n  SELECT order_id, MAX(order_total) AS order_total\n  FROM order_items\n  GROUP BY order_id\n)\nSELECT SUM(order_total) AS revenue\nFROM order_totals;",
         "note": "Не суммируй метрику заказа после соединения с позициями без проверки размножения. DISTINCT по сумме может удалить реальные заказы.",
-        "practiceIds": [
-          "e57"
-        ],
+        "practiceIds": [],
         "outcomes": [
           "Определять зерно таблиц и результата",
           "выбирать безопасный уровень агрегации для метрики."
@@ -2230,7 +2228,8 @@ export const modules = [
         "simple": "Каждый JOIN должен иметь понятную цель: какие атрибуты добавляет и как меняет число строк.",
         "practiceIds": [
           "e24",
-          "e26"
+          "e26",
+          "e49"
         ],
         "outcomes": [
           "Построить цепочку из нескольких JOIN",
@@ -5617,7 +5616,7 @@ export const exercises = [
   {
     "id": "e49",
     "mode": "select",
-    "m": "aggregates",
+    "m": "joins",
     "title": "Средний чек по городу магазина",
     "task": "Посчитай среднюю сумму заказа по городу магазина. Выведи city и average_amount.",
     "solution": "SELECT s.city, AVG(o.total_amount) AS average_amount FROM stores s JOIN orders o ON o.store_id = s.store_id GROUP BY s.city;"
@@ -5772,8 +5771,8 @@ export const exercises = [
     "id": "e67",
     "m": "inserts",
     "title": "INSERT ... SELECT",
-    "task": "Скопируй товары категории 'Техника' в новую временную таблицу practice_products, сохранив product_id, product_name и price. Таблица должна быть создана командой CREATE TEMP TABLE ... AS SELECT. Проверка сравнит содержимое.",
-    "solution": "CREATE TEMP TABLE practice_products AS SELECT product_id, product_name, price FROM products WHERE category = 'Техника';",
+    "task": "Создай временную таблицу practice_products с полями product_id, product_name и price, затем заполни её товарами категории 'Техника' командой INSERT ... SELECT. Проверка сравнит содержимое.",
+    "solution": "CREATE TEMP TABLE practice_products (product_id BIGINT, product_name TEXT, price NUMERIC(10, 2));\nINSERT INTO practice_products (product_id, product_name, price)\nSELECT product_id, product_name, price\nFROM products\nWHERE category = 'Техника';",
     "mode": "mutation",
     "checkQuery": "SELECT product_id, product_name, price FROM practice_products ORDER BY product_id;"
   },
