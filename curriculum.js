@@ -1363,7 +1363,7 @@ export const modules = [
       {
         "title": "NULLS FIRST и NULLS LAST",
         "body": "NULLS FIRST и NULLS LAST задают, где разместить строки с NULL при сортировке. В PostgreSQL по умолчанию NULL располагается первым при DESC и последним при ASC. Это может быть неочевидно, если сортируешь дату последнего события или необязательную сумму.\n\nЯвное указание NULLS LAST или NULLS FIRST делает намерение понятным и независимым от того, помнит ли читатель настройки по умолчанию. Например, при сортировке зарплаты по убыванию неизвестные значения часто логично отправить в конец.\n\nNULL не равен нулю и не является минимальным числом. Его позиция при сортировке — отдельное правило, которое можно задать явно.",
-        "example": "SELECT employee_id, salary\nFROM employees\nORDER BY salary DESC NULLS LAST;",
+        "example": "SELECT order_id, employee_id\nFROM orders\nORDER BY employee_id ASC NULLS LAST;",
         "note": "Не делай вывод, что NULL всегда в конце: положение зависит от направления сортировки и явной настройки.",
         "simple": "NULLS LAST/FIRST управляет местом отсутствующих значений в отсортированном результате.",
         "practiceIds": [],
