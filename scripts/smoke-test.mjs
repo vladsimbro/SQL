@@ -153,6 +153,9 @@ assert.ok(relationalModule.lessons.find(lesson => lesson.title === 'Внешни
 assert.ok(relationalModule.lessons.find(lesson => lesson.title === 'NULL и неизвестное значение').body.includes('NOT IN'), 'NULL lesson must explain the NOT IN and NULL trap');
 const typesModule = modules.find(module => module.id === 'types');
 assert.ok(typesModule.lessons.find(lesson => lesson.title === 'Выбор типа даты и времени').body.includes('TIMESTAMPTZ') && typesModule.lessons.find(lesson => lesson.title === 'Выбор типа даты и времени').body.includes('модуле временной аналитики'), 'Date/time type lesson must introduce the types and defer session timezone mechanics to the dedicated module');
+assert.ok(relationalModule.lessons.find(lesson => lesson.title === 'Таблица, строка и столбец').body.includes('created_at — DATE'), 'Introductory table example must match the DATE type in the teaching schema');
+assert.deepEqual(typesModule.lessons.find(lesson => lesson.title === 'Числовые типы').exampleResult.rows, [['0.3','0.30000000000000004']], 'Numeric types example must contrast exact and approximate decimal arithmetic');
+assert.deepEqual(typesModule.lessons.find(lesson => lesson.title === 'Преобразование типов').exampleResult.rows, [['251.00','3','3.5000000000000000']], 'Type conversion example must show integer versus decimal division');
 const datetimeQualityModule = modules.find(module => module.id === 'datetime');
 assert.ok(datetimeQualityModule.lessons.find(lesson => lesson.title === 'Часовые пояса и AT TIME ZONE').example.includes('Europe/Warsaw'), 'Timezone lesson must execute both AT TIME ZONE directions');
 assert.equal(datetimeQualityModule.lessons.find(lesson => lesson.title === 'Генерация календаря и пропущенные периоды').exampleResult.rows.at(-1)[1], 0, 'Calendar example must show a day without events');
@@ -164,7 +167,7 @@ assert.equal(analyticsQualityModule.lessons.find(lesson => lesson.title === 'С�
 const selectModule = modules.find(module => module.id === 'select');
 assert.ok(selectModule.lessons.find(lesson => lesson.title === 'DISTINCT ON в PostgreSQL').example.includes('order_id DESC'), 'DISTINCT ON must define a deterministic tie-breaker');
 const sortingModule = modules.find(module => module.id === 'sorting');
-assert.ok(sortingModule.lessons.find(lesson => lesson.title === 'Keyset pagination').example.includes("DATE '2026-01-12'"), 'Keyset example must use a timestamp literal matching the sample column type');
+assert.ok(sortingModule.lessons.find(lesson => lesson.title === 'Keyset pagination').example.includes("DATE '2026-01-12'"), 'Keyset example must use a DATE literal matching the sample column type');
 assert.ok(!modules.find(module => module.id === 'anatomy').lessons.find(lesson => lesson.title === 'Логический порядок обработки').example.includes('--'), 'Logical query-order example must not duplicate the explanation with SQL comments');
 const selectQualityModule = modules.find(module => module.id === 'select');
 assert.equal(selectQualityModule.lessons.find(lesson => lesson.title === 'DISTINCT ON в PostgreSQL').exampleResult.rows.length, 4, 'DISTINCT ON example must return one latest order per customer with deterministic tie-breaking');
@@ -184,6 +187,13 @@ assert.ok(cteModule.lessons.find(lesson => lesson.title === 'Материали�
 const setOperationsModule = modules.find(module => module.id === 'setops');
 assert.equal(setOperationsModule.lessons.find(lesson => lesson.title === 'UNION и UNION ALL').exampleResult.rows.length, 8, 'UNION ALL example must retain duplicate customer IDs');
 assert.equal(setOperationsModule.lessons.find(lesson => lesson.title === 'INTERSECT').exampleResult.rows.length, 1, 'INTERSECT example must show only the common customer set');
+const foundationsQualityModule = modules.find(module => module.id === 'foundations');
+assert.ok(!foundationsQualityModule.lessons.find(lesson => lesson.title === 'Клиент, сервер и запрос').example.includes('psql'), 'The browser SQL example must not mix terminal connection commands with executable SQL');
+assert.equal(foundationsQualityModule.lessons.find(lesson => lesson.title === 'Диалекты SQL и стандарт').exampleResult.rows.length, 1, 'Dialect example must match a customer in the teaching dataset');
+const anatomyQualityModule = modules.find(module => module.id === 'anatomy');
+assert.equal(anatomyQualityModule.lessons.find(lesson => lesson.title === 'Анатомия SELECT').exampleResult.rows.length, 5, 'SELECT anatomy example must show the five highest delivered orders');
+assert.equal(anatomyQualityModule.lessons.find(lesson => lesson.title === 'Логический порядок обработки').exampleResult.rows.length, 2, 'Logical query order example must return the qualifying delivered cities');
+assert.ok(anatomyQualityModule.lessons.find(lesson => lesson.title === 'Логический порядок обработки').example.includes("status = 'delivered'"), 'Logical order example must use statuses present in the teaching dataset');
 const aggregateModule = modules.find(module => module.id === 'aggregates');
 assert.ok(aggregateModule.lessons.find(lesson => lesson.title === 'Агрегатные функции').body.includes('COUNT(DISTINCT employee_id)'), 'Aggregate lesson must distinguish row, non-null and distinct-value counts');
 assert.ok(aggregateModule.lessons.find(lesson => lesson.title === 'GROUP BY и зерно результата').body.includes('COUNT(o.order_id)'), 'GROUP BY lesson must explain COUNT(*) versus COUNT(right_key) after LEFT JOIN');
