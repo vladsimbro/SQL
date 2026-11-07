@@ -5476,7 +5476,19 @@ export const modules = [
           "result": "Медиана описывает середину, а P90 помогает понять опыт клиентов в медленной части распределения.",
           "pitfall": "P90 не означает, что 90% доставок занимают ровно столько минут. Это порог распределения."
         },
-        "id": "analytics.mediana-i-pertsentili"
+        "id": "analytics.mediana-i-pertsentili",
+        "exampleResult": {
+          "columns": [
+            "median_minutes",
+            "p90_minutes"
+          ],
+          "rows": [
+            [
+              300,
+              444
+            ]
+          ]
+        }
       },
       {
         "title": "Скользящие метрики по времени",
