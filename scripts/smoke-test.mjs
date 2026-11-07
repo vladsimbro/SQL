@@ -225,7 +225,7 @@ assert.equal(subqueryModule.lessons.find(lesson => lesson.title === 'Корре�
 assert.ok(subqueryModule.lessons.find(lesson => lesson.title === 'ANY и ALL: сравнение с набором значений').example.includes("category = 'Посуда'"), 'ALL example must compare against a non-empty teaching dataset');
 const cteModule = modules.find(module => module.id === 'cte');
 assert.equal(cteModule.lessons.find(lesson => lesson.title === 'Рекурсивный WITH').exampleResult.rows.length, 5, 'Recursive CTE example must show its stopping condition');
-const multiCteLesson = cteModule.lessons.find(lesson => lesson.title === 'Несколько CTE и цепочка преобразований');
+const multiCteLesson = cteModule.lessons.find(lesson => lesson.title === 'От фильтрации к выручке магазина');
 assert.ok(multiCteLesson.example.includes('FROM filtered_orders') && multiCteLesson.example.includes('GROUP BY store_id'), 'Multi-CTE lesson must demonstrate a real dependency from filtering to aggregation');
 assert.deepEqual(multiCteLesson.exampleResult.rows, [['Центральный','Москва',3,6340],['Волжский','Казань',2,2900],['Уральский','Пермь',1,1500]], 'CTE chain must preserve the delivered-order filter and aggregate to one row per store');
 assert.ok(cteModule.lessons.find(lesson => lesson.title === 'Материализация и оптимизация CTE').example.includes('NOT MATERIALIZED'), 'CTE optimization lesson must demonstrate PostgreSQL materialization control');
