@@ -59,15 +59,18 @@ assert.ok(modules.every(module => module.lessons.every(lesson => !lesson.walkthr
 const explanationStart = appSource.indexOf('function lessonFocusTokens');
 const explanationEnd = appSource.indexOf('function renderWorkedExample', explanationStart);
 const explanationCode = appSource.slice(explanationStart, explanationEnd);
-const escapeHtml = value => String(value ?? '').replace(/[&<>\"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#39;'}[ch]));
-const explanationApi = new Function('esc','sqlTokenTips', explanationCode + '; return { lessonFocusTokens, renderAnnotatedSql, renderExampleBreakdown };')(escapeHtml, {});
+const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+const explanationApi = new Function('esc','sqlTokenTips', explanationCode + '; return { lessonFocusTokens, renderAnnotatedSql, renderExampleBreakdown };')(escapeHtml, {
+  JOIN:'Joins tables.', LEFT:'Keeps all rows from the left side.', ON:'Defines the join condition.',
+  SELECT:'Selects output columns.', FROM:'Defines the source.', WHERE:'Filters rows.'
+});
 const joinLesson = { title: 'INNER JOIN и LEFT JOIN', simple: 'Соединение таблиц по ключам.' };
-const joinHtml = explanationApi.renderAnnotatedSql(\"SELECT o.id FROM orders o LEFT JOIN customers c ON c.id = o.customer_id WHERE o.id = 7 -- note\", joinLesson);
+const joinHtml = explanationApi.renderAnnotatedSql("SELECT o.id FROM orders o LEFT JOIN customers c ON c.id = o.customer_id WHERE o.id = 7 -- note", joinLesson);
 assert.ok(joinHtml.includes('data-tip=') && joinHtml.includes('>LEFT</span>') && joinHtml.includes('>JOIN</span>') && joinHtml.includes('>ON</span>'), 'JOIN topic should highlight only relevant join syntax');
 assert.ok(!joinHtml.includes('>SELECT</span>') && !joinHtml.includes('>FROM</span>') && !joinHtml.includes('>orders</span>') && !joinHtml.includes('>7</span>') && !joinHtml.includes('>note</span>'), 'Unrelated clauses, identifiers, numbers and comments must not be highlighted');
-const neutralHtml = explanationApi.renderAnnotatedSql(\"SELECT 'COUNT(*)' AS label, 12 FROM orders -- comment\", { title: 'Клиент и сервер' });
+const neutralHtml = explanationApi.renderAnnotatedSql("SELECT 'COUNT(*)' AS label, 12 FROM orders -- comment", { title: 'Клиент и сервер' });
 assert.ok(!neutralHtml.includes('data-tip='), 'Unrelated lessons must not highlight generic SQL tokens or literals');
-const breakdown = explanationApi.renderExampleBreakdown(\"SELECT o.id\\nFROM orders o\\nLEFT JOIN customers c\\nON c.id = o.customer_id\\nWHERE o.id = 7\\n-- comment\", joinLesson);
+const breakdown = explanationApi.renderExampleBreakdown("SELECT o.id\nFROM orders o\nLEFT JOIN customers c\nON c.id = o.customer_id\nWHERE o.id = 7\n-- comment", joinLesson);
 assert.ok(breakdown.includes('Ключевые части запроса') && breakdown.includes('LEFT JOIN') && breakdown.includes('Задаёт ключ сопоставления таблиц.'));
 assert.ok(!breakdown.includes('SELECT o.id') && !breakdown.includes('WHERE o.id') && !breakdown.includes('-- comment') && !breakdown.includes('Эта строка уточняет'), 'Breakdown must omit unrelated clauses, comments and generic filler');
 assert.ok(appSource.includes('function renderWorkedExample') && appSource.includes('renderWorkedExample(l.walkthrough)'), 'Worked lesson scenarios must be rendered in the lesson page');
