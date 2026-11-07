@@ -84,6 +84,9 @@ assert.ok(cssSource.includes(':root.light .CodeMirror') && cssSource.includes(':
 
 const ids = new Set(modules.map(module => module.id));
 assert.equal(modules.reduce((sum, module) => sum + module.lessons.length, 0), 173, 'Expected 173 lessons');
+assert.equal(modules.filter(module=>module.track==='core').reduce((sum,module)=>sum+module.lessons.length,0),112,'Expected 112 lessons in the core analyst route');
+assert.equal(modules.filter(module=>module.track==='postgresql').reduce((sum,module)=>sum+module.lessons.length,0),61,'Expected 61 lessons in the optional PostgreSQL route');
+assert.ok(appSource.includes("const core=moduleLessons('core')")&&appSource.includes('const trackModules=moduleLessons(m.track)'), 'Continue and lesson navigation must stay inside the selected learning route');
 assert.equal(glossary.length, 72, 'Expected 72 glossary terms');
 assert.equal(reference.length, 13, 'Expected 13 reference groups');
 const normalizeStart = appSource.indexOf('function normalizeResult');
