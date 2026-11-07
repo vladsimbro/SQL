@@ -238,7 +238,8 @@ export const modules = [
               "shipped"
             ]
           ]
-        }
+        },
+        "tipTokens": []
       },
       {
         "title": "База данных, схема и таблица: уровни организации",
@@ -414,7 +415,7 @@ export const modules = [
       {
         "title": "NULL и неизвестное значение",
         "body": "NULL обозначает отсутствие значения: оно неизвестно, не задано или неприменимо. NULL — не число 0, не пустая строка и не слово 'NULL'. Эти значения имеют разный смысл.\n\nГлавная ловушка: обычное сравнение с NULL не даёт TRUE или FALSE. Например, employee_id = NULL возвращает UNKNOWN. Поэтому WHERE employee_id = NULL не найдёт строки. Для проверки используй IS NULL или IS NOT NULL.\n\nSQL использует трёхзначную логику: TRUE, FALSE и UNKNOWN. WHERE оставляет только строки, для которых условие TRUE. Поэтому UNKNOWN тоже отбрасывается. Агрегаты вроде SUM и AVG обычно пропускают NULL, а COUNT(*) считает строки независимо от значений столбцов.\n\nUNKNOWN распространяется через логические операторы не так, как TRUE или FALSE. Например, TRUE AND UNKNOWN даёт UNKNOWN, FALSE AND UNKNOWN даёт FALSE, а NOT UNKNOWN остаётся UNKNOWN. Поэтому условие в WHERE может не пройти фильтр, даже если оно не оказалось FALSE.\n\nОсобенно осторожно используй NOT IN, если подзапрос способен вернуть NULL: сравнение с таким набором может дать UNKNOWN и неожиданно убрать строки. Для проверки отсутствия совпадений часто надёжнее NOT EXISTS. Если нужно сравнить два значения так, чтобы NULL считался сопоставимым состоянием, в PostgreSQL есть IS DISTINCT FROM и IS NOT DISTINCT FROM.",
-        "example": "SELECT order_id\nFROM orders\nWHERE employee_id IS NULL;\n\n-- Сколько строк и сколько заполненных employee_id:\nSELECT COUNT(*) AS all_rows,\n       COUNT(employee_id) AS known_employee_ids\nFROM orders;\n\n-- UNKNOWN в логических выражениях\nSELECT TRUE AND NULL AS true_and_unknown,\n       FALSE AND NULL AS false_and_unknown,\n       NOT NULL AS not_unknown;\n\n-- NULL-безопасное сравнение\nSELECT NULL IS DISTINCT FROM NULL AS are_different; -- FALSE",
+        "example": "SELECT COUNT(*)::int AS all_orders,\n       COUNT(employee_id)::int AS orders_with_employee,\n       COUNT(*) FILTER (WHERE employee_id IS NULL)::int AS unassigned_orders\nFROM orders;",
         "note": "NULL не равен самому себе через =. Используй IS NULL, а для NULL-безопасного сравнения — IS [NOT] DISTINCT FROM. Осторожно с NOT IN и наборами, содержащими NULL.",
         "simple": "NULL означает «значение отсутствует или неизвестно». Для проверки есть IS NULL, а не = NULL.",
         "practiceIds": [
@@ -450,7 +451,26 @@ export const modules = [
           "result": "Условие employee_id IS NULL найдёт все заказы без назначенного сотрудника.",
           "pitfall": "NOT IN тоже может вести себя неожиданно, если подзапрос возвращает NULL. Для антисоединения часто безопаснее NOT EXISTS."
         },
-        "id": "relational.null-i-neizvestnoe-znachenie"
+        "id": "relational.null-i-neizvestnoe-znachenie",
+        "exampleResult": {
+          "columns": [
+            "all_orders",
+            "orders_with_employee",
+            "unassigned_orders"
+          ],
+          "rows": [
+            [
+              12,
+              10,
+              2
+            ]
+          ]
+        },
+        "tipTokens": [
+          "COUNT",
+          "FILTER",
+          "NULL"
+        ]
       },
       {
         "title": "Нормализация и дублирование",
@@ -1003,7 +1023,8 @@ export const modules = [
               "cancelled"
             ]
           ]
-        }
+        },
+        "tipTokens": []
       },
       {
         "title": "Выражения в списке SELECT",
@@ -1093,7 +1114,10 @@ export const modules = [
               "Санкт-Петербург"
             ]
           ]
-        }
+        },
+        "tipTokens": [
+          "DISTINCT"
+        ]
       },
       {
         "title": "DISTINCT ON в PostgreSQL",
@@ -1268,7 +1292,11 @@ export const modules = [
               "Казань"
             ]
           ]
-        }
+        },
+        "tipTokens": [
+          "AND",
+          "OR"
+        ]
       },
       {
         "title": "IN, BETWEEN и диапазоны",
@@ -1340,7 +1368,11 @@ export const modules = [
               "shipped"
             ]
           ]
-        }
+        },
+        "tipTokens": [
+          "IN",
+          "BETWEEN"
+        ]
       },
       {
         "title": "LIKE, ILIKE и шаблоны",
@@ -1378,7 +1410,10 @@ export const modules = [
               "Мария"
             ]
           ]
-        }
+        },
+        "tipTokens": [
+          "ILIKE"
+        ]
       },
       {
         "title": "Фильтрация дат и времени",
@@ -2023,7 +2058,7 @@ export const modules = [
       {
         "title": "Агрегатные функции",
         "body": "Агрегатная функция получает набор строк и возвращает одно значение. COUNT считает строки или непустые значения, SUM складывает числа, AVG вычисляет среднее, MIN и MAX находят границы.\n\nБез GROUP BY агрегат обычно сворачивает весь набор входных строк в одну строку результата. Если таблица пуста, COUNT(*) вернёт 0, а SUM и AVG вернут NULL. COUNT(*) считает строки независимо от NULL в столбцах; COUNT(amount) считает только строки, где amount не NULL.\n\nАгрегаты работают с тем набором строк, который остался после FROM, JOIN и WHERE. Поэтому если JOIN размножил строки, SUM может посчитать одну сумму несколько раз. Перед агрегацией всегда понимай, что представляет одна входная строка.",
-        "example": "SELECT COUNT(*) AS order_rows,\n       COUNT(employee_id) AS assigned_orders,\n       SUM(total_amount) AS revenue,\n       AVG(total_amount) AS average_order\nFROM orders;",
+        "example": "SELECT COUNT(*)::int AS order_rows,\n       COUNT(employee_id)::int AS assigned_orders,\n       SUM(total_amount)::int AS total_revenue,\n       AVG(total_amount)::int AS average_order\nFROM orders;",
         "note": "SUM и AVG игнорируют NULL, а COUNT(*) считает строки. Пустой набор и набор из NULL — не одно и то же.",
         "simple": "Агрегат сворачивает много строк в одно итоговое значение. COUNT(*) считает строки, COUNT(column) — только заполненные значения.",
         "practiceIds": [
@@ -2048,12 +2083,33 @@ export const modules = [
             "explanation": "COUNT(*) считает все строки, а COUNT(amount) пропускает две строки, где amount равен NULL."
           }
         ],
-        "id": "aggregates.agregatnye-funktsii"
+        "id": "aggregates.agregatnye-funktsii",
+        "exampleResult": {
+          "columns": [
+            "order_rows",
+            "assigned_orders",
+            "total_revenue",
+            "average_order"
+          ],
+          "rows": [
+            [
+              12,
+              10,
+              21390,
+              1782
+            ]
+          ]
+        },
+        "tipTokens": [
+          "COUNT",
+          "SUM",
+          "AVG"
+        ]
       },
       {
         "title": "GROUP BY и зерно результата",
         "body": "GROUP BY меняет уровень детализации результата. До группировки одна строка обычно представляет отдельный заказ. После GROUP BY city одна строка представляет уже город, а не заказ. Это и есть зерно результата: точное описание того, что означает одна строка.\n\nАгрегатные функции работают внутри каждой группы. COUNT(*) считает строки группы, SUM(total_amount) складывает суммы, AVG(total_amount) считает среднее. Если сгруппировать по city и status, групп будет больше: одна на каждую встреченную комбинацию города и статуса.\n\nПример: нужно получить число заказов и выручку по каждому городу. PostgreSQL распределяет строки orders по значениям city, затем считает показатели отдельно для каждой группы. Если в городе пять заказов, в итоговой таблице будет одна строка с count = 5 и суммой этих пяти заказов.\n\nЛюбое поле в SELECT после группировки должно быть либо частью ключа группировки, либо аргументом агрегатной функции, либо выражением, которое однозначно зависит от ключа и допускается PostgreSQL. Иначе непонятно, какое из нескольких значений строки группы показывать.\n\nПеред написанием GROUP BY сформулируй фразу «одна строка результата = ...». Если ответ звучит как «один город», группируй по городу. Если «один город и месяц», нужны оба измерения. Это простой способ не потерять смысл метрики.",
-        "example": "SELECT s.city,\n       COUNT(*) AS orders_count,\n       SUM(o.total_amount) AS revenue\nFROM orders AS o\nJOIN stores AS s ON s.store_id = o.store_id\nGROUP BY s.city\nORDER BY s.city;",
+        "example": "SELECT s.city,\n       COUNT(o.order_id)::int AS orders_count,\n       COALESCE(SUM(o.total_amount), 0)::int AS revenue\nFROM stores AS s\nLEFT JOIN orders AS o ON o.store_id = s.store_id\nGROUP BY s.city\nORDER BY s.city;",
         "note": "Перед GROUP BY сформулируй зерно результата одним предложением: «одна строка — это ...».",
         "simple": "GROUP BY не просто собирает похожие строки. Он меняет зерно результата: вместо отдельных заказов ты получаешь группы, например по одному городу.",
         "practiceIds": [
@@ -2088,12 +2144,50 @@ export const modules = [
           "result": "Итог содержит две строки, по одной на город. Общее число строк результата равно числу различных значений city, а не числу заказов.",
           "pitfall": "Если добавить order_id в GROUP BY, зерно станет «один город и один заказ». Группировка перестанет сворачивать заказы до уровня города."
         },
-        "id": "aggregates.group-by-i-zerno-rezultata"
+        "id": "aggregates.group-by-i-zerno-rezultata",
+        "exampleResult": {
+          "columns": [
+            "city",
+            "orders_count",
+            "revenue"
+          ],
+          "rows": [
+            [
+              "Казань",
+              3,
+              6100
+            ],
+            [
+              "Москва",
+              3,
+              6340
+            ],
+            [
+              "Омск",
+              0,
+              0
+            ],
+            [
+              "Пермь",
+              3,
+              5000
+            ],
+            [
+              "Санкт-Петербург",
+              3,
+              3950
+            ]
+          ]
+        },
+        "tipTokens": [
+          "GROUP",
+          "BY"
+        ]
       },
       {
         "title": "HAVING против WHERE",
         "body": "WHERE и HAVING оба фильтруют данные, но делают это на разных уровнях. WHERE отбрасывает отдельные строки до группировки. HAVING отбрасывает уже сформированные группы после GROUP BY.\n\nДопустим, нужно посчитать выручку только по доставленным заказам и показать города, где таких заказов не меньше пяти. Условие status = 'delivered' относится к каждой записи заказа, поэтому оно находится в WHERE. Условие COUNT(*) >= 5 относится к результату группировки по городу, поэтому оно находится в HAVING.\n\nПорядок важен для смысла метрики. Если перенести статус в HAVING как часть агрегатного условия, придётся иначе формулировать агрегат. Если же поставить COUNT(*) в WHERE, PostgreSQL сообщит об ошибке: агрегат нельзя использовать в WHERE того же уровня запроса.\n\nНе переноси все фильтры в HAVING «потому что там агрегаты». Ранний фильтр в WHERE обычно уменьшает число строк, которые нужно группировать, и яснее выражает намерение. В HAVING оставляй условия, которые действительно проверяют группу: число строк, сумму, среднее или другие агрегаты.\n\nВ аналитике это различие особенно важно: фильтр по дате заказа и требование «показать магазины с выручкой больше 100 000» относятся к разным этапам.",
-        "example": "SELECT s.city,\n       COUNT(*) AS delivered_orders\nFROM orders AS o\nJOIN stores AS s ON s.store_id = o.store_id\nWHERE o.status = 'delivered'\nGROUP BY s.city\nHAVING COUNT(*) >= 2;",
+        "example": "SELECT s.city,\n       COUNT(*)::int AS delivered_orders\nFROM orders AS o\nJOIN stores AS s ON s.store_id = o.store_id\nWHERE o.status = 'delivered'\nGROUP BY s.city\nHAVING COUNT(*) >= 2\nORDER BY s.city;",
         "note": "Фильтр по статусу относится к строкам и стоит в WHERE. Фильтр по числу заказов относится к группе и стоит в HAVING.",
         "simple": "WHERE отвечает «какие исходные строки участвуют?», HAVING — «какие готовые группы оставить?»",
         "practiceIds": [
@@ -2128,12 +2222,34 @@ export const modules = [
           "result": "В результате останутся только города с пятью или более доставленными заказами. Количество считается после фильтра по статусу.",
           "pitfall": "Если сначала сгруппировать все статусы и использовать HAVING COUNT(*) >= 5, ты посчитаешь все заказы, а не только доставленные."
         },
-        "id": "aggregates.having-protiv-where"
+        "id": "aggregates.having-protiv-where",
+        "exampleResult": {
+          "columns": [
+            "city",
+            "delivered_orders"
+          ],
+          "rows": [
+            [
+              "Казань",
+              2
+            ],
+            [
+              "Москва",
+              3
+            ]
+          ]
+        },
+        "tipTokens": [
+          "WHERE",
+          "GROUP",
+          "BY",
+          "HAVING"
+        ]
       },
       {
         "title": "Условная агрегация и FILTER",
         "body": "Условная агрегация позволяет посчитать несколько метрик в одном проходе по группам. Конструкция SUM(CASE WHEN ... THEN 1 ELSE 0 END) считает строки, удовлетворяющие условию. В PostgreSQL для этого также есть FILTER (WHERE ...), который читается особенно ясно.\n\nНапример, можно получить общее количество заказов, число доставленных и число отменённых в одной строке на город. Важно понимать, что FILTER ограничивает входные строки только для конкретного агрегата, а не для всего запроса.\n\nЕсли ELSE 0 опустить в CASE, результат для неподходящих строк будет NULL. SUM всё равно пропустит эти NULL, но COUNT(expression) может вести себя иначе, чем ожидается. Явно указывай ELSE, когда нужен понятный счётчик.",
-        "example": "SELECT s.city,\n       COUNT(*) AS all_orders,\n       COUNT(*) FILTER (WHERE o.status = 'delivered') AS delivered_orders,\n       SUM(o.total_amount) FILTER (WHERE o.status = 'delivered') AS delivered_revenue\nFROM orders AS o\nJOIN stores AS s ON s.store_id = o.store_id\nGROUP BY s.city;",
+        "example": "SELECT s.city,\n       COUNT(o.order_id)::int AS all_orders,\n       COUNT(o.order_id) FILTER (WHERE o.status = 'delivered')::int AS delivered_orders,\n       COALESCE(SUM(o.total_amount) FILTER (WHERE o.status = 'delivered'), 0)::int AS delivered_revenue\nFROM stores AS s\nLEFT JOIN orders AS o ON o.store_id = s.store_id\nGROUP BY s.city\nORDER BY s.city;",
         "note": "Не ставь общий WHERE status = 'delivered', если в том же результате нужен счётчик всех заказов.",
         "simple": "FILTER ограничивает строки для одного агрегата, не затрагивая остальные агрегаты в SELECT.",
         "practiceIds": [
@@ -2168,7 +2284,52 @@ export const modules = [
           "result": "Одна строка на магазин содержит общее число заказов и несколько отдельных счётчиков по статусам.",
           "pitfall": "Не ставь статус delivered в общий WHERE, если тебе одновременно нужно показать количество всех заказов."
         },
-        "id": "aggregates.uslovnaya-agregatsiya-i-filter"
+        "id": "aggregates.uslovnaya-agregatsiya-i-filter",
+        "exampleResult": {
+          "columns": [
+            "city",
+            "all_orders",
+            "delivered_orders",
+            "delivered_revenue"
+          ],
+          "rows": [
+            [
+              "Казань",
+              3,
+              2,
+              2900
+            ],
+            [
+              "Москва",
+              3,
+              3,
+              6340
+            ],
+            [
+              "Омск",
+              0,
+              0,
+              0
+            ],
+            [
+              "Пермь",
+              3,
+              1,
+              1500
+            ],
+            [
+              "Санкт-Петербург",
+              3,
+              0,
+              0
+            ]
+          ]
+        },
+        "tipTokens": [
+          "FILTER",
+          "COUNT",
+          "SUM"
+        ]
       },
       {
         "title": "DISTINCT внутри агрегатов",
@@ -2409,7 +2570,12 @@ export const modules = [
               null
             ]
           ]
-        }
+        },
+        "tipTokens": [
+          "LEFT",
+          "JOIN",
+          "ON"
+        ]
       },
       {
         "title": "FULL, CROSS и SELF JOIN",
@@ -2579,7 +2745,7 @@ export const modules = [
         "title": "Fan-out: почему JOIN умножает строки",
         "body": "Fan-out — ситуация, когда после нескольких соединений одна исходная строка превращается в несколько комбинаций.\n\nУ заказа может быть три позиции и два платежа. Если напрямую соединить обе таблицы деталей по order_id, для этого заказа получится до шести комбинаций: каждая позиция сочетается с каждым платежом. Сумма позиций и сумма платежей будут повторяться.\n\nБезопасный подход — сначала агрегировать каждый источник деталей до одной строки на заказ, а затем соединять подготовленные результаты. В примере item_totals и payment_totals имеют ровно одну строку на order_id, поэтому соединение не размножает метрики.",
         "simple": "Fan-out не ошибка SQL, а изменение числа строк. Ошибка — считать метрики, не учитывая новый уровень детализации.",
-        "example": "WITH item_totals AS (\n  SELECT order_id, SUM(quantity * unit_price) AS items_total\n  FROM order_items\n  GROUP BY order_id\n),\npayment_totals AS (\n  SELECT order_id, SUM(amount) AS paid_total\n  FROM payments\n  GROUP BY order_id\n)\nSELECT o.order_id, i.items_total, p.paid_total\nFROM orders AS o\nLEFT JOIN item_totals AS i USING (order_id)\nLEFT JOIN payment_totals AS p USING (order_id);",
+        "example": "WITH item_totals AS (\n  SELECT order_id, SUM(quantity * unit_price)::int AS items_total\n  FROM order_items\n  GROUP BY order_id\n),\npayment_totals AS (\n  SELECT order_id, SUM(amount)::int AS paid_total\n  FROM payments\n  GROUP BY order_id\n)\nSELECT o.order_id::int AS order_id, i.items_total, p.paid_total\nFROM orders AS o\nLEFT JOIN item_totals AS i USING (order_id)\nLEFT JOIN payment_totals AS p USING (order_id)\nWHERE o.order_id IN (101, 106)\nORDER BY o.order_id;",
         "note": "Не исправляй fan-out через SUM(DISTINCT amount): одинаковые суммы у разных реальных платежей будут ошибочно схлопнуты.",
         "practiceIds": [],
         "outcomes": [
@@ -2600,7 +2766,33 @@ export const modules = [
             "explanation": "Каждая из трёх позиций может сочетаться с каждым из двух платежей. Получается 3 × 2 = 6 строк, и метрики обеих деталей могут размножиться."
           }
         ],
-        "id": "joins.fan-out-pochemu-join-umnozhaet-stroki"
+        "id": "joins.fan-out-pochemu-join-umnozhaet-stroki",
+        "exampleResult": {
+          "columns": [
+            "order_id",
+            "items_total",
+            "paid_total"
+          ],
+          "rows": [
+            [
+              101,
+              1200,
+              1250
+            ],
+            [
+              106,
+              2500,
+              3200
+            ]
+          ]
+        },
+        "tipTokens": [
+          "WITH",
+          "GROUP",
+          "BY",
+          "JOIN",
+          "USING"
+        ]
       }
     ],
     "quiz": [
