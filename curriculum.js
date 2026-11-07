@@ -2631,7 +2631,9 @@ export const modules = [
           "Различать оба направления AT TIME ZONE",
           "Объяснять риск неоднозначного локального времени"
         ],
-        "practiceIds": [],
+        "practiceIds": [
+          "e77"
+        ],
         "quiz": [
           {
             "question": "Какой тип возвращает выражение timestamp without time zone AT TIME ZONE zone?",
@@ -2657,7 +2659,9 @@ export const modules = [
           "Объяснять проблему BETWEEN для timestamp",
           "Понимать, почему диапазон удобен для индексов"
         ],
-        "practiceIds": [],
+        "practiceIds": [
+          "e72"
+        ],
         "quiz": [
           {
             "question": "Как правильно выбрать все события за ноябрь?",
@@ -2683,7 +2687,10 @@ export const modules = [
           "Различать DATE_TRUNC и EXTRACT",
           "Учитывать ISO-недели и границы года"
         ],
-        "practiceIds": [],
+        "practiceIds": [
+          "e73",
+          "e74"
+        ],
         "quiz": [
           {
             "question": "Почему EXTRACT(MONTH FROM created_at) недостаточно для помесячной аналитики за несколько лет?",
@@ -2709,7 +2716,9 @@ export const modules = [
           "Показывать периоды с нулевыми событиями",
           "Различать отсутствие факта и неизвестное значение"
         ],
-        "practiceIds": [],
+        "practiceIds": [
+          "e75"
+        ],
         "quiz": [
           {
             "question": "Почему отчёт с GROUP BY по таблице событий не показывает дни без событий?",
@@ -2736,7 +2745,9 @@ export const modules = [
           "Проверять отрицательные и незавершённые интервалы",
           "Использовать перцентили для SLA"
         ],
-        "practiceIds": [],
+        "practiceIds": [
+          "e76"
+        ],
         "quiz": [
           {
             "question": "Что означает NULL в delivered_at при расчёте длительности доставки?",
@@ -5617,9 +5628,7 @@ export const modules = [
       "https://www.postgresql.org/docs/current/backup.html"
     ]
   }
-];
-
-export const exercises = [
+][
   {
     "id": "e01",
     "mode": "select",
@@ -6236,6 +6245,126 @@ export const exercises = [
     "expectedCheck": {
       "product_1_committed": true,
       "product_2_rolled_back": true
+    }
+  },
+  {
+    "id": "e72",
+    "mode": "select",
+    "m": "datetime",
+    "title": "Заказы за три календарных дня",
+    "task": "Найди все заказы, созданные с 11 по 13 января 2026 года включительно. Выведи результат в хронологическом порядке.",
+    "solution": "SELECT order_id, created_at FROM orders WHERE created_at >= DATE '2026-01-11' AND created_at < DATE '2026-01-14' ORDER BY created_at, order_id;",
+    "orderMatters": true,
+    "quiz": {
+      "question": "Почему правая граница диапазона выбрана как 14 января?",
+      "options": [
+        "Чтобы включить начало 14 января",
+        "Чтобы включить весь день 13 января, не подбирая время последней секунды",
+        "Потому что BETWEEN не работает с DATE",
+        "Чтобы исключить 13 января"
+      ],
+      "answer": 1,
+      "explanation": "Полуоткрытый интервал включает 11, 12 и 13 января, но исключает 14 января."
+    }
+  },
+  {
+    "id": "e73",
+    "mode": "select",
+    "m": "datetime",
+    "title": "Выручка по календарным месяцам",
+    "task": "Рассчитай сумму заказов отдельно для каждого календарного месяца. Результат отсортируй по месяцу.",
+    "solution": "SELECT DATE_TRUNC('month', created_at::timestamp) AS month_start, SUM(total_amount) AS revenue FROM orders GROUP BY DATE_TRUNC('month', created_at::timestamp) ORDER BY month_start;",
+    "orderMatters": true,
+    "quiz": {
+      "question": "Почему группировка только по EXTRACT(MONTH FROM created_at) опасна для отчёта за несколько лет?",
+      "options": [
+        "Она объединит одинаковые месяцы разных лет",
+        "Она всегда возвращает NULL",
+        "Она сортирует месяцы случайно",
+        "Она запрещена в PostgreSQL"
+      ],
+      "answer": 0,
+      "explanation": "Номер месяца повторяется каждый год. DATE_TRUNC сохраняет и год, и месяц."
+    }
+  },
+  {
+    "id": "e74",
+    "mode": "select",
+    "m": "datetime",
+    "title": "Сколько заказов в каждый день недели",
+    "task": "Посчитай количество заказов для каждого дня недели и выведи дни в порядке ISO-нумерации.",
+    "solution": "SELECT EXTRACT(ISODOW FROM created_at) AS iso_day, COUNT(*) AS orders_count FROM orders GROUP BY EXTRACT(ISODOW FROM created_at) ORDER BY iso_day;",
+    "orderMatters": true,
+    "quiz": {
+      "question": "Какой диапазон значений возвращает EXTRACT(ISODOW FROM date)?",
+      "options": [
+        "0–6, воскресенье = 0",
+        "1–7, понедельник = 1 и воскресенье = 7",
+        "1–12, номер месяца",
+        "1–31, день месяца"
+      ],
+      "answer": 1,
+      "explanation": "ISODOW использует ISO-нумерацию: понедельник 1, воскресенье 7."
+    }
+  },
+  {
+    "id": "e75",
+    "mode": "select",
+    "m": "datetime",
+    "title": "Календарь заказов без пропусков",
+    "task": "Покажи каждый день с 10 по 17 января 2026 года и число заказов в этот день. Дни без заказов должны присутствовать с нулём.",
+    "solution": "WITH calendar AS (SELECT generate_series(DATE '2026-01-10', DATE '2026-01-17', INTERVAL '1 day')::date AS day), daily AS (SELECT created_at, COUNT(*) AS orders_count FROM orders GROUP BY created_at) SELECT c.day, COALESCE(d.orders_count, 0) AS orders_count FROM calendar c LEFT JOIN daily d ON d.created_at = c.day ORDER BY c.day;",
+    "orderMatters": true,
+    "quiz": {
+      "question": "Почему здесь нужна календарная таблица или generate_series?",
+      "options": [
+        "Чтобы ускорить COUNT в любом случае",
+        "Чтобы создать строки для дат, которых нет в таблице заказов",
+        "Чтобы удалить повторяющиеся даты",
+        "Чтобы автоматически заменить NULL в исходных данных"
+      ],
+      "answer": 1,
+      "explanation": "GROUP BY не создаёт группы для отсутствующих дат. Календарная сетка создаёт ожидаемые периоды."
+    }
+  },
+  {
+    "id": "e76",
+    "mode": "select",
+    "m": "datetime",
+    "title": "Время от создания до доставки",
+    "task": "Для заказов, у которых есть события создания и доставки, рассчитай длительность между этими событиями в часах.",
+    "solution": "SELECT created.order_id, EXTRACT(EPOCH FROM (delivered.event_at - created.event_at)) / 3600.0 AS delivery_hours FROM order_events created JOIN order_events delivered ON delivered.order_id = created.order_id WHERE created.event_type = 'created' AND delivered.event_type = 'delivered' ORDER BY created.order_id;",
+    "orderMatters": true,
+    "quiz": {
+      "question": "Что возвращает EXTRACT(EPOCH FROM delivered_at - created_at)?",
+      "options": [
+        "Количество календарных месяцев",
+        "Длительность интервала в секундах",
+        "Номер дня недели",
+        "Момент времени в UTC"
+      ],
+      "answer": 1,
+      "explanation": "Разность временных меток даёт интервал, а EPOCH переводит его длительность в секунды."
+    }
+  },
+  {
+    "id": "e77",
+    "mode": "select",
+    "m": "datetime",
+    "title": "Показать события в часовом поясе Варшавы",
+    "task": "Выведи события заказов и их локальное время в часовом поясе Europe/Warsaw. Сохрани сортировку по моменту события.",
+    "solution": "SELECT event_id, order_id, event_at AT TIME ZONE 'Europe/Warsaw' AS warsaw_time FROM order_events ORDER BY event_at, event_id;",
+    "orderMatters": true,
+    "quiz": {
+      "question": "Какой тип результата возвращает timestamp without time zone AT TIME ZONE zone?",
+      "options": [
+        "timestamp without time zone",
+        "timestamp with time zone",
+        "date",
+        "interval"
+      ],
+      "answer": 1,
+      "explanation": "Локальные часы интерпретируются в указанной зоне и превращаются в конкретный момент TIMESTAMPTZ."
     }
   }
 ];
