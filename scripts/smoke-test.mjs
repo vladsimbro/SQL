@@ -166,6 +166,16 @@ assert.ok(selectModule.lessons.find(lesson => lesson.title === 'DISTINCT ON в P
 const sortingModule = modules.find(module => module.id === 'sorting');
 assert.ok(sortingModule.lessons.find(lesson => lesson.title === 'Keyset pagination').example.includes("TIMESTAMP '2026-01-12 00:00:00'"), 'Keyset example must use a timestamp literal matching the sample column type');
 assert.ok(!modules.find(module => module.id === 'anatomy').lessons.find(lesson => lesson.title === 'Логический порядок обработки').example.includes('--'), 'Logical query-order example must not duplicate the explanation with SQL comments');
+const subqueryModule = modules.find(module => module.id === 'subqueries');
+assert.ok(subqueryModule.lessons.find(lesson => lesson.title === 'Коррелированные подзапросы').example.includes('c.customer_id'), 'Correlated subquery must reference the current outer row');
+assert.equal(subqueryModule.lessons.find(lesson => lesson.title === 'Коррелированные подзапросы').exampleResult.rows.filter(row => row[2] === null).length, 5, 'Scalar correlated subquery must preserve customers without orders');
+assert.ok(subqueryModule.lessons.find(lesson => lesson.title === 'ANY, ALL и сравнение с массивом значений').example.includes("category = 'Посуда'"), 'ALL example must compare against a non-empty teaching dataset');
+const cteModule = modules.find(module => module.id === 'cte');
+assert.equal(cteModule.lessons.find(lesson => lesson.title === 'Рекурсивный WITH').exampleResult.rows.length, 5, 'Recursive CTE example must show its stopping condition');
+assert.ok(cteModule.lessons.find(lesson => lesson.title === 'Материализация и оптимизация CTE').example.includes('NOT MATERIALIZED'), 'CTE optimization lesson must demonstrate PostgreSQL materialization control');
+const setOperationsModule = modules.find(module => module.id === 'setops');
+assert.equal(setOperationsModule.lessons.find(lesson => lesson.title === 'UNION и UNION ALL').exampleResult.rows.length, 8, 'UNION ALL example must retain duplicate customer IDs');
+assert.equal(setOperationsModule.lessons.find(lesson => lesson.title === 'INTERSECT').exampleResult.rows.length, 1, 'INTERSECT example must show only the common customer set');
 const aggregateModule = modules.find(module => module.id === 'aggregates');
 assert.ok(aggregateModule.lessons.find(lesson => lesson.title === 'Агрегатные функции').body.includes('COUNT(DISTINCT employee_id)'), 'Aggregate lesson must distinguish row, non-null and distinct-value counts');
 assert.ok(aggregateModule.lessons.find(lesson => lesson.title === 'GROUP BY и зерно результата').body.includes('COUNT(o.order_id)'), 'GROUP BY lesson must explain COUNT(*) versus COUNT(right_key) after LEFT JOIN');
