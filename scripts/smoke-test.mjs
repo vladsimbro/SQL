@@ -47,7 +47,7 @@ assert.equal(modules.reduce((sum, module) => sum + module.lessons.length, 0), 14
 assert.equal(glossary.length, 72, 'Expected 72 glossary terms');
 assert.equal(reference.length, 13, 'Expected 13 reference groups');
 const normalizeStart = appSource.indexOf('function normalizeResult');
-const normalizeEnd = appSource.indexOf('function runEditorQuery', normalizeStart);
+const normalizeEnd = appSource.indexOf('\nasync function runEditorQuery', normalizeStart);
 const normalize = new Function(appSource.slice(normalizeStart, normalizeEnd) + '; return normalizeResult;')();
 const orderedA = { rows: [{id:1},{id:2}], fields: [{name:'id'}] };
 const orderedB = { rows: [{id:2},{id:1}], fields: [{name:'id'}] };
