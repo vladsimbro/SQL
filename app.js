@@ -307,6 +307,41 @@ function renderStudy() {
  <div class="lesson-card"><div class="eyebrow">${esc(m.stage)} · УРОК ${state.lessonIndex+1} ИЗ ${m.lessons.length}</div><h1>${esc(l.title)}</h1>${lessonBody(l,m)}${renderLessonQuiz(l)}${practice?`<div class="lesson-footer lesson-practice-links">${practice}</div>`:''}<div class="lesson-footer"><button class="btn primary" data-action="complete-lesson">${done?'✓ Урок завершён':'Отметить урок завершённым'}</button></div></div>${outcomes}
  <div class="lesson-card"><div class="lesson-footer"><button class="btn" data-action="prev-lesson" ${state.lessonIndex===0?'disabled':''}>← Предыдущий урок</button><button class="btn primary" data-action="next-lesson" ${trackEnd?'disabled':''}>${trackEnd?(m.track==='core'?'Основной маршрут завершён':'Дополнительный маршрут завершён'):state.lessonIndex===m.lessons.length-1?'Следующий модуль →':'Следующий урок →'}</button></div></div></article></div>`;
 }
+function renderAssessment() {
+  const available=moduleLessons(state.assessmentTrack);
+  const selected=modules.find(module=>module.id===state.assessmentModuleId);
+  if(!selected){
+    return pageHead('ПРОВЕРКА ЗНАНИЙ','Контрольные работы','Проверь понимание целого модуля. Каждый тест содержит вопросы из отдельного банка; лучший результат сохраняется в браузере.') +
+      '<div class="assessment-track-tabs">' +
+      '<button class="track-tab '+(state.assessmentTrack==='core'?'active':'')+'" data-assessment-track="core"><strong>Основной маршрут</strong><span>Аналитика и SQL</span></button>' +
+      '<button class="track-tab '+(state.assessmentTrack==='postgresql'?'active':'')+'" data-assessment-track="postgresql"><strong>PostgreSQL</strong><span>Дополнительный маршрут</span></button></div>' +
+      '<div class="assessment-grid">' + available.map(module=>{
+        const result=state.assessmentResults[module.id];
+        return '<button class="assessment-module" data-assessment-module="'+module.id+'"><span class="eyebrow">'+module.lessons.length+' УРОКОВ · '+module.quiz.length+' ВОПРОСА</span><strong>'+esc(module.title)+'</strong><span class="assessment-module-meta">'+(result?'Попыток: '+result.attempts+' · лучший результат: '+result.bestScore+'/'+module.quiz.length:'Ещё не проходили')+'</span><span class="assessment-module-action">'+(result&&result.passed?'Зачёт получен · Повторить':'Начать проверку')+' →</span></button>';
+      }).join('')+'</div>';
+  }
+  const bank=selected.quiz||[];
+  const answered=Object.keys(state.assessmentAnswers).length;
+  const score=bank.reduce((sum,q,index)=>sum+(state.assessmentAnswers[index]===q.answer?1:0),0);
+  const passed=score>=Math.ceil(bank.length*0.75);
+  let html=pageHead('КОНТРОЛЬНАЯ РАБОТА',esc(selected.title),'Ответь на все вопросы. Правильные ответы и объяснения откроются после отправки.','<button class="btn" data-action="assessment-back">← Все модули</button>');
+  html+='<section class="card assessment-test"><div class="assessment-progress"><span>Ответы</span><strong>'+answered+' из '+bank.length+'</strong></div><div class="progress-track"><span style="width:'+(bank.length?answered/bank.length*100:0)+'%"></span></div>';
+  html+=bank.map((question,index)=>{
+    const chosen=state.assessmentAnswers[index],correct=chosen===question.answer;
+    let options=question.options.map((option,optionIndex)=>{
+      const selectedAnswer=chosen===optionIndex;
+      const cls=state.assessmentSubmitted&&optionIndex===question.answer?' correct':state.assessmentSubmitted&&selectedAnswer&&!correct?' incorrect':'';
+      return '<button class="quiz-option'+(selectedAnswer&&!state.assessmentSubmitted?' selected':'')+cls+'" data-assessment-answer="'+index+':'+optionIndex+'" '+(state.assessmentSubmitted?'disabled':'')+'><span class="quiz-radio">'+String.fromCharCode(65+optionIndex)+'</span><span>'+esc(option)+'</span></button>';
+    }).join('');
+    return '<article class="assessment-question"><div class="eyebrow">ВОПРОС '+(index+1)+' ИЗ '+bank.length+'</div><h3>'+esc(question.question)+'</h3><div class="quiz-options">'+options+'</div>'+(state.assessmentSubmitted?'<div class="quiz-feedback '+(correct?'correct':'incorrect')+'"><strong>'+(correct?'Верно':'Неверно')+'</strong> '+esc(question.explanation)+'</div>':'')+'</article>';
+  }).join('');
+  if(state.assessmentSubmitted){
+    html+='<div class="assessment-result '+(passed?'passed':'not-passed')+'"><strong>'+(passed?'Зачёт получен':'Нужно повторить материал')+'</strong><span>'+score+' из '+bank.length+' · '+Math.round(score/bank.length*100)+'%</span><p>'+(passed?'Порог зачёта — 75%. Результат сохранён.':'Для зачёта нужно не менее '+Math.ceil(bank.length*0.75)+' правильных ответов. Изучи объяснения и попробуй ещё раз.')+'</p></div><div class="assessment-actions"><button class="btn" data-action="assessment-back">К списку модулей</button><button class="btn primary" data-action="assessment-retry">Повторить работу</button></div>';
+  }else{
+    html+='<div class="assessment-actions"><span class="assessment-hint">Ответь на все вопросы, чтобы отправить работу.</span><button class="btn primary" data-action="assessment-submit" '+(answered!==bank.length?'disabled':'')+'>Завершить и проверить</button></div>';
+  }
+  return html+'</section>';
+}
 function renderExerciseQuiz(ex) {
  const q=ex.quiz;if(!q)return '';const selected=state.exerciseQuizAnswers[ex.id],answered=selected!==undefined,correct=selected===q.answer;
  return `<section class="exercise-quiz"><div class="eyebrow">ПРОВЕРЬ ПОНЯТИЕ ПЕРЕД ПРАКТИКОЙ</div><strong class="exercise-quiz-question">${esc(q.question)}</strong><div class="quiz-options">${q.options.map((option,oi)=>`<button class="quiz-option ${answered&&oi===selected?(correct?'correct':'incorrect'):''}" data-exercise-quiz-answer="${oi}" ${answered&&correct?'disabled':''}><span class="quiz-radio">${String.fromCharCode(65+oi)}</span><span>${esc(option)}</span></button>`).join('')}</div>${answered?`<div class="quiz-feedback ${correct?'correct':'incorrect'}"><strong>${correct?'Верно!':'Не совсем.'}</strong> ${esc(q.explanation)}</div>`:''}</section>`;
@@ -408,6 +443,16 @@ function handleAction(action) {
   const m=moduleById(state.moduleId)||modules[0];
   const trackModules=moduleLessons(m.track);
   const trackIndex=trackModules.findIndex(module=>module.id===m.id);
+  if(action==='assessment-back'){state.assessmentModuleId=null;state.assessmentAnswers={};state.assessmentSubmitted=false;render();return;}
+  if(action==='assessment-retry'){state.assessmentAnswers={};state.assessmentSubmitted=false;render();return;}
+  if(action==='assessment-submit'){
+    const assessment=modules.find(module=>module.id===state.assessmentModuleId),bank=assessment?.quiz||[];
+    if(!assessment||Object.keys(state.assessmentAnswers).length!==bank.length){toast('Ответь на все вопросы перед отправкой');return;}
+    const score=bank.reduce((sum,question,index)=>sum+(state.assessmentAnswers[index]===question.answer?1:0),0);
+    const previous=state.assessmentResults[assessment.id]||{attempts:0,bestScore:0,passed:false};
+    state.assessmentResults[assessment.id]={attempts:previous.attempts+1,bestScore:Math.max(previous.bestScore,score),passed:previous.passed||score>=Math.ceil(bank.length*0.75)};
+    state.assessmentSubmitted=true;saveProgress();render();return;
+  }
   if(action==='continue'||action==='open-next'){const core=moduleLessons('core');const next=core.flatMap(module=>module.lessons.map((lesson,index)=>({module,index}))).find(item=>!state.completedLessons.has(lessonKey(item.module.id,item.index)))||{module:core.at(-1),index:core.at(-1).lessons.length-1};state.moduleId=next.module.id;state.lessonIndex=next.index;go('study');}
   if(action==='complete-lesson'){const key=lessonKey(state.moduleId,state.lessonIndex);if(state.completedLessons.has(key))state.completedLessons.delete(key);else state.completedLessons.add(key);saveProgress();render();}
   if(action==='prev-lesson'){if(state.lessonIndex>0)state.lessonIndex--;else if(trackIndex>0){state.moduleId=trackModules[trackIndex-1].id;state.lessonIndex=trackModules[trackIndex-1].lessons.length-1;}render();}
@@ -592,9 +637,11 @@ async function initDatabase() {
   }
 }
 document.addEventListener('click',event=>{
- const el=event.target.closest('[data-nav],[data-track],[data-module],[data-lesson],[data-exercise],[data-action],[data-copy-code],[data-sample],[data-quiz-answer],[data-exercise-quiz-answer]');if(!el)return;
+ const el=event.target.closest('[data-nav],[data-track],[data-module],[data-assessment-track],[data-assessment-module],[data-assessment-answer],[data-lesson],[data-exercise],[data-action],[data-copy-code],[data-sample],[data-quiz-answer],[data-exercise-quiz-answer]');if(!el)return;
  if(el.dataset.nav){event.preventDefault();go(el.dataset.nav);return;}
- if(el.dataset.track){state.roadmapTrack=el.dataset.track;render();return;}
+ if(el.dataset.track){state.roadmapTrack=el.dataset.track;render();return;} if(el.dataset.assessmentTrack){state.assessmentTrack=el.dataset.assessmentTrack;state.assessmentModuleId=null;render();return;}
+ if(el.dataset.assessmentModule){state.assessmentModuleId=el.dataset.assessmentModule;state.assessmentAnswers={};state.assessmentSubmitted=false;go('assessment');return;}
+ if(el.dataset.assessmentAnswer){if(!state.assessmentSubmitted){const [qi,oi]=el.dataset.assessmentAnswer.split(':').map(Number);state.assessmentAnswers[qi]=oi;render();}return;}
  if(el.dataset.module){state.moduleId=el.dataset.module;state.lessonIndex=0;go('study');return;}
  if(el.dataset.lesson){const [mid,li]=el.dataset.lesson.split(':');state.moduleId=mid;state.lessonIndex=Number(li);render();return;}
  if(el.dataset.exercise){state.exerciseId=el.dataset.exercise;if(state.view!=='practice')go('practice');else render();return;}
