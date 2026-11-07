@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { PGlite } from '@electric-sql/pglite';
-import { modules, exercises, schema, seedSQL, glossary, reference } from '../curriculum.js';
+import { modules, learningTracks, exercises, schema, seedSQL, glossary, reference } from '../curriculum.js';
 import { sandboxTaskTopics, sandboxTaskCount } from '../sandbox-tasks.js';
 
 const curriculumSource = await readFile(new URL('../curriculum.js', import.meta.url), 'utf8');
@@ -10,7 +10,7 @@ const sqlUtilsSource = await readFile(new URL('../sql-utils.js', import.meta.url
 const htmlSource = await readFile(new URL('../index.html', import.meta.url), 'utf8');
 const cssSource = await readFile(new URL('../styles.css', import.meta.url), 'utf8');
 assert.ok(curriculumSource.includes('export const exercises = ['), 'Practice exercises must be exported as a named dataset');
-assert.ok(curriculumSource.includes('];\n\nexport const exercises = ['), 'Module and practice arrays must be closed as separate declarations');
+assert.ok(curriculumSource.includes('export const learningTracks = [') && curriculumSource.includes('export const exercises = ['), 'Learning routes and practice arrays must be exported separately');
 assert.ok(Array.isArray(glossary) && glossary.length >= 30, 'Glossary must contain at least 30 usable terms');
 assert.ok(Array.isArray(reference) && reference.length >= 8, 'SQL quick reference must contain usable topic groups');
 assert.ok(exercises.every(exercise => ['select','explain','mutation','transaction'].includes(exercise.mode)), 'Every exercise must have a supported explicit mode');
@@ -180,8 +180,17 @@ assert.equal(sandboxTaskCount, 350, 'Expected 350 random sandbox tasks');
 assert.ok(sandboxTaskTopics.every(topic => topic.tasks.length === 25 && new Set(topic.tasks.map(item => item.prompt)).size === 25 && new Set(topic.tasks.map(item => item.hint)).size === 25), 'Every random-task topic must contain 25 unique prompts and hints');
 assert.ok(sandboxTaskTopics.every(topic => topic.tasks.every(item => item.title && item.prompt && item.hint && item.solution)), 'Every random task must include a title, task condition, specific hint and reference solution');
 assert.ok(appSource.includes('data-random-topic') && appSource.includes('new-random-task') && appSource.includes('check-random-task'), 'Playground must provide topic selection, random task generation and checking');
-assert.deepEqual(modules.map(module => module.stage.split(' · ')[0]), Array.from({length:25},(_,i)=>String(i+1).padStart(2,'0')), 'Roadmap stages must be consecutive and match module order');
+assert.deepEqual(modules.filter(module=>module.track==='core').map(module=>module.id), learningTracks.find(track=>track.id==='core').moduleIds, 'Core modules must follow the declared analyst route');
+assert.deepEqual(modules.filter(module=>module.track==='postgresql').map(module=>module.id), learningTracks.find(track=>track.id==='postgresql').moduleIds, 'PostgreSQL modules must follow the declared optional route');
+assert.equal(learningTracks.length,2,'The curriculum must expose exactly two learning routes');
+assert.ok(modules.every(module=>['core','postgresql'].includes(module.track)&&Number.isInteger(module.trackOrder)), 'Every module must belong to an explicit learning route');
+const lessonIds=modules.flatMap(module=>module.lessons.map(lesson=>lesson.id));
+assert.equal(new Set(lessonIds).size,173,'Every lesson must have a unique stable ID');
+assert.ok(lessonIds.every(id=>typeof id==='string'&&id.length>4),'Every lesson ID must be stable and non-empty');
+assert.ok(appSource.includes('legacyIds.get(value)')&&appSource.includes('quizKey('),'Progress migration must convert legacy positional lesson and quiz keys');
+assert.ok(appSource.includes('data-track=')&&appSource.includes('state.roadmapTrack'),'Roadmap must allow switching between core and optional routes');
 assert.ok(modules.findIndex(module => module.id === 'select') < modules.findIndex(module => module.id === 'ddl'), 'Read-query fundamentals must be taught before schema modification');
+assert.ok(modules.findIndex(module=>module.id==='workflow')<modules.findIndex(module=>module.id==='ddl'),'The optional PostgreSQL route must follow the complete analyst route');
 assert.ok(modules.findIndex(module => module.id === 'analytics') === modules.findIndex(module => module.id === 'windows') + 1, 'Professional analytics must follow window functions directly');
 
 for (const id of ['e46','e101','e102']) {
