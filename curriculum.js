@@ -1721,16 +1721,15 @@ export const modules = [
         ],
         "quiz": [
           {
-            "question": "Что вернёт COALESCE(NULL, NULL, 15, 20)?",
+            "question": "Почему revenue / NULLIF(order_count, 0) защищает запрос от деления на ноль?",
             "options": [
-              "NULL",
-              "0",
-              "15",
-              "20"
+              "NULLIF возвращает NULL, когда order_count равен 0, а деление на NULL не вызывает ошибку деления на ноль",
+              "NULLIF заменяет ноль на единицу",
+              "COALESCE удаляет строки с нулевым order_count",
+              "PostgreSQL автоматически пропускает любое деление на ноль"
             ],
-            "answer": 2,
-            "explanation": "COALESCE возвращает первое значение, которое не равно NULL.",
-            "sourceQuestionIndex": 0
+            "answer": 0,
+            "explanation": "Если order_count равен 0, NULLIF(order_count, 0) возвращает NULL. Деление на NULL даёт NULL, а не ошибку. При ненулевом значении возвращается исходный знаменатель."
           }
         ]
       }

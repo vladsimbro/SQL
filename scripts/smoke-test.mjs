@@ -66,7 +66,7 @@ assert.ok(modules.every(module => module.lessons.every(lesson => Array.isArray(l
 assert.ok(modules.every(module => module.lessons.every(lesson => lesson.body.split(/\\n\\s*\\n/).filter(Boolean).length >= 2)), 'Every lesson explanation must be divided into readable paragraphs');
 assert.ok(modules.every(module => module.lessons.every(lesson => lesson.quiz.every(q => q.options.length === 4 && new Set(q.options).size === 4 && q.options.every(option => option.trim().length > 8)))), 'Lesson quiz options must be distinct and substantive');
 assert.ok(modules.every(module => module.lessons.every(lesson => lesson.quiz.every(q => q.explanation && q.question && Number.isInteger(q.answer) && q.answer >= 0 && q.answer < q.options.length))), 'Every lesson quiz must have a valid answer and explanation');
-assert.ok(appSource.includes("split(/\\\\n\\\\s*\\\\n/)"), 'Lesson explanations must render as separate paragraphs');
+assert.ok(appSource.includes(String.raw`split(/\n\s*\n/)`), 'Lesson explanations must render as separate paragraphs');
 
 const linkedPractice = modules.flatMap(module => module.lessons.flatMap(lesson => (lesson.practiceIds || []).map(id => ({ module, id }))));
 assert.equal(linkedPractice.length, exercises.length, 'Every exercise must be linked from its intended lesson');
