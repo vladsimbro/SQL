@@ -6878,6 +6878,8 @@ export const exercises = [
     "task": "Напиши EXPLAIN для выборки заказов customer_id = 1. Проверка оценивает выполнение запроса, а не конкретный текст плана.",
     "solution": "EXPLAIN SELECT order_id, total_amount FROM orders WHERE customer_id = 1;",
     "mode": "explain",
+    "requiredPatterns": ["\\bFROM\\s+orders\\b","\\bWHERE\\s+customer_id\\s*=\\s*1\\b"],
+    "requirementsMessage": "Построй план именно для выборки из orders с фильтром customer_id = 1.",
     "hint": "EXPLAIN должен стоять перед SELECT. В плане найди тип сканирования и оценку количества строк."
   },
   {
@@ -7741,6 +7743,8 @@ export const exercises = [
     "task": "Построй план выполнения запроса, который выбирает order_id и total_amount для доставленных заказов. Изучи тип сканирования и оценку количества строк.",
     "solution": "EXPLAIN SELECT order_id, total_amount FROM orders WHERE status = 'delivered';",
     "mode": "explain",
+    "requiredPatterns": ["\\bSELECT\\b[\\s\\S]*\\border_id\\b","\\btotal_amount\\b","\\bFROM\\s+orders\\b","\\bWHERE\\s+status\\s*=\\s*'delivered'"],
+    "requirementsMessage": "Для этого плана нужны order_id и total_amount из orders с фильтром status = 'delivered'.",
     "hint": "Начни с EXPLAIN перед SELECT. Найди узел Scan, estimated rows и условие фильтрации."
   },
   {
@@ -7750,6 +7754,8 @@ export const exercises = [
     "task": "Построй план запроса, который соединяет orders и stores по store_id, выбирает номер заказа и название магазина и оставляет заказы customer_id = 1.",
     "solution": "EXPLAIN SELECT o.order_id, s.store_name FROM orders o JOIN stores s ON s.store_id = o.store_id WHERE o.customer_id = 1;",
     "mode": "explain",
+    "requiredPatterns": ["\\bSELECT\\b[\\s\\S]*\\bo\\.order_id\\b","\\bs\\.store_name\\b","\\bFROM\\s+orders\\s+o\\b","\\bJOIN\\s+stores\\s+s\\b","\\bON\\s+s\\.store_id\\s*=\\s*o\\.store_id\\b","\\bWHERE\\s+o\\.customer_id\\s*=\\s*1\\b"],
+    "requirementsMessage": "Нужен JOIN orders и stores по store_id с выбором order_id/store_name и фильтром customer_id = 1.",
     "hint": "В плане найди узлы чтения обеих таблиц и узел соединения. Не путай INNER JOIN в SQL с конкретным алгоритмом Nested Loop, Hash Join или Merge Join."
   }
 ];
