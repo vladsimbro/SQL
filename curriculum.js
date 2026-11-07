@@ -8,7 +8,7 @@ export const modules = [
       {
         "title": "Данные, информация и база данных",
         "body": "Данные — это отдельные значения: номер заказа, дата, сумма, статус. Сами по себе они отвечают на вопрос «что записано?», но не всегда объясняют ситуацию. Информация появляется, когда мы связываем значения и интерпретируем их: например, считаем выручку по дням и видим, в какой день продажи выросли.\n\nБаза данных — организованное хранилище связанных данных. В отличие от набора разрозненных файлов, база позволяет задавать структуру, проверять корректность значений, искать записи и одновременно обслуживать много пользователей.\n\nВажно различать три понятия. База данных — сами организованные данные. СУБД — программа, которая хранит их и управляет доступом. SQL — язык, с помощью которого мы обращаемся к СУБД. PostgreSQL — СУБД, а не разновидность SQL.",
-        "example": "SELECT 'Заказ №104 доставлен' AS message;\n\n-- Запрос возвращает одну вычисленную строку.\n-- Таблица для этого не нужна.",
+        "example": "SELECT 'Заказ №104 доставлен' AS message;",
         "note": "Не называй PostgreSQL «языком SQL»: PostgreSQL — система управления базами данных.",
         "simple": "",
         "practiceIds": [],
@@ -842,7 +842,7 @@ export const modules = [
       {
         "title": "Логический порядок обработки",
         "body": "Запрос записывается в привычном порядке SELECT → FROM → WHERE → GROUP BY → HAVING → ORDER BY → LIMIT, но для понимания результата полезно представить логические этапы обработки. Это модель смысла запроса, а не обещание, что сервер физически выполняет операции строго по очереди: оптимизатор может выбрать другой план, если результат останется тем же.\n\nУпрощённая последовательность в PostgreSQL такая:\n\n1. **FROM и JOIN** формируют исходный набор строк. Условия ON определяют, какие строки соединяются.\n2. **WHERE** отбрасывает отдельные строки до группировки. Здесь нельзя использовать агрегаты вроде COUNT(*) для фильтрации группы.\n3. **GROUP BY** объединяет оставшиеся строки в группы, а агрегаты вычисляют показатели для каждой группы.\n4. **HAVING** отбрасывает уже сформированные группы по условиям, в том числе по агрегатам.\n5. **Оконные вычисления (WINDOW)** рассчитываются над строками, оставшимися после группировки и HAVING, если запрос их использует.\n6. **SELECT** формирует выражения и столбцы результата.\n7. **DISTINCT** при наличии убирает повторяющиеся строки результата.\n8. **ORDER BY** задаёт порядок вывода. На этом этапе обычно доступны алиасы из SELECT.\n9. **LIMIT и OFFSET** ограничивают выдаваемые строки.\n\nРассмотрим заказы. Сначала WHERE оставляет только оплаченные строки. Затем GROUP BY собирает их по городу. HAVING оставляет только города минимум с двумя оплаченными заказами. SELECT рассчитывает количество и сумму, ORDER BY сортирует города по выручке, LIMIT оставляет первые пять.\n\nИменно поэтому алиас orders_count из SELECT нельзя использовать в WHERE того же уровня: WHERE логически работает раньше, чем формируется список SELECT. Для фильтрации агрегатов нужен HAVING, а для фильтрации результата запроса можно использовать внешний SELECT.",
-        "example": "SELECT s.city,\n       COUNT(*) AS orders_count,\n       SUM(o.total_amount) AS revenue\nFROM orders AS o\nJOIN stores AS s ON s.store_id = o.store_id\nWHERE o.status = 'paid'\nGROUP BY s.city\nHAVING COUNT(*) >= 2\nORDER BY revenue DESC\nLIMIT 5;\n\n-- Упрощённые промежуточные результаты:\n-- WHERE: только строки со status = 'paid'\n-- GROUP BY: одна группа на каждый city\n-- HAVING: остаются города с двумя и более заказами\n-- SELECT: рассчитываются orders_count и revenue\n-- ORDER BY + LIMIT: выбираются первые пять городов.",
+        "example": "SELECT s.city,\n       COUNT(*) AS orders_count,\n       SUM(o.total_amount) AS revenue\nFROM orders AS o\nJOIN stores AS s ON s.store_id = o.store_id\nWHERE o.status = 'paid'\nGROUP BY s.city\nHAVING COUNT(*) >= 2\nORDER BY revenue DESC\nLIMIT 5;",
         "note": "Логический порядок помогает понять смысл запроса и область видимости алиасов. Он не равен физическому плану выполнения, который выбирает оптимизатор PostgreSQL.",
         "simple": "Сначала определяется источник и отбираются строки, потом формируются группы и показатели, после чего строится и сортируется результат. Сервер может физически выполнять план иначе.",
         "practiceIds": [],
@@ -1122,7 +1122,7 @@ export const modules = [
       {
         "title": "DISTINCT ON в PostgreSQL",
         "body": "DISTINCT ON — расширение PostgreSQL, которое оставляет одну строку для каждой комбинации указанных выражений. В отличие от обычного DISTINCT, остальные столбцы результата могут различаться: PostgreSQL выбирает одну строку из каждой группы.\n\nЧтобы результат был предсказуемым, обычно нужен ORDER BY. Например, DISTINCT ON (customer_id) вместе с ORDER BY customer_id, created_at DESC позволяет получить самый новый заказ каждого клиента.\n\nПорядок выражений в DISTINCT ON должен согласовываться с началом ORDER BY. Если не задать критерий выбора строки, нельзя надёжно сказать, какая запись останется.",
-        "example": "SELECT DISTINCT ON (customer_id)\n       customer_id, order_id, created_at\nFROM orders\nORDER BY customer_id, created_at DESC;",
+        "example": "SELECT DISTINCT ON (customer_id)\n       customer_id, order_id, created_at\nFROM orders\nORDER BY customer_id, created_at DESC, order_id DESC;",
         "note": "DISTINCT ON — PostgreSQL-специфичная конструкция. Для переносимого SQL часто используют ROW_NUMBER() и фильтрацию по номеру строки.",
         "simple": "DISTINCT ON отвечает на вопрос «оставь одну строку на группу», а ORDER BY определяет, какую именно строку предпочесть.",
         "practiceIds": [
@@ -1713,7 +1713,7 @@ export const modules = [
       {
         "title": "Keyset pagination",
         "body": "Keyset pagination выбирает следующую страницу относительно последней увиденной записи, а не пропускает фиксированное количество строк. Для сортировки по created_at DESC и order_id DESC можно передать обе величины последней строки и выбрать записи, которые идут дальше.\n\nТакой способ обычно эффективнее OFFSET на больших смещениях, потому что условие может использовать индекс. Он также меньше подвержен сдвигу страниц при появлении новых записей перед текущей позицией.\n\nКлюч сортировки должен задавать полный устойчивый порядок. Если created_at не уникален, добавь order_id. Для составного порядка условие продолжения нужно составить с учётом всех частей ключа.",
-        "example": "SELECT order_id, created_at\nFROM orders\nWHERE (created_at, order_id) <\n      (TIMESTAMPTZ '2026-11-07 10:00:00+00', 5000)\nORDER BY created_at DESC, order_id DESC\nLIMIT 20;",
+        "example": "SELECT order_id, created_at\nFROM orders\nWHERE (created_at, order_id) <\n      (TIMESTAMP '2026-01-12 00:00:00', 105)\nORDER BY created_at DESC, order_id DESC\nLIMIT 20;",
         "note": "Сравнение кортежей должно соответствовать направлению сортировки. Для смешанных ASC/DESC критериев условие нужно строить отдельно.",
         "simple": "Keyset pagination продолжает выборку от последнего ключа страницы, а не пересчитывает пропуск всех предыдущих строк.",
         "practiceIds": [],
@@ -3024,8 +3024,8 @@ export const modules = [
     "lessons": [
       {
         "title": "Подзапрос как значение",
-        "body": "Подзапрос — запрос, вложенный в другой SQL-запрос. Он может вернуть одно значение, один столбец или целую таблицу. В зависимости от результата подзапрос используют как скалярное выражение, источник в FROM или условие фильтрации.\n\nСкалярный подзапрос должен вернуть не более одной строки и одного столбца. Например, можно сравнить цену заказа со средней ценой всех заказов. Если скалярный подзапрос вернёт несколько строк, PostgreSQL выдаст ошибку.\n\nПодзапрос помогает разделить задачу на этапы: сначала вычислить значение, затем использовать его во внешнем запросе. Но не нужно вкладывать запросы автоматически: иногда JOIN или CTE читаются проще.",
-        "example": "SELECT order_id, total_amount\nFROM orders\nWHERE total_amount > (\n  SELECT AVG(total_amount)\n  FROM orders\n);",
+        "body": "Подзапрос — запрос, вложенный в другой SQL-запрос. Он может вернуть одно значение, один столбец или целую таблицу. В зависимости от результата подзапрос используют как скалярное выражение, источник в FROM или условие фильтрации.\n\nСкалярный подзапрос должен вернуть не более одной строки и одного столбца. Например, можно сравнить цену заказа со средней ценой всех заказов. Если скалярный подзапрос вернёт несколько строк, PostgreSQL выдаст ошибку.\n\nПодзапрос помогает разделить задачу на этапы: сначала вычислить значение, затем использовать его во внешнем запросе. Но не нужно вкладывать запросы автоматически: иногда JOIN или CTE читаются проще.\n\nЕсли скалярный подзапрос возвращает NULL (например, агрегат MIN по пустому набору), сравнение с ним тоже даст UNKNOWN. Внешний WHERE такую строку не оставит. Проверяй не только количество строк, но и поведение пустого набора.",
+        "example": "SELECT order_id, total_amount::int AS total_amount\nFROM orders\nWHERE total_amount > (\n  SELECT AVG(total_amount)\n  FROM orders\n)\nORDER BY order_id;",
         "note": "Если подзапрос должен быть скалярным, проверь, что он действительно возвращает не более одной строки.",
         "simple": "Скалярный подзапрос возвращает одно значение, которое внешний запрос использует как выражение.",
         "practiceIds": [
@@ -3060,12 +3060,40 @@ export const modules = [
           "result": "Вернутся только заказы, сумма которых выше общей средней суммы.",
           "pitfall": "Если скалярный подзапрос неожиданно вернёт больше одной строки, PostgreSQL выдаст ошибку. Для набора значений используй IN, EXISTS или JOIN."
         },
-        "id": "subqueries.podzapros-kak-znachenie"
+        "id": "subqueries.podzapros-kak-znachenie",
+        "exampleResult": {
+          "columns": [
+            "order_id",
+            "total_amount"
+          ],
+          "rows": [
+            [
+              103,
+              2400
+            ],
+            [
+              105,
+              1800
+            ],
+            [
+              106,
+              3200
+            ],
+            [
+              109,
+              4200
+            ],
+            [
+              112,
+              2750
+            ]
+          ]
+        }
       },
       {
         "title": "IN и подзапрос с набором значений",
         "body": "IN проверяет, входит ли значение в набор, возвращённый подзапросом. Например, можно выбрать заказы клиентов, которые совершали хотя бы одну покупку в конкретном регионе.\n\nПодзапрос внутри IN обычно возвращает один столбец и любое количество строк. Если набор пуст, совпадений не будет. Если подзапрос содержит NULL, поведение NOT IN может стать неожиданным: отсутствие совпадения не всегда превращается в TRUE, потому что результат может быть UNKNOWN.\n\nДля положительной проверки IN часто понятен. Для проверки отсутствия связи обычно безопаснее NOT EXISTS, особенно если столбец в подзапросе допускает NULL.",
-        "example": "SELECT order_id\nFROM orders\nWHERE customer_id IN (\n  SELECT customer_id\n  FROM customers\n  WHERE city = 'Warsaw'\n);",
+        "example": "SELECT order_id, customer_id\nFROM orders\nWHERE customer_id IN (\n  SELECT customer_id\n  FROM customers\n  WHERE city = 'Москва'\n)\nORDER BY order_id;",
         "note": "Если подзапрос для NOT IN может вернуть NULL, рассмотрите NOT EXISTS.",
         "simple": "IN сопоставляет значение с набором. Для NOT IN учитывай возможность NULL в этом наборе.",
         "practiceIds": [],
@@ -3086,12 +3114,32 @@ export const modules = [
             "explanation": "Если совпадения нет, но набор содержит NULL, результат NOT IN может быть UNKNOWN, а не TRUE. WHERE отбрасывает UNKNOWN."
           }
         ],
-        "id": "subqueries.in-i-podzapros-s-naborom-znacheniy"
+        "id": "subqueries.in-i-podzapros-s-naborom-znacheniy",
+        "exampleResult": {
+          "columns": [
+            "order_id",
+            "customer_id"
+          ],
+          "rows": [
+            [
+              101,
+              1
+            ],
+            [
+              105,
+              1
+            ],
+            [
+              110,
+              1
+            ]
+          ]
+        }
       },
       {
         "title": "EXISTS и NOT EXISTS",
         "body": "EXISTS проверяет, вернул ли подзапрос хотя бы одну строку. Значения в SELECT внутри EXISTS обычно не важны: часто пишут SELECT 1. Важно только существование строки, удовлетворяющей условию.\n\nEXISTS особенно удобен для поиска родительских записей с дочерними: клиенты, у которых есть хотя бы один заказ. NOT EXISTS ищет записи без соответствий. В отличие от JOIN, EXISTS не размножает строку внешнего источника при нескольких совпадениях.\n\nОптимизатор PostgreSQL часто превращает EXISTS в semi join, поэтому это не обязательно медленный способ. Выбирай EXISTS по смыслу задачи, а затем проверяй план, если производительность важна.",
-        "example": "SELECT c.customer_id, c.customer_name\nFROM customers AS c\nWHERE EXISTS (\n  SELECT 1\n  FROM orders AS o\n  WHERE o.customer_id = c.customer_id\n);",
+        "example": "SELECT c.customer_id, c.customer_name\nFROM customers AS c\nWHERE EXISTS (\n  SELECT 1\n  FROM orders AS o\n  WHERE o.customer_id = c.customer_id\n)\nORDER BY c.customer_id;",
         "note": "Для поиска отсутствующих связей используй NOT EXISTS. Он не страдает от NULL в наборе так, как NOT IN.",
         "simple": "EXISTS задаёт вопрос «есть ли хотя бы одна подходящая строка?», а не «какие значения вернуть?».",
         "practiceIds": [
@@ -3128,12 +3176,36 @@ export const modules = [
           "result": "Каждый подходящий клиент появляется один раз, даже если оформил десять заказов.",
           "pitfall": "JOIN вернёт несколько строк на клиента при нескольких заказах. EXISTS лучше выражает задачу «есть хотя бы один»."
         },
-        "id": "subqueries.exists-i-not-exists"
+        "id": "subqueries.exists-i-not-exists",
+        "exampleResult": {
+          "columns": [
+            "customer_id",
+            "customer_name"
+          ],
+          "rows": [
+            [
+              1,
+              "Алексей"
+            ],
+            [
+              2,
+              "Мария"
+            ],
+            [
+              3,
+              "Ирина"
+            ],
+            [
+              4,
+              "Дмитрий"
+            ]
+          ]
+        }
       },
       {
         "title": "Коррелированные подзапросы",
-        "body": "Коррелированный подзапрос ссылается на столбцы внешнего запроса. Он выполняет логическую проверку для каждой внешней строки, например ищет максимальную дату заказа именно текущего клиента.\n\nТакой запрос удобно читать, когда внутреннее условие зависит от конкретной внешней записи. Но наивное представление «подзапрос обязательно запускается заново для каждой строки» не всегда верно: оптимизатор может преобразовать его в JOIN или другой план.\n\nКоррелированный подзапрос может быть менее очевиден, чем агрегированный JOIN. Сравнивай оба варианта по ясности и EXPLAIN ANALYZE на реальных объёмах, если есть проблема производительности.",
-        "example": "SELECT c.customer_id, c.customer_name\nFROM customers AS c\nWHERE c.registered_at = (\n  SELECT MIN(o.created_at)\n  FROM orders AS o\n  WHERE o.customer_id = c.customer_id\n);",
+        "body": "Коррелированный подзапрос ссылается на столбцы внешнего запроса. Он выполняет логическую проверку для каждой внешней строки, например ищет максимальную дату заказа именно текущего клиента.\n\nТакой запрос удобно читать, когда внутреннее условие зависит от конкретной внешней записи. Но наивное представление «подзапрос обязательно запускается заново для каждой строки» не всегда верно: оптимизатор может преобразовать его в JOIN или другой план.\n\nКоррелированный подзапрос может быть менее очевиден, чем агрегированный JOIN. Сравнивай оба варианта по ясности и EXPLAIN ANALYZE на реальных объёмах, если есть проблема производительности.\n\nКорреляция видна в условии o.customer_id = c.customer_id: внутренний запрос использует ID клиента из текущей внешней строки. Здесь подзапрос возвращает дату первого заказа каждого клиента. Для клиентов без заказов MIN вернёт NULL, но сама строка клиента останется, потому что подзапрос находится в SELECT, а не в WHERE.",
+        "example": "SELECT c.customer_id, c.customer_name,\n       (\n         SELECT MIN(o.created_at)::text\n         FROM orders AS o\n         WHERE o.customer_id = c.customer_id\n       ) AS first_order_date\nFROM customers AS c\nORDER BY c.customer_id;",
         "note": "Не делай вывод о скорости только по вложенности. Оптимизатор может преобразовать запрос.",
         "simple": "Коррелированный подзапрос использует значение текущей строки внешнего запроса.",
         "practiceIds": [
@@ -3156,12 +3228,66 @@ export const modules = [
             "explanation": "c.customer_id — значение текущей внешней строки. Подзапрос ищет заказы именно этого клиента."
           }
         ],
-        "id": "subqueries.korrelirovannye-podzaprosy"
+        "id": "subqueries.korrelirovannye-podzaprosy",
+        "exampleResult": {
+          "columns": [
+            "customer_id",
+            "customer_name",
+            "first_order_date"
+          ],
+          "rows": [
+            [
+              1,
+              "Алексей",
+              "2026-01-10"
+            ],
+            [
+              2,
+              "Мария",
+              "2026-01-10"
+            ],
+            [
+              3,
+              "Ирина",
+              "2026-01-11"
+            ],
+            [
+              4,
+              "Дмитрий",
+              "2026-01-11"
+            ],
+            [
+              5,
+              "Ольга",
+              null
+            ],
+            [
+              6,
+              "Сергей",
+              null
+            ],
+            [
+              7,
+              "Наталья",
+              null
+            ],
+            [
+              8,
+              "Андрей",
+              null
+            ],
+            [
+              9,
+              "Екатерина",
+              null
+            ]
+          ]
+        }
       },
       {
         "title": "ANY, ALL и сравнение с массивом значений",
         "body": "ANY и ALL сравнивают значение с результатами набора. x > ANY (subquery) означает, что x больше хотя бы одного значения набора. x > ALL означает, что x больше каждого значения набора.\n\nANY похож на «существует хотя бы одно сравнение TRUE», а ALL — на «все сравнения TRUE». Для пустого набора ANY даёт FALSE, а ALL — TRUE. NULL в наборе может привести к UNKNOWN, если ни одно сравнение не даёт однозначного ответа.\n\nЭти операторы полезны для сравнений с распределением значений, но часто можно выразить ту же идею через MIN, MAX или EXISTS. Выбирай форму, которую проще проверить на крайних случаях.",
-        "example": "SELECT product_id, price\nFROM products\nWHERE price > ALL (\n  SELECT price\n  FROM products\n  WHERE category = 'coffee'\n);",
+        "example": "SELECT product_id, product_name, price::int AS price\nFROM products\nWHERE price > ALL (\n  SELECT price\n  FROM products\n  WHERE category = 'Посуда'\n)\nORDER BY product_id;",
         "note": "ALL не означает «большинство». Достаточно одного FALSE, чтобы результат сравнения с ALL стал FALSE.",
         "simple": "ANY требует хотя бы одного истинного сравнения, ALL — истинности каждого сравнения.",
         "practiceIds": [],
@@ -3182,7 +3308,31 @@ export const modules = [
             "explanation": "ALL требует, чтобы сравнение было истинным для каждого значения, возвращённого подзапросом."
           }
         ],
-        "id": "subqueries.any-all-i-sravnenie-s-massivom-znacheniy"
+        "id": "subqueries.any-all-i-sravnenie-s-massivom-znacheniy",
+        "exampleResult": {
+          "columns": [
+            "product_id",
+            "product_name",
+            "price"
+          ],
+          "rows": [
+            [
+              1,
+              "Кофемашина",
+              2500
+            ],
+            [
+              3,
+              "Чайник",
+              1500
+            ],
+            [
+              7,
+              "Подарочный набор",
+              1200
+            ]
+          ]
+        }
       }
     ],
     "quiz": [
@@ -3246,7 +3396,7 @@ export const modules = [
       {
         "title": "Обычный WITH",
         "body": "CTE (Common Table Expression) — именованный результат подзапроса, объявленный через WITH. Он существует в рамках одного SQL-оператора и позволяет разбить сложную задачу на логические этапы.\n\nНапример, сначала можно выбрать доставленные заказы, а затем посчитать их выручку по магазинам. Первый этап получает имя delivered_orders. Основной SELECT читает этот набор как временный источник данных. Это не новая постоянная таблица и не отдельный запуск, который нужно вручную сохранять.\n\nCTE особенно полезен, когда запрос состоит из нескольких преобразований: фильтрация, соединение, агрегация, ранжирование. Имена должны описывать смысл этапа, а не просто называться q1 или temp. Тогда запрос можно читать как последовательность действий над данными.\n\nНе думай, что каждый CTE обязательно физически сохраняется в памяти. В современных версиях PostgreSQL простые CTE могут быть встроены в основной запрос. MATERIALIZED и NOT MATERIALIZED позволяют влиять на это поведение в подходящих случаях, но их не нужно добавлять без измеримой причины.\n\nCTE не исправляет неправильную логику JOIN и не делает запрос автоматически быстрее. Его главная польза — ясная структура и возможность отдельно проверить промежуточный результат.",
-        "example": "WITH delivered_orders AS (\n  SELECT o.order_id, s.city, o.total_amount\n  FROM orders AS o\n  JOIN stores AS s ON s.store_id = o.store_id\n  WHERE o.status = 'delivered'\n)\nSELECT city, SUM(total_amount) AS revenue\nFROM delivered_orders\nGROUP BY city;",
+        "example": "WITH delivered_orders AS (\n  SELECT o.order_id, s.city, o.total_amount\n  FROM orders AS o\n  JOIN stores AS s ON s.store_id = o.store_id\n  WHERE o.status = 'delivered'\n)\nSELECT city, SUM(total_amount)::int AS revenue\nFROM delivered_orders\nGROUP BY city\nORDER BY city;",
         "note": "CTE существует только в пределах одного SQL-оператора. Не путай его с CREATE TEMP TABLE.",
         "simple": "WITH даёт имя промежуточному набору строк. Это способ организовать запрос, а не создать постоянную таблицу.",
         "practiceIds": [
@@ -3281,12 +3431,32 @@ export const modules = [
           "result": "Результат содержит по одной строке на магазин с количеством доставленных заказов и их суммой.",
           "pitfall": "CTE доступен только в пределах одного SQL-оператора. Следующий отдельный запрос уже не сможет обратиться к delivered_orders."
         },
-        "id": "cte.obychnyy-with"
+        "id": "cte.obychnyy-with",
+        "exampleResult": {
+          "columns": [
+            "city",
+            "revenue"
+          ],
+          "rows": [
+            [
+              "Казань",
+              2900
+            ],
+            [
+              "Москва",
+              6340
+            ],
+            [
+              "Пермь",
+              1500
+            ]
+          ]
+        }
       },
       {
         "title": "Несколько CTE и цепочка преобразований",
         "body": "В одном WITH можно объявить несколько CTE. Следующий CTE может ссылаться на предыдущий, поэтому запрос удобно строить как цепочку преобразований: отобрать строки, агрегировать, присоединить справочник, сформировать итог.\n\nКаждый этап желательно делать с понятным зерном. Например, первый CTE содержит одну строку на заказ, второй — одну строку на клиента. Если соединить их на неверном уровне, дубли могут появиться даже внутри аккуратно названной цепочки.\n\nCTE не гарантирует, что данные вычисляются один раз или материализуются. Это зависит от версии PostgreSQL, настроек и конструкции запроса. Не используй CTE как обещание производительности: он прежде всего делает логику явной.",
-        "example": "WITH monthly_orders AS (\n  SELECT DATE_TRUNC('month', created_at) AS month,\n         COUNT(*) AS orders_count\n  FROM orders\n  GROUP BY 1\n),\nmonthly_revenue AS (\n  SELECT DATE_TRUNC('month', created_at) AS month,\n         SUM(total_amount) AS revenue\n  FROM orders\n  GROUP BY 1\n)\nSELECT m.month, m.orders_count, r.revenue\nFROM monthly_orders AS m\nJOIN monthly_revenue AS r USING (month);",
+        "example": "WITH monthly_orders AS (\n  SELECT DATE_TRUNC('month', created_at)::date::text AS month,\n         COUNT(*)::int AS orders_count\n  FROM orders\n  GROUP BY 1\n),\nmonthly_revenue AS (\n  SELECT DATE_TRUNC('month', created_at)::date::text AS month,\n         SUM(total_amount)::int AS revenue\n  FROM orders\n  GROUP BY 1\n)\nSELECT m.month, m.orders_count, r.revenue\nFROM monthly_orders AS m\nJOIN monthly_revenue AS r USING (month)\nORDER BY m.month;",
         "note": "Одинаковое число строк в двух CTE не означает, что их можно соединять без ключа. Соединяй по смысловому ключу.",
         "simple": "Несколько CTE позволяют читать сложный запрос как последовательность именованных этапов.",
         "practiceIds": [
@@ -3321,12 +3491,26 @@ export const modules = [
           "result": "Запрос читается как конвейер: фильтрация → агрегация → выдача результата.",
           "pitfall": "Не создавай CTE ради каждой строки SQL. Разделяй запрос там, где меняется смысл или зерно данных."
         },
-        "id": "cte.neskolko-cte-i-tsepochka-preobrazovaniy"
+        "id": "cte.neskolko-cte-i-tsepochka-preobrazovaniy",
+        "exampleResult": {
+          "columns": [
+            "month",
+            "orders_count",
+            "revenue"
+          ],
+          "rows": [
+            [
+              "2026-01-01",
+              12,
+              21390
+            ]
+          ]
+        }
       },
       {
         "title": "Материализация и оптимизация CTE",
         "body": "В PostgreSQL CTE может быть встроен в основной запрос или материализован как отдельный промежуточный результат. MATERIALIZED просит вычислить CTE отдельно, NOT MATERIALIZED разрешает встроить его, если это возможно.\n\nМатериализация может быть полезна, если результат используется несколько раз или если нужно избежать повторного выполнения дорогого этапа. Но она может мешать проталкиванию фильтров и оптимизации. NOT MATERIALIZED может дать оптимизатору больше свободы, но иногда приводит к повторному вычислению.\n\nНе добавляй эти ключевые слова наугад. Сначала посмотри EXPLAIN (ANALYZE, BUFFERS), найди реальную проблему и сравни планы. Поведение зависит от версии PostgreSQL и свойств CTE.",
-        "example": "WITH filtered_orders AS NOT MATERIALIZED (\n  SELECT *\n  FROM orders\n  WHERE store_id IN (\n    SELECT store_id\n    FROM stores\n    WHERE city = 'Warsaw'\n  )\n)\nSELECT *\nFROM filtered_orders\nWHERE status = 'delivered';",
+        "example": "WITH filtered_orders AS NOT MATERIALIZED (\n  SELECT order_id, store_id, status, total_amount\n  FROM orders\n  WHERE store_id IN (\n    SELECT store_id\n    FROM stores\n    WHERE city = 'Москва'\n  )\n)\nSELECT order_id, total_amount::int AS total_amount\nFROM filtered_orders\nWHERE status = 'delivered'\nORDER BY order_id;",
         "note": "Материализация — не универсальное ускорение. Проверяй план выполнения и реальное время.",
         "simple": "MATERIALIZED фиксирует отдельное вычисление CTE, NOT MATERIALIZED позволяет встроить его в запрос.",
         "practiceIds": [],
@@ -3347,12 +3531,32 @@ export const modules = [
             "explanation": "Материализация может ограничить оптимизацию и pushdown фильтров. Это иногда приводит к обработке большего промежуточного набора."
           }
         ],
-        "id": "cte.materializatsiya-i-optimizatsiya-cte"
+        "id": "cte.materializatsiya-i-optimizatsiya-cte",
+        "exampleResult": {
+          "columns": [
+            "order_id",
+            "total_amount"
+          ],
+          "rows": [
+            [
+              101,
+              1250
+            ],
+            [
+              102,
+              890
+            ],
+            [
+              109,
+              4200
+            ]
+          ]
+        }
       },
       {
         "title": "Рекурсивный WITH",
         "body": "Рекурсивный CTE позволяет обходить иерархии и строить последовательности. В нём есть начальная часть (anchor), которая задаёт первые строки, и рекурсивная часть, которая ссылается на сам CTE и добавляет следующий уровень.\n\nТипичный пример — дерево категорий или организационная структура. Начинаем с корневого узла, затем на каждом шаге находим дочерние записи. UNION ALL объединяет начальный и рекурсивный наборы. Процесс продолжается, пока рекурсивная часть не перестанет возвращать новые строки.\n\nСледи за условием остановки и циклами. В графе с циклическими ссылками рекурсия может продолжаться бесконечно или до ограничения ресурсов. Для защиты можно хранить путь посещённых узлов и не посещать один ID повторно.",
-        "example": "WITH RECURSIVE numbers(n) AS (\n  SELECT 1\n  UNION ALL\n  SELECT n + 1\n  FROM numbers\n  WHERE n < 5\n)\nSELECT n\nFROM numbers;",
+        "example": "WITH RECURSIVE numbers(n) AS (\n  SELECT 1\n  UNION ALL\n  SELECT n + 1\n  FROM numbers\n  WHERE n < 5\n)\nSELECT n\nFROM numbers\nORDER BY n;",
         "note": "Всегда продумывай остановку рекурсии. В иерархии с циклами нужна защита от повторного посещения узлов.",
         "simple": "Рекурсивный CTE состоит из стартового набора и шага, который строит следующий уровень.",
         "practiceIds": [
@@ -3388,7 +3592,29 @@ export const modules = [
           "result": "CTE вернёт пять строк: 1, 2, 3, 4 и 5.",
           "pitfall": "У рекурсивного CTE обязательно должно быть условие остановки или другая гарантия конечности. Иначе запрос может генерировать строки бесконечно."
         },
-        "id": "cte.rekursivnyy-with"
+        "id": "cte.rekursivnyy-with",
+        "exampleResult": {
+          "columns": [
+            "n"
+          ],
+          "rows": [
+            [
+              1
+            ],
+            [
+              2
+            ],
+            [
+              3
+            ],
+            [
+              4
+            ],
+            [
+              5
+            ]
+          ]
+        }
       }
     ],
     "quiz": [
@@ -3452,7 +3678,7 @@ export const modules = [
       {
         "title": "UNION и UNION ALL",
         "body": "UNION объединяет результаты двух SELECT и удаляет полностью повторяющиеся строки. UNION ALL делает то же объединение, но сохраняет повторы. Для объединения запросы должны возвращать одинаковое количество столбцов с совместимыми типами в соответствующих позициях.\n\nUNION выполняет работу по устранению дублей, поэтому часто дороже UNION ALL. Если повторы допустимы или важны для подсчёта событий, используй UNION ALL. Если нужно получить общий список уникальных комбинаций, UNION подходит.\n\nНазвания столбцов результата обычно берутся из первого SELECT. Порядок строк не гарантируется без общего ORDER BY в конце.",
-        "example": "SELECT customer_id\nFROM customers\nWHERE city = 'Warsaw'\nUNION ALL\nSELECT customer_id\nFROM orders\nWHERE status = 'delivered';",
+        "example": "SELECT customer_id\nFROM customers\nWHERE city = 'Москва'\nUNION ALL\nSELECT customer_id\nFROM orders\nWHERE status = 'delivered'\nORDER BY customer_id;",
         "note": "UNION удаляет дубли по всей строке результата, а не только по одному столбцу, если выбрано несколько полей.",
         "simple": "UNION убирает одинаковые строки результата, UNION ALL сохраняет их.",
         "practiceIds": [
@@ -3475,12 +3701,43 @@ export const modules = [
             "explanation": "UNION ALL сохраняет все строки обоих наборов, включая полные дубликаты."
           }
         ],
-        "id": "setops.union-i-union-all"
+        "id": "setops.union-i-union-all",
+        "exampleResult": {
+          "columns": [
+            "customer_id"
+          ],
+          "rows": [
+            [
+              1
+            ],
+            [
+              1
+            ],
+            [
+              1
+            ],
+            [
+              2
+            ],
+            [
+              2
+            ],
+            [
+              3
+            ],
+            [
+              4
+            ],
+            [
+              5
+            ]
+          ]
+        }
       },
       {
         "title": "INTERSECT",
         "body": "INTERSECT возвращает строки, которые присутствуют в обоих результатах SELECT. INTERSECT по умолчанию удаляет дубликаты, а INTERSECT ALL сохраняет кратность совпадений по правилам мультимножеств.\n\nЭта операция полезна для пересечения наборов: например, получить клиентов, которые присутствуют и в списке покупателей, и в списке участников программы лояльности. Иногда ту же задачу можно решить через JOIN или EXISTS, но INTERSECT может ясно показать именно операцию над двумя наборами.\n\nКак и UNION, INTERSECT требует одинакового количества совместимых столбцов. Порядок строк не гарантируется без ORDER BY.",
-        "example": "SELECT customer_id\nFROM customers\nINTERSECT\nSELECT customer_id\nFROM customer_profiles;",
+        "example": "SELECT customer_id\nFROM customers\nWHERE city = 'Москва'\nINTERSECT\nSELECT customer_id\nFROM orders\nWHERE status = 'delivered'\nORDER BY customer_id;",
         "note": "INTERSECT сравнивает всю строку выбранных столбцов. Выбери только те поля, по которым действительно определяешь пересечение.",
         "simple": "INTERSECT оставляет общие строки двух наборов.",
         "practiceIds": [],
@@ -3501,12 +3758,22 @@ export const modules = [
             "explanation": "INTERSECT возвращает общие уникальные строки. Значения 2 и 3 присутствуют в обоих наборах."
           }
         ],
-        "id": "setops.intersect"
+        "id": "setops.intersect",
+        "exampleResult": {
+          "columns": [
+            "customer_id"
+          ],
+          "rows": [
+            [
+              1
+            ]
+          ]
+        }
       },
       {
         "title": "EXCEPT",
         "body": "EXCEPT возвращает строки из первого SELECT, которых нет во втором. EXCEPT по умолчанию удаляет дубли; EXCEPT ALL учитывает количество повторов.\n\nПорядок запросов важен: A EXCEPT B не равно B EXCEPT A. Это операция разности множеств. Её удобно применять для поиска отсутствующих записей: клиенты из CRM, которых нет в выгрузке оплат, или ожидаемые ID без фактических событий.\n\nКак и другие операции над наборами, EXCEPT требует совместимой структуры SELECT. NULL значения сравниваются по правилам set operations, а не обычного оператора = в WHERE.",
-        "example": "SELECT customer_id\nFROM customers\nEXCEPT\nSELECT customer_id\nFROM orders;",
+        "example": "SELECT customer_id\nFROM customers\nEXCEPT\nSELECT customer_id\nFROM orders\nORDER BY customer_id;",
         "note": "Если поменять местами SELECT, смысл разности изменится.",
         "simple": "EXCEPT оставляет строки из левого набора, которых нет в правом. Порядок частей имеет значение.",
         "practiceIds": [
@@ -3529,12 +3796,34 @@ export const modules = [
             "explanation": "EXCEPT направлен: результатом являются строки первого набора, которых нет во втором."
           }
         ],
-        "id": "setops.except"
+        "id": "setops.except",
+        "exampleResult": {
+          "columns": [
+            "customer_id"
+          ],
+          "rows": [
+            [
+              5
+            ],
+            [
+              6
+            ],
+            [
+              7
+            ],
+            [
+              8
+            ],
+            [
+              9
+            ]
+          ]
+        }
       },
       {
         "title": "Скобки и порядок операций",
         "body": "Операции UNION, INTERSECT и EXCEPT можно комбинировать. При нескольких операциях важно понимать приоритет и использовать скобки, если требуется конкретная последовательность.\n\nORDER BY обычно ставится один раз после всего выражения и сортирует итоговый набор. Нельзя воспринимать ORDER BY внутри каждой части как сортировку окончательного результата без соответствующих скобок и ограничений.\n\nДля читаемости сложные комбинации лучше разбивать на CTE с именами. Тогда каждый набор можно проверить отдельно, а затем объединить. Это особенно полезно, если в запросе есть разные правила фильтрации или дедупликации.",
-        "example": "(SELECT customer_id\n FROM customers\n WHERE city = 'Warsaw'\n EXCEPT\n SELECT customer_id\n FROM orders\n WHERE status = 'cancelled')\nUNION\n(SELECT customer_id\n FROM customers\n WHERE city = 'Krakow')\nORDER BY customer_id;",
+        "example": "(SELECT customer_id\n FROM customers\n WHERE city = 'Москва'\n EXCEPT\n SELECT customer_id\n FROM orders\n WHERE status = 'cancelled')\nUNION\n(SELECT customer_id\n FROM customers\n WHERE city = 'Казань')\nORDER BY customer_id;",
         "note": "Не полагайся на визуальный порядок строк в частях set operation. Сортируй общий результат внешним ORDER BY.",
         "simple": "Скобки и CTE помогают явно показать, в каком порядке объединяются наборы.",
         "practiceIds": [],
@@ -3555,7 +3844,26 @@ export const modules = [
             "explanation": "Внешний ORDER BY применяется к итоговому набору, полученному после операции над SELECT."
           }
         ],
-        "id": "setops.skobki-i-poryadok-operatsiy"
+        "id": "setops.skobki-i-poryadok-operatsiy",
+        "exampleResult": {
+          "columns": [
+            "customer_id"
+          ],
+          "rows": [
+            [
+              1
+            ],
+            [
+              2
+            ],
+            [
+              5
+            ],
+            [
+              7
+            ]
+          ]
+        }
       }
     ],
     "quiz": [
