@@ -9,6 +9,10 @@ const appSource = await readFile(new URL('../app.js', import.meta.url), 'utf8');
 const sqlUtilsSource = await readFile(new URL('../sql-utils.js', import.meta.url), 'utf8');
 const htmlSource = await readFile(new URL('../index.html', import.meta.url), 'utf8');
 const cssSource = await readFile(new URL('../styles.css', import.meta.url), 'utf8');
+const buildVersion = JSON.parse(await readFile(new URL('../version.json', import.meta.url), 'utf8')).build;
+const importedAssetVersions = [...appSource.matchAll(/from\s+['"]\.\/[^'"]+\.js\?v=([^'"]+)['"]/g)].map(match => match[1]);
+assert.equal(importedAssetVersions.length, 3, 'Application must import all three local modules with cache versions');
+assert.ok(importedAssetVersions.every(version => version === buildVersion), 'Local JavaScript imports must use the current release build to avoid stale cached curriculum and SQL utilities');
 assert.ok(curriculumSource.includes('export const exercises = ['), 'Practice exercises must be exported as a named dataset');
 assert.ok(curriculumSource.includes('export const learningTracks = [') && curriculumSource.includes('export const exercises = ['), 'Learning routes and practice arrays must be exported separately');
 assert.ok(Array.isArray(glossary) && glossary.length >= 30, 'Glossary must contain at least 30 usable terms');
@@ -110,7 +114,7 @@ assert.ok(modules.every(module => module.lessons.every(lesson => lesson.quiz.eve
 const ddlModule = modules.find(module => module.id === 'ddl');
 assert.ok(ddlModule.lessons.some(lesson => lesson.title === 'CHECK: проверка бизнес-правил' && lesson.body.includes('TRUE или NULL')), 'DDL must explain CHECK and UNKNOWN semantics');
 assert.ok(ddlModule.lessons.some(lesson => lesson.title === 'Составные ограничения и составные внешние ключи'), 'DDL must explain composite constraints');
-assert.ok(ddlModule.lessons.some(lesson => lesson.title === 'Безопасное изменение схемы и миграции' && lesson.body.includes('NOT VALID')), 'DDL must explain safe schema migrations');
+assert.ok(ddlModule.lessons.some(lesson => lesson.title === 'PostgreSQL: ограничения и блокировки при миграциях' && lesson.body.includes('NOT VALID') && lesson.body.includes('VALIDATE CONSTRAINT')), 'DDL must explain PostgreSQL-specific constraint validation and migration locks');
 const dateTimeModule = modules.find(module => module.id === 'datetime');
 assert.equal(dateTimeModule.lessons.length, 7, 'Date/time stage must contain seven focused lessons');
 assert.ok(dateTimeModule.lessons.some(lesson => lesson.title === 'Фильтрация по датам: полуоткрытые интервалы' && lesson.body.includes('BETWEEN')), 'Date/time stage must explain half-open timestamp ranges');
@@ -123,7 +127,7 @@ assert.equal(datetimeModule.lessons.length, 7, 'Date/time module must contain se
 assert.ok(datetimeModule.lessons.every(lesson => (lesson.practiceIds || []).length > 0), 'Every date/time lesson must link to at least one relevant practice task');
 assert.deepEqual(datetimeModule.lessons.flatMap(lesson => lesson.practiceIds || []).sort(), ['e72','e73','e74','e75','e76','e77','e78','e79'].sort(), 'Date/time lessons must link all eight dedicated practice tasks exactly once');
 assert.ok(exercises.filter(exercise => exercise.m === 'datetime').every(exercise => exercise.quiz?.options?.length === 4 && exercise.quiz.explanation), 'Date/time practice tasks must include a concept check');
-assert.ok(appSource.includes("curriculum.js?v=20261107-36") && appSource.includes("sql-utils.js?v=20261107-36") && appSource.includes("sandbox-tasks.js?v=20261107-36"), 'Application module dependencies must use the current cache version');
+assert.ok(importedAssetVersions.every(version => version === buildVersion), 'Every imported local module must use the current cache version');
 
 
 const windowModule = modules.find(module => module.id === 'windows');
@@ -148,7 +152,7 @@ assert.ok(relationalModule.lessons.find(lesson => lesson.title === 'Первич
 assert.ok(relationalModule.lessons.find(lesson => lesson.title === 'Внешний ключ и связи').body.includes('не создаёт автоматически индекс'), 'Foreign-key lesson must explain child-side index behavior');
 assert.ok(relationalModule.lessons.find(lesson => lesson.title === 'NULL и неизвестное значение').body.includes('NOT IN'), 'NULL lesson must explain the NOT IN and NULL trap');
 const typesModule = modules.find(module => module.id === 'types');
-assert.ok(typesModule.lessons.find(lesson => lesson.title === 'Дата, время и часовые пояса').body.includes('без явного смещения'), 'Timestamp lesson must explain session timezone interpretation');
+assert.ok(typesModule.lessons.find(lesson => lesson.title === 'Выбор типа даты и времени').body.includes('TIMESTAMPTZ') && typesModule.lessons.find(lesson => lesson.title === 'Выбор типа даты и времени').body.includes('модуле временной аналитики'), 'Date/time type lesson must introduce the types and defer session timezone mechanics to the dedicated module');
 const anatomyModule = modules.find(module => module.id === 'anatomy');
 assert.ok(anatomyModule.lessons.find(lesson => lesson.title === 'Логический порядок обработки').body.includes('физически выполняет'), 'Logical query order lesson must distinguish logical semantics from physical execution');
 assert.ok(anatomyModule.lessons.find(lesson => lesson.title === 'Логический порядок обработки').body.includes('Оконные вычисления (WINDOW)'), 'Logical query order lesson must place window calculations');
