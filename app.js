@@ -1,6 +1,6 @@
-import { modules, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261107-26';
-import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261107-26';
-import { firstSqlKeyword, explainStatementKeyword, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261107-26';
+import { modules, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261107-27';
+import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261107-27';
+import { firstSqlKeyword, explainStatementKeyword, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261107-27';
 
 const $ = (s, root=document) => root.querySelector(s);
 const $$ = (s, root=document) => [...root.querySelectorAll(s)];
