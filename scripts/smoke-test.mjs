@@ -157,7 +157,7 @@ assert.ok(relationalModule.lessons.find(lesson => lesson.title === 'Таблиц
 assert.deepEqual(typesModule.lessons.find(lesson => lesson.title === 'Числовые типы').exampleResult.rows, [['0.3','0.30000000000000004']], 'Numeric types example must contrast exact and approximate decimal arithmetic');
 assert.deepEqual(typesModule.lessons.find(lesson => lesson.title === 'Преобразование типов').exampleResult.rows, [['251.00','3','3.5000000000000000']], 'Type conversion example must show integer versus decimal division');
 const expressionsQualityModule = modules.find(module => module.id === 'expressions');
-assert.deepEqual(expressionsQualityModule.lessons.find(lesson => lesson.title === 'Числовые функции').exampleResult.rows, [['125.68',5,4,12]], 'Numeric function example must show rounding, ceiling, floor and absolute value');
+assert.deepEqual(expressionsQualityModule.lessons.find(lesson => lesson.title === 'Числовые функции').exampleResult.rows, [['125.68','5','4',12]], 'Numeric function example must show rounding, ceiling, floor and absolute value');
 assert.deepEqual(expressionsQualityModule.lessons.find(lesson => lesson.title === 'Функции даты и времени').exampleResult.rows, [['2026-01-01',12]], 'Date function example must match the DATE-based teaching dataset');
 assert.deepEqual(expressionsQualityModule.lessons.find(lesson => lesson.title === 'COALESCE, NULLIF и безопасные вычисления').exampleResult.rows, [['12000','0','3000.00']], 'NULL-safe calculation example must show fallback and zero-safe division');
 const datetimeQualityModule = modules.find(module => module.id === 'datetime');
