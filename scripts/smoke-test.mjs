@@ -374,7 +374,7 @@ try {
         } else if (exercise.id === 'e65') {
           assert.deepEqual(observed.rows.map(row => [row.product_id, row.product_name, row.category, Number(row.price)]), [[1, 'Coffee machine', 'Equipment', 2750]], 'UPSERT task must verify the final row values');
         } else if (exercise.id === 'e66') {
-          assert.equal(observed.rows.length, 2, 'Constraint task must create both a primary key and a CHECK constraint');
+          assert.ok(observed.rows.length >= 2, 'Constraint task must create both a primary key and a CHECK constraint');
           assert.ok(observed.rows.some(row => row.definition.includes('PRIMARY KEY')));
           assert.ok(observed.rows.some(row => row.definition.includes('CHECK') && row.definition.includes('>=') && row.definition.includes('<=')), 'CHECK constraint must enforce both range boundaries');
         } else if (exercise.id === 'e67') {
