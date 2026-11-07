@@ -2115,7 +2115,7 @@ export const modules = [
       {
         "title": "GROUP BY и зерно результата",
         "body": "GROUP BY меняет зерно результата: одна строка начинает представлять группу, а не исходную запись. GROUP BY city означает одну строку на город; GROUP BY city, status — одну строку на каждую встреченную пару города и статуса.\n\nАгрегаты вычисляются отдельно внутри каждой группы. Перед запросом сформулируй: «одна строка результата = ...». Это помогает выбрать ключ группировки и не смешать разные уровни детализации.\n\nВажная ловушка появляется с LEFT JOIN. Для магазина без заказов PostgreSQL всё равно сохраняет одну строку магазина, а поля заказа заполняет NULL. Поэтому COUNT(*) вернёт 1, хотя заказов нет. COUNT(o.order_id) вернёт 0, потому что идентификатор реального заказа в этой строке равен NULL.\n\nSUM(o.total_amount) для такого магазина вернёт NULL. Если по правилам отчёта отсутствие заказов должно отображаться как нулевая выручка, используй COALESCE(SUM(...), 0). Это решение для отображения метрики, а не доказательство, что в источнике была сумма 0.\n\nСтолбец в SELECT после группировки должен входить в GROUP BY, быть аргументом агрегата или однозначно зависеть от ключа группировки в допустимом для PostgreSQL случае.",
-        "example": "SELECT s.city,\n       COUNT(*)::int AS joined_rows,\n       COUNT(o.order_id)::int AS orders_count,\n       COALESCE(SUM(o.total_amount), 0)::int AS revenue\nFROM stores AS s\nLEFT JOIN orders AS o ON o.store_id = s.store_id\nGROUP BY s.city\nORDER BY s.city;",
+        "example": "SELECT s.store_id,\n       s.store_name,\n       COUNT(*)::int AS joined_rows,\n       COUNT(o.order_id)::int AS orders_count,\n       COALESCE(SUM(o.total_amount), 0)::int AS revenue\nFROM stores AS s\nLEFT JOIN orders AS o ON o.store_id = s.store_id\nGROUP BY s.store_id, s.store_name\nORDER BY s.store_id;",
         "note": "Перед GROUP BY сформулируй зерно результата одним предложением: «одна строка — это ...».",
         "simple": "GROUP BY не просто собирает похожие строки. Он меняет зерно результата: вместо отдельных заказов ты получаешь группы, например по одному городу.",
         "practiceIds": [
@@ -2153,41 +2153,47 @@ export const modules = [
         "id": "aggregates.group-by-i-zerno-rezultata",
         "exampleResult": {
           "columns": [
-            "city",
+            "store_id",
+            "store_name",
             "joined_rows",
             "orders_count",
             "revenue"
           ],
           "rows": [
             [
-              "Казань",
-              3,
-              3,
-              6100
-            ],
-            [
-              "Москва",
+              1,
+              "Центральный",
               3,
               3,
               6340
             ],
             [
-              "Омск",
-              1,
-              0,
-              0
+              2,
+              "Северный",
+              3,
+              3,
+              3950
             ],
             [
-              "Пермь",
+              3,
+              "Волжский",
+              3,
+              3,
+              6100
+            ],
+            [
+              4,
+              "Уральский",
               3,
               3,
               5000
             ],
             [
-              "Санкт-Петербург",
-              3,
-              3,
-              3950
+              5,
+              "Запасной",
+              1,
+              0,
+              0
             ]
           ]
         },
