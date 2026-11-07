@@ -4029,7 +4029,7 @@ export const modules = [
       {
         "title": "LAG и LEAD",
         "body": "LAG и LEAD позволяют получить значение из соседней строки внутри окна. LAG смотрит назад, LEAD — вперёд. Они полезны, когда нужно сравнить текущую запись с предыдущей или следующей без самостоятельного JOIN таблицы с самой собой.\n\nОбе функции используют ORDER BY внутри OVER. Для истории статусов заказа это может быть event_at, а при одинаковом времени нужен дополнительный уникальный event_id. Иначе PostgreSQL не обязан выбирать один и тот же порядок соседних событий.\n\nПервый аргумент — выражение, которое нужно получить. Второй, необязательный, задаёт смещение: по умолчанию одна строка. Третий задаёт значение, если соседней строки нет. Например, LAG(total_amount, 1, 0) вернёт 0 для первой строки раздела.\n\nЧастый сценарий — изменение показателя: текущая сумма минус предыдущая. Другой сценарий — время между событиями. Но LAG берёт предыдущую существующую строку, а не обязательно предыдущий календарный день или месяц. Если период пропущен, сначала построй календарную сетку.\n\nКак и другие оконные функции, LAG и LEAD не уменьшают число строк. Они добавляют соседнее значение к текущей записи.",
-        "example": "SELECT order_id, created_at::text AS created_at::date::text AS created_at, total_amount::int AS total_amount,\n       (LAG(total_amount) OVER (\n         PARTITION BY store_id\n         ORDER BY created_at, order_id\n       ))::int AS previous_order_amount\nFROM orders\nWHERE store_id = 2\nORDER BY created_at, order_id;",
+        "example": "SELECT order_id, created_at::date::text AS created_at, total_amount::int AS total_amount,\n       (LAG(total_amount) OVER (\n         PARTITION BY customer_id\n         ORDER BY created_at, order_id\n       ))::int AS previous_order_amount\nFROM orders\nWHERE customer_id = 1\nORDER BY created_at, order_id;",
         "note": "Без ORDER BY понятие предыдущей строки не определено. Добавляй tie-breaker при совпадающих датах.",
         "simple": "LAG берёт значение из предыдущей строки окна, LEAD — из следующей. Порядок должен быть определён явно.",
         "practiceIds": [
@@ -4164,9 +4164,9 @@ export const modules = [
       },
       {
         "title": "ROWS и RANGE: две разные оконные рамки",
-        "body": "ROWS и RANGE задают разные способы определения рамки окна. ROWS считает физические строки относительно текущей позиции. RANGE ориентируется на значения выражения сортировки и может включать все строки с равным значением ключа.\n\nЕсли две транзакции имеют одинаковый created_at, RANGE CURRENT ROW может включить обе строки как peers. ROWS CURRENT ROW ограничивается текущей физической строкой в порядке окна. Это различие особенно заметно в накопительных итогах и скользящих окнах.\n\nДля временных интервалов RANGE может выражать окно по значению даты, но синтаксис и ограничения зависят от типа сортировки. Не заменяй ROWS на RANGE без понимания того, как обрабатываются равные значения.\n\nВ примере сравниваются два окна на одном наборе заказов магазина. ROWS идёт по физическому порядку строк и при одинаковой дате учитывает tie-breaker order_id. RANGE смотрит на значение даты: строки с одинаковой датой являются peers и получают одинаковую сумму за календарные семь дней.",
+        "body": "ROWS и RANGE задают разные способы определения рамки окна. ROWS считает физические строки относительно текущей позиции. RANGE ориентируется на значения выражения сортировки и может включать все строки с равным значением ключа.\n\nЕсли две транзакции имеют одинаковый created_at, RANGE CURRENT ROW может включить обе строки как peers. ROWS CURRENT ROW ограничивается текущей физической строкой в порядке окна. Это различие особенно заметно в накопительных итогах и скользящих окнах.\n\nДля временных интервалов RANGE может выражать окно по значению даты, но синтаксис и ограничения зависят от типа сортировки. Не заменяй ROWS на RANGE без понимания того, как обрабатываются равные значения.\n\nВ примере сравниваются два окна на одном наборе заказов магазина. ROWS идёт по физическому порядку строк и при одинаковой дате учитывает tie-breaker order_id. RANGE смотрит на значение даты: строки с одинаковой датой являются peers и получают одинаковую сумму за календарные семь дней.\n\nЧтобы увидеть разницу, в примере ниже используются две строки с одинаковой датой. ROWS считает физические строки по порядку (order_id), поэтому первая строка не видит вторую. RANGE учитывает все строки-peer с той же датой, поэтому обе строки получают общую сумму за этот день.",
         "simple": "ROWS считает позиции строк, RANGE — диапазон значений ключа сортировки и связанные с ним peers.",
-        "example": "SELECT order_id, created_at::text AS created_at::date::text AS created_at, total_amount::int AS total_amount,\n       (SUM(total_amount) OVER (\n         PARTITION BY store_id\n         ORDER BY created_at, order_id\n         ROWS BETWEEN 6 PRECEDING AND CURRENT ROW\n       ))::int AS rolling_rows,\n       (SUM(total_amount) OVER (\n         PARTITION BY store_id\n         ORDER BY created_at::timestamp\n         RANGE BETWEEN INTERVAL '6 days' PRECEDING AND CURRENT ROW\n       ))::int AS rolling_7_days\nFROM orders\nWHERE store_id = 2\nORDER BY created_at, order_id;",
+        "example": "WITH sample_orders (order_id, created_at, total_amount) AS (\n  VALUES\n    (1, TIMESTAMP '2026-01-10 10:00', 100),\n    (2, TIMESTAMP '2026-01-10 15:00', 200),\n    (3, TIMESTAMP '2026-01-12 12:00', 300)\n)\nSELECT order_id, created_at::date::text AS order_day, total_amount,\n       SUM(total_amount) OVER (\n         ORDER BY created_at, order_id\n         ROWS BETWEEN 6 PRECEDING AND CURRENT ROW\n       ) AS rolling_rows,\n       SUM(total_amount) OVER (\n         ORDER BY created_at::date\n         RANGE BETWEEN INTERVAL '6 days' PRECEDING AND CURRENT ROW\n       ) AS rolling_7_days\nFROM sample_orders\nORDER BY created_at, order_id;",
         "note": "Если важна последовательность отдельных событий с одинаковым временем, добавь tie-breaker и используй подходящую ROWS-рамку.",
         "practiceIds": [
           "e82"
@@ -4204,32 +4204,32 @@ export const modules = [
         "exampleResult": {
           "columns": [
             "order_id",
-            "created_at",
+            "order_day",
             "total_amount",
             "rolling_rows",
             "rolling_7_days"
           ],
           "rows": [
             [
-              101,
+              1,
               "2026-01-10",
-              1250,
-              1250,
-              1250
+              100,
+              100,
+              300
             ],
             [
-              105,
+              2,
+              "2026-01-10",
+              200,
+              300,
+              300
+            ],
+            [
+              3,
               "2026-01-12",
-              1800,
-              3050,
-              3050
-            ],
-            [
-              110,
-              "2026-01-14",
-              990,
-              4040,
-              4040
+              300,
+              600,
+              600
             ]
           ]
         }
