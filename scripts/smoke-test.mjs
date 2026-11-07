@@ -143,6 +143,9 @@ assert.deepEqual(analyticsModule.lessons.find(lesson => lesson.title === 'Мед
 assert.equal(analyticsModule.lessons.length, 13, 'Analytics module must include period comparisons, conversion and combined-query workflow');
 assert.deepEqual(analyticsModule.lessons.find(lesson => lesson.title === 'Когортный анализ').exampleResult.rows, [['2026-01-01',3],['2026-02-01',2]], 'Cohort example must show separate cohort sizes across months');
 assert.deepEqual(analyticsModule.lessons.find(lesson => lesson.title === 'Retention: когортное удержание').exampleResult.rows, [['2026-01-01',0,3,3,'100.00'],['2026-01-01',1,3,2,'66.67'],['2026-01-01',2,3,2,'66.67'],['2026-02-01',0,2,2,'100.00'],['2026-02-01',1,2,1,'50.00']], 'Retention example must compare active users against the fixed original cohort size');
+const funnelLesson = analyticsModule.lessons.find(lesson => lesson.title === 'Воронка и условные этапы');
+assert.ok(funnelLesson.example.includes("e.event_at > c.created_at") && funnelLesson.example.includes("e.event_at > s.shipped_at") && funnelLesson.example.includes("INTERVAL '7 days'"), 'Strict order funnel must enforce event sequence and a fixed conversion window');
+assert.deepEqual(funnelLesson.exampleResult.rows, [[5,3,1,'60.00','33.33']], 'Strict funnel must reject out-of-order and late events');
 const combinedReportLesson = analyticsModule.lessons.find(lesson => lesson.title === 'Составной аналитический запрос: от фактов до отчёта');
 assert.ok(combinedReportLesson.body.includes('город магазина (stores.city)') && combinedReportLesson.body.includes('ROW_NUMBER'), 'Combined report must define its city dimension and deterministic Top-N policy');
 assert.ok(combinedReportLesson.example.includes('ORDER BY city, revenue DESC, customer_id'), 'Final report must sort by the displayed ranking metric and a stable key');
