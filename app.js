@@ -1,6 +1,6 @@
-import { modules, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261107-21';
-import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261107-21';
-import { firstSqlKeyword, explainStatementKeyword, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261107-21';
+import { modules, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261107-22';
+import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261107-22';
+import { firstSqlKeyword, explainStatementKeyword, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261107-22';
 
 const $ = (s, root=document) => root.querySelector(s);
 const $$ = (s, root=document) => [...root.querySelectorAll(s)];
@@ -388,13 +388,14 @@ async function initDatabase() {
     stage='подготовка эталонных результатов практики';
     await prepareExpected();
     state.engineReady=true;pill.classList.add('ready');status.textContent='PostgreSQL готов';
+    stage='отрисовка интерфейса после запуска базы';
     render();
   }catch(err){
     console.error('SQL Academy database initialization failed:',stage,err);
     state.engineReady=false;
     if(state.db){try{await state.db.close();}catch{} state.db=null;}
     pill.classList.add('error');status.textContent='Ошибка движка';
-    const detail=esc(err?.message||String(err));
+    const detail=esc(err?.stack||err?.message||String(err));
     $('#app-content').innerHTML='<div class="empty-state"><h2>Не удалось запустить PostgreSQL</h2><p><strong>Этап:</strong> '+esc(stage)+'</p><p>'+detail+'</p><p>Проверь подключение к CDN только если не загрузилась библиотека. Если ошибка возникла на другом этапе, это уже проблема инициализации базы, а не интернет-соединения.</p><button class="btn primary" id="retry-engine">Повторить запуск</button></div>';
     $('#retry-engine').addEventListener('click',initDatabase);
   }
