@@ -360,6 +360,29 @@ try {
         await db.exec(exercise.solution);
         const observed = await db.query(exercise.checkQuery);
         assert.ok(observed.rows.length > 0, `Mutation exercise ${exercise.id} did not produce a checkable state`);
+        if (exercise.id === 'e61') {
+          assert.deepEqual(observed.rows, [
+            { column_name: 'category_id', data_type: 'integer', is_nullable: 'NO', is_primary_key: true },
+            { column_name: 'category_name', data_type: 'text', is_nullable: 'NO', is_primary_key: false }
+          ], 'Table-creation task must verify both NOT NULL and the primary key');
+        } else if (exercise.id === 'e62') {
+          assert.deepEqual(observed.rows.map(row => [row.product_id, row.product_name, row.category, Number(row.price)]), [[99, 'Sample item', 'Accessories', 450]], 'INSERT task must verify the exact inserted product');
+        } else if (exercise.id === 'e63') {
+          assert.deepEqual(observed.rows.map(row => [row.product_id, Number(row.price)]), [[1, 2750]], 'UPDATE task must verify the exact 10% price increase');
+        } else if (exercise.id === 'e64') {
+          assert.equal(Number(observed.rows[0].remaining_rows), 0, 'DELETE task must verify that the target row is absent');
+        } else if (exercise.id === 'e65') {
+          assert.deepEqual(observed.rows.map(row => [row.product_id, row.product_name, row.category, Number(row.price)]), [[1, 'Coffee machine', 'Equipment', 2750]], 'UPSERT task must verify the final row values');
+        } else if (exercise.id === 'e66') {
+          assert.equal(observed.rows.length, 2, 'Constraint task must create both a primary key and a CHECK constraint');
+          assert.ok(observed.rows.some(row => row.definition.includes('PRIMARY KEY')));
+          assert.ok(observed.rows.some(row => row.definition.includes('CHECK') && row.definition.includes('>=') && row.definition.includes('<=')), 'CHECK constraint must enforce both range boundaries');
+        } else if (exercise.id === 'e67') {
+          assert.deepEqual(observed.rows.map(row => [row.product_id, row.product_name, Number(row.price)]), [[1, 'Кофемашина', 2500], [3, 'Чайник', 1500]], 'INSERT ... SELECT task must copy exactly the products in the requested category');
+        } else if (exercise.id === 'e68') {
+          assert.equal(observed.rows.length, 1, 'Index task must create the requested index');
+          assert.match(observed.rows[0].indexdef, /\(status\)/i, 'Index task must index the status column');
+        }
       } finally {
         await db.exec('ROLLBACK;');
       }
@@ -385,6 +408,10 @@ try {
     }
     checked++;
   }
+  await db.exec('CREATE TEMP TABLE practice_categories (category_id INTEGER NOT NULL, category_name TEXT NOT NULL);');
+  const invalidPrimaryKeyResult = await db.query(exercises.find(exercise => exercise.id === 'e61').checkQuery);
+  assert.ok(invalidPrimaryKeyResult.rows.every(row => !row.is_primary_key), 'A table without PRIMARY KEY must fail the e61 structural check');
+  await db.exec('DROP TABLE practice_categories;');
   const lessonExampleDb = new PGlite();
   try {
     await lessonExampleDb.exec(seedSQL);

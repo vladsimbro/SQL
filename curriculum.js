@@ -9596,7 +9596,7 @@ export const exercises = [
     "task": "Создай временную таблицу practice_categories с двумя столбцами: category_id типа integer как первичный ключ и category_name типа text с ограничением NOT NULL. Проверка посмотрит на фактическую структуру таблицы.",
     "solution": "CREATE TEMP TABLE practice_categories (category_id INTEGER PRIMARY KEY, category_name TEXT NOT NULL);",
     "mode": "mutation",
-    "checkQuery": "SELECT column_name, data_type, is_nullable FROM information_schema.columns WHERE table_name = 'practice_categories' ORDER BY ordinal_position;",
+    "checkQuery": "SELECT c.column_name, c.data_type, c.is_nullable, EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_attribute a ON a.attrelid = con.conrelid AND a.attnum = ANY(con.conkey) WHERE con.conrelid = 'practice_categories'::regclass AND con.contype = 'p' AND a.attname = c.column_name) AS is_primary_key FROM information_schema.columns c WHERE c.table_name = 'practice_categories' ORDER BY c.ordinal_position;",
     "hint": "CREATE TABLE задаёт столбцы и ограничения. Проверь типы и первичный ключ до вставки строк."
   },
   {
