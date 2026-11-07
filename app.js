@@ -1,6 +1,6 @@
-import { modules, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261107-25';
-import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261107-25';
-import { firstSqlKeyword, explainStatementKeyword, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261107-25';
+import { modules, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261107-26';
+import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261107-26';
+import { firstSqlKeyword, explainStatementKeyword, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261107-26';
 
 const $ = (s, root=document) => root.querySelector(s);
 const $$ = (s, root=document) => [...root.querySelectorAll(s)];
@@ -213,8 +213,8 @@ function bindPage(){
   }else{textarea.addEventListener('keydown',editorKeys);if(textarea.id==='playground-editor')textarea.addEventListener('input',()=>localStorage.setItem(EDITOR_KEY,textarea.value));}
  });
  const exSearch=$('#exercise-search');if(exSearch)exSearch.addEventListener('input',()=>{$$('.exercise-item').forEach(b=>b.style.display=b.textContent.toLowerCase().includes(exSearch.value.toLowerCase())?'flex':'none');});
- const glSearch=$('#glossary-search');if(glSearch)glSearch.addEventListener('input',()=>{$('.glossary-item').forEach(b=>b.style.display=b.dataset.term.includes(glSearch.value.toLowerCase())?'grid':'none');});
- $('[data-random-topic]').forEach(input=>input.addEventListener('change',()=>{if(input.checked)state.randomTopics.add(input.dataset.randomTopic);else state.randomTopics.delete(input.dataset.randomTopic);render();}));
+ const glSearch=$('#glossary-search');if(glSearch)glSearch.addEventListener('input',()=>{$$('.glossary-item').forEach(b=>b.style.display=b.dataset.term.includes(glSearch.value.toLowerCase())?'grid':'none');});
+ $$('[data-random-topic]').forEach(input=>input.addEventListener('change',()=>{if(input.checked)state.randomTopics.add(input.dataset.randomTopic);else state.randomTopics.delete(input.dataset.randomTopic);render();}));
 }
 function editorKeys(e) {
   if(e.key==='Tab'){e.preventDefault();const a=e.target.selectionStart,b=e.target.selectionEnd;e.target.setRangeText('  ',a,b,'end');}
