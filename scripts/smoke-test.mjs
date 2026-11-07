@@ -53,7 +53,7 @@ assert.ok(appSource.includes('reference.map(g=>') && appSource.includes('glossar
 assert.ok(appSource.includes('preserveOrder=false'), 'Result normalization must support order-sensitive exercises');
 assert.ok(appSource.includes('function renderAnnotatedSql') && appSource.includes('function renderExampleBreakdown'), 'Lesson examples must include SQL hover explanations and line-by-line breakdowns');
 const walkthroughLessons = modules.flatMap(module => module.lessons.filter(lesson => lesson.walkthrough));
-assert.equal(walkthroughLessons.length, 40, 'Expected forty deeply worked core lesson scenarios');
+assert.equal(walkthroughLessons.length, 173, 'Every lesson must have a complete worked scenario');
 assert.ok(walkthroughLessons.every(lesson => lesson.walkthrough.title && lesson.walkthrough.scenario && lesson.walkthrough.steps?.length >= 3 && lesson.walkthrough.result && lesson.walkthrough.pitfall), 'Every worked scenario must include context, ordered reasoning, result and common pitfall');
 assert.ok(appSource.includes('function renderWorkedExample') && appSource.includes('renderWorkedExample(l.walkthrough)'), 'Worked lesson scenarios must be rendered in the lesson page');
 assert.ok(cssSource.includes('.worked-example') && cssSource.includes('.worked-steps'), 'Worked scenarios must have dedicated responsive styling');
@@ -79,6 +79,8 @@ assert.equal(modules.length, 25, 'Expected 25 ordered modules');
 assert.ok(modules.every(module => module.lessons.length > 0), 'Every module must have lessons');
 assert.ok(modules.every(module => module.lessons.every(lesson => lesson.title && lesson.body && lesson.example && lesson.note)), 'Every lesson must contain title, theory, example and note');
 assert.ok(modules.every(module => module.lessons.every(lesson => lesson.simple)), 'Every lesson must include a plain-language explanation');
+assert.ok(modules.every(module => module.lessons.every(lesson => lesson.walkthrough && lesson.walkthrough.title && lesson.walkthrough.scenario && lesson.walkthrough.steps?.length >= 4 && lesson.walkthrough.result && lesson.walkthrough.pitfall)), 'Every lesson must include a complete, lesson-specific worked scenario with at least four reasoning steps');
+assert.ok(new Set(modules.flatMap(module => module.lessons.map(lesson => lesson.walkthrough.title))).size === 173, 'Every lesson must have its own worked-scenario title');
 assert.ok(modules.every(module => module.lessons.every(lesson => Array.isArray(lesson.outcomes) && lesson.outcomes.length >= 2)), 'Every lesson must have lesson-specific outcomes');
 assert.ok(modules.filter(module => ['foundations','relational','types','anatomy','ddl','inserts','select','where','sorting','expressions','aggregates','joins','subqueries','cte','setops','dml','constraints','windows','views','analytics','performance','advanced','security','workflow'].includes(module.id)).every(module => module.lessons.every(lesson => lesson.body.split(/\n\s*\n/).filter(Boolean).length >= 2)), 'Rewritten lesson explanations must be divided into readable paragraphs');
 assert.ok(modules.filter(module => ['foundations','relational','types','anatomy','ddl','inserts','select','where','sorting','expressions','aggregates','joins','subqueries','cte','setops','dml','constraints','windows','views'].includes(module.id)).every(module => module.lessons.every(lesson => lesson.quiz.every(q => q.options.length === 4 && new Set(q.options).size === 4))), 'Rewritten lesson quiz options must be distinct and substantive');
@@ -100,7 +102,7 @@ assert.equal(datetimeModule.lessons.length, 7, 'Date/time module must contain se
 assert.ok(datetimeModule.lessons.every(lesson => (lesson.practiceIds || []).length > 0), 'Every date/time lesson must link to at least one relevant practice task');
 assert.deepEqual(datetimeModule.lessons.flatMap(lesson => lesson.practiceIds || []).sort(), ['e72','e73','e74','e75','e76','e77','e78','e79'].sort(), 'Date/time lessons must link all eight dedicated practice tasks exactly once');
 assert.ok(exercises.filter(exercise => exercise.m === 'datetime').every(exercise => exercise.quiz?.options?.length === 4 && exercise.quiz.explanation), 'Date/time practice tasks must include a concept check');
-assert.ok(appSource.includes("curriculum.js?v=20261107-31") && appSource.includes("sql-utils.js?v=20261107-31") && appSource.includes("sandbox-tasks.js?v=20261107-31"), 'Application module dependencies must use the current cache version');
+assert.ok(appSource.includes("curriculum.js?v=20261107-34") && appSource.includes("sql-utils.js?v=20261107-34") && appSource.includes("sandbox-tasks.js?v=20261107-34"), 'Application module dependencies must use the current cache version');
 
 
 const windowModule = modules.find(module => module.id === 'windows');
