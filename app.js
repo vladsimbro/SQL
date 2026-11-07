@@ -1,6 +1,6 @@
-import { modules, learningTracks, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261107-64';
-import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261107-64';
-import { firstSqlKeyword, explainStatementKeyword, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261107-64';
+import { modules, learningTracks, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261107-65';
+import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261107-65';
+import { firstSqlKeyword, explainStatementKeyword, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261107-65';
 
 const $ = (s, root=document) => root.querySelector(s);
 const $$ = (s, root=document) => [...root.querySelectorAll(s)];
@@ -532,6 +532,7 @@ async function resetDatabase() {
 }
 async function prepareExpected() {
   state.expected.clear();
+  const failures = [];
   for(const ex of exercises){
     try{
       if(ex.mode==='mutation'){
@@ -558,7 +559,10 @@ async function prepareExpected() {
         const result=await state.db.query(ex.solution);
         state.expected.set(ex.id,normalizeResult(result,ex.orderMatters));
       }
-    } catch(err){console.warn('Could not prepare exercise',ex.id,err.message);}
+    } catch(err){failures.push(`${ex.id}: ${err.message}`);console.warn('Could not prepare exercise',ex.id,err.message);}
+  }
+  if (failures.length || state.expected.size !== exercises.length) {
+    throw new Error(`Не удалось подготовить эталонные результаты (${state.expected.size}/${exercises.length}). ${failures.join('; ')}`);
   }
 }
 async function initDatabase() {

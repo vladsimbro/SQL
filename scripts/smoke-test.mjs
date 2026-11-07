@@ -306,6 +306,11 @@ assert.equal(new Set(exercises.map(exercise => exercise.id)).size, exercises.len
 assert.ok(exercises.every(exercise => ids.has(exercise.m)), 'Every exercise must reference an existing module');
 assert.ok(exercises.every(exercise => exercise.solution && exercise.task && exercise.hint?.trim()), 'Every exercise must have a task, unique hint and reference solution');
 assert.equal(new Set(exercises.map(exercise => exercise.hint)).size, exercises.length, 'Every practical exercise must have a unique task-specific hint');
+const progressiveHintExercises = exercises.filter(exercise => exercise.hint2 || exercise.hint3);
+assert.equal(progressiveHintExercises.length, 20, 'Advanced analytics practice must expose progressive hints for all twenty tasks');
+assert.ok(progressiveHintExercises.every(exercise => exercise.hint2?.trim() && exercise.hint3?.trim()), 'Progressive hints must provide both reasoning and a query-structure level');
+assert.ok(appSource.includes('function renderExerciseHints') && appSource.includes('exercise.hint3'), 'Practice must render optional hints as separately revealed levels');
+assert.ok(appSource.includes('state.expected.size !== exercises.length') && appSource.includes('failures.length'), 'The SQL engine must not become ready when any expected exercise result is missing');
 assert.equal(sandboxTaskTopics.length, 14, 'Expected fourteen selectable random-task topics');
 assert.equal(sandboxTaskCount, 350, 'Expected 350 random sandbox tasks');
 assert.ok(sandboxTaskTopics.every(topic => topic.tasks.length === 25 && new Set(topic.tasks.map(item => item.prompt)).size === 25 && new Set(topic.tasks.map(item => item.hint)).size === 25), 'Every random-task topic must contain 25 unique prompts and hints');
