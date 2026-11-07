@@ -2187,12 +2187,28 @@ export const modules = [
             "explanation": "Третья цифра после точки равна 5, поэтому значение округляется до 12.35."
           }
         ],
-        "id": "expressions.chislovye-funktsii"
+        "id": "expressions.chislovye-funktsii",
+        "exampleResult": {
+          "columns": [
+            "rounded",
+            "rounded_up",
+            "rounded_down",
+            "positive_value"
+          ],
+          "rows": [
+            [
+              "125.68",
+              5,
+              4,
+              12
+            ]
+          ]
+        }
       },
       {
         "title": "Функции даты и времени",
         "body": "Функции даты и времени помогают извлекать части даты, сдвигать временные значения и получать текущий момент. EXTRACT(year FROM created_at) извлекает год, DATE_TRUNC('month', created_at) округляет дату до начала месяца, а INTERVAL задаёт временной интервал.\n\nCURRENT_DATE возвращает дату сессии, CURRENT_TIMESTAMP — текущий момент с часовым поясом. В PostgreSQL CURRENT_TIMESTAMP фиксируется на начало текущей транзакции, поэтому несколько вызовов в одной транзакции возвращают один момент.\n\nДля отчётных периодов часто лучше использовать диапазон дат в WHERE, а не оборачивать столбец DATE_TRUNC в фильтре. Так проще использовать индекс по времени.",
-        "example": "SELECT DATE_TRUNC('month', created_at) AS month_start,\n       COUNT(*) AS orders_count\nFROM orders\nGROUP BY DATE_TRUNC('month', created_at)\nORDER BY month_start;",
+        "example": "SELECT DATE_TRUNC('month', created_at)::date::text AS month_start,\n       COUNT(*)::int AS orders_count\nFROM orders\nGROUP BY DATE_TRUNC('month', created_at)\nORDER BY month_start;",
         "note": "Учитывай часовой пояс и тип timestamp. Один момент может относиться к разным календарным дням в разных зонах.",
         "simple": "DATE_TRUNC обрезает точность временного значения до указанной единицы, а INTERVAL задаёт сдвиг.",
         "practiceIds": [],
@@ -2214,7 +2230,19 @@ export const modules = [
             "explanation": "DATE_TRUNC обрезает временную метку до указанной точности и возвращает начало соответствующего периода."
           }
         ],
-        "id": "expressions.funktsii-daty-i-vremeni"
+        "id": "expressions.funktsii-daty-i-vremeni",
+        "exampleResult": {
+          "columns": [
+            "month_start",
+            "orders_count"
+          ],
+          "rows": [
+            [
+              "2026-01-01",
+              12
+            ]
+          ]
+        }
       },
       {
         "title": "CASE: условная логика",
@@ -2259,7 +2287,7 @@ export const modules = [
       {
         "title": "COALESCE, NULLIF и безопасные вычисления",
         "body": "COALESCE возвращает первый аргумент, который не равен NULL. Это удобно, когда нужно показать запасное значение или продолжить вычисление при отсутствии данных. Например, COALESCE(discount, 0) подставит ноль вместо NULL.\n\nNULLIF(a, b) возвращает NULL, если a = b, иначе возвращает a. Частый пример — защита от деления на ноль: numerator / NULLIF(denominator, 0). Если знаменатель равен нулю, выражение делит на NULL и возвращает NULL вместо ошибки.\n\nПодставлять ноль вместо NULL безопасно не всегда. Неизвестная сумма и действительно нулевая сумма — разные факты. Решение должно соответствовать смыслу метрики.",
-        "example": "WITH monthly_stats AS (\n  SELECT 12000::numeric AS revenue,\n         NULL::numeric AS discount,\n         4::integer AS order_count\n)\nSELECT revenue,\n       COALESCE(discount, 0) AS discount_for_display,\n       revenue / NULLIF(order_count, 0) AS average_revenue\nFROM monthly_stats;",
+        "example": "WITH monthly_stats AS (\n  SELECT 12000::numeric AS revenue,\n         NULL::numeric AS discount,\n         4::integer AS order_count\n)\nSELECT revenue::text AS revenue,\n       COALESCE(discount, 0)::text AS discount_for_display,\n       ROUND(revenue / NULLIF(order_count, 0), 2)::text AS average_revenue\nFROM monthly_stats;",
         "note": "COALESCE не исправляет качество данных. Не заменяй неизвестные значения нулём без бизнес-основания.",
         "simple": "COALESCE заменяет отсутствие запасным значением; NULLIF превращает заданное значение в NULL.",
         "practiceIds": [
@@ -2295,7 +2323,21 @@ export const modules = [
           "result": "Расчёт безопасен при нулевом знаменателе, а решение о подмене NULL принимается осознанно.",
           "pitfall": "COALESCE не является косметическим форматированием: замена неизвестного значения на 0 меняет смысл метрики."
         },
-        "id": "expressions.coalesce-nullif-i-bezopasnye-vychisleniya"
+        "id": "expressions.coalesce-nullif-i-bezopasnye-vychisleniya",
+        "exampleResult": {
+          "columns": [
+            "revenue",
+            "discount_for_display",
+            "average_revenue"
+          ],
+          "rows": [
+            [
+              "12000",
+              "0",
+              "3000.00"
+            ]
+          ]
+        }
       }
     ],
     "quiz": [
