@@ -307,8 +307,8 @@ assert.ok(exercises.every(exercise => ids.has(exercise.m)), 'Every exercise must
 assert.ok(exercises.every(exercise => exercise.solution && exercise.task && exercise.hint?.trim()), 'Every exercise must have a task, unique hint and reference solution');
 assert.equal(new Set(exercises.map(exercise => exercise.hint)).size, exercises.length, 'Every practical exercise must have a unique task-specific hint');
 const progressiveHintExercises = exercises.filter(exercise => exercise.hint2 || exercise.hint3);
-assert.equal(progressiveHintExercises.length, 20, 'Advanced analytics practice must expose progressive hints for all twenty tasks');
-assert.ok(progressiveHintExercises.every(exercise => exercise.hint2?.trim() && exercise.hint3?.trim()), 'Progressive hints must provide both reasoning and a query-structure level');
+assert.equal(progressiveHintExercises.length, exercises.length, 'All practical tasks must expose three progressive hint levels');
+assert.ok(progressiveHintExercises.every(exercise => exercise.hint2?.trim() && exercise.hint3?.trim()), 'Every practical task must provide reasoning and a query-structure hint level');
 assert.ok(appSource.includes('function renderExerciseHints') && appSource.includes('exercise.hint3'), 'Practice must render optional hints as separately revealed levels');
 assert.ok(appSource.includes('${renderExerciseHints(active)}'), 'The active practice task must render its own hint data instead of a shared generic hint');
 const hintStart = appSource.indexOf('function renderExerciseHints');
