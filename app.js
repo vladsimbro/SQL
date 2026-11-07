@@ -112,38 +112,26 @@ function lessonBody(l,m) {
   const sources=(m.sources||[]).map((url,i)=>`<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">Документация PostgreSQL ${i+1} ↗</a>`).join(' · ');
   return `<p>${esc(l.body)}</p>${simple}<h2>Пример</h2><div class="code-block"><div class="code-head"><span>POSTGRESQL</span><button class="btn small" data-copy-code>Копировать</button></div><pre>${esc(l.example)}</pre></div><div class="note-box"><strong>Запомни:</strong> ${esc(l.note)}</div><div class="lesson-sources"><strong>Первоисточники:</strong> ${sources}</div>`;
 }
-function renderModuleQuiz(m) {
- const bank=m.quiz||[];
- if(!bank.length)return '';
- const first=(state.lessonIndex*2)%bank.length;
- const questions=[{q:bank[first],index:first},{q:bank[(first+1)%bank.length],index:(first+1)%bank.length}];
- return `<section class="quiz-panel"><div class="eyebrow">МИНИ-ТЕСТ · ПРОВЕРКА ПОНИМАНИЯ</div><h2>Проверь себя</h2><p class="quiz-intro">В каждом уроке — два вопроса из банка модуля. Выбери ответ и прочитай объяснение.</p>
- ${questions.map(({q, index})=>{const key=state.moduleId+':'+state.lessonIndex+':'+index,selected=state.quizAnswers[key],answered=selected!==undefined,correct=selected===q.answer;
- return `<div class="quiz-question"><div class="quiz-question-title"><span>ВОПРОС ${index+1} ИЗ ${bank.length}</span><strong>${esc(q.question)}</strong></div><div class="quiz-options">${q.options.map((opt,oi)=>`<button class="quiz-option ${answered&&oi===selected?(correct?'correct':'incorrect'):''} ${answered&&correct&&oi===q.answer?'answer-key':''}" data-quiz-answer="${index}:${oi}" ${answered&&correct?'disabled':''}><span class="quiz-radio">${String.fromCharCode(65+oi)}</span><span>${esc(opt)}</span></button>`).join('')}</div>${answered?`<div class="quiz-feedback ${correct?'correct':'incorrect'}"><strong>${correct?'Верно!':'Пока нет.'}</strong> ${esc(correct?q.explanation:'Попробуй ещё раз. Подумай над правилом и выбери другой вариант.')}</div>`:''}</div>`;}).join('')}
- <div class="quiz-summary">${questions.every(({q,index})=>state.quizAnswers[state.moduleId+':'+state.lessonIndex+':'+index]===q.answer)?'<strong>Отлично! Оба ответа верны.</strong>':'Ответь на вопросы, чтобы закрепить материал.'}</div></section>`;
+function renderLessonQuiz(l) {
+ const bank=l.quiz||[];if(!bank.length)return '';
+ return `<section class="quiz-panel"><div class="eyebrow">МИНИ-ТЕСТ · ПОСЛЕ ОБЪЯСНЕНИЯ</div><h2>Проверь понимание</h2><p class="quiz-intro">Вопрос относится к материалу этого урока. Сначала изучи объяснение и пример, затем отвечай.</p>
+ ${bank.map((q,index)=>{const key=state.moduleId+':'+state.lessonIndex+':'+index,selected=state.quizAnswers[key],answered=selected!==undefined,correct=selected===q.answer;
+ return `<div class="quiz-question"><div class="quiz-question-title"><span>ВОПРОС ${index+1} ИЗ ${bank.length}</span><strong>${esc(q.question)}</strong></div><div class="quiz-options">${q.options.map((opt,oi)=>`<button class="quiz-option ${answered&&oi===selected?(correct?'correct':'incorrect'):''} ${answered&&correct&&oi===q.answer?'answer-key':''}" data-quiz-answer="${index}:${oi}" ${answered&&correct?'disabled':''}><span class="quiz-radio">${String.fromCharCode(65+oi)}</span><span>${esc(opt)}</span></button>`).join('')}</div>${answered?`<div class="quiz-feedback ${correct?'correct':'incorrect'}"><strong>${correct?'Верно!':'Пока нет.'}</strong> ${esc(q.explanation)}${!correct?' Попробуй ещё раз, опираясь на объяснение выше.':''}</div>`:''}</div>`;}).join('')}
+ <div class="quiz-summary">${bank.every((q,index)=>state.quizAnswers[state.moduleId+':'+state.lessonIndex+':'+index]===q.answer)?'<strong>Проверка пройдена.</strong>':'Ответь на вопрос, чтобы закрепить материал.'}</div></section>`;
 }
-
 function renderStudy() {
-  const m=moduleById(state.moduleId)||modules[0];
-  state.lessonIndex=Math.max(0,Math.min(state.lessonIndex,m.lessons.length-1));
-  const l=m.lessons[state.lessonIndex],done=state.completedLessons.has(lessonKey(m.id,state.lessonIndex));
-  const idx=modules.indexOf(m);
-  const sidebar=modules.map((mod,mi)=>`<div style="margin-bottom:13px"><h3 style="color:var(--muted);font-size:10px;margin:0 0 5px">${String(mi+1).padStart(2,'0')} · ${esc(mod.title)}</h3>${mod.lessons.map((x,li)=>`<button class="lesson-nav-item ${mod.id===m.id&&li===state.lessonIndex?'active':''} ${state.completedLessons.has(lessonKey(mod.id,li))?'done':''}" data-lesson="${mod.id}:${li}"><span class="dot">${state.completedLessons.has(lessonKey(mod.id,li))?'✓':'○'}</span>${esc(x.title)}</button>`).join('')}</div>`).join('');
-  return `
-    ${pageHead('УЧЕБНИК · МОДУЛЬ '+String(idx+1).padStart(2,'0'),m.title,m.desc)}
-    <div class="split-layout"><aside class="card lesson-sidebar"><h3>Содержание курса</h3>${sidebar}</aside>
-    <article class="lesson-content">
-      <div class="lesson-card"><div class="eyebrow">${esc(m.stage)} · УРОК ${state.lessonIndex+1} ИЗ ${m.lessons.length}</div><h1>${esc(l.title)}</h1>${lessonBody(l,m)}${renderModuleQuiz(m)}<div class="lesson-footer"><button class="btn" data-action="lesson-practice">Задачи по теме →</button><button class="btn primary" data-action="complete-lesson">${done?'✓ Урок завершён':'Отметить урок завершённым'}</button></div></div>
-      <div class="lesson-card"><div class="eyebrow">КОНТРОЛЬНЫЕ ВОПРОСЫ</div><h2>Что нужно уметь после урока</h2><ul><li>Дать определение ключевым понятиям темы без заучивания текста.</li><li>Объяснить, на каком этапе запроса применяется изученная конструкция.</li><li>Предсказать результат на маленьком примере до запуска SQL.</li><li>Найти типичную ошибку и объяснить, почему она возникает.</li></ul><div class="note-box">Привычка прогнозировать результат до выполнения запроса — один из самых полезных навыков в SQL.</div><div class="lesson-footer"><button class="btn" data-action="prev-lesson" ${state.lessonIndex===0?'disabled':''}>← Предыдущий урок</button><button class="btn primary" data-action="next-lesson">${state.lessonIndex===m.lessons.length-1?'Следующий модуль →':'Следующий урок →'}</button></div></div>
-    </article></div>`;
+ const m=moduleById(state.moduleId)||modules[0];state.lessonIndex=Math.max(0,Math.min(state.lessonIndex,m.lessons.length-1));
+ const l=m.lessons[state.lessonIndex],done=state.completedLessons.has(lessonKey(m.id,state.lessonIndex)),idx=modules.indexOf(m);
+ const sidebar=modules.map((mod,mi)=>`<div style="margin-bottom:13px"><h3 style="color:var(--muted);font-size:10px;margin:0 0 5px">${String(mi+1).padStart(2,'0')} · ${esc(mod.title)}</h3>${mod.lessons.map((x,li)=>`<button class="lesson-nav-item ${mod.id===m.id&&li===state.lessonIndex?'active':''} ${state.completedLessons.has(lessonKey(mod.id,li))?'done':''}" data-lesson="${mod.id}:${li}"><span class="dot">${state.completedLessons.has(lessonKey(mod.id,li))?'✓':'○'}</span>${esc(x.title)}</button>`).join('')}</div>`).join('');
+ const practice=(l.practiceIds||[]).map(id=>{const ex=exercises.find(e=>e.id===id);return ex?`<button class="btn" data-exercise="${ex.id}">Практика: ${esc(ex.title)} →</button>`:''}).join('');
+ const outcomes=(l.outcomes||[]).length?`<div class="lesson-card"><div class="eyebrow">РЕЗУЛЬТАТ УРОКА</div><h2>Что ты должен уметь</h2><ul>${l.outcomes.map(item=>`<li>${esc(item)}</li>`).join('')}</ul></div>`:'';
+ return `${pageHead('УЧЕБНИК · МОДУЛЬ '+String(idx+1).padStart(2,'0'),m.title,m.desc)}<div class="split-layout"><aside class="card lesson-sidebar"><h3>Содержание курса</h3>${sidebar}</aside><article class="lesson-content">
+ <div class="lesson-card"><div class="eyebrow">${esc(m.stage)} · УРОК ${state.lessonIndex+1} ИЗ ${m.lessons.length}</div><h1>${esc(l.title)}</h1>${lessonBody(l,m)}${renderLessonQuiz(l)}${practice?`<div class="lesson-footer lesson-practice-links">${practice}</div>`:''}<div class="lesson-footer"><button class="btn primary" data-action="complete-lesson">${done?'✓ Урок завершён':'Отметить урок завершённым'}</button></div></div>${outcomes}
+ <div class="lesson-card"><div class="lesson-footer"><button class="btn" data-action="prev-lesson" ${state.lessonIndex===0?'disabled':''}>← Предыдущий урок</button><button class="btn primary" data-action="next-lesson">${state.lessonIndex===m.lessons.length-1?'Следующий модуль →':'Следующий урок →'}</button></div></div></article></div>`;
 }
-function renderExerciseQuiz(ex,m) {
- const bank=m.quiz||[];if(!bank.length)return '';
- const index=exercises.indexOf(ex)%bank.length,q=bank[index],selected=state.exerciseQuizAnswers[ex.id],answered=selected!==undefined,correct=selected===q.answer;
- return `<section class="exercise-quiz"><div class="eyebrow">ВОПРОС ПЕРЕД ПРАКТИКОЙ</div><strong class="exercise-quiz-question">${esc(q.question)}</strong>
- <div class="quiz-options">${q.options.map((option,oi)=>`<button class="quiz-option ${answered&&oi===selected?(correct?'correct':'incorrect'):''}" data-exercise-quiz-answer="${oi}" ${answered&&correct?'disabled':''}><span class="quiz-radio">${String.fromCharCode(65+oi)}</span><span>${esc(option)}</span></button>`).join('')}</div>
- ${answered?`<div class="quiz-feedback ${correct?'correct':'incorrect'}"><strong>${correct?'Верно!':'Не совсем.'}</strong> ${esc(correct?q.explanation:'Подумай ещё и выбери другой вариант. Практическая задача поможет закрепить правило.')}</div>`:''}
- </section>`;
+function renderExerciseQuiz(ex) {
+ const q=ex.quiz;if(!q)return '';const selected=state.exerciseQuizAnswers[ex.id],answered=selected!==undefined,correct=selected===q.answer;
+ return `<section class="exercise-quiz"><div class="eyebrow">ПРОВЕРЬ ПОНЯТИЕ ПЕРЕД ПРАКТИКОЙ</div><strong class="exercise-quiz-question">${esc(q.question)}</strong><div class="quiz-options">${q.options.map((option,oi)=>`<button class="quiz-option ${answered&&oi===selected?(correct?'correct':'incorrect'):''}" data-exercise-quiz-answer="${oi}" ${answered&&correct?'disabled':''}><span class="quiz-radio">${String.fromCharCode(65+oi)}</span><span>${esc(option)}</span></button>`).join('')}</div>${answered?`<div class="quiz-feedback ${correct?'correct':'incorrect'}"><strong>${correct?'Верно!':'Не совсем.'}</strong> ${esc(q.explanation)}</div>`:''}</section>`;
 }
 function renderPractice() {
   const active=exercises.find(e=>e.id===state.exerciseId)||exercises[0];
@@ -153,7 +141,7 @@ function renderPractice() {
   ${pageHead(`ПРАКТИКА · ${exercises.length} ЗАДАНИЙ`,'Закрепляй SQL руками','Каждое задание проверяется сравнением результата твоего запроса с эталонным результатом, рассчитанным на той же учебной базе. Порядок строк не учитывается, если он не меняет состав результата.')}
   <div class="exercise-layout"><aside><input class="exercise-filter" id="exercise-search" placeholder="Найти задачу по названию…"><div class="exercise-list" id="exercise-list">${list}</div></aside>
   <section><div class="task-card"><div class="task-meta">ЗАДАНИЕ ${exercises.indexOf(active)+1} ИЗ ${exercises.length} · ${esc(m.title)}</div><h2>${esc(active.title)} ${state.completedExercises.has(active.id)?'✓':''}</h2><p>${esc(active.task)}</p><details class="hint"><summary>Показать подсказку</summary><p>Сначала определи зерно результата: что означает одна строка? Затем выбери нужные таблицы, условия, группировку и сортировку. Не копируй решение целиком, пока не попробовал сам.</p></details></div>
-  ${renderExerciseQuiz(active,m)}
+  ${renderExerciseQuiz(active)}
   ${editor('','exercise-editor','Напиши SQL-запрос. Эталонное решение скрыто до нажатия «Показать решение».')}
   <div class="editor-actions" style="margin-top:10px"><button class="btn primary" data-action="check-exercise">Проверить решение</button>${(active.mode==='mutation'||active.mode==='transaction')?'':'<button class="btn" data-action="run-exercise">Выполнить запрос</button>'}<button class="btn" data-action="show-solution">Показать решение</button><button class="btn" data-action="reset-db">Сбросить базу</button></div>
   <div id="exercise-feedback"></div><div id="exercise-results"></div>
@@ -228,7 +216,7 @@ function handleAction(action) {
   if(action==='complete-lesson'){const key=lessonKey(state.moduleId,state.lessonIndex);if(state.completedLessons.has(key))state.completedLessons.delete(key);else state.completedLessons.add(key);saveProgress();render();}
   if(action==='prev-lesson'){if(state.lessonIndex>0)state.lessonIndex--;else{const i=modules.indexOf(m);if(i>0){state.moduleId=modules[i-1].id;state.lessonIndex=modules[i-1].lessons.length-1;}}render();}
   if(action==='next-lesson'){if(state.lessonIndex<m.lessons.length-1)state.lessonIndex++;else{const i=modules.indexOf(m);if(i<modules.length-1){state.moduleId=modules[i+1].id;state.lessonIndex=0;}}render();}
-  if(action==='lesson-practice'){const ex=exercises.find(x=>x.m===state.moduleId);if(ex){state.exerciseId=ex.id;go('practice');}else{go('practice');}}
+  if(action==='lesson-practice'){const id=m.lessons[state.lessonIndex]?.practiceIds?.[0];if(id){state.exerciseId=id;go('practice');}}
   if(action==='prev-exercise'||action==='next-exercise'){const i=exercises.findIndex(x=>x.id===state.exerciseId);state.exerciseId=exercises[Math.max(0,Math.min(exercises.length-1,i+(action==='next-exercise'?1:-1)))].id;render();}
   if(action==='clear-editor')setEditorValue(state.view==='practice'?'exercise-editor':'playground-editor','');
   if(action==='reset-editor'){const sample='SELECT status, COUNT(*) AS orders_count\\nFROM orders\\nGROUP BY status\\nORDER BY orders_count DESC;';setEditorValue('playground-editor',sample);localStorage.setItem(EDITOR_KEY,sample);}
@@ -373,11 +361,11 @@ document.addEventListener('click',event=>{
  if(el.dataset.lesson){const [mid,li]=el.dataset.lesson.split(':');state.moduleId=mid;state.lessonIndex=Number(li);render();return;}
  if(el.dataset.exercise){state.exerciseId=el.dataset.exercise;render();return;}
  if(el.dataset.exerciseQuizAnswer!==undefined){
-  const option=Number(el.dataset.exerciseQuizAnswer),ex=exercises.find(x=>x.id===state.exerciseId),m=moduleById(ex?.m),q=m?.quiz?.[exercises.indexOf(ex)%m.quiz.length];
+  const option=Number(el.dataset.exerciseQuizAnswer),ex=exercises.find(x=>x.id===state.exerciseId),q=ex?.quiz;
   if(ex&&q){state.exerciseQuizAnswers[ex.id]=option;saveProgress();render();}
   return;
  }
- if(el.dataset.quizAnswer){const [qi,oi]=el.dataset.quizAnswer.split(':').map(Number),q=moduleById(state.moduleId)?.quiz?.[qi];if(q){state.quizAnswers[state.moduleId+':'+state.lessonIndex+':'+qi]=oi;saveProgress();render();}return;}
+ if(el.dataset.quizAnswer){const [qi,oi]=el.dataset.quizAnswer.split(':').map(Number),q=moduleById(state.moduleId)?.lessons?.[state.lessonIndex]?.quiz?.[qi];if(q){state.quizAnswers[state.moduleId+':'+state.lessonIndex+':'+qi]=oi;saveProgress();render();}return;}
  if(el.dataset.copyCode){const txt=$('pre',el.closest('.code-block'))?.textContent||'';navigator.clipboard?.writeText(txt).then(()=>toast('Пример скопирован')).catch(()=>toast('Не удалось скопировать'));return;}
  if(el.dataset.sample){localStorage.setItem(EDITOR_KEY,el.dataset.sample);go('playground');return;}
  if(el.dataset.action){handleAction(el.dataset.action);return;}

@@ -62,6 +62,16 @@ assert.equal(modules.length, 24, 'Expected 24 ordered modules');
 assert.ok(modules.every(module => module.lessons.length > 0), 'Every module must have lessons');
 assert.ok(modules.every(module => module.lessons.every(lesson => lesson.title && lesson.body && lesson.example && lesson.note)), 'Every lesson must contain title, theory, example and note');
 assert.ok(modules.every(module => module.lessons.every(lesson => lesson.simple)), 'Every lesson must include a plain-language explanation');
+assert.ok(modules.every(module => module.lessons.every(lesson => Array.isArray(lesson.outcomes) && lesson.outcomes.length >= 2)), 'Every lesson must have lesson-specific outcomes');
+const linkedPractice = modules.flatMap(module => module.lessons.flatMap(lesson => (lesson.practiceIds || []).map(id => ({ module, id }))));
+assert.equal(linkedPractice.length, exercises.length, 'Every exercise must be linked from its intended lesson');
+assert.equal(new Set(linkedPractice.map(item => item.id)).size, linkedPractice.length, 'An exercise must not be linked to multiple lessons');
+for (const item of linkedPractice) assert.ok(exercises.some(exercise => exercise.id === item.id && exercise.m === item.module.id), `Practice link ${item.id} must belong to its lesson module`);
+assert.ok(modules.every(module => module.lessons.every(lesson => Array.isArray(lesson.quiz))), 'Quiz data must be stored on individual lessons');
+assert.ok(modules.some(module => module.lessons.some(lesson => lesson.quiz.length)), 'Lessons must include focused knowledge checks');
+assert.ok(!appSource.includes('state.lessonIndex*2'), 'Lesson quizzes must not rotate through unrelated module-wide questions');
+assert.ok(!appSource.includes('exercises.find(x=>x.m===state.moduleId)'), 'Lesson practice must not jump to the first arbitrary exercise in a module');
+
 assert.ok(modules.every(module => module.sources?.length), 'Every module must link to official documentation');
 assert.ok(modules.every(module => module.quiz?.length >= 4), 'Every module must include a question bank');
 const quizQuestions = modules.flatMap(module => module.quiz);
