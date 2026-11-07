@@ -1627,7 +1627,7 @@ export const modules = [
       {
         "title": "COALESCE, NULLIF и безопасные вычисления",
         "body": "COALESCE возвращает первый аргумент, который не равен NULL. Это удобно, когда нужно показать запасное значение или продолжить вычисление при отсутствии данных. Например, COALESCE(discount, 0) подставит ноль вместо NULL.\n\nNULLIF(a, b) возвращает NULL, если a = b, иначе возвращает a. Частый пример — защита от деления на ноль: numerator / NULLIF(denominator, 0). Если знаменатель равен нулю, выражение делит на NULL и возвращает NULL вместо ошибки.\n\nПодставлять ноль вместо NULL безопасно не всегда. Неизвестная сумма и действительно нулевая сумма — разные факты. Решение должно соответствовать смыслу метрики.",
-        "example": "SELECT revenue,\n       COALESCE(discount, 0) AS discount_for_display,\n       revenue / NULLIF(order_count, 0) AS average_revenue\nFROM monthly_stats;",
+        "example": "WITH monthly_stats AS (\n  SELECT 12000::numeric AS revenue,\n         NULL::numeric AS discount,\n         4::integer AS order_count\n)\nSELECT revenue,\n       COALESCE(discount, 0) AS discount_for_display,\n       revenue / NULLIF(order_count, 0) AS average_revenue\nFROM monthly_stats;",
         "note": "COALESCE не исправляет качество данных. Не заменяй неизвестные значения нулём без бизнес-основания.",
         "simple": "COALESCE заменяет отсутствие запасным значением; NULLIF превращает заданное значение в NULL.",
         "practiceIds": [
@@ -2355,7 +2355,7 @@ export const modules = [
       {
         "title": "Интервалы и арифметика времени",
         "body": "INTERVAL описывает продолжительность или календарный сдвиг. С датой можно складывать интервалы, а разность двух дат или временных меток даёт интервал. Но календарный месяц не равен фиксированному числу дней: месяцы имеют разную длину, а сутки при переходе на летнее время могут длиться 23 или 25 часов в локальной зоне.\n\nПоэтому различай календарную арифметику и измерение прошедшего времени. «Следующий месяц» означает календарный переход, а «через 30 суток» — фиксированное количество дней. Для SLA и длительности события обычно вычитают два момента TIMESTAMPTZ. Для отчёта за календарный месяц строят границы месяца.\n\nНе превращай интервал в секунды без понимания его компонентов: месяцы и годы не имеют единственного фиксированного количества секунд. Если нужна точная длительность, считай разницу между двумя моментами, а не пытайся заранее перевести абстрактный месяц в секунды.",
-        "example": "SELECT TIMESTAMP '2026-03-01 10:00' + INTERVAL '1 month';\n\nSELECT finished_at - started_at AS elapsed\nFROM jobs;\n\nSELECT now() + INTERVAL '90 minutes' AS due_at;",
+        "example": "WITH jobs AS (\n  SELECT TIMESTAMP '2026-03-01 10:00' AS started_at,\n         TIMESTAMP '2026-03-01 11:35' AS finished_at\n)\nSELECT finished_at - started_at AS elapsed\nFROM jobs;\n\nSELECT TIMESTAMP '2026-03-01 10:00' + INTERVAL '1 month' AS next_month;\nSELECT now() + INTERVAL '90 minutes' AS due_at;",
         "note": "INTERVAL '1 month' — календарный месяц, а не 30 дней. При работе с часовыми поясами локальные сутки могут иметь разную фактическую длительность.",
         "simple": "Интервал «месяц» и интервал «30 дней» не всегда одно и то же.",
         "outcomes": [
@@ -2508,7 +2508,7 @@ export const modules = [
       {
         "title": "Временные метрики: длительность и SLA",
         "body": "В аналитике логистики и поддержки часто измеряют время между событиями: создание заказа, начало сборки, передача курьеру, доставка. Сначала нужно определить точные точки старта и финиша, единицу измерения, часовой пояс и правила для незавершённых процессов.\n\nРазность двух TIMESTAMPTZ даёт интервал между моментами. Для длительности в секундах можно использовать EXTRACT(EPOCH FROM finished_at - started_at). Если завершения ещё нет, результат будет NULL; не подменяй его нулём без бизнес-правила. Ноль означает мгновенное завершение, а NULL может означать, что событие ещё не произошло или данные отсутствуют.\n\nСреднее время часто скрывает длинный хвост распределения. Для SLA полезно смотреть медиану, 90-й или 95-й перцентиль, долю заказов в пределах целевого времени и отдельно незавершённые случаи. Также проверь отрицательные длительности: они могут указывать на ошибку порядка событий, неверный часовой пояс или некорректные исходные данные.",
-        "example": "SELECT order_id,\n       EXTRACT(EPOCH FROM delivered_at - created_at) / 60.0 AS minutes_to_deliver\nFROM orders\nWHERE delivered_at IS NOT NULL;\n\nSELECT percentile_cont(0.9) WITHIN GROUP (\n         ORDER BY EXTRACT(EPOCH FROM delivered_at - created_at)\n       ) AS p90_seconds\nFROM orders\nWHERE delivered_at IS NOT NULL;",
+        "example": "WITH delivery_times AS (\n  SELECT o.order_id,\n         delivered.event_at - created.event_at AS elapsed\n  FROM orders o\n  JOIN order_events created\n    ON created.order_id = o.order_id\n   AND created.event_type = 'created'\n  JOIN order_events delivered\n    ON delivered.order_id = o.order_id\n   AND delivered.event_type = 'delivered'\n)\nSELECT order_id,\n       EXTRACT(EPOCH FROM elapsed) / 60.0 AS minutes_to_deliver\nFROM delivery_times;\n\nWITH delivery_times AS (\n  SELECT EXTRACT(EPOCH FROM delivered.event_at - created.event_at) AS seconds\n  FROM order_events created\n  JOIN order_events delivered USING (order_id)\n  WHERE created.event_type = 'created'\n    AND delivered.event_type = 'delivered'\n)\nSELECT percentile_cont(0.9) WITHIN GROUP (ORDER BY seconds) AS p90_seconds\nFROM delivery_times;",
         "note": "Фильтр delivered_at IS NOT NULL исключает незавершённые заказы из расчёта завершённой длительности. Их нужно считать отдельно, если метрика должна учитывать текущий backlog.",
         "simple": "Временная метрика начинается с точного определения событий и правил для незавершённых случаев.",
         "outcomes": [
@@ -2864,7 +2864,7 @@ export const modules = [
       {
         "title": "Материализация и оптимизация CTE",
         "body": "В PostgreSQL CTE может быть встроен в основной запрос или материализован как отдельный промежуточный результат. MATERIALIZED просит вычислить CTE отдельно, NOT MATERIALIZED разрешает встроить его, если это возможно.\n\nМатериализация может быть полезна, если результат используется несколько раз или если нужно избежать повторного выполнения дорогого этапа. Но она может мешать проталкиванию фильтров и оптимизации. NOT MATERIALIZED может дать оптимизатору больше свободы, но иногда приводит к повторному вычислению.\n\nНе добавляй эти ключевые слова наугад. Сначала посмотри EXPLAIN (ANALYZE, BUFFERS), найди реальную проблему и сравни планы. Поведение зависит от версии PostgreSQL и свойств CTE.",
-        "example": "WITH filtered_orders AS NOT MATERIALIZED (\n  SELECT * FROM orders\n)\nSELECT *\nFROM filtered_orders\nWHERE city = 'Warsaw';",
+        "example": "WITH filtered_orders AS NOT MATERIALIZED (\n  SELECT *\n  FROM orders\n  WHERE store_id IN (\n    SELECT store_id\n    FROM stores\n    WHERE city = 'Warsaw'\n  )\n)\nSELECT *\nFROM filtered_orders\nWHERE status = 'delivered';",
         "note": "Материализация — не универсальное ускорение. Проверяй план выполнения и реальное время.",
         "simple": "MATERIALIZED фиксирует отдельное вычисление CTE, NOT MATERIALIZED позволяет встроить его в запрос.",
         "practiceIds": [],
@@ -2974,7 +2974,7 @@ export const modules = [
       {
         "title": "UNION и UNION ALL",
         "body": "UNION объединяет результаты двух SELECT и удаляет полностью повторяющиеся строки. UNION ALL делает то же объединение, но сохраняет повторы. Для объединения запросы должны возвращать одинаковое количество столбцов с совместимыми типами в соответствующих позициях.\n\nUNION выполняет работу по устранению дублей, поэтому часто дороже UNION ALL. Если повторы допустимы или важны для подсчёта событий, используй UNION ALL. Если нужно получить общий список уникальных комбинаций, UNION подходит.\n\nНазвания столбцов результата обычно берутся из первого SELECT. Порядок строк не гарантируется без общего ORDER BY в конце.",
-        "example": "SELECT email FROM customers_2025\nUNION ALL\nSELECT email FROM customers_2026;",
+        "example": "SELECT customer_id\nFROM customers\nWHERE city = 'Warsaw'\nUNION ALL\nSELECT customer_id\nFROM orders\nWHERE status = 'delivered';",
         "note": "UNION удаляет дубли по всей строке результата, а не только по одному столбцу, если выбрано несколько полей.",
         "simple": "UNION убирает одинаковые строки результата, UNION ALL сохраняет их.",
         "practiceIds": [
@@ -3001,7 +3001,7 @@ export const modules = [
       {
         "title": "INTERSECT",
         "body": "INTERSECT возвращает строки, которые присутствуют в обоих результатах SELECT. INTERSECT по умолчанию удаляет дубликаты, а INTERSECT ALL сохраняет кратность совпадений по правилам мультимножеств.\n\nЭта операция полезна для пересечения наборов: например, получить клиентов, которые присутствуют и в списке покупателей, и в списке участников программы лояльности. Иногда ту же задачу можно решить через JOIN или EXISTS, но INTERSECT может ясно показать именно операцию над двумя наборами.\n\nКак и UNION, INTERSECT требует одинакового количества совместимых столбцов. Порядок строк не гарантируется без ORDER BY.",
-        "example": "SELECT customer_id FROM online_customers\nINTERSECT\nSELECT customer_id FROM loyalty_members;",
+        "example": "SELECT customer_id\nFROM customers\nINTERSECT\nSELECT customer_id\nFROM customer_profiles;",
         "note": "INTERSECT сравнивает всю строку выбранных столбцов. Выбери только те поля, по которым действительно определяешь пересечение.",
         "simple": "INTERSECT оставляет общие строки двух наборов.",
         "practiceIds": [],
@@ -3026,7 +3026,7 @@ export const modules = [
       {
         "title": "EXCEPT",
         "body": "EXCEPT возвращает строки из первого SELECT, которых нет во втором. EXCEPT по умолчанию удаляет дубли; EXCEPT ALL учитывает количество повторов.\n\nПорядок запросов важен: A EXCEPT B не равно B EXCEPT A. Это операция разности множеств. Её удобно применять для поиска отсутствующих записей: клиенты из CRM, которых нет в выгрузке оплат, или ожидаемые ID без фактических событий.\n\nКак и другие операции над наборами, EXCEPT требует совместимой структуры SELECT. NULL значения сравниваются по правилам set operations, а не обычного оператора = в WHERE.",
-        "example": "SELECT customer_id FROM customers\nEXCEPT\nSELECT customer_id FROM customers_with_orders;",
+        "example": "SELECT customer_id\nFROM customers\nEXCEPT\nSELECT customer_id\nFROM orders;",
         "note": "Если поменять местами SELECT, смысл разности изменится.",
         "simple": "EXCEPT оставляет строки из левого набора, которых нет в правом. Порядок частей имеет значение.",
         "practiceIds": [
@@ -3053,7 +3053,7 @@ export const modules = [
       {
         "title": "Скобки и порядок операций",
         "body": "Операции UNION, INTERSECT и EXCEPT можно комбинировать. При нескольких операциях важно понимать приоритет и использовать скобки, если требуется конкретная последовательность.\n\nORDER BY обычно ставится один раз после всего выражения и сортирует итоговый набор. Нельзя воспринимать ORDER BY внутри каждой части как сортировку окончательного результата без соответствующих скобок и ограничений.\n\nДля читаемости сложные комбинации лучше разбивать на CTE с именами. Тогда каждый набор можно проверить отдельно, а затем объединить. Это особенно полезно, если в запросе есть разные правила фильтрации или дедупликации.",
-        "example": "(SELECT customer_id FROM customers_2025\n EXCEPT\n SELECT customer_id FROM blocked_customers)\nUNION\n(SELECT customer_id FROM customers_2026)\nORDER BY customer_id;",
+        "example": "(SELECT customer_id\n FROM customers\n WHERE city = 'Warsaw'\n EXCEPT\n SELECT customer_id\n FROM orders\n WHERE status = 'cancelled')\nUNION\n(SELECT customer_id\n FROM customers\n WHERE city = 'Krakow')\nORDER BY customer_id;",
         "note": "Не полагайся на визуальный порядок строк в частях set operation. Сортируй общий результат внешним ORDER BY.",
         "simple": "Скобки и CTE помогают явно показать, в каком порядке объединяются наборы.",
         "practiceIds": [],
@@ -3829,7 +3829,7 @@ export const modules = [
       {
         "title": "Блокировки и взаимные блокировки",
         "body": "Блокировка координирует конкурентный доступ к данным. UPDATE и DELETE блокируют изменяемые строки, а SELECT обычно читает согласованный снимок благодаря MVCC и не блокирует обычные изменения так, как многие ожидают.\n\nВзаимная блокировка (deadlock) возникает, когда транзакции ждут ресурсы друг друга по кругу. PostgreSQL обнаруживает deadlock и отменяет одну из транзакций. Это не означает, что база сломалась: приложение должно обработать ошибку и при необходимости повторить безопасную операцию.\n\nСнижать риск deadlock помогает единый порядок захвата строк, короткие транзакции и отсутствие ожидания пользователя внутри транзакции. Не удерживай блокировки дольше, чем требуется.",
-        "example": "BEGIN;\nSELECT *\nFROM accounts\nWHERE account_id IN (1, 2)\nORDER BY account_id\nFOR UPDATE;\nCOMMIT;",
+        "example": "BEGIN;\nSELECT *\nFROM orders\nWHERE order_id IN (101, 102)\nORDER BY order_id\nFOR UPDATE;\nCOMMIT;",
         "note": "Если несколько транзакций блокируют одни и те же записи, захватывай их в одинаковом порядке.",
         "simple": "Deadlock — цикл взаимного ожидания. PostgreSQL прерывает одну транзакцию, чтобы остальные могли продолжить.",
         "practiceIds": [],
@@ -4029,7 +4029,7 @@ export const modules = [
       {
         "title": "ROW_NUMBER, RANK и DENSE_RANK",
         "body": "ROW_NUMBER, RANK и DENSE_RANK присваивают строкам порядковые позиции внутри окна. Все три функции используют ORDER BY внутри OVER, но по-разному обрабатывают одинаковые значения.\n\nROW_NUMBER всегда выдаёт уникальный последовательный номер: 1, 2, 3, 4. Если две строки имеют одинаковую сумму, одна всё равно получит меньший номер. Чтобы выбор был воспроизводимым, добавь уникальный дополнительный критерий, например order_id.\n\nRANK присваивает одинаковым значениям одинаковое место, а следующее место пропускает. Для сумм 100, 100, 80 ранги будут 1, 1, 3. DENSE_RANK тоже присваивает одинаковым значениям один ранг, но не делает пропуск: 1, 1, 2.\n\nPARTITION BY позволяет начинать нумерацию заново для каждой группы. Например, можно ранжировать заказы отдельно внутри каждого магазина. Без PARTITION BY рейтинг будет общим для всех магазинов.\n\nДля задачи «самый дорогой заказ каждого магазина» часто используют ROW_NUMBER и внешний фильтр rn = 1. Если нужно показать все заказы, разделившие первое место, используй RANK или DENSE_RANK. Выбор функции зависит от смысла задачи, а не от того, какая короче пишется.",
-        "example": "SELECT employee_id, score,\n       ROW_NUMBER() OVER (ORDER BY score DESC, employee_id) AS row_num,\n       RANK() OVER (ORDER BY score DESC) AS rank_num,\n       DENSE_RANK() OVER (ORDER BY score DESC) AS dense_rank_num\nFROM exam_results;",
+        "example": "SELECT order_id, store_id, total_amount,\n       ROW_NUMBER() OVER (PARTITION BY store_id ORDER BY total_amount DESC, order_id) AS row_num,\n       RANK() OVER (PARTITION BY store_id ORDER BY total_amount DESC) AS rank_num,\n       DENSE_RANK() OVER (PARTITION BY store_id ORDER BY total_amount DESC) AS dense_rank_num\nFROM orders;",
         "note": "Для выбора одной последней строки на группу часто используют ROW_NUMBER() и внешний фильтр WHERE rn = 1.",
         "simple": "ROW_NUMBER не допускает одинаковых номеров. RANK допускает равные места и пропускает следующий номер. DENSE_RANK допускает равные места без пропусков.",
         "practiceIds": [
@@ -4109,7 +4109,7 @@ export const modules = [
       {
         "title": "Накопительные итоги и рамки окна",
         "body": "Накопительный итог строится оконным агрегатом с ORDER BY. Например, SUM(amount) OVER (PARTITION BY account_id ORDER BY created_at) считает сумму от начала истории до текущей строки.\n\nРамка окна определяет, какие строки входят в вычисление для текущей записи. Для явного накопительного итога часто используют ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW. Без явной рамки стандартная рамка с ORDER BY может включать все строки с равными значениями сортировки, что меняет результат при одинаковых датах.\n\nДобавляй уникальный критерий сортировки и явно задавай рамку, если нужна построчная последовательность. Это помогает избежать неожиданных скачков накопительного значения.",
-        "example": "SELECT account_id, created_at, transaction_id, amount,\n       SUM(amount) OVER (\n         PARTITION BY account_id\n         ORDER BY created_at, transaction_id\n         ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW\n       ) AS running_balance\nFROM transactions;",
+        "example": "SELECT customer_id, created_at, order_id, total_amount,\n       SUM(total_amount) OVER (\n         PARTITION BY customer_id\n         ORDER BY created_at, order_id\n         ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW\n       ) AS running_total\nFROM orders;",
         "note": "Явная ROWS-рамка и уникальная сортировка делают накопительный итог предсказуемым.",
         "simple": "Накопительный итог — сумма от первой строки раздела до текущей строки в заданном порядке.",
         "practiceIds": [
@@ -4176,7 +4176,7 @@ export const modules = [
         "title": "ROWS и RANGE: две разные оконные рамки",
         "body": "ROWS и RANGE задают разные способы определения рамки окна. ROWS считает физические строки относительно текущей позиции. RANGE ориентируется на значения выражения сортировки и может включать все строки с равным значением ключа.\n\nЕсли две транзакции имеют одинаковый created_at, RANGE CURRENT ROW может включить обе строки как peers. ROWS CURRENT ROW ограничивается текущей физической строкой в порядке окна. Это различие особенно заметно в накопительных итогах и скользящих окнах.\n\nДля временных интервалов RANGE может выражать окно по значению даты, но синтаксис и ограничения зависят от типа сортировки. Не заменяй ROWS на RANGE без понимания того, как обрабатываются равные значения.",
         "simple": "ROWS считает позиции строк, RANGE — диапазон значений ключа сортировки и связанные с ним peers.",
-        "example": "SELECT created_at, amount,\n       SUM(amount) OVER (\n         ORDER BY created_at\n         ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW\n       ) AS row_running_total,\n       SUM(amount) OVER (\n         ORDER BY created_at\n         RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW\n       ) AS range_running_total\nFROM transactions;",
+        "example": "SELECT customer_id, created_at, order_id, total_amount,\n       SUM(total_amount) OVER (\n         PARTITION BY customer_id\n         ORDER BY created_at\n         RANGE BETWEEN INTERVAL '6 days' PRECEDING AND CURRENT ROW\n       ) AS rolling_7_days\nFROM orders;",
         "note": "Если важна последовательность отдельных событий с одинаковым временем, добавь tie-breaker и используй подходящую ROWS-рамку.",
         "practiceIds": [
           "e82"
@@ -4408,7 +4408,7 @@ export const modules = [
       {
         "title": "Воронка и условные этапы",
         "body": "Воронка описывает последовательные этапы пути пользователя или заказа: визит, регистрация, добавление в корзину, покупка. Для каждого этапа нужно определить событие, период и правила перехода.\n\nУсловная агрегация позволяет посчитать количество пользователей, достигших каждого этапа. Но этапы должны считаться на одном уровне, обычно на уровне уникального пользователя или сессии. Если считать строки событий, один активный пользователь может попасть в метрику много раз.\n\nКонверсия этапа — отношение числа участников следующего этапа к числу участников предыдущего. Уточни, должна ли воронка быть строгой по времени: событие B должно произойти после A, а не просто когда-либо.",
-        "example": "SELECT\n  COUNT(DISTINCT user_id) FILTER (WHERE event_name = 'visit') AS visitors,\n  COUNT(DISTINCT user_id) FILTER (WHERE event_name = 'signup') AS signups,\n  COUNT(DISTINCT user_id) FILTER (WHERE event_name = 'purchase') AS buyers\nFROM events;",
+        "example": "SELECT\n  COUNT(DISTINCT customer_id) AS customers_with_orders,\n  COUNT(DISTINCT customer_id) FILTER (WHERE status IN ('shipped', 'delivered')) AS customers_with_shipped_orders,\n  COUNT(DISTINCT customer_id) FILTER (WHERE status = 'delivered') AS customers_with_delivered_orders\nFROM orders;",
         "note": "Этот запрос считает достигших этапов, но не проверяет их временной порядок. Для строгой воронки нужно анализировать последовательность событий.",
         "simple": "Воронка считает уникальные сущности на каждом этапе, а конверсия сравнивает соседние этапы.",
         "practiceIds": [
@@ -4464,7 +4464,7 @@ export const modules = [
       {
         "title": "Дедупликация и выбор последней записи",
         "body": "Дедупликация нужна, когда источник содержит повторные события или несколько версий одной сущности. Сначала определи правило, какая запись считается правильной: самая свежая, подтверждённая, с наивысшим приоритетом или с заполненными полями.\n\nROW_NUMBER() OVER (PARTITION BY business_key ORDER BY updated_at DESC, id DESC) присваивает номер каждой версии. Затем внешний запрос оставляет rn = 1. Уникальный tie-breaker важен: если даты совпали, без второго критерия выбор может быть произвольным.\n\nНе удаляй дубли только потому, что строки похожи. Две одинаковые суммы могут принадлежать разным заказам, а повторное событие может быть реальным повторным действием пользователя.",
-        "example": "WITH ranked AS (\n  SELECT *,\n         ROW_NUMBER() OVER (\n           PARTITION BY order_id\n           ORDER BY updated_at DESC, event_id DESC\n         ) AS rn\n  FROM order_status_history\n)\nSELECT *\nFROM ranked\nWHERE rn = 1;",
+        "example": "WITH ranked AS (\n  SELECT *,\n         ROW_NUMBER() OVER (\n           PARTITION BY order_id\n           ORDER BY event_at DESC, event_id DESC\n         ) AS rn\n  FROM order_events\n)\nSELECT *\nFROM ranked\nWHERE rn = 1;",
         "note": "Сначала сформулируй бизнес-правило выбора победителя. DISTINCT не умеет выбирать самую актуальную запись.",
         "simple": "Дедупликация — это выбор одной записи по явному бизнес-правилу, а не механическое DISTINCT.",
         "practiceIds": [
@@ -4491,7 +4491,7 @@ export const modules = [
       {
         "title": "Временные ряды и пропущенные периоды",
         "body": "Временной ряд показывает метрику по последовательным периодам: часам, дням, неделям или месяцам. GROUP BY по DATE_TRUNC создаёт только те периоды, в которых есть строки. Если в какой-то день событий не было, строки за него не появится.\n\nДля непрерывного ряда нужно создать календарную сетку, например generate_series, и LEFT JOIN к агрегатам фактов. Затем COALESCE может заменить отсутствие агрегата на 0, если ноль действительно означает отсутствие событий.\n\nУчитывай часовой пояс и границы периода. Для TIMESTAMPTZ календарный день зависит от выбранной зоны. Не подменяй отсутствующие данные нулём, если отсутствие означает задержку загрузки или неизвестность.",
-        "example": "WITH calendar AS (\n  SELECT generate_series(\n    DATE '2026-01-01', DATE '2026-01-07', INTERVAL '1 day'\n  )::date AS day\n), daily AS (\n  SELECT created_at::date AS day, COUNT(*) AS orders_count\n  FROM orders\n  GROUP BY created_at::date\n)\nSELECT c.day, COALESCE(d.orders_count, 0) AS orders_count\nFROM calendar AS c\nLEFT JOIN daily AS d USING (day)\nORDER BY c.day;",
+        "example": "WITH calendar AS (\n  SELECT generate_series(\n    DATE '2026-01-10', DATE '2026-01-16', INTERVAL '1 day'\n  )::date AS day\n), daily AS (\n  SELECT created_at AS day, COUNT(*) AS orders_count\n  FROM orders\n  GROUP BY created_at\n)\nSELECT c.day, COALESCE(d.orders_count, 0) AS orders_count\nFROM calendar AS c\nLEFT JOIN daily AS d USING (day)\nORDER BY c.day;",
         "note": "COALESCE(..., 0) уместен только когда отсутствие строки действительно означает нулевое количество, а не неизвестные данные.",
         "simple": "GROUP BY показывает периоды с данными. Календарная сетка позволяет показать и периоды без событий.",
         "practiceIds": [
@@ -4572,7 +4572,7 @@ export const modules = [
         "title": "Retention: когортное удержание",
         "body": "Retention показывает, какая доля пользователей возвращается или совершает целевое действие после периода вступления. Сначала формируют когорты по дате первого события, затем считают активность в периодах 0, 1, 2 и далее.\n\nВ знаменателе обычно размер исходной когорты. В числителе — число уникальных пользователей этой когорты, активных в конкретном периоде. Важно выбрать определение активности: вход в приложение, покупка, любое событие или другое действие.\n\nRetention можно считать по календарным месяцам или по полным интервалам от даты регистрации. Эти определения дают разные результаты. В отчёте явно указывай, какой вариант используешь.",
         "simple": "Retention — доля исходной когорты, которая активна в последующем периоде.",
-        "example": "WITH cohort AS (\n  SELECT user_id, MIN(event_date) AS first_day\n  FROM events\n  GROUP BY user_id\n)\nSELECT first_day, COUNT(*) AS cohort_size\nFROM cohort\nGROUP BY first_day;",
+        "example": "WITH cohort AS (\n  SELECT customer_id, MIN(created_at) AS first_order_date\n  FROM orders\n  GROUP BY customer_id\n)\nSELECT first_order_date, COUNT(*) AS cohort_size\nFROM cohort\nGROUP BY first_order_date\nORDER BY first_order_date;",
         "note": "Не меняй определение активности между когортами. Знаменатель и календарь должны быть одинаковыми.",
         "practiceIds": [
           "e86"
@@ -4599,7 +4599,7 @@ export const modules = [
         "title": "Медиана и перцентили",
         "body": "Медиана делит упорядоченный набор пополам: половина значений не больше неё, половина не меньше. В отличие от среднего, медиана менее чувствительна к очень большим или малым выбросам.\n\nВ PostgreSQL percentile_cont(0.5) вычисляет непрерывный перцентиль и может интерполировать значение между наблюдениями. percentile_disc(0.5) выбирает фактическое значение из набора. Для распределения времени доставки или чека эти функции могут дать немного разные результаты.\n\nПерцентили показывают хвосты распределения: P90 — значение, ниже которого лежит примерно 90% наблюдений. Для SLA часто важнее P90 или P95, чем среднее, потому что они показывают опыт пользователей в худшей части распределения.",
         "simple": "Медиана — P50. P90 показывает границу, ниже которой находится около 90% значений.",
-        "example": "SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY delivery_minutes) AS median_minutes,\n       percentile_cont(0.9) WITHIN GROUP (ORDER BY delivery_minutes) AS p90_minutes\nFROM deliveries;",
+        "example": "WITH delivery_times AS (\n  SELECT EXTRACT(EPOCH FROM delivered.event_at - created.event_at) / 60.0 AS delivery_minutes\n  FROM order_events created\n  JOIN order_events delivered USING (order_id)\n  WHERE created.event_type = 'created'\n    AND delivered.event_type = 'delivered'\n)\nSELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY delivery_minutes) AS median_minutes,\n       percentile_cont(0.9) WITHIN GROUP (ORDER BY delivery_minutes) AS p90_minutes\nFROM delivery_times;",
         "note": "Уточняй, нужен интерполированный percentile_cont или фактическое наблюдение percentile_disc.",
         "practiceIds": [
           "e87"
@@ -4638,7 +4638,7 @@ export const modules = [
         "title": "Скользящие метрики по времени",
         "body": "Скользящая метрика рассчитывается для окна вокруг каждой точки времени. Например, скользящая сумма за последние 7 дней сглаживает дневные колебания и помогает увидеть тенденцию.\n\nДля окна по строкам можно использовать ROWS BETWEEN 6 PRECEDING AND CURRENT ROW, но это означает семь строк, а не обязательно семь календарных дней. Если в данных пропущены даты, окно может охватить более длинный период.\n\nДля настоящего временного окна используй календарную сетку или RANGE по временной оси с подходящим INTERVAL. Проверь, что каждая дата представлена ровно один раз, иначе число строк в рамке будет влиять на результат.",
         "simple": "Семь строк — не всегда семь дней. Определи, окно считается по записям или по календарному времени.",
-        "example": "SELECT day, orders_count,\n       SUM(orders_count) OVER (\n         ORDER BY day\n         ROWS BETWEEN 6 PRECEDING AND CURRENT ROW\n       ) AS rolling_7_rows\nFROM daily_orders;",
+        "example": "WITH daily_orders AS (\n  SELECT created_at AS day, COUNT(*) AS orders_count\n  FROM orders\n  GROUP BY created_at\n)\nSELECT day, orders_count,\n       SUM(orders_count) OVER (\n         ORDER BY day\n         ROWS BETWEEN 6 PRECEDING AND CURRENT ROW\n       ) AS rolling_7_rows\nFROM daily_orders;",
         "note": "Перед названием «за 7 дней» убедись, что данные содержат одну строку на каждый календарный день без пропусков.",
         "practiceIds": [
           "e88"
@@ -5531,7 +5531,7 @@ export const modules = [
       {
         "title": "JSON и JSONB",
         "body": "JSON — формат хранения структурированных данных в виде объектов, массивов, строк, чисел, boolean и null. В PostgreSQL есть JSON и JSONB. JSON сохраняет исходный текст документа, а JSONB хранит разобранное бинарное представление и обычно удобнее для поиска и операторов.\n\nJSONB полезен, когда структура документа меняется или часть полей заранее неизвестна. Но если поле стабильно и участвует в связях, фильтрах и отчётах, обычные типизированные столбцы часто лучше. Не превращай всю базу в один JSONB только ради гибкости.\n\nДля чтения JSONB используют операторы извлечения: -> возвращает JSON, ->> возвращает текст. При извлечении отсутствующего ключа результатом будет NULL. Для числовых расчётов значение нужно привести к подходящему типу.",
-        "example": "SELECT payload -> 'customer' AS customer_json,\n       payload -> 'customer' ->> 'name' AS customer_name\nFROM raw_events;",
+        "example": "SELECT attributes -> 'segment' AS segment_json,\n       attributes ->> 'segment' AS segment_text,\n       attributes ->> 'source' AS source\nFROM customer_profiles;",
         "note": "Если значение участвует в регулярной аналитике и ограничениях, подумай, не лучше ли вынести его в отдельный столбец.",
         "simple": "JSONB хранит структурированный документ и позволяет обращаться к его ключам и значениям.",
         "practiceIds": [
@@ -5586,7 +5586,7 @@ export const modules = [
       {
         "title": "Полнотекстовый поиск",
         "body": "Полнотекстовый поиск предназначен для поиска слов и лексем в больших текстах с учётом языковых правил. В PostgreSQL текст преобразуется в tsvector, а поисковая фраза — в tsquery. @@ проверяет совпадение документа и запроса.\n\nВ отличие от LIKE '%слово%', полнотекстовый поиск может учитывать нормализацию слов и индексироваться через GIN. Это полезно для описаний, статей и комментариев, где нужно искать по смыслу словоформ, а не по точной подстроке.\n\nДля ранжирования результатов применяют ts_rank или ts_rank_cd. Конфигурация языка влияет на разбор слов и стемминг, поэтому выбирай её осознанно.",
-        "example": "SELECT document_id,\n       ts_rank(search_vector, plainto_tsquery('russian', 'быстрая доставка')) AS rank\nFROM documents\nWHERE search_vector @@ plainto_tsquery('russian', 'быстрая доставка')\nORDER BY rank DESC;",
+        "example": "SELECT product_id, product_name,\n       ts_rank(to_tsvector('simple', product_name), plainto_tsquery('simple', 'coffee')) AS rank\nFROM products\nWHERE to_tsvector('simple', product_name) @@ plainto_tsquery('simple', 'coffee')\nORDER BY rank DESC;",
         "note": "Для частых запросов создай GIN индекс по tsvector и проверь план.",
         "simple": "Полнотекстовый поиск сравнивает нормализованные лексемы, а не просто подстроки.",
         "practiceIds": [],
@@ -5686,7 +5686,7 @@ export const modules = [
       {
         "title": "Операторы JSONB: проверка и индексация",
         "body": "Для JSONB доступны операторы проверки содержимого и извлечения значений. @> проверяет, содержит ли документ заданный JSON-фрагмент. ? проверяет наличие ключа верхнего уровня, а -> и ->> извлекают значение.\n\nGIN индекс может ускорить containment-запросы по JSONB. Но важно выбрать операторный класс: jsonb_ops поддерживает более широкий набор операций, jsonb_path_ops оптимизирован для определённых containment-поисков.\n\nНе индексируй JSONB автоматически целиком, если запросы используют только одно поле. Для часто фильтруемого ключа иногда лучше expression index по конкретному выражению или вынесение значения в обычный столбец.",
-        "example": "CREATE INDEX idx_events_payload\nON events USING GIN (payload jsonb_path_ops);\n\nSELECT * FROM events\nWHERE payload @> '{\"source\":\"mobile\"}';",
+        "example": "SELECT customer_id, attributes\nFROM customer_profiles\nWHERE attributes @> '{\"segment\":\"vip\"}'::jsonb;",
         "note": "Операторный класс определяет поддерживаемые операции. Проверь, совпадает ли он с реальными условиями WHERE.",
         "simple": "@> проверяет включение JSON-структуры, ? — наличие ключа, GIN ускоряет подходящие поиски.",
         "practiceIds": [
