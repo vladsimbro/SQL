@@ -271,7 +271,8 @@ try {
       }
     }
     const expectedExamples = modules.flatMap(module=>module.lessons.map(lesson=>({module,lesson}))).filter(item=>item.lesson.exampleResult);
-    assert.ok(expectedExamples.length >= 7, 'Key lessons must show expected query results');
+    assert.ok(expectedExamples.length >= 14, 'Key lessons must show expected query results');
+    assert.ok(appSource.includes('lesson?.tipTokens')&&!appSource.includes('${renderExampleBreakdown(l.example,l)}'), 'Lesson highlighting must use explicit topic tokens and avoid repetitive generic line explanations');
     for (const {module,lesson} of expectedExamples) {
       const statements = sqlLexer.splitStatements(lesson.example || '');
       assert.equal(statements.length,1, `Expected-result example ${module.id}/${lesson.title} must contain exactly one SQL statement`);
