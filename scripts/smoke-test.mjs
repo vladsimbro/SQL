@@ -160,7 +160,7 @@ const expressionsQualityModule = modules.find(module => module.id === 'expressio
 assert.deepEqual(expressionsQualityModule.lessons.find(lesson => lesson.title === 'Числовые функции').exampleResult.rows, [['125.68','5','4',12]], 'Numeric function example must show rounding, ceiling, floor and absolute value');
 const timeExpressionsLesson = expressionsQualityModule.lessons.find(lesson => lesson.title === 'Временные выражения: краткое введение');
 assert.ok(!timeExpressionsLesson.example.includes('DATE_TRUNC') && timeExpressionsLesson.body.includes('отдельном модуле временной аналитики'), 'Expression module must introduce basic time expressions without duplicating the dedicated temporal module');
-assert.deepEqual(expressionsQualityModule.lessons.find(lesson => lesson.title === 'COALESCE, NULLIF и безопасные вычисления').exampleResult.rows, [['12000',0,'3000.00']], 'NULL-safe calculation example must show fallback and zero-safe division');
+assert.deepEqual(expressionsQualityModule.lessons.find(lesson => lesson.title === 'COALESCE, NULLIF и безопасные вычисления').exampleResult.rows, [['12000','0','3000.00']], 'NULL-safe calculation example must show fallback and zero-safe division');
 assert.equal(expressionsQualityModule.lessons.find(lesson => lesson.title === 'CASE: условная логика').exampleResult.rows.length, 4, 'CASE example must show each selected business category');
 const datetimeQualityModule = modules.find(module => module.id === 'datetime');
 assert.ok(datetimeQualityModule.lessons.find(lesson => lesson.title === 'Часовые пояса и AT TIME ZONE').example.includes('Europe/Warsaw'), 'Timezone lesson must execute both AT TIME ZONE directions');
