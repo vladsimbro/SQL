@@ -2905,20 +2905,7 @@ export const modules = [
             "explanation": "Агрегат складывает значения строк результата JOIN. Одна сумма заказа будет учтена три раза, если сначала не вернуть зерно к одному заказу."
           }
         ],
-        "id": "aggregates.zerno-dannykh-i-bezopasnaya-agregatsiya"
-      }
-    ],
-    "quiz": [
-      {
-        "question": "Чем COUNT(*) отличается от COUNT(price)?",
-        "options": [
-          "Ничем",
-          "COUNT(*) считает строки, COUNT(price) не считает строки, где price равен NULL",
-          "COUNT(price) считает только нули",
-          "COUNT(*) считает только уникальные строки"
-        ],
-        "answer": 1,
-        "explanation": "COUNT(*) считает каждую строку. COUNT(столбец) игнорирует NULL в этом столбце.",
+        "id": "aggregates.zerno-dannykh-i-bezopasnaya-agregatsiya",
         "exampleResult": {
           "columns": [
             "order_id",
@@ -2975,6 +2962,19 @@ export const modules = [
             ]
           ]
         }
+      }
+    ],
+    "quiz": [
+      {
+        "question": "Чем COUNT(*) отличается от COUNT(price)?",
+        "options": [
+          "Ничем",
+          "COUNT(*) считает строки, COUNT(price) не считает строки, где price равен NULL",
+          "COUNT(price) считает только нули",
+          "COUNT(*) считает только уникальные строки"
+        ],
+        "answer": 1,
+        "explanation": "COUNT(*) считает каждую строку. COUNT(столбец) игнорирует NULL в этом столбце."
       },
       {
         "question": "Что происходит с результатом при GROUP BY status?",
