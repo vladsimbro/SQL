@@ -6470,7 +6470,7 @@ export const modules = [
       {
         "title": "Вставка нескольких строк и INSERT ... SELECT",
         "body": "Один INSERT может добавить несколько строк, если перечислить несколько наборов VALUES. Также можно вставить результат SELECT: это полезно для переноса или преобразования данных внутри базы.\n\nINSERT ... SELECT не требует промежуточного CSV. Количество и типы столбцов SELECT должны соответствовать списку столбцов INSERT. Если целевая таблица имеет ограничения, они проверяются так же, как при обычной вставке.\n\nПри копировании данных подумай о повторном запуске. Если ключи могут уже существовать, используй подходящую стратегию: очистку тестовой таблицы, ON CONFLICT или предварительную проверку. Не запускай повторную загрузку без понимания, создаст ли она дубли.",
-        "example": "CREATE TEMP TABLE archived_orders (\n  order_id BIGINT,\n  customer_id BIGINT,\n  total_amount NUMERIC(12,2)\n);\n\nINSERT INTO archived_orders (order_id, customer_id, total_amount)\nSELECT order_id, customer_id, total_amount\nFROM orders\nWHERE created_at < DATE '2026-01-12';\n\nSELECT *\nFROM archived_orders\nORDER BY order_id;",
+        "example": "BEGIN;\nCREATE TEMP TABLE archived_orders (\n  order_id BIGINT,\n  customer_id BIGINT,\n  total_amount NUMERIC(12,2)\n) ON COMMIT DROP;\n\nINSERT INTO archived_orders (order_id, customer_id, total_amount)\nSELECT order_id, customer_id, total_amount\nFROM orders\nWHERE created_at < DATE '2026-01-12';\n\nSELECT *\nFROM archived_orders\nORDER BY order_id;\nCOMMIT;",
         "note": "Число, порядок и типы выражений в SELECT должны соответствовать целевому списку столбцов.",
         "simple": "INSERT ... SELECT переносит результат одного запроса в другую таблицу.",
         "practiceIds": [
@@ -6498,7 +6498,7 @@ export const modules = [
       {
         "title": "DEFAULT, RETURNING и безопасная проверка",
         "body": "DEFAULT позволяет попросить PostgreSQL применить значение по умолчанию для конкретного столбца. RETURNING возвращает вставленные строки, в том числе сгенерированные ID и значения DEFAULT.\n\nЭто особенно полезно, если ключ генерируется IDENTITY: не нужно отдельным запросом искать последнюю вставленную запись. RETURNING возвращает точный ID той строки, которую создал текущий INSERT.\n\nПроверяй результат вставки до продолжения процесса. Если INSERT выполняется внутри транзакции, можно посмотреть RETURNING и при необходимости откатить операцию. Но RETURNING не заменяет проверки уникальности и бизнес-ограничений.\n\nВ учебной таблице orders обязательны store_id, customer_id, status, total_amount и created_at. Поэтому при INSERT нельзя указывать только customer_id и status: остальные обязательные поля тоже должны получить значение.",
-        "example": "INSERT INTO orders (\n  order_id, store_id, customer_id, status, total_amount, created_at\n)\nVALUES (\n  999, 1, 1, DEFAULT, 1250.00, DATE '2026-11-07'\n)\nRETURNING order_id, status, created_at;",
+        "example": "CREATE TEMP TABLE example_orders (\n  order_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,\n  status TEXT NOT NULL DEFAULT 'new',\n  created_at DATE NOT NULL DEFAULT CURRENT_DATE\n);\n\nINSERT INTO example_orders DEFAULT VALUES\nRETURNING order_id, status, created_at;",
         "note": "Не ищи последний ID через MAX(id): при параллельной работе это может вернуть чужую запись.",
         "simple": "DEFAULT использует настройку столбца, RETURNING показывает фактически вставленные значения.",
         "practiceIds": [],
@@ -6835,7 +6835,7 @@ export const modules = [
       {
         "title": "ACID",
         "body": "ACID описывает свойства надёжной транзакционной обработки. Atomicity означает «всё или ничего». Consistency — переход из одного допустимого состояния базы в другое при соблюдении ограничений. Isolation — контроль взаимодействия параллельных транзакций. Durability — сохранность подтверждённых изменений при сбое в рамках гарантий СУБД.\n\nACID не означает, что любая бизнес-логика автоматически корректна. Если запрос неверно посчитал сумму и успешно закоммитился, база надёжно сохранит неправильный результат. Ограничения и проверки приложения должны обеспечивать смысловую корректность.\n\nИзоляция не всегда означает полную последовательность транзакций. Разные уровни изоляции допускают разные эффекты параллельного выполнения.\n\nACID защищает выполнение транзакции, но не проверяет, правильно ли аналитик выбрал строки и формулу. Успешно зафиксированный неверный UPDATE остаётся неверным бизнес-результатом.",
-        "example": "BEGIN;\nCREATE TEMP TABLE accounts (\n  account_id integer PRIMARY KEY,\n  balance numeric(12,2) NOT NULL CHECK (balance >= 0)\n);\nINSERT INTO accounts VALUES (1, 1000), (2, 500);\nUPDATE accounts SET balance = balance - 100 WHERE account_id = 1;\nUPDATE accounts SET balance = balance + 100 WHERE account_id = 2;\nCOMMIT;\nSELECT account_id, balance FROM accounts ORDER BY account_id;",
+        "example": "BEGIN;\nCREATE TEMP TABLE accounts (\n  account_id integer PRIMARY KEY,\n  balance numeric(12,2) NOT NULL CHECK (balance >= 0)\n) ON COMMIT DROP;\nINSERT INTO accounts VALUES (1, 1000), (2, 500);\nUPDATE accounts SET balance = balance - 100 WHERE account_id = 1;\nUPDATE accounts SET balance = balance + 100 WHERE account_id = 2;\nSELECT account_id, balance FROM accounts ORDER BY account_id;\nCOMMIT;",
         "note": "ACID не спасает от логически ошибочного SQL. Проверяй условия и инварианты отдельно.",
         "simple": "ACID описывает надёжность выполнения транзакций, а не правильность бизнес-формулы в запросе.",
         "practiceIds": [],
@@ -6925,7 +6925,7 @@ export const modules = [
       {
         "title": "SAVEPOINT и частичный откат",
         "body": "SAVEPOINT создаёт точку внутри транзакции, к которой можно откатиться, не отменяя всю транзакцию. ROLLBACK TO SAVEPOINT отменяет команды после точки, а RELEASE SAVEPOINT удаляет саму точку.\n\nЭто полезно, когда часть операции можно отменить, а остальные изменения сохранить. Например, пакетная обработка может попытаться вставить необязательную запись, обработать конфликт и продолжить работу.\n\nSAVEPOINT не заменяет общую транзакционную стратегию. Если ошибка нарушила бизнес-инвариант всей операции, лучше откатить транзакцию полностью. После ROLLBACK TO SAVEPOINT транзакция остаётся активной.",
-        "example": "CREATE TEMP TABLE order_notes (\n  order_id BIGINT REFERENCES orders(order_id),\n  note TEXT\n);\n\nBEGIN;\nUPDATE orders SET status = 'processing' WHERE order_id = 101;\nSAVEPOINT optional_step;\nINSERT INTO order_notes (order_id, note)\nVALUES (101, 'Автоматическая пометка');\nROLLBACK TO SAVEPOINT optional_step;\nCOMMIT;",
+        "example": "BEGIN;\nCREATE TEMP TABLE order_notes (\n  order_id BIGINT REFERENCES orders(order_id),\n  note TEXT\n) ON COMMIT DROP;\nSAVEPOINT optional_step;\nINSERT INTO order_notes (order_id, note)\nVALUES (101, 'Автоматическая пометка');\nROLLBACK TO SAVEPOINT optional_step;\nSELECT COUNT(*)::int AS notes_after_rollback FROM order_notes;\nCOMMIT;",
         "note": "ROLLBACK TO SAVEPOINT не завершает всю транзакцию. После него можно продолжить работу и выполнить COMMIT.",
         "simple": "SAVEPOINT — промежуточная точка отката внутри одной транзакции.",
         "practiceIds": [
@@ -6980,7 +6980,7 @@ export const modules = [
         "title": "SERIALIZABLE и повтор транзакции",
         "body": "SERIALIZABLE — самый строгий стандартный уровень изоляции PostgreSQL. Он допускает параллельное выполнение, но отслеживает зависимости так, чтобы успешный результат был эквивалентен некоторому последовательному порядку транзакций.\n\nЕсли обнаружен конфликт сериализации, PostgreSQL отменяет одну транзакцию с SQLSTATE 40001. Это ожидаемая часть работы уровня SERIALIZABLE, а не обязательно признак ошибки данных. Приложение должно повторить всю транзакцию целиком, а не только последнюю команду.\n\nПовтор безопасен только если операция не вызвала необратимые внешние эффекты до фиксации: например, не отправила письмо или не списала деньги через сторонний сервис. Такие действия требуют отдельной архитектуры, например transactional outbox.",
         "simple": "SERIALIZABLE обеспечивает последовательную семантику, но приложение должно уметь повторять транзакции после конфликта.",
-        "example": "BEGIN ISOLATION LEVEL SERIALIZABLE;\nUPDATE products\nSET price = price * 1.05\nWHERE product_id = 1;\nCOMMIT;",
+        "example": "BEGIN ISOLATION LEVEL SERIALIZABLE;\nUPDATE products\nSET price = 2600.00\nWHERE product_id = 1;\nCOMMIT;",
         "note": "При SQLSTATE 40001 повторяй всю транзакцию с самого начала и учитывай внешние побочные эффекты.",
         "practiceIds": [],
         "outcomes": [
