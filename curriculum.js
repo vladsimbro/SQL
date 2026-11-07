@@ -1178,7 +1178,7 @@ export const modules = [
       {
         "title": "LIKE, ILIKE и шаблоны",
         "body": "LIKE ищет текст по шаблону. Символ % означает любое количество символов, а _ — ровно один символ. Например, 'Ann%' найдёт значения, начинающиеся с Ann, а '%son' — заканчивающиеся на son.\n\nВ PostgreSQL ILIKE делает такое сравнение без учёта регистра. LIKE зависит от регистра и правил сравнения. Если нужно искать символ % или _ как обычный знак, используй ESCAPE и экранируй его.\n\nШаблон с % в начале часто не может использовать обычный B-tree индекс так же эффективно, как префиксный поиск. Для больших объёмов данных способ поиска стоит выбирать с учётом индексов и требований.",
-        "example": "SELECT customer_id, full_name\nFROM customers\nWHERE full_name ILIKE 'ann%';",
+        "example": "SELECT customer_id, customer_name\nFROM customers\nWHERE customer_name ILIKE 'ann%';",
         "note": "LIKE не означает поиск подстроки без шаблонов: для поиска фрагмента обычно нужны проценты с обеих сторон, например '%ann%'.",
         "simple": "% — любое количество символов; _ — один символ. ILIKE не учитывает регистр в PostgreSQL.",
         "practiceIds": [],
@@ -1510,7 +1510,7 @@ export const modules = [
       {
         "title": "Строковые функции",
         "body": "Строковые функции преобразуют и анализируют текст. LOWER и UPPER меняют регистр, LENGTH считает длину, TRIM убирает пробелы по краям, CONCAT объединяет значения. REPLACE заменяет фрагменты строки.\n\nФункции часто используют в SELECT для отображения и в WHERE для поиска. Но если обернуть индексируемый столбец функцией, обычный индекс по исходному значению может не помочь. Для частого поиска по LOWER(email) можно рассмотреть функциональный индекс.\n\nОперации с NULL требуют внимания: CONCAT в PostgreSQL ведёт себя иначе, чем оператор || в некоторых сценариях. Проверяй конкретную функцию и желаемое поведение отсутствующих частей текста.",
-        "example": "SELECT customer_id,\n       TRIM(full_name) AS clean_name,\n       LOWER(email) AS normalized_email,\n       LENGTH(full_name) AS name_length\nFROM customers;",
+        "example": "SELECT customer_id,\n       TRIM(customer_name) AS clean_name,\n       LOWER(customer_name) AS normalized_name,\n       LENGTH(customer_name) AS name_length\nFROM customers;",
         "note": "Если нужно сохранить преобразованный текст, одного SELECT недостаточно. Для изменения данных требуется UPDATE.",
         "simple": "Строковые функции создают преобразованное значение. Они не изменяют текст в исходной строке таблицы.",
         "practiceIds": [
@@ -2007,7 +2007,7 @@ export const modules = [
       {
         "title": "Что делает JOIN",
         "body": "JOIN соединяет строки двух источников по заданному правилу. Он не «приклеивает таблицу целиком» и не гарантирует одну строку результата на одну строку слева. Для каждой строки левого источника PostgreSQL ищет строки справа, которые удовлетворяют условию соединения.\n\nВ учебной схеме orders хранит заказы, а customers — клиентов. В orders есть customer_id, который ссылается на customers.customer_id. Соединение по этим полям позволяет вывести имя клиента рядом с номером заказа.\n\nСамое важное перед JOIN — кардинальность связи. Если у одного заказа ровно один клиент, а customer_id уникален в customers, один заказ даст максимум одну совпавшую строку. Но если соединить заказ с order_items, где у него может быть много позиций, заказ повторится по числу позиций.\n\nТип JOIN определяет судьбу строк без пары. INNER JOIN оставляет только совпадения. LEFT JOIN сохраняет все строки слева и заполняет правые столбцы NULL, если пары нет. Алгоритм выполнения (Nested Loop, Hash Join или Merge Join) — отдельный выбор планировщика и не задаётся словами INNER/LEFT.\n\nУсловие ON должно связывать правильные ключи. Соединение orders.order_id с customers.customer_id может быть синтаксически корректным, но логически бессмысленным. Проверяй не только имена столбцов, но и смысл каждого ключа.",
-        "example": "SELECT o.order_id, c.full_name\nFROM orders AS o\nJOIN customers AS c\n  ON c.customer_id = o.customer_id;",
+        "example": "SELECT o.order_id, c.customer_name\nFROM orders AS o\nJOIN customers AS c\n  ON c.customer_id = o.customer_id;",
         "note": "Не соединяй таблицы по одноимённым столбцам наугад. Сначала найди реальный ключ и кардинальность связи.",
         "simple": "JOIN сопоставляет строки по условию. Число строк после соединения зависит от того, сколько совпадений находится с каждой стороны.",
         "practiceIds": [
@@ -2046,7 +2046,7 @@ export const modules = [
       {
         "title": "INNER JOIN и LEFT JOIN",
         "body": "INNER JOIN и LEFT JOIN отличаются тем, что происходит со строками без совпадения. INNER JOIN возвращает только пары, для которых условие ON истинно. LEFT JOIN возвращает все строки левой таблицы; если справа пары нет, правые столбцы становятся NULL.\n\nПредставим отчёт по заказам и сотрудникам. В orders поле employee_id может быть NULL, если заказ ещё не назначен сотруднику. Если использовать INNER JOIN, такие заказы пропадут. Для отчёта о всех заказах нужен LEFT JOIN.\n\nПосле LEFT JOIN важно внимательно писать фильтры. Условие по правой таблице в WHERE может удалить строки, где справа NULL, и фактически превратить результат в поведение INNER JOIN. Если нужно сохранить все строки слева, а справа присоединить только сотрудников с определённым признаком, условие часто следует поместить в ON.\n\nПростой контроль: сравни COUNT(*) до и после соединения и отдельно посчитай строки, где ключ правой стороны IS NULL. Но помни, что число строк может увеличиться при связи один-ко-многим. Проверка количества — сигнал, а не полное доказательство корректности.",
-        "example": "SELECT o.order_id, c.full_name\nFROM orders AS o\nLEFT JOIN customers AS c\n  ON c.customer_id = o.customer_id;",
+        "example": "SELECT o.order_id, c.customer_name\nFROM orders AS o\nLEFT JOIN customers AS c\n  ON c.customer_id = o.customer_id;",
         "note": "Фильтр по правой таблице в WHERE может убрать строки с NULL и разрушить смысл LEFT JOIN.",
         "simple": "INNER оставляет только пары. LEFT сохраняет каждую строку слева, даже если справа ничего не нашлось.",
         "practiceIds": [
@@ -2085,7 +2085,7 @@ export const modules = [
       {
         "title": "FULL, CROSS и SELF JOIN",
         "body": "FULL JOIN сохраняет строки обеих таблиц: совпавшие объединяются, а несовпавшие с одной стороны дополняются NULL с другой. Это полезно для сверки двух наборов, например списка ожидаемых и фактических платежей.\n\nCROSS JOIN строит декартово произведение: каждая строка слева сочетается с каждой строкой справа. Если слева 10 строк, а справа 5, результат содержит 50 строк. Используй его осознанно, например для построения сетки дат и категорий.\n\nSELF JOIN — обычное соединение таблицы самой с собой. Он нужен, когда строки одной таблицы связаны между собой: сотрудник и его руководитель, родительская категория и дочерняя. Для читаемости обязательно используй разные алиасы.",
-        "example": "-- Сотрудник и его руководитель\nSELECT e.full_name AS employee,\n       m.full_name AS manager\nFROM employees AS e\nLEFT JOIN employees AS m\n  ON m.employee_id = e.manager_id;",
+        "example": "-- Пары разных клиентов из одного города (self join)\nSELECT c1.customer_name AS first_customer,\n       c2.customer_name AS second_customer,\n       c1.city\nFROM customers AS c1\nJOIN customers AS c2\n  ON c2.city = c1.city\n AND c1.customer_id < c2.customer_id;",
         "note": "CROSS JOIN может резко увеличить результат. Перед ним оцени число строк обоих источников.",
         "simple": "FULL JOIN сохраняет обе стороны, CROSS JOIN перемножает строки, SELF JOIN соединяет таблицу с самой собой.",
         "practiceIds": [],
@@ -2110,7 +2110,7 @@ export const modules = [
       {
         "title": "Соединение трёх и более таблиц",
         "body": "Если запрос соединяет три таблицы, каждое новое JOIN добавляет ещё один источник и условие связи. Важно не просто перечислить таблицы, а понимать цепочку ключей: orders → customers, orders → stores, order_items → products.\n\nЧаще всего сначала выбирают базовое зерно результата, затем присоединяют таблицы, которые добавляют нужные атрибуты. Если к заказам добавить позиции, зерно изменится с заказа на позицию. Если затем добавить товары, количество строк обычно останется на уровне позиций, если product_id уникален в products.\n\nПроверяй каждую связь по отдельности: сравни число строк до и после JOIN, найди ключи с несколькими совпадениями и проверь, не появились ли неожиданные NULL.",
-        "example": "SELECT o.order_id,\n       c.full_name,\n       s.store_name\nFROM orders AS o\nJOIN customers AS c ON c.customer_id = o.customer_id\nJOIN stores AS s ON s.store_id = o.store_id;",
+        "example": "SELECT o.order_id,\n       c.customer_name,\n       s.store_name\nFROM orders AS o\nJOIN customers AS c ON c.customer_id = o.customer_id\nJOIN stores AS s ON s.store_id = o.store_id;",
         "note": "Не добавляй несколько JOIN одновременно, если ещё не проверил каждую связь отдельно.",
         "simple": "Каждый JOIN должен иметь понятную цель: какие атрибуты добавляет и как меняет число строк.",
         "practiceIds": [
@@ -2648,7 +2648,7 @@ export const modules = [
       {
         "title": "EXISTS и NOT EXISTS",
         "body": "EXISTS проверяет, вернул ли подзапрос хотя бы одну строку. Значения в SELECT внутри EXISTS обычно не важны: часто пишут SELECT 1. Важно только существование строки, удовлетворяющей условию.\n\nEXISTS особенно удобен для поиска родительских записей с дочерними: клиенты, у которых есть хотя бы один заказ. NOT EXISTS ищет записи без соответствий. В отличие от JOIN, EXISTS не размножает строку внешнего источника при нескольких совпадениях.\n\nОптимизатор PostgreSQL часто превращает EXISTS в semi join, поэтому это не обязательно медленный способ. Выбирай EXISTS по смыслу задачи, а затем проверяй план, если производительность важна.",
-        "example": "SELECT c.customer_id, c.full_name\nFROM customers AS c\nWHERE EXISTS (\n  SELECT 1\n  FROM orders AS o\n  WHERE o.customer_id = c.customer_id\n);",
+        "example": "SELECT c.customer_id, c.customer_name\nFROM customers AS c\nWHERE EXISTS (\n  SELECT 1\n  FROM orders AS o\n  WHERE o.customer_id = c.customer_id\n);",
         "note": "Для поиска отсутствующих связей используй NOT EXISTS. Он не страдает от NULL в наборе так, как NOT IN.",
         "simple": "EXISTS задаёт вопрос «есть ли хотя бы одна подходящая строка?», а не «какие значения вернуть?».",
         "practiceIds": [
@@ -2677,7 +2677,7 @@ export const modules = [
       {
         "title": "Коррелированные подзапросы",
         "body": "Коррелированный подзапрос ссылается на столбцы внешнего запроса. Он выполняет логическую проверку для каждой внешней строки, например ищет максимальную дату заказа именно текущего клиента.\n\nТакой запрос удобно читать, когда внутреннее условие зависит от конкретной внешней записи. Но наивное представление «подзапрос обязательно запускается заново для каждой строки» не всегда верно: оптимизатор может преобразовать его в JOIN или другой план.\n\nКоррелированный подзапрос может быть менее очевиден, чем агрегированный JOIN. Сравнивай оба варианта по ясности и EXPLAIN ANALYZE на реальных объёмах, если есть проблема производительности.",
-        "example": "SELECT c.customer_id, c.full_name\nFROM customers AS c\nWHERE c.created_at = (\n  SELECT MIN(o.created_at)\n  FROM orders AS o\n  WHERE o.customer_id = c.customer_id\n);",
+        "example": "SELECT c.customer_id, c.customer_name\nFROM customers AS c\nWHERE c.registered_at = (\n  SELECT MIN(o.created_at)\n  FROM orders AS o\n  WHERE o.customer_id = c.customer_id\n);",
         "note": "Не делай вывод о скорости только по вложенности. Оптимизатор может преобразовать запрос.",
         "simple": "Коррелированный подзапрос использует значение текущей строки внешнего запроса.",
         "practiceIds": [
@@ -3400,7 +3400,7 @@ export const modules = [
       {
         "title": "INSERT: добавление строк",
         "body": "INSERT добавляет новые строки в таблицу. В списке столбцов указывай, какие поля заполняешь, а в VALUES — соответствующие значения в том же порядке. Явный список столбцов делает запрос устойчивее к изменению структуры и не заставляет помнить физический порядок колонок.\n\nЕсли столбец пропущен, PostgreSQL использует DEFAULT, если он задан, иначе — NULL, если это разрешено. Если обязательное поле не заполнено и не имеет значения по умолчанию, вставка завершится ошибкой.\n\nINSERT может добавить одну строку или несколько. Типы значений должны быть совместимы с типами столбцов, а ограничения проверяются при вставке.",
-        "example": "INSERT INTO customers (full_name, email)\nVALUES ('Anna Petrova', 'anna@example.com');",
+        "example": "INSERT INTO customers (customer_id, customer_name, city, registered_at)\nVALUES (999, 'Anna Petrova', 'Warsaw', DATE '2026-11-07');",
         "note": "Всегда указывай список столбцов. INSERT INTO table VALUES (...) хрупок при изменении схемы.",
         "simple": "INSERT добавляет строки. Список столбцов и VALUES должны соответствовать друг другу по порядку.",
         "practiceIds": [
@@ -3615,7 +3615,7 @@ export const modules = [
       {
         "title": "RETURNING",
         "body": "RETURNING позволяет получить значения строк, которые были затронуты INSERT, UPDATE или DELETE. Это полезно, когда после изменения нужно узнать сгенерированный ID или проверить новое состояние.\n\nВ INSERT RETURNING часто используют для получения ID, созданных DEFAULT или IDENTITY. В UPDATE можно увидеть обновлённые значения, а в DELETE — данные удалённых строк. Возвращаемые значения не требуют отдельного SELECT после изменения.\n\nRETURNING не делает изменение безопасным само по себе. Он только показывает, какие строки затронуты. Для контроля используй точное условие и транзакцию там, где это уместно.",
-        "example": "INSERT INTO customers (full_name, email)\nVALUES ('Anna Petrova', 'anna@example.com')\nRETURNING customer_id, full_name;",
+        "example": "INSERT INTO customers (customer_id, customer_name, city, registered_at)\nVALUES (999, 'Anna Petrova', 'Warsaw', DATE '2026-11-07')\nRETURNING customer_id, customer_name;",
         "note": "Если UPDATE или DELETE вернул неожиданное число строк, не подтверждай транзакцию до выяснения причины.",
         "simple": "RETURNING возвращает строки, затронутые изменяющей командой.",
         "practiceIds": [],
@@ -3640,7 +3640,7 @@ export const modules = [
       {
         "title": "UPSERT: ON CONFLICT",
         "body": "UPSERT в PostgreSQL реализуется через INSERT ... ON CONFLICT. Если вставка нарушает указанный уникальный или exclusion-конфликт, можно выполнить DO NOTHING или DO UPDATE.\n\nON CONFLICT требует подходящего ограничения или индекса, который определяет конфликт. Например, уникальный email может означать, что при повторном импорте клиента нужно обновить имя. EXCLUDED содержит значения, которые пытались вставить.\n\nUPSERT удобен для идемпотентной загрузки, но нужно аккуратно выбирать поля для обновления. Не перезаписывай свежие данные устаревшей выгрузкой. Также учитывай, что конкурирующие транзакции могут влиять на то, какая версия записи останется.",
-        "example": "INSERT INTO customers (email, full_name)\nVALUES ('anna@example.com', 'Anna Petrova')\nON CONFLICT (email)\nDO UPDATE SET full_name = EXCLUDED.full_name;",
+        "example": "INSERT INTO products (product_id, product_name, category, price)\nVALUES (1, 'Updated coffee', 'Drinks', 499.00)\nON CONFLICT (product_id)\nDO UPDATE SET product_name = EXCLUDED.product_name,\n              price = EXCLUDED.price;",
         "note": "ON CONFLICT не сработает без подходящего уникального ограничения или индекса на указанном ключе.",
         "simple": "ON CONFLICT обрабатывает нарушение уникальности в момент INSERT. EXCLUDED — строка, которую пытались вставить.",
         "practiceIds": [
@@ -3667,7 +3667,7 @@ export const modules = [
       {
         "title": "MERGE: синхронизация двух наборов",
         "body": "MERGE сопоставляет целевой набор строк с источником по условию ON и позволяет выполнять разные действия в зависимости от результата сопоставления. Можно обновить совпавшие строки, вставить отсутствующие или удалить строки, которые больше не нужны.\n\nMERGE полезен для синхронизации таблиц и пакетной загрузки изменений. В отличие от простого UPSERT, он может обрабатывать несколько типов совпадений в одном операторе. Но правила WHEN MATCHED и WHEN NOT MATCHED нужно проектировать осторожно: неверное условие ON может массово обновить или вставить неправильные записи.\n\nПеред запуском MERGE проверь, что источник не содержит несколько строк, совпадающих с одной целевой записью, если логика этого не допускает. Поведение и доступные возможности зависят от версии PostgreSQL.",
-        "example": "MERGE INTO target_customers AS t\nUSING staged_customers AS s\nON t.customer_id = s.customer_id\nWHEN MATCHED THEN\n  UPDATE SET full_name = s.full_name\nWHEN NOT MATCHED THEN\n  INSERT (customer_id, full_name)\n  VALUES (s.customer_id, s.full_name);",
+        "example": "MERGE INTO customers AS t\nUSING (VALUES\n  (1, 'Updated customer', 'Warsaw', DATE '2026-01-01'),\n  (999, 'New customer', 'Krakow', DATE '2026-11-07')\n) AS s(customer_id, customer_name, city, registered_at)\nON t.customer_id = s.customer_id\nWHEN MATCHED THEN\n  UPDATE SET customer_name = s.customer_name\nWHEN NOT MATCHED THEN\n  INSERT (customer_id, customer_name, city, registered_at)\n  VALUES (s.customer_id, s.customer_name, s.city, s.registered_at);",
         "note": "До MERGE проверь уникальность ключа в источнике и точность условия ON.",
         "simple": "MERGE сопоставляет источник и цель, а затем выбирает действие для совпавших и несовпавших строк.",
         "practiceIds": [],
@@ -4981,7 +4981,7 @@ export const modules = [
       {
         "title": "Обработка ошибок и EXCEPTION",
         "body": "Блок EXCEPTION перехватывает ошибки, возникшие в соответствующем блоке PL/pgSQL. Это позволяет обработать ожидаемую ситуацию, например уникальный конфликт, и вернуть понятный результат или выполнить альтернативное действие.\n\nОбработка исключения не должна скрывать любые ошибки без разбора. Если перехватить OTHERS и ничего не сделать, настоящие проблемы могут остаться незамеченными. Лучше перехватывать конкретные SQLSTATE или именованные условия и логировать контекст.\n\nВ PostgreSQL блок с EXCEPTION работает как подблок с собственным откатом изменений внутри него. Но внешние побочные эффекты и действия вне транзакции могут не отмениться.",
-        "example": "DO $$\nBEGIN\n  INSERT INTO customers (customer_id, full_name)\n  VALUES (1, 'Test');\nEXCEPTION\n  WHEN unique_violation THEN\n    RAISE NOTICE 'Customer already exists';\nEND;\n$$;",
+        "example": "DO $$\nBEGIN\n  INSERT INTO customers (customer_id, customer_name)\n  VALUES (1, 'Test');\nEXCEPTION\n  WHEN unique_violation THEN\n    RAISE NOTICE 'Customer already exists';\nEND;\n$$;",
         "note": "Не используй WHEN OTHERS без повторного выброса или осмысленной обработки неизвестной ошибки.",
         "simple": "EXCEPTION позволяет обработать ожидаемую ошибку, но не должен превращаться в заглушку для всех проблем.",
         "practiceIds": [],
@@ -5243,7 +5243,7 @@ export const modules = [
       {
         "title": "Чтение плана: Scan, Join и Aggregate",
         "body": "План выполнения состоит из узлов. Scan читает источник, Join объединяет наборы, Aggregate считает группы или агрегаты, Sort сортирует строки, Limit ограничивает результат.\n\nNested Loop для каждой строки внешнего набора ищет совпадения во внутреннем. Он может быть быстрым для малого внешнего набора и индексного поиска, но дорогим при большом числе внешних строк. Hash Join строит хеш-таблицу по одной стороне и ищет совпадения по другой; Merge Join использует упорядоченные входы.\n\nУзел сам по себе не плохой. Смотри на actual rows, loops и время. Nested Loop с десятью строками и быстрым индексным поиском может быть отличным планом, а Hash Join может быть невыгоден для маленького результата.",
-        "example": "EXPLAIN (ANALYZE, BUFFERS)\nSELECT o.order_id, c.full_name\nFROM orders AS o\nJOIN customers AS c USING (customer_id);",
+        "example": "EXPLAIN (ANALYZE, BUFFERS)\nSELECT o.order_id, c.customer_name\nFROM orders AS o\nJOIN customers AS c USING (customer_id);",
         "note": "Nested Loop не означает ошибку. Важны размер внешнего набора, число loops и стоимость внутреннего поиска.",
         "simple": "Название узла описывает способ выполнения, а не его качество. Оцени фактический объём и число циклов.",
         "practiceIds": [
