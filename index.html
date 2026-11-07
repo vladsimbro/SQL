@@ -11,7 +11,6 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css">
-  <link rel="stylesheet" href="./styles.css">
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
 </head>
 <body>
@@ -63,6 +62,39 @@
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/sql/sql.min.js"></script>
-<script type="module" src="./app.js"></script>
+<script type="module">
+const loadCurrentBuild = async () => {
+ const response = await fetch('./version.json?check=' + Date.now(), { cache: 'no-store' });
+ if (!response.ok) throw new Error('Не удалось проверить версию сайта');
+ const { build } = await response.json();
+ const stylesheet = document.createElement('link');
+ stylesheet.rel = 'stylesheet';
+ stylesheet.href = './styles.css?v=' + encodeURIComponent(build);
+ document.head.append(stylesheet);
+ await import('./app.js?v=' + encodeURIComponent(build));
+ return build;
+};
+let activeBuild = '';
+loadCurrentBuild().then(build => { activeBuild = build; }).catch(error => {
+ const host = document.querySelector('#app-content');
+ if (host) host.innerHTML = '<div class="loading-screen"><h2>Не удалось загрузить SQL Academy</h2><p>Проверьте подключение к интернету и обновите страницу.</p></div>';
+ console.error(error);
+});
+const checkForUpdate = async () => {
+ if (!activeBuild) return;
+ try {
+  const response = await fetch('./version.json?check=' + Date.now(), { cache: 'no-store' });
+  if (!response.ok) return;
+  const { build } = await response.json();
+  if (build && build !== activeBuild) {
+   const url = new URL(location.href);
+   url.searchParams.set('v', build);
+   location.replace(url.href);
+  }
+ } catch (error) { console.warn('Не удалось проверить обновление SQL Academy', error); }
+};
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkForUpdate(); });
+window.addEventListener('focus', checkForUpdate);
+</script>
 </body>
 </html>

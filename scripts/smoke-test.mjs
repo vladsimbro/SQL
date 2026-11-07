@@ -51,7 +51,7 @@ assert.ok(htmlSource.includes('data-nav="reference"') && htmlSource.includes('da
 assert.ok(cssSource.includes(':root.light .CodeMirror') && cssSource.includes(':root.light .reference-card') && cssSource.includes(':root.light .glossary-item'), 'Light theme must style the editor, reference and glossary');
 
 const ids = new Set(modules.map(module => module.id));
-assert.equal(modules.reduce((sum, module) => sum + module.lessons.length, 0), 148, 'Expected 148 lessons');
+assert.equal(modules.reduce((sum, module) => sum + module.lessons.length, 0), 149, 'Expected 149 lessons');
 assert.equal(glossary.length, 72, 'Expected 72 glossary terms');
 assert.equal(reference.length, 13, 'Expected 13 reference groups');
 const normalizeStart = appSource.indexOf('function normalizeResult');

@@ -1,5 +1,5 @@
-import { modules, exercises, glossary, reference, schema, seedSQL } from './curriculum.js';
-import { firstSqlKeyword, explainStatementKeyword, splitStatements, readOnlyQueryKeyword } from './sql-utils.js';
+import { modules, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261107-1';
+import { firstSqlKeyword, explainStatementKeyword, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261107-1';
 
 const $ = (s, root=document) => root.querySelector(s);
 const $$ = (s, root=document) => [...root.querySelectorAll(s)];
