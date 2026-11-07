@@ -1258,12 +1258,12 @@ export const modules = [
           ],
           "rows": [
             [
-              103,
-              "shipped",
+              105,
+              "delivered",
               "Казань"
             ],
             [
-              105,
+              111,
               "delivered",
               "Казань"
             ]
