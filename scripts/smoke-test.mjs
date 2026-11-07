@@ -51,10 +51,25 @@ assert.ok(appSource.includes('readOnlyQueryKeyword(parts[0])'), 'SELECT exercise
 assert.ok(appSource.includes('explainStatementKeyword(parts[0])'), 'EXPLAIN exercises must parse EXPLAIN options and CTEs');
 assert.ok(appSource.includes('reference.map(g=>') && appSource.includes('glossary.map(g=>'), 'Reference and glossary views must render their datasets');
 assert.ok(appSource.includes('preserveOrder=false'), 'Result normalization must support order-sensitive exercises');
-assert.ok(appSource.includes('function renderAnnotatedSql') && appSource.includes('function renderExampleBreakdown'), 'Lesson examples must include SQL hover explanations and line-by-line breakdowns');
+assert.ok(appSource.includes('function lessonFocusTokens') && appSource.includes('function renderAnnotatedSql') && appSource.includes('function renderExampleBreakdown'), 'SQL explanations must be contextual and concise');
 const walkthroughLessons = modules.flatMap(module => module.lessons.filter(lesson => lesson.walkthrough));
-assert.equal(walkthroughLessons.length, 173, 'Every lesson must have a complete worked scenario');
-assert.ok(walkthroughLessons.every(lesson => lesson.walkthrough.title && lesson.walkthrough.scenario && lesson.walkthrough.steps?.length >= 3 && lesson.walkthrough.result && lesson.walkthrough.pitfall), 'Every worked scenario must include context, ordered reasoning, result and common pitfall');
+assert.equal(walkthroughLessons.length, 40, 'Only substantive, hand-authored worked scenarios should remain');
+assert.ok(walkthroughLessons.every(lesson => lesson.walkthrough.title && lesson.walkthrough.scenario && lesson.walkthrough.steps?.length >= 3 && lesson.walkthrough.result && lesson.walkthrough.pitfall), 'Every retained worked scenario must include context, reasoning, result and pitfall');
+assert.ok(modules.every(module => module.lessons.every(lesson => !lesson.walkthrough || !lesson.walkthrough.scenario.startsWith('Представь, что ты решаешь рабочую задачу'))), 'Generic template walkthroughs must not be shown');
+const explanationStart = appSource.indexOf('function lessonFocusTokens');
+const explanationEnd = appSource.indexOf('function renderWorkedExample', explanationStart);
+const explanationCode = appSource.slice(explanationStart, explanationEnd);
+const escapeHtml = value => String(value ?? '').replace(/[&<>\"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#39;'}[ch]));
+const explanationApi = new Function('esc','sqlTokenTips', explanationCode + '; return { lessonFocusTokens, renderAnnotatedSql, renderExampleBreakdown };')(escapeHtml, {});
+const joinLesson = { title: 'INNER JOIN и LEFT JOIN', simple: 'Соединение таблиц по ключам.' };
+const joinHtml = explanationApi.renderAnnotatedSql(\"SELECT o.id FROM orders o LEFT JOIN customers c ON c.id = o.customer_id WHERE o.id = 7 -- note\", joinLesson);
+assert.ok(joinHtml.includes('data-tip=') && joinHtml.includes('>LEFT</span>') && joinHtml.includes('>JOIN</span>') && joinHtml.includes('>ON</span>'), 'JOIN topic should highlight only relevant join syntax');
+assert.ok(!joinHtml.includes('>SELECT</span>') && !joinHtml.includes('>FROM</span>') && !joinHtml.includes('>orders</span>') && !joinHtml.includes('>7</span>') && !joinHtml.includes('>note</span>'), 'Unrelated clauses, identifiers, numbers and comments must not be highlighted');
+const neutralHtml = explanationApi.renderAnnotatedSql(\"SELECT 'COUNT(*)' AS label, 12 FROM orders -- comment\", { title: 'Клиент и сервер' });
+assert.ok(!neutralHtml.includes('data-tip='), 'Unrelated lessons must not highlight generic SQL tokens or literals');
+const breakdown = explanationApi.renderExampleBreakdown(\"SELECT o.id\\nFROM orders o\\nLEFT JOIN customers c\\nON c.id = o.customer_id\\nWHERE o.id = 7\\n-- comment\", joinLesson);
+assert.ok(breakdown.includes('Ключевые части запроса') && breakdown.includes('LEFT JOIN') && breakdown.includes('Задаёт ключ сопоставления таблиц.'));
+assert.ok(!breakdown.includes('SELECT o.id') && !breakdown.includes('WHERE o.id') && !breakdown.includes('-- comment') && !breakdown.includes('Эта строка уточняет'), 'Breakdown must omit unrelated clauses, comments and generic filler');
 assert.ok(appSource.includes('function renderWorkedExample') && appSource.includes('renderWorkedExample(l.walkthrough)'), 'Worked lesson scenarios must be rendered in the lesson page');
 assert.ok(cssSource.includes('.worked-example') && cssSource.includes('.worked-steps'), 'Worked scenarios must have dedicated responsive styling');
 
@@ -79,8 +94,8 @@ assert.equal(modules.length, 25, 'Expected 25 ordered modules');
 assert.ok(modules.every(module => module.lessons.length > 0), 'Every module must have lessons');
 assert.ok(modules.every(module => module.lessons.every(lesson => lesson.title && lesson.body && lesson.example && lesson.note)), 'Every lesson must contain title, theory, example and note');
 assert.ok(modules.every(module => module.lessons.every(lesson => lesson.simple)), 'Every lesson must include a plain-language explanation');
-assert.ok(modules.every(module => module.lessons.every(lesson => lesson.walkthrough && lesson.walkthrough.title && lesson.walkthrough.scenario && lesson.walkthrough.steps?.length >= 4 && lesson.walkthrough.result && lesson.walkthrough.pitfall)), 'Every lesson must include a complete, lesson-specific worked scenario with at least four reasoning steps');
-assert.ok(new Set(modules.flatMap(module => module.lessons.map(lesson => lesson.walkthrough.title))).size === 173, 'Every lesson must have its own worked-scenario title');
+assert.ok(modules.every(module => module.lessons.every(lesson => !lesson.walkthrough || (lesson.walkthrough.title && lesson.walkthrough.scenario && lesson.walkthrough.steps?.length >= 3 && lesson.walkthrough.result && lesson.walkthrough.pitfall))), 'Every retained worked scenario must be complete');
+assert.equal(new Set(walkthroughLessons.map(lesson => lesson.walkthrough.title)).size, 40, 'Retained worked-scenario titles must be unique');
 assert.ok(modules.every(module => module.lessons.every(lesson => Array.isArray(lesson.outcomes) && lesson.outcomes.length >= 2)), 'Every lesson must have lesson-specific outcomes');
 assert.ok(modules.filter(module => ['foundations','relational','types','anatomy','ddl','inserts','select','where','sorting','expressions','aggregates','joins','subqueries','cte','setops','dml','constraints','windows','views','analytics','performance','advanced','security','workflow'].includes(module.id)).every(module => module.lessons.every(lesson => lesson.body.split(/\n\s*\n/).filter(Boolean).length >= 2)), 'Rewritten lesson explanations must be divided into readable paragraphs');
 assert.ok(modules.filter(module => ['foundations','relational','types','anatomy','ddl','inserts','select','where','sorting','expressions','aggregates','joins','subqueries','cte','setops','dml','constraints','windows','views'].includes(module.id)).every(module => module.lessons.every(lesson => lesson.quiz.every(q => q.options.length === 4 && new Set(q.options).size === 4))), 'Rewritten lesson quiz options must be distinct and substantive');
@@ -102,7 +117,7 @@ assert.equal(datetimeModule.lessons.length, 7, 'Date/time module must contain se
 assert.ok(datetimeModule.lessons.every(lesson => (lesson.practiceIds || []).length > 0), 'Every date/time lesson must link to at least one relevant practice task');
 assert.deepEqual(datetimeModule.lessons.flatMap(lesson => lesson.practiceIds || []).sort(), ['e72','e73','e74','e75','e76','e77','e78','e79'].sort(), 'Date/time lessons must link all eight dedicated practice tasks exactly once');
 assert.ok(exercises.filter(exercise => exercise.m === 'datetime').every(exercise => exercise.quiz?.options?.length === 4 && exercise.quiz.explanation), 'Date/time practice tasks must include a concept check');
-assert.ok(appSource.includes("curriculum.js?v=20261107-34") && appSource.includes("sql-utils.js?v=20261107-34") && appSource.includes("sandbox-tasks.js?v=20261107-34"), 'Application module dependencies must use the current cache version');
+assert.ok(appSource.includes("curriculum.js?v=20261107-35") && appSource.includes("sql-utils.js?v=20261107-35") && appSource.includes("sandbox-tasks.js?v=20261107-35"), 'Application module dependencies must use the current cache version');
 
 
 const windowModule = modules.find(module => module.id === 'windows');
