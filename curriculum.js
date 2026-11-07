@@ -4866,7 +4866,7 @@ export const modules = [
       {
         "title": "LAG и LEAD",
         "body": "LAG и LEAD позволяют получить значение из соседней строки внутри окна. LAG смотрит назад, LEAD — вперёд. Они полезны, когда нужно сравнить текущую запись с предыдущей или следующей без самостоятельного JOIN таблицы с самой собой.\n\nОбе функции используют ORDER BY внутри OVER. Для истории статусов заказа это может быть event_at, а при одинаковом времени нужен дополнительный уникальный event_id. Иначе PostgreSQL не обязан выбирать один и тот же порядок соседних событий.\n\nПервый аргумент — выражение, которое нужно получить. Второй, необязательный, задаёт смещение: по умолчанию одна строка. Третий задаёт значение, если соседней строки нет. Например, LAG(total_amount, 1, 0) вернёт 0 для первой строки раздела.\n\nЧастый сценарий — изменение показателя: текущая сумма минус предыдущая. Другой сценарий — время между событиями. Но LAG берёт предыдущую существующую строку, а не обязательно предыдущий календарный день или месяц. Если период пропущен, сначала построй календарную сетку.\n\nКак и другие оконные функции, LAG и LEAD не уменьшают число строк. Они добавляют соседнее значение к текущей записи.",
-        "example": "SELECT order_id, created_at::date::text AS created_at, total_amount::int AS total_amount,\n       (LAG(total_amount) OVER (\n         PARTITION BY customer_id\n         ORDER BY created_at, order_id\n       ))::int AS previous_order_amount\nFROM orders\nWHERE customer_id = 1\nORDER BY created_at, order_id;",
+        "example": "SELECT order_id, created_at::date::text AS created_at, total_amount::int AS total_amount,\n       (LAG(total_amount) OVER w)::int AS previous_order_amount,\n       (LEAD(total_amount) OVER w)::int AS next_order_amount\nFROM orders\nWHERE customer_id = 1\nWINDOW w AS (PARTITION BY customer_id ORDER BY created_at, order_id)\nORDER BY created_at, order_id;",
         "note": "Без ORDER BY понятие предыдущей строки не определено. Добавляй tie-breaker при совпадающих датах.",
         "simple": "LAG берёт значение из предыдущей строки окна, LEAD — из следующей. Порядок должен быть определён явно.",
         "practiceIds": [
@@ -4907,26 +4907,30 @@ export const modules = [
             "order_id",
             "created_at",
             "total_amount",
-            "previous_order_amount"
+            "previous_order_amount",
+            "next_order_amount"
           ],
           "rows": [
             [
               101,
               "2026-01-10",
               1250,
-              null
+              null,
+              1800
             ],
             [
               105,
               "2026-01-12",
               1800,
-              1250
+              1250,
+              990
             ],
             [
               110,
               "2026-01-14",
               990,
-              1800
+              1800,
+              null
             ]
           ]
         }
@@ -4934,7 +4938,7 @@ export const modules = [
       {
         "title": "Накопительные итоги и рамки окна",
         "body": "Накопительный итог строится оконным агрегатом с ORDER BY. Например, SUM(amount) OVER (PARTITION BY account_id ORDER BY created_at) считает сумму от начала истории до текущей строки.\n\nРамка окна определяет, какие строки входят в вычисление для текущей записи. Для явного накопительного итога часто используют ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW. Без явной рамки стандартная рамка с ORDER BY может включать все строки с равными значениями сортировки, что меняет результат при одинаковых датах.\n\nДобавляй уникальный критерий сортировки и явно задавай рамку, если нужна построчная последовательность. Это помогает избежать неожиданных скачков накопительного значения.",
-        "example": "SELECT customer_id, created_at, order_id, total_amount,\n       SUM(total_amount) OVER (\n         PARTITION BY customer_id\n         ORDER BY created_at, order_id\n         ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW\n       ) AS running_total\nFROM orders;",
+        "example": "SELECT customer_id, order_id, created_at::date::text AS created_at,\n       total_amount::int AS total_amount,\n       (SUM(total_amount) OVER (\n         PARTITION BY customer_id\n         ORDER BY created_at, order_id\n         ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW\n       ))::int AS running_total\nFROM orders\nWHERE customer_id = 1\nORDER BY created_at, order_id;",
         "note": "Явная ROWS-рамка и уникальная сортировка делают накопительный итог предсказуемым.",
         "simple": "Накопительный итог — сумма от первой строки раздела до текущей строки в заданном порядке.",
         "practiceIds": [
@@ -4969,7 +4973,39 @@ export const modules = [
           "result": "У каждого клиента первая строка содержит сумму первого заказа, следующая — сумму первых двух и так далее.",
           "pitfall": "Без ORDER BY сумма будет общей по разделу, а не накопительной. Если даты совпадают, добавь уникальный ключ для стабильной последовательности."
         },
-        "id": "windows.nakopitelnye-itogi-i-ramki-okna"
+        "id": "windows.nakopitelnye-itogi-i-ramki-okna",
+        "exampleResult": {
+          "columns": [
+            "customer_id",
+            "order_id",
+            "created_at",
+            "total_amount",
+            "running_total"
+          ],
+          "rows": [
+            [
+              1,
+              101,
+              "2026-01-10",
+              1250,
+              1250
+            ],
+            [
+              1,
+              105,
+              "2026-01-12",
+              1800,
+              3050
+            ],
+            [
+              1,
+              110,
+              "2026-01-14",
+              990,
+              4040
+            ]
+          ]
+        }
       },
       {
         "title": "Оконные функции после группировки",
@@ -5075,7 +5111,7 @@ export const modules = [
         "title": "FIRST_VALUE, LAST_VALUE и NTH_VALUE",
         "body": "FIRST_VALUE возвращает значение из первой строки рамки окна, LAST_VALUE — из последней, NTH_VALUE — из строки с заданным номером. В отличие от LAG и LEAD, они выбирают значение по позиции внутри рамки, а не просто по смещению от текущей строки.\n\nУ LAST_VALUE есть ловушка: если указать ORDER BY и не задать рамку явно, стандартная рамка обычно заканчивается текущей строкой и её peers. Поэтому LAST_VALUE часто возвращает не последнее значение всей группы, а значение в конце текущей рамки. Чтобы получить последнее значение раздела, укажи ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING.\n\nNTH_VALUE возвращает NULL, если нужной строки нет в рамке. Поэтому проверь, сколько строк попадает в раздел, и не путай номер строки с идентификатором записи.",
         "simple": "FIRST_VALUE, LAST_VALUE и NTH_VALUE выбирают значение из определённой позиции рамки окна. Для последнего значения всей группы обычно нужна рамка до UNBOUNDED FOLLOWING.",
-        "example": "SELECT customer_id, order_id, total_amount,\n       FIRST_VALUE(total_amount) OVER w AS first_amount,\n       LAST_VALUE(total_amount) OVER w AS last_amount,\n       NTH_VALUE(total_amount, 2) OVER w AS second_amount\nFROM orders\nWINDOW w AS (\n  PARTITION BY customer_id\n  ORDER BY created_at, order_id\n  ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING\n);",
+        "example": "SELECT customer_id, order_id, total_amount::int AS total_amount,\n       (FIRST_VALUE(total_amount) OVER w)::int AS first_amount,\n       (LAST_VALUE(total_amount) OVER w)::int AS last_amount,\n       (NTH_VALUE(total_amount, 2) OVER w)::int AS second_amount\nFROM orders\nWHERE customer_id = 1\nWINDOW w AS (\n  PARTITION BY customer_id\n  ORDER BY created_at, order_id\n  ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING\n)\nORDER BY created_at, order_id;",
         "note": "Если LAST_VALUE неожиданно совпадает с текущей строкой, проверь рамку окна. ORDER BY без явной полной рамки не означает «до последней строки группы».",
         "outcomes": [
           "Объяснять разницу между LAG/LEAD и FIRST_VALUE/LAST_VALUE/NTH_VALUE",
@@ -5097,7 +5133,43 @@ export const modules = [
         "practiceIds": [
           "e93"
         ],
-        "id": "windows.first-value-last-value-i-nth-value"
+        "id": "windows.first-value-last-value-i-nth-value",
+        "exampleResult": {
+          "columns": [
+            "customer_id",
+            "order_id",
+            "total_amount",
+            "first_amount",
+            "last_amount",
+            "second_amount"
+          ],
+          "rows": [
+            [
+              1,
+              101,
+              1250,
+              1250,
+              990,
+              1800
+            ],
+            [
+              1,
+              105,
+              1800,
+              1250,
+              990,
+              1800
+            ],
+            [
+              1,
+              110,
+              990,
+              1250,
+              990,
+              1800
+            ]
+          ]
+        }
       },
       {
         "title": "NTILE, PERCENT_RANK и CUME_DIST",
@@ -8380,7 +8452,7 @@ export const modules = [
     "track": "postgresql",
     "trackOrder": 8
   }
-];
+]
 
 export const learningTracks = [
   {
