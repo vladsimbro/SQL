@@ -2579,7 +2579,9 @@ export const modules = [
           "Объяснять роль часового пояса сессии",
           "Понимать, почему зона может храниться отдельно от момента"
         ],
-        "practiceIds": [],
+        "practiceIds": [
+          "e78"
+        ],
         "quiz": [
           {
             "question": "Что представляет TIMESTAMPTZ в PostgreSQL?",
@@ -2605,7 +2607,9 @@ export const modules = [
           "Различать календарные периоды и прошедшую длительность",
           "Избегать неверного перевода месяцев и лет в секунды"
         ],
-        "practiceIds": [],
+        "practiceIds": [
+          "e79"
+        ],
         "quiz": [
           {
             "question": "Почему INTERVAL '1 month' нельзя всегда считать равным 30 дням?",
@@ -6365,6 +6369,44 @@ export const modules = [
       ],
       "answer": 1,
       "explanation": "Локальные часы интерпретируются в указанной зоне и превращаются в конкретный момент TIMESTAMPTZ."
+    }
+  },
+  {
+    "id": "e78",
+    "mode": "select",
+    "m": "datetime",
+    "title": "Определи тип временного значения",
+    "task": "Верни типы трёх выражений: календарной даты, локальной временной метки и временной метки с часовым поясом. Выведи три строки с названиями выражений и типами.",
+    "solution": "SELECT 'calendar_date' AS value_kind, pg_typeof(DATE '2026-11-07')::text AS data_type UNION ALL SELECT 'local_timestamp', pg_typeof(TIMESTAMP '2026-11-07 10:00:00')::text UNION ALL SELECT 'zoned_timestamp', pg_typeof(TIMESTAMPTZ '2026-11-07 10:00:00+00')::text;",
+    "quiz": {
+      "question": "Что принципиально отличает TIMESTAMPTZ от TIMESTAMP WITHOUT TIME ZONE?",
+      "options": [
+        "Первый представляет конкретный момент времени, второй хранит локальные дату и часы без зоны",
+        "Первый хранит только дату",
+        "Второй всегда хранится в UTC",
+        "Между ними нет различий"
+      ],
+      "answer": 0,
+      "explanation": "TIMESTAMPTZ представляет однозначный момент. TIMESTAMP WITHOUT TIME ZONE не содержит информации о часовом поясе."
+    }
+  },
+  {
+    "id": "e79",
+    "mode": "select",
+    "m": "datetime",
+    "title": "Календарный сдвиг и длительность",
+    "task": "Рассчитай два значения от одной даты: дату через один календарный месяц и дату через 30 дней. Выведи оба результата и объясни разницу по значениям.",
+    "solution": "SELECT DATE '2026-01-31' + INTERVAL '1 month' AS one_calendar_month, DATE '2026-01-31' + INTERVAL '30 days' AS thirty_days;",
+    "quiz": {
+      "question": "Почему INTERVAL '1 month' и INTERVAL '30 days' могут дать разные результаты?",
+      "options": [
+        "Месяц является календарной единицей переменной длины, а 30 days задаёт 30 дней",
+        "INTERVAL игнорирует дни",
+        "PostgreSQL случайно выбирает дату",
+        "30 days всегда округляется до месяца"
+      ],
+      "answer": 0,
+      "explanation": "Календарные месяцы имеют разную длину. Поэтому месяц нельзя считать фиксированными 30 днями."
     }
   }
 ];

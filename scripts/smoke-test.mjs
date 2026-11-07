@@ -10,11 +10,11 @@ const cssSource = await readFile(new URL('../styles.css', import.meta.url), 'utf
 assert.ok(Array.isArray(glossary) && glossary.length >= 30, 'Glossary must contain at least 30 usable terms');
 assert.ok(Array.isArray(reference) && reference.length >= 8, 'SQL quick reference must contain usable topic groups');
 assert.ok(exercises.every(exercise => ['select','explain','mutation','transaction'].includes(exercise.mode)), 'Every exercise must have a supported explicit mode');
-assert.equal(exercises.filter(exercise => exercise.mode === 'select').length, 65, 'Expected 65 SELECT exercises');
+assert.equal(exercises.filter(exercise => exercise.mode === 'select').length, 67, 'Expected 67 SELECT exercises');
 assert.equal(exercises.filter(exercise => exercise.mode === 'explain').length, 1, 'Expected one EXPLAIN exercise');
 assert.equal(exercises.filter(exercise => exercise.mode === 'mutation').length, 8, 'Expected eight mutation exercises');
 assert.equal(exercises.filter(exercise => exercise.mode === 'transaction').length, 3, 'Expected three transaction exercises');
-assert.equal(exercises.length, 77, 'Expected 77 total practice exercises');
+assert.equal(exercises.length, 79, 'Expected 79 total practice exercises');
 assert.equal(exercises.filter(exercise => exercise.mode === 'mutation').length, 8, 'Expected eight mutation exercises');
 assert.equal(exercises.filter(exercise => exercise.mode === 'transaction').length, 3, 'Expected three transaction exercises');
 assert.ok(exercises.every(exercise => modules.some(module => module.id === exercise.m)), 'Every exercise must belong to a real module');
@@ -85,7 +85,7 @@ assert.ok(dateTimeModule.lessons.some(lesson => lesson.title === 'Временн
 const datetimeModule = modules.find(module => module.id === 'datetime');
 assert.equal(datetimeModule.lessons.length, 7, 'Date/time module must contain seven lessons');
 assert.ok(datetimeModule.lessons.every(lesson => (lesson.practiceIds || []).length > 0), 'Every date/time lesson must link to at least one relevant practice task');
-assert.deepEqual(datetimeModule.lessons.flatMap(lesson => lesson.practiceIds || []).sort(), ['e72','e73','e74','e75','e76','e77'].sort(), 'Date/time lessons must link all six dedicated practice tasks exactly once');
+assert.deepEqual(datetimeModule.lessons.flatMap(lesson => lesson.practiceIds || []).sort(), ['e72','e73','e74','e75','e76','e77','e78','e79'].sort(), 'Date/time lessons must link all six dedicated practice tasks exactly once');
 assert.ok(exercises.filter(exercise => exercise.m === 'datetime').every(exercise => exercise.quiz?.options?.length === 4 && exercise.quiz.explanation), 'Date/time practice tasks must include a concept check');
 assert.ok(appSource.includes("curriculum.js?v=20261107-4") && appSource.includes("sql-utils.js?v=20261107-4"), 'Application module dependencies must use the current cache version');
 
