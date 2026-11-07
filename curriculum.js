@@ -2058,7 +2058,7 @@ export const modules = [
       {
         "title": "Агрегатные функции",
         "body": "Агрегатная функция получает набор строк и возвращает одно значение. COUNT считает строки или непустые значения, SUM складывает числа, AVG вычисляет среднее, MIN и MAX находят границы.\n\nБез GROUP BY агрегат обычно сворачивает весь набор входных строк в одну строку результата. Если таблица пуста, COUNT(*) вернёт 0, а SUM и AVG вернут NULL. COUNT(*) считает строки независимо от NULL в столбцах; COUNT(amount) считает только строки, где amount не NULL.\n\nАгрегаты работают с тем набором строк, который остался после FROM, JOIN и WHERE. Поэтому если JOIN размножил строки, SUM может посчитать одну сумму несколько раз. Перед агрегацией всегда понимай, что представляет одна входная строка.",
-        "example": "SELECT COUNT(*)::int AS order_rows,\n       COUNT(employee_id)::int AS assigned_orders,\n       SUM(total_amount)::int AS total_revenue,\n       AVG(total_amount)::int AS average_order\nFROM orders;",
+        "example": "SELECT COUNT(*)::int AS order_rows,\n       COUNT(employee_id)::int AS assigned_orders,\n       SUM(total_amount)::int AS total_revenue,\n       ROUND(AVG(total_amount))::int AS average_order\nFROM orders;",
         "note": "SUM и AVG игнорируют NULL, а COUNT(*) считает строки. Пустой набор и набор из NULL — не одно и то же.",
         "simple": "Агрегат сворачивает много строк в одно итоговое значение. COUNT(*) считает строки, COUNT(column) — только заполненные значения.",
         "practiceIds": [
