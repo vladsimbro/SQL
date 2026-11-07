@@ -799,7 +799,7 @@ export const modules = [
       {
         "title": "Алиасы и читаемость",
         "body": "Алиас — временное имя выражения или источника данных внутри запроса. AS делает его назначение явным: total_amount * 0.1 AS fee. Алиас столбца помогает читать результат и обращаться к выражению в тех частях запроса, где это разрешено.\n\nАлиас таблицы сокращает длинные имена и делает JOIN понятнее. Например, orders AS o и customers AS c. После назначения алиаса в этом запросе обычно обращаются к таблице через o или c. Это особенно полезно, когда у нескольких таблиц есть столбец id или created_at.\n\nАлиас не создаёт новый столбец в таблице и не меняет схему. Он существует только в рамках запроса. Для вычисленного значения лучше выбирать осмысленное имя, а не x или column1.",
-        "example": "SELECT o.order_id,\n       c.full_name AS customer_name\nFROM orders AS o\nJOIN customers AS c\n  ON c.customer_id = o.customer_id;",
+        "example": "SELECT o.order_id,\n       c.customer_name AS customer_name\nFROM orders AS o\nJOIN customers AS c\n  ON c.customer_id = o.customer_id;",
         "note": "Если в нескольких таблицах есть customer_id, указывай алиас источника: o.customer_id или c.customer_id. Это устраняет неоднозначность.",
         "simple": "Алиас — имя внутри запроса, а не переименование настоящего столбца в базе.",
         "practiceIds": [],
