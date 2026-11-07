@@ -268,7 +268,9 @@ export const modules = [
         "example": "SELECT order_id\nFROM orders\nWHERE employee_id IS NULL;\n\n-- Сколько строк и сколько заполненных employee_id:\nSELECT COUNT(*) AS all_rows,\n       COUNT(employee_id) AS known_employee_ids\nFROM orders;",
         "note": "COUNT(*) считает строки. COUNT(column) считает только не-NULL значения в столбце.",
         "simple": "NULL означает «значение отсутствует или неизвестно». Для проверки есть IS NULL, а не = NULL.",
-        "practiceIds": [],
+        "practiceIds": [
+          "e08"
+        ],
         "outcomes": [
           "Объяснить UNKNOWN в SQL",
           "корректно фильтровать NULL",
@@ -1438,9 +1440,7 @@ export const modules = [
         "example": "SELECT order_id, employee_id\nFROM orders\nWHERE employee_id IS DISTINCT FROM 42;",
         "note": "IS DISTINCT FROM — PostgreSQL-расширение. Обычное <> сохраняет стандартное поведение UNKNOWN при NULL.",
         "simple": "IS DISTINCT FROM сравнивает значения так, будто NULL — это сравнимое состояние, а не UNKNOWN.",
-        "practiceIds": [
-          "e08"
-        ],
+        "practiceIds": [],
         "outcomes": [
           "Применять IS DISTINCT FROM и IS NOT DISTINCT FROM",
           "объяснить отличие от <> и =."
@@ -2309,7 +2309,9 @@ export const modules = [
         "example": "SELECT s.store_id, s.store_name, o.order_id\nFROM stores AS s\nLEFT JOIN LATERAL (\n  SELECT order_id\n  FROM orders AS o\n  WHERE o.store_id = s.store_id\n  ORDER BY created_at DESC\n  LIMIT 1\n) AS o ON TRUE;",
         "note": "Не используй NATURAL JOIN в устойчивом рабочем коде: изменение схемы может изменить условие соединения.",
         "simple": "USING удобно при одинаковых именах ключа. NATURAL JOIN слишком неявен. LATERAL даёт подзапросу доступ к предыдущим источникам FROM.",
-        "practiceIds": [],
+        "practiceIds": [
+          "e52"
+        ],
         "outcomes": [
           "Выбирать между ON и USING",
           "объяснить риски NATURAL JOIN и назначение LATERAL."
@@ -2334,9 +2336,7 @@ export const modules = [
         "simple": "Fan-out не ошибка SQL, а изменение числа строк. Ошибка — считать метрики, не учитывая новый уровень детализации.",
         "example": "WITH item_totals AS (\n  SELECT order_id, SUM(quantity * unit_price) AS items_total\n  FROM order_items\n  GROUP BY order_id\n),\npayment_totals AS (\n  SELECT order_id, SUM(amount) AS paid_total\n  FROM payments\n  GROUP BY order_id\n)\nSELECT o.order_id, i.items_total, p.paid_total\nFROM orders AS o\nLEFT JOIN item_totals AS i USING (order_id)\nLEFT JOIN payment_totals AS p USING (order_id);",
         "note": "Не пытайся лечить fan-out через SUM(DISTINCT amount): одинаковые суммы у разных реальных строк будут потеряны.",
-        "practiceIds": [
-          "e52"
-        ],
+        "practiceIds": [],
         "outcomes": [
           "Распознавать fan-out",
           "агрегировать независимые детали до JOIN",
@@ -2473,7 +2473,8 @@ export const modules = [
         "simple": "EXISTS задаёт вопрос «есть ли хотя бы одна подходящая строка?», а не «какие значения вернуть?».",
         "practiceIds": [
           "e28",
-          "e29"
+          "e29",
+          "e58"
         ],
         "outcomes": [
           "Находить строки через EXISTS и NOT EXISTS",
@@ -2526,9 +2527,7 @@ export const modules = [
         "example": "SELECT product_id, price\nFROM products\nWHERE price > ALL (\n  SELECT price\n  FROM products\n  WHERE category_id = 7\n);",
         "note": "ALL не означает «большинство». Достаточно одного FALSE, чтобы результат сравнения с ALL стал FALSE.",
         "simple": "ANY требует хотя бы одного истинного сравнения, ALL — истинности каждого сравнения.",
-        "practiceIds": [
-          "e58"
-        ],
+        "practiceIds": [],
         "outcomes": [
           "Различать ANY и ALL",
           "объяснить поведение на пустом наборе и при NULL."
@@ -3126,7 +3125,8 @@ export const modules = [
         "note": "Не оставляй транзакции открытыми надолго: они могут удерживать блокировки и мешать очистке старых версий строк.",
         "simple": "Транзакция позволяет подтвердить все связанные изменения вместе или отменить их вместе.",
         "practiceIds": [
-          "e69"
+          "e69",
+          "e70"
         ],
         "outcomes": [
           "Начинать и завершать транзакции",
@@ -3228,7 +3228,7 @@ export const modules = [
         "note": "ROLLBACK TO SAVEPOINT не завершает всю транзакцию. После него можно продолжить работу и выполнить COMMIT.",
         "simple": "SAVEPOINT — промежуточная точка отката внутри одной транзакции.",
         "practiceIds": [
-          "e70"
+          "e71"
         ],
         "outcomes": [
           "Создавать SAVEPOINT",
@@ -3254,9 +3254,7 @@ export const modules = [
         "example": "CREATE TABLE order_items (\n  order_id BIGINT REFERENCES orders(order_id)\n    ON DELETE CASCADE,\n  product_id BIGINT REFERENCES products(product_id)\n);",
         "note": "CASCADE может удалить большой объём связанных данных. Перед его использованием проследи всю цепочку внешних ключей.",
         "simple": "ON DELETE задаёт судьбу дочерних строк, когда удаляется родительская запись.",
-        "practiceIds": [
-          "e71"
-        ],
+        "practiceIds": [],
         "outcomes": [
           "Выбирать действия ON DELETE по смыслу данных",
           "объяснить DEFERRABLE и отложенную проверку."
@@ -3392,7 +3390,8 @@ export const modules = [
         "simple": "ROW_NUMBER нумерует каждую строку, RANK оставляет пропуски после ничьей, DENSE_RANK — нет.",
         "practiceIds": [
           "e35",
-          "e36"
+          "e36",
+          "e39"
         ],
         "outcomes": [
           "Различать ROW_NUMBER, RANK и DENSE_RANK",
@@ -3472,9 +3471,7 @@ export const modules = [
         "example": "WITH monthly AS (\n  SELECT DATE_TRUNC('month', created_at) AS month,\n         SUM(total_amount) AS revenue\n  FROM orders\n  GROUP BY 1\n)\nSELECT month, revenue,\n       SUM(revenue) OVER () AS total_revenue,\n       revenue / SUM(revenue) OVER () AS revenue_share\nFROM monthly;",
         "note": "Оконная функция после GROUP BY работает с результатом группировки. Не смешивай зерно заказов и зерно месяцев.",
         "simple": "Сначала агрегируй исходные строки, затем оконная функция анализирует строки групп.",
-        "practiceIds": [
-          "e39"
-        ],
+        "practiceIds": [],
         "outcomes": [
           "Применять оконные функции к агрегированным данным",
           "считать долю группы от общего итога."
@@ -5285,7 +5282,7 @@ export const exercises = [
   {
     "id": "e08",
     "mode": "select",
-    "m": "where",
+    "m": "relational",
     "title": "Заказы без сотрудника",
     "task": "Найди все заказы, у которых employee_id отсутствует. Не используй сравнение с = NULL.",
     "solution": "SELECT order_id, employee_id FROM orders WHERE employee_id IS NULL;"

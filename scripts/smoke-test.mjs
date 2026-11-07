@@ -76,6 +76,7 @@ assert.ok(modules.every(module => module.lessons.every(lesson => Array.isArray(l
 assert.ok(modules.some(module => module.lessons.some(lesson => lesson.quiz.length)), 'Lessons must include focused knowledge checks');
 assert.ok(!appSource.includes('state.lessonIndex*2'), 'Lesson quizzes must not rotate through unrelated module-wide questions');
 assert.ok(!appSource.includes('exercises.find(x=>x.m===state.moduleId)'), 'Lesson practice must not jump to the first arbitrary exercise in a module');
+assert.ok(appSource.includes("if(state.view!=='practice')go('practice')"), 'Lesson practice links must navigate to the practice page');
 
 assert.ok(modules.every(module => module.sources?.length), 'Every module must link to official documentation');
 assert.ok(modules.every(module => module.quiz?.length >= 4), 'Every module must include a question bank');

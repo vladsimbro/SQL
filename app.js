@@ -360,7 +360,7 @@ document.addEventListener('click',event=>{
  if(el.dataset.nav){event.preventDefault();go(el.dataset.nav);return;}
  if(el.dataset.module){state.moduleId=el.dataset.module;state.lessonIndex=0;go('study');return;}
  if(el.dataset.lesson){const [mid,li]=el.dataset.lesson.split(':');state.moduleId=mid;state.lessonIndex=Number(li);render();return;}
- if(el.dataset.exercise){state.exerciseId=el.dataset.exercise;render();return;}
+ if(el.dataset.exercise){state.exerciseId=el.dataset.exercise;if(state.view!=='practice')go('practice');else render();return;}
  if(el.dataset.exerciseQuizAnswer!==undefined){
   const option=Number(el.dataset.exerciseQuizAnswer),ex=exercises.find(x=>x.id===state.exerciseId),q=ex?.quiz;
   if(ex&&q){state.exerciseQuizAnswers[ex.id]=option;saveProgress();render();}
