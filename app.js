@@ -235,7 +235,7 @@ async function checkExercise() {
   if(!sql){feedback.innerHTML='<div class="feedback fail">Напиши SQL-запрос перед проверкой.</div>';return;}
   try{
     const parts=splitStatements(sql);
-    if(ex.mode!=='transaction' && parts.length!==1) throw new Error('В этом задании используй один SQL-запрос.');
+    if(!['transaction','mutation'].includes(ex.mode) && parts.length!==1) throw new Error('В этом задании используй один SQL-запрос.');
     if(ex.mode==='transaction' && parts.length<2) throw new Error('Задание на транзакцию должно содержать несколько команд, разделённых точкой с запятой.');
     const started=performance.now();
     if(ex.mode==='explain') {
@@ -252,7 +252,7 @@ async function checkExercise() {
     if(!expected) throw new Error('Эталонный результат для задания не подготовлен.');
     let result, observed, passed;
     if(ex.mode==='mutation' || ex.mode==='transaction') {
-      if(ex.mode==='mutation' && !['INSERT','UPDATE','DELETE','CREATE','ALTER','DROP','MERGE'].includes(firstSqlKeyword(parts[0]))) throw new Error('Для этой задачи нужна команда изменения данных или структуры: INSERT, UPDATE, DELETE, CREATE, ALTER, DROP либо MERGE.');
+      if(ex.mode==='mutation' && parts.some(part=>!['INSERT','UPDATE','DELETE','CREATE','ALTER','DROP','MERGE'].includes(firstSqlKeyword(part)))) throw new Error('Каждая команда в этом задании должна изменять данные или структуру: INSERT, UPDATE, DELETE, CREATE, ALTER, DROP либо MERGE.');
       if(ex.mode==='transaction' && (ex.requiredPatterns||[]).some(pattern=>!new RegExp(pattern,'i').test(sql))) throw new Error('В запросе отсутствует одна из обязательных команд транзакции. Сверься с условием задания.');
       const {PGlite}=await import('https://cdn.jsdelivr.net/npm/@electric-sql/pglite@0.5.15/dist/index.js');
       const isolatedDb=new PGlite();
@@ -262,7 +262,8 @@ async function checkExercise() {
           await isolatedDb.exec(sql);
           result={rows:[],fields:[]};
         } else {
-          result=await isolatedDb.query(parts[0]);
+          await isolatedDb.exec(sql);
+          result={rows:[],fields:[]};
         }
         observed=await isolatedDb.query(ex.checkQuery);
         passed=JSON.stringify(normalizeResult(observed,ex.orderMatters))===JSON.stringify(expected);
@@ -316,7 +317,7 @@ async function prepareExpected() {
       if(ex.mode==='mutation'){
         await state.db.exec('BEGIN;');
         try {
-          await state.db.query(ex.solution);
+          await state.db.exec(ex.solution);
           const observed=await state.db.query(ex.checkQuery);
           state.expected.set(ex.id,normalizeResult(observed));
         } finally {

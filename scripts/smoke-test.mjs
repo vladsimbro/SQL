@@ -38,6 +38,9 @@ assert.equal(exercises.filter(exercise => exercise.orderMatters).length, 11, 'Or
 assert.equal(sqlLexer.splitStatements('DO $body$ BEGIN PERFORM 1; PERFORM 2; END $body$; SELECT 3;').length, 2, 'Dollar-quoted procedural blocks must remain a single statement');
 for (const exercise of exercises.filter(e => e.mode === 'select')) assert.equal(sqlLexer.readOnlyQueryKeyword(exercise.solution), 'SELECT', `Exercise ${exercise.id} must be a read-only SELECT`);
 for (const exercise of exercises.filter(e => e.mode === 'explain')) assert.equal(sqlLexer.explainStatementKeyword(exercise.solution), 'SELECT', `Exercise ${exercise.id} must EXPLAIN a SELECT`);
+const insertSelectExercise = exercises.find(exercise => exercise.id === 'e67');
+assert.equal(sqlLexer.splitStatements(insertSelectExercise.solution).length, 2, 'INSERT ... SELECT practice may create a staging table and then insert rows');
+assert.deepEqual(sqlLexer.splitStatements(insertSelectExercise.solution).map(sqlLexer.firstSqlKeyword), ['CREATE','INSERT'], 'Multi-statement mutation practice must use only allowed mutation statements');
 assert.ok(appSource.includes("if(ex.mode==='explain')"), 'EXPLAIN mode must be handled separately from normal SELECT exercises');
 assert.ok(appSource.includes('readOnlyQueryKeyword(parts[0])'), 'SELECT exercises must validate read-only SELECT/CTE statements');
 assert.ok(appSource.includes('explainStatementKeyword(parts[0])'), 'EXPLAIN exercises must parse EXPLAIN options and CTEs');
@@ -107,7 +110,7 @@ try {
     if (exercise.mode === 'mutation') {
       await db.exec('BEGIN;');
       try {
-        await db.query(exercise.solution);
+        await db.exec(exercise.solution);
         const observed = await db.query(exercise.checkQuery);
         assert.ok(observed.rows.length > 0, `Mutation exercise ${exercise.id} did not produce a checkable state`);
       } finally {
