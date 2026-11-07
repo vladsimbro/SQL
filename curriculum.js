@@ -196,7 +196,7 @@ export const modules = [
     "lessons": [
       {
         "title": "Таблица, строка и столбец",
-        "body": "Реляционная таблица хранит записи одного типа или отношения. Например, таблица orders содержит заказы. Каждая строка — один заказ, а столбцы order_id, created_at, status и total_amount описывают его свойства.\n\nУ столбца есть имя и тип данных. Например, total_amount может иметь тип NUMERIC, created_at — TIMESTAMP, а status — TEXT. Схема таблицы описывает эти столбцы и ограничения на значения.\n\nТаблица не является отсортированным списком. Даже если строки часто выводятся в одном порядке, SQL не обещает сохранять его. Порядок результата задаётся отдельно с помощью ORDER BY.",
+        "body": "Реляционная таблица хранит записи одного типа или отношения. Например, таблица orders содержит заказы. Каждая строка — один заказ, а столбцы order_id, created_at, status и total_amount описывают его свойства.\n\nУ столбца есть имя и тип данных. Например, total_amount может иметь тип NUMERIC, created_at — DATE, а status — TEXT. Схема таблицы описывает эти столбцы и ограничения на значения.\n\nТаблица не является отсортированным списком. Даже если строки часто выводятся в одном порядке, SQL не обещает сохранять его. Порядок результата задаётся отдельно с помощью ORDER BY.",
         "example": "SELECT order_id::int AS order_id, status\nFROM orders\nWHERE order_id BETWEEN 101 AND 103\nORDER BY order_id;",
         "note": "Не делай вывод о порядке строк по тому, как они случайно отображаются в клиенте. Без ORDER BY порядок не гарантирован.",
         "simple": "Строка — запись. Столбец — характеристика записи. Таблица — набор записей одного вида.",
@@ -608,7 +608,19 @@ export const modules = [
             "explanation": "NUMERIC предназначен для точной десятичной арифметики. DOUBLE PRECISION хранит приближённое двоичное значение."
           }
         ],
-        "id": "types.chislovye-tipy"
+        "id": "types.chislovye-tipy",
+        "exampleResult": {
+          "columns": [
+            "exact_sum",
+            "approximate_sum"
+          ],
+          "rows": [
+            [
+              "0.3",
+              "0.30000000000000004"
+            ]
+          ]
+        }
       },
       {
         "title": "Строки и текст",
@@ -686,7 +698,21 @@ export const modules = [
             "explanation": "Строка 'abc' не представляет целое число, поэтому PostgreSQL не может выполнить такое преобразование."
           }
         ],
-        "id": "types.preobrazovanie-tipov"
+        "id": "types.preobrazovanie-tipov",
+        "exampleResult": {
+          "columns": [
+            "doubled_amount",
+            "integer_division",
+            "decimal_division"
+          ],
+          "rows": [
+            [
+              "251.00",
+              "3",
+              "3.5"
+            ]
+          ]
+        }
       },
       {
         "title": "BOOLEAN, UUID и специальные типы",
