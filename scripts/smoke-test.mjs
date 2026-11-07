@@ -158,7 +158,7 @@ assert.ok(datetimeQualityModule.lessons.find(lesson => lesson.title === 'Час�
 assert.equal(datetimeQualityModule.lessons.find(lesson => lesson.title === 'Генерация календаря и пропущенные периоды').exampleResult.rows.at(-1)[1], 0, 'Calendar example must show a day without events');
 const windowQualityModule = modules.find(module => module.id === 'windows');
 assert.ok(windowQualityModule.lessons.find(lesson => lesson.title === 'LAG и LEAD').example.includes('ORDER BY created_at, order_id'), 'LAG example must use a deterministic tie-breaker');
-assert.ok(windowQualityModule.lessons.find(lesson => lesson.title === 'ROWS и RANGE: две разные оконные рамки').exampleResult.rows[2][3] !== windowQualityModule.lessons.find(lesson => lesson.title === 'ROWS и RANGE: две разные оконные рамки').exampleResult.rows[2][4], 'ROWS and RANGE example must expose peer-row behavior');
+assert.ok(windowQualityModule.lessons.find(lesson => lesson.title === 'ROWS и RANGE: две разные оконные рамки').exampleResult.rows[0][3] !== windowQualityModule.lessons.find(lesson => lesson.title === 'ROWS и RANGE: две разные оконные рамки').exampleResult.rows[0][4], 'ROWS and RANGE example must expose peer-row behavior');
 const analyticsQualityModule = modules.find(module => module.id === 'analytics');
 assert.equal(analyticsQualityModule.lessons.find(lesson => lesson.title === 'Сравнение периодов: MoM, WoW и YoY').exampleResult.rows.length, 3, 'Period comparison example must include the missing month and zero-denominator case');
 const aggregateModule = modules.find(module => module.id === 'aggregates');
