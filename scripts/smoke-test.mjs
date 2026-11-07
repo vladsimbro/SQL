@@ -270,6 +270,16 @@ try {
         runnableExamples++;
       }
     }
+    const expectedExamples = modules.flatMap(module=>module.lessons.map(lesson=>({module,lesson}))).filter(item=>item.lesson.exampleResult);
+    assert.ok(expectedExamples.length >= 7, 'Key lessons must show expected query results');
+    for (const {module,lesson} of expectedExamples) {
+      const statements = sqlLexer.splitStatements(lesson.example || '');
+      assert.equal(statements.length,1, `Expected-result example ${module.id}/${lesson.title} must contain exactly one SQL statement`);
+      const result = await lessonExampleDb.query(statements[0]);
+      const expected = lesson.exampleResult;
+      assert.deepEqual(result.rows.map(row=>expected.columns.map(column=>row[column])), expected.rows, `Expected result mismatch in ${module.id}/${lesson.title}`);
+    }
+    console.log(`Verified ${expectedExamples.length} lesson example result tables.`);
     assert.ok(runnableExamples >= 90, `Expected at least 90 executable lesson examples, got ${runnableExamples}`);
     console.log(`Executed ${runnableExamples} read-only lesson examples against the teaching schema.`);
   } finally {
