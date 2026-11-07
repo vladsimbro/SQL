@@ -2752,7 +2752,7 @@ export const modules = [
       {
         "title": "ANY, ALL и сравнение с массивом значений",
         "body": "ANY и ALL сравнивают значение с результатами набора. x > ANY (subquery) означает, что x больше хотя бы одного значения набора. x > ALL означает, что x больше каждого значения набора.\n\nANY похож на «существует хотя бы одно сравнение TRUE», а ALL — на «все сравнения TRUE». Для пустого набора ANY даёт FALSE, а ALL — TRUE. NULL в наборе может привести к UNKNOWN, если ни одно сравнение не даёт однозначного ответа.\n\nЭти операторы полезны для сравнений с распределением значений, но часто можно выразить ту же идею через MIN, MAX или EXISTS. Выбирай форму, которую проще проверить на крайних случаях.",
-        "example": "SELECT product_id, price\nFROM products\nWHERE price > ALL (\n  SELECT price\n  FROM products\n  WHERE category_id = 7\n);",
+        "example": "SELECT product_id, price\nFROM products\nWHERE price > ALL (\n  SELECT price\n  FROM products\n  WHERE category = 'coffee'\n);",
         "note": "ALL не означает «большинство». Достаточно одного FALSE, чтобы результат сравнения с ALL стал FALSE.",
         "simple": "ANY требует хотя бы одного истинного сравнения, ALL — истинности каждого сравнения.",
         "practiceIds": [],
@@ -3621,7 +3621,7 @@ export const modules = [
       {
         "title": "UPDATE",
         "body": "UPDATE изменяет значения существующих строк. SET задаёт новые значения столбцов, а WHERE определяет, какие строки будут затронуты. Если WHERE отсутствует, PostgreSQL обновит все строки таблицы.\n\nВ SET можно использовать старые значения строки: например, price = price * 1.05 увеличит цену на 5%. Можно обновлять несколько столбцов одновременно. Условие WHERE нужно проверить отдельно до запуска, особенно в рабочей базе.\n\nRETURNING позволяет получить изменённые строки прямо из UPDATE. Для безопасной проверки в транзакционной среде можно начать BEGIN, выполнить UPDATE с RETURNING, проверить результат и завершить COMMIT или ROLLBACK.",
-        "example": "UPDATE products\nSET price = price * 1.05\nWHERE category_id = 7\nRETURNING product_id, price;",
+        "example": "UPDATE products\nSET price = price * 1.05\nWHERE category = 'coffee'\nRETURNING product_id, price;",
         "note": "Перед UPDATE выполни SELECT с тем же WHERE и проверь число строк. Не запускай изменение наугад.",
         "simple": "UPDATE меняет строки. Самая опасная часть — неверное или отсутствующее WHERE.",
         "practiceIds": [
