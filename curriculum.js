@@ -2316,7 +2316,7 @@ export const modules = [
       {
         "title": "COALESCE, NULLIF и безопасные вычисления",
         "body": "COALESCE возвращает первый аргумент, который не равен NULL. Это удобно, когда нужно показать запасное значение или продолжить вычисление при отсутствии данных. Например, COALESCE(discount, 0) подставит ноль вместо NULL.\n\nNULLIF(a, b) возвращает NULL, если a = b, иначе возвращает a. Частый пример — защита от деления на ноль: numerator / NULLIF(denominator, 0). Если знаменатель равен нулю, выражение делит на NULL и возвращает NULL вместо ошибки.\n\nПодставлять ноль вместо NULL безопасно не всегда. Неизвестная сумма и действительно нулевая сумма — разные факты. Решение должно соответствовать смыслу метрики.",
-        "example": "WITH monthly_stats AS (\n  SELECT 12000::numeric AS revenue,\n         NULL::numeric AS discount,\n         4::integer AS order_count\n)\nSELECT revenue::text AS revenue,\n       COALESCE(discount, 0)::text AS discount_for_display,\n       ROUND(revenue / NULLIF(order_count, 0), 2)::text AS average_revenue\nFROM monthly_stats;",
+        "example": "WITH monthly_stats AS (\n  SELECT 12000::numeric AS revenue,\n         NULL::numeric AS discount,\n         4::integer AS order_count\n)\nSELECT revenue::text AS revenue,\n       COALESCE(discount, 0)::text AS discount_for_display,\n       ROUND(revenue / NULLIF(order_count, 0), 2)::numeric(12,2)::text AS average_revenue\nFROM monthly_stats;",
         "note": "COALESCE не исправляет качество данных. Не заменяй неизвестные значения нулём без бизнес-основания.",
         "simple": "COALESCE заменяет отсутствие запасным значением; NULLIF превращает заданное значение в NULL.",
         "practiceIds": [
@@ -2363,7 +2363,7 @@ export const modules = [
             [
               "12000",
               0,
-              "3000.0000000000000000"
+              "3000.00"
             ]
           ]
         }
