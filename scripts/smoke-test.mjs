@@ -321,6 +321,8 @@ assert.ok(appSource.includes('state.expected.size !== exercises.length') && appS
 assert.ok(appSource.includes('function renderAssessment') && appSource.includes('data-assessment-module') && appSource.includes('data-assessment-answer'), 'Module question banks must be accessible through a dedicated assessment flow');
 assert.ok(appSource.includes('assessment-submit') && appSource.includes('assessment-retry') && appSource.includes('assessmentResults'), 'Module assessments must support submission, retakes and persistent best results');
 assert.ok(appSource.includes('Math.ceil(bank.length*0.75)'), 'Module assessment pass threshold must be explicit and consistent');
+assert.ok(stylesSource.includes('.assessment-grid') && stylesSource.includes('@media(max-width:700px){.assessment-grid{grid-template-columns:1fr}'), 'Module assessments must adapt to mobile screens');
+assert.ok(stylesSource.includes('var(--line)') && !stylesSource.includes('var(--border)') && !stylesSource.includes('var(--card)'), 'Assessment styles must use the existing design tokens');
 assert.ok(htmlSource.includes('data-nav="assessment"'), 'Module assessments must be reachable from main navigation');
 assert.ok(modules.every(module => module.quiz.length === 4), 'Every module assessment must contain four bank questions');
 assert.ok(appSource.includes('function renderAssessment') && appSource.includes('data-assessment-module') && appSource.includes('data-assessment-answer'), 'Module question banks must be accessible through a dedicated assessment flow');
