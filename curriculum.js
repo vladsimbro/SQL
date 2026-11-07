@@ -5595,8 +5595,8 @@ export const modules = [
       },
       {
         "title": "Временные ряды и пропущенные периоды",
-        "body": "Временной ряд показывает метрику по последовательным периодам: часам, дням, неделям или месяцам. GROUP BY по DATE_TRUNC создаёт только те периоды, в которых есть строки. Если в какой-то день событий не было, строки за него не появится.\n\nДля непрерывного ряда нужно создать календарную сетку, например generate_series, и LEFT JOIN к агрегатам фактов. Затем COALESCE может заменить отсутствие агрегата на 0, если ноль действительно означает отсутствие событий.\n\nУчитывай часовой пояс и границы периода. Для TIMESTAMPTZ календарный день зависит от выбранной зоны. Не подменяй отсутствующие данные нулём, если отсутствие означает задержку загрузки или неизвестность.",
-        "example": "WITH calendar AS (\n  SELECT generate_series(\n    DATE '2026-01-10', DATE '2026-01-16', INTERVAL '1 day'\n  )::date AS day\n), daily AS (\n  SELECT created_at AS day, COUNT(*) AS orders_count\n  FROM orders\n  GROUP BY created_at\n)\nSELECT c.day, COALESCE(d.orders_count, 0) AS orders_count\nFROM calendar AS c\nLEFT JOIN daily AS d USING (day)\nORDER BY c.day;",
+        "body": "Временной ряд показывает метрику по последовательным периодам: часам, дням, неделям или месяцам. GROUP BY по DATE_TRUNC создаёт только те периоды, в которых есть строки. Если в какой-то день событий не было, строки за него не появится.\n\nДля непрерывного ряда нужно создать календарную сетку, например generate_series, и LEFT JOIN к агрегатам фактов. Затем COALESCE может заменить отсутствие агрегата на 0, если ноль действительно означает отсутствие событий.\n\nУчитывай часовой пояс и границы периода. Для TIMESTAMPTZ календарный день зависит от выбранной зоны. Не подменяй отсутствующие данные нулём, если отсутствие означает задержку загрузки или неизвестность.\n\nВ примере ниже календарь содержит все семь дней, а фактические заказы есть только в трёх. Поэтому LEFT JOIN сохраняет пустые даты, а COUNT после COALESCE показывает ноль. Если источник неполон из-за сбоя загрузки, такой ноль был бы ложным: сначала проверь полноту данных.",
+        "example": "WITH sample_orders (order_day, order_id) AS (\n  VALUES\n    (DATE '2026-01-10', 1),\n    (DATE '2026-01-10', 2),\n    (DATE '2026-01-12', 3),\n    (DATE '2026-01-15', 4),\n    (DATE '2026-01-15', 5),\n    (DATE '2026-01-15', 6)\n), calendar AS (\n  SELECT generate_series(\n    DATE '2026-01-10', DATE '2026-01-16', INTERVAL '1 day'\n  )::date AS day\n), daily AS (\n  SELECT order_day AS day, COUNT(*) AS orders_count\n  FROM sample_orders\n  GROUP BY order_day\n)\nSELECT c.day::text AS day,\n       COALESCE(d.orders_count, 0)::int AS orders_count\nFROM calendar AS c\nLEFT JOIN daily AS d USING (day)\nORDER BY c.day;",
         "note": "COALESCE(..., 0) уместен только когда отсутствие строки действительно означает нулевое количество, а не неизвестные данные.",
         "simple": "GROUP BY показывает периоды с данными. Календарная сетка позволяет показать и периоды без событий.",
         "practiceIds": [
@@ -5633,7 +5633,43 @@ export const modules = [
           "result": "В отчёте есть все семь дней. Дни без заказов показываются с нулевым количеством.",
           "pitfall": "Не заменяй NULL нулём, если пустая дата означает не отсутствие заказов, а сбой или задержку загрузки данных."
         },
-        "id": "analytics.vremennye-ryady-i-propushchennye-periody"
+        "id": "analytics.vremennye-ryady-i-propushchennye-periody",
+        "exampleResult": {
+          "columns": [
+            "day",
+            "orders_count"
+          ],
+          "rows": [
+            [
+              "2026-01-10",
+              2
+            ],
+            [
+              "2026-01-11",
+              0
+            ],
+            [
+              "2026-01-12",
+              1
+            ],
+            [
+              "2026-01-13",
+              0
+            ],
+            [
+              "2026-01-14",
+              0
+            ],
+            [
+              "2026-01-15",
+              3
+            ],
+            [
+              "2026-01-16",
+              0
+            ]
+          ]
+        }
       },
       {
         "title": "Качество данных и проверки",
@@ -5817,9 +5853,9 @@ export const modules = [
       },
       {
         "title": "Скользящие метрики по времени",
-        "body": "Скользящая метрика рассчитывается для окна вокруг каждой точки времени. Например, скользящая сумма за последние 7 дней сглаживает дневные колебания и помогает увидеть тенденцию.\n\nДля окна по строкам можно использовать ROWS BETWEEN 6 PRECEDING AND CURRENT ROW, но это означает семь строк, а не обязательно семь календарных дней. Если в данных пропущены даты, окно может охватить более длинный период.\n\nДля настоящего временного окна используй календарную сетку или RANGE по временной оси с подходящим INTERVAL. Проверь, что каждая дата представлена ровно один раз, иначе число строк в рамке будет влиять на результат.",
+        "body": "Скользящая метрика рассчитывается для окна вокруг каждой точки времени. Например, скользящая сумма за последние 7 дней сглаживает дневные колебания и помогает увидеть тенденцию.\n\nДля окна по строкам можно использовать ROWS BETWEEN 6 PRECEDING AND CURRENT ROW, но это означает семь строк, а не обязательно семь календарных дней. Если в данных пропущены даты, окно может охватить более длинный период.\n\nДля настоящего временного окна используй календарную сетку или RANGE по временной оси с подходящим INTERVAL. Проверь, что каждая дата представлена ровно один раз, иначе число строк в рамке будет влиять на результат.\n\nВ примере сначала создаётся одна строка на каждый календарный день. Только после этого ROWS BETWEEN 6 PRECEDING AND CURRENT ROW действительно охватывает текущий день и шесть предыдущих календарных дней. На разреженных данных без календаря это было бы семь последних дней с заказами, а не семь календарных дней.",
         "simple": "Семь строк — не всегда семь дней. Определи, окно считается по записям или по календарному времени.",
-        "example": "WITH daily_orders AS (\n  SELECT created_at AS day, COUNT(*) AS orders_count\n  FROM orders\n  GROUP BY created_at\n)\nSELECT day, orders_count,\n       SUM(orders_count) OVER (\n         ORDER BY day\n         ROWS BETWEEN 6 PRECEDING AND CURRENT ROW\n       ) AS rolling_7_rows\nFROM daily_orders;",
+        "example": "WITH sample_orders (order_day, amount) AS (\n  VALUES\n    (DATE '2026-01-01', 100),\n    (DATE '2026-01-02', 200),\n    (DATE '2026-01-04', 50),\n    (DATE '2026-01-07', 300)\n), calendar AS (\n  SELECT generate_series(\n    DATE '2026-01-01', DATE '2026-01-07', INTERVAL '1 day'\n  )::date AS day\n), daily AS (\n  SELECT order_day AS day, SUM(amount) AS revenue\n  FROM sample_orders\n  GROUP BY order_day\n), filled AS (\n  SELECT c.day, COALESCE(d.revenue, 0)::int AS revenue\n  FROM calendar AS c\n  LEFT JOIN daily AS d USING (day)\n)\nSELECT day::text AS day,\n       revenue,\n       SUM(revenue) OVER (\n         ORDER BY day\n         ROWS BETWEEN 6 PRECEDING AND CURRENT ROW\n       )::int AS rolling_7_days\nFROM filled\nORDER BY day;",
         "note": "Перед названием «за 7 дней» убедись, что данные содержат одну строку на каждый календарный день без пропусков.",
         "practiceIds": [
           "e88"
@@ -5841,7 +5877,51 @@ export const modules = [
             "explanation": "ROWS считает физические строки в упорядоченном наборе. Для календарных семи дней нужно убедиться, что зерно — один день без пропусков."
           }
         ],
-        "id": "analytics.skolzyashchie-metriki-po-vremeni"
+        "id": "analytics.skolzyashchie-metriki-po-vremeni",
+        "exampleResult": {
+          "columns": [
+            "day",
+            "revenue",
+            "rolling_7_days"
+          ],
+          "rows": [
+            [
+              "2026-01-01",
+              100,
+              100
+            ],
+            [
+              "2026-01-02",
+              200,
+              300
+            ],
+            [
+              "2026-01-03",
+              0,
+              300
+            ],
+            [
+              "2026-01-04",
+              50,
+              350
+            ],
+            [
+              "2026-01-05",
+              0,
+              350
+            ],
+            [
+              "2026-01-06",
+              0,
+              350
+            ],
+            [
+              "2026-01-07",
+              300,
+              650
+            ]
+          ]
+        }
       },
       {
         "title": "Доля от общего итога и доля внутри группы",
@@ -8651,7 +8731,7 @@ export const modules = [
     "track": "postgresql",
     "trackOrder": 8
   }
-]
+];
 
 export const learningTracks = [
   {
