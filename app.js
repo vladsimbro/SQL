@@ -272,6 +272,13 @@ function renderExampleBreakdown(sql, lesson) {
   return '<section class="example-breakdown"><div class="breakdown-heading"><h3>Ключевые части запроса</h3></div><ol class="breakdown-list">'+rows+'</ol></section>';
 }
 
+function renderExampleResult(lesson) {
+  const result=lesson.exampleResult;
+  if(!result?.columns?.length||!Array.isArray(result.rows))return '';
+  const head=result.columns.map(column=>'<th>'+esc(column)+'</th>').join('');
+  const rows=result.rows.map(row=>'<tr>'+result.columns.map((column,index)=>'<td>'+esc(row[index]===null?'NULL':String(row[index]))+'</td>').join('')+'</tr>').join('');
+  return '<div class="result-panel example-result"><div class="result-head"><strong>Ожидаемый результат</strong><small>'+result.rows.length+' строк</small></div><div class="result-body">'+(rows?'<table class="result-table"><thead><tr>'+head+'</tr></thead><tbody>'+rows+'</tbody></table>':'<p class="empty-result">Запрос не вернул строк.</p>')+'</div></div>';
+}
 function renderWorkedExample(w) {
   if(!w?.scenario||!Array.isArray(w.steps)||!w.steps.length)return '';
   return '<section class="worked-example"><div class="eyebrow">РАЗОБРАННЫЙ СЦЕНАРИЙ</div><h3>'+esc(w.title||'Пройдём пример по шагам')+'</h3><p class="worked-scenario">'+esc(w.scenario)+'</p><ol class="worked-steps">'+w.steps.map(step=>'<li>'+esc(step)+'</li>').join('')+'</ol><div class="worked-result"><strong>Что должно получиться</strong><p>'+esc(w.result||'')+'</p></div>'+(w.pitfall?'<div class="worked-pitfall"><strong>Типичная ошибка</strong><p>'+esc(w.pitfall)+'</p></div>':'')+'</section>';
@@ -280,7 +287,7 @@ function lessonBody(l,m) {
   const simple=l.simple?`<div class="plain-language"><strong>Коротко</strong><p>${esc(l.simple)}</p></div>`:'';
   const explanation=(l.body||'').split(/\n\s*\n/).filter(Boolean).map(paragraph=>`<p>${esc(paragraph)}</p>`).join('');
   const sources=(m.sources||[]).map((url,i)=>`<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">Документация PostgreSQL ${i+1} ↗</a>`).join(' · ');
-  return `<div class="lesson-explanation">${explanation}</div>${simple}${renderWorkedExample(l.walkthrough)}<h2>Разберём на примере</h2><div class="code-block"><div class="code-head"><span>POSTGRESQL</span><button class="btn small" data-copy-code>Копировать</button></div><pre>${renderAnnotatedSql(l.example,l)}</pre></div>${renderExampleBreakdown(l.example,l)}<div class="note-box"><strong>Важно:</strong> ${esc(l.note)}</div><div class="lesson-sources"><strong>Первоисточники:</strong> ${sources}</div>`;
+  return `<div class="lesson-explanation">${explanation}</div>${simple}${renderWorkedExample(l.walkthrough)}<h2>Разберём на примере</h2><div class="code-block"><div class="code-head"><span>POSTGRESQL</span><button class="btn small" data-copy-code>Копировать</button></div><pre>${renderAnnotatedSql(l.example,l)}</pre></div>${renderExampleResult(l)}${renderExampleBreakdown(l.example,l)}<div class="note-box"><strong>Важно:</strong> ${esc(l.note)}</div><div class="lesson-sources"><strong>Первоисточники:</strong> ${sources}</div>`;
 }
 function renderLessonQuiz(l) {
  const bank=l.quiz||[];if(!bank.length)return '';
