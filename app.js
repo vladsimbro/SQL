@@ -1,6 +1,6 @@
-import { modules, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261107-27';
-import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261107-27';
-import { firstSqlKeyword, explainStatementKeyword, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261107-27';
+import { modules, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261107-28';
+import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261107-28';
+import { firstSqlKeyword, explainStatementKeyword, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261107-28';
 
 const $ = (s, root=document) => root.querySelector(s);
 const $$ = (s, root=document) => [...root.querySelectorAll(s)];
@@ -108,11 +108,75 @@ function renderRoadmap() {
   `<div class="callout" style="margin-bottom:20px"><strong>Как проходить курс:</strong> читай уроки по порядку, запускай примеры, выполняй мини-задачу в конце урока и закрепляй тему в разделе «Практика». Не перескакивай к оконным функциям, пока не понимаешь, на каком уровне находятся строки и группы.</div>`+
   [...groups.entries()].map(([stage,items])=>`<section class="roadmap-stage"><div class="roadmap-stage-head"><span>${esc(stage)}</span><h2>${esc(items[0].m.title.split(':')[0])}</h2><small>${items.reduce((n,x)=>n+x.m.lessons.length,0)} уроков</small></div><div class="module-list">${items.map(x=>moduleRow(x.m,x.i)).join('')}</div></section>`).join('');
 }
+const sqlTokenTips = {
+  SELECT:'Определяет столбцы и выражения, которые попадут в результат запроса.', FROM:'Указывает таблицу или другой источник строк.', WHERE:'Фильтрует отдельные строки до группировки.',
+  JOIN:'Соединяет строки двух источников по условию или правилу соединения.', LEFT:'Сохраняет все строки левого источника, даже если совпадения справа нет.', RIGHT:'Сохраняет все строки правого источника.', INNER:'Оставляет только совпавшие пары строк.', FULL:'Сохраняет несовпавшие строки обеих сторон.', CROSS:'Создаёт декартово произведение.', ON:'Задаёт условие сопоставления строк таблиц.',
+  AS:'Задаёт псевдоним столбцу, выражению или источнику данных.', DISTINCT:'Удаляет повторяющиеся строки результата.', GROUP:'Начинает группировку строк.', BY:'Часть GROUP BY или ORDER BY.', HAVING:'Фильтрует уже сформированные группы.', ORDER:'Начинает сортировку результата.', ASC:'Сортировка по возрастанию.', DESC:'Сортировка по убыванию.', LIMIT:'Ограничивает число возвращаемых строк.', OFFSET:'Пропускает строки перед выдачей результата.',
+  WITH:'Объявляет CTE — именованный промежуточный результат запроса.', RECURSIVE:'Разрешает CTE ссылаться на себя.', UNION:'Объединяет результаты запросов и по умолчанию удаляет дубликаты.', ALL:'Сохраняет дубликаты в UNION ALL.',
+  INSERT:'Добавляет новые строки.', INTO:'Указывает целевую таблицу.', VALUES:'Задаёт значения вставляемых строк.', UPDATE:'Изменяет существующие строки.', SET:'Указывает новые значения столбцов.', DELETE:'Удаляет выбранные строки.', RETURNING:'Возвращает строки, изменённые командой.', CREATE:'Создаёт объект базы данных.', INDEX:'Структура для ускорения подходящих поисков и сортировок.', INCLUDE:'Добавляет значения в индекс без включения их в ключ сортировки.', USING:'Указывает метод доступа или способ использования объекта.',
+  EXPLAIN:'Показывает план, который PostgreSQL выбрал для запроса.', ANALYZE:'В EXPLAIN ANALYZE запускает запрос и измеряет фактическое выполнение; отдельно ANALYZE обновляет статистику.', BUFFERS:'Показывает чтение и попадания в буферный кеш PostgreSQL.', VERBOSE:'Показывает расширенные сведения об узлах плана.', COSTS:'Управляет выводом оценочной стоимости узлов.', VACUUM:'Обслуживает таблицу и помогает повторно использовать место старых версий строк.', MATERIALIZED:'Просит материализовать CTE в соответствующем контексте.',
+  FILTER:'Ограничивает строки, учитываемые конкретной агрегатной функцией.', OVER:'Превращает функцию в оконную и задаёт её окно.', PARTITION:'Часть PARTITION BY: делит окно на независимые группы.', ROWS:'Задаёт рамку оконной функции в физических строках.', RANGE:'Задаёт рамку окна по значениям сортировки.',
+  CASE:'Начинает условное выражение.', WHEN:'Задаёт условие ветки CASE.', THEN:'Задаёт результат при истинном WHEN.', ELSE:'Задаёт запасной результат CASE.', END:'Завершает выражение CASE.', AND:'Логическое И: оба условия должны быть истинными.', OR:'Логическое ИЛИ: достаточно одного истинного условия.', NOT:'Логическое отрицание; учитывай поведение NULL.', NULL:'Отсутствующее или неизвестное значение; используй IS NULL.', IS:'Используется для проверки NULL и булевых состояний.', IN:'Проверяет вхождение в список или результат подзапроса.', EXISTS:'Проверяет, вернул ли подзапрос хотя бы одну строку.', BETWEEN:'Проверяет включительный диапазон.', LIKE:'Сравнивает текст с шаблоном.', ILIKE:'PostgreSQL-вариант LIKE без учёта регистра.',
+  COUNT:'Считает строки или не-NULL значения аргумента.', SUM:'Считает сумму значений.', AVG:'Вычисляет среднее арифметическое.', MIN:'Возвращает минимум.', MAX:'Возвращает максимум.', COALESCE:'Возвращает первый аргумент, который не равен NULL.', NULLIF:'Возвращает NULL, если аргументы равны.', LAG:'Берёт значение из предыдущей строки окна.', LEAD:'Берёт значение из следующей строки окна.', ROW_NUMBER:'Нумерует строки внутри окна без пропусков.', RANK:'Ранжирует значения с пропусками после совпадений.', DENSE_RANK:'Ранжирует значения без пропусков.', NTILE:'Распределяет строки окна по приблизительно равным группам.', DATE_TRUNC:'Округляет дату или время до календарной единицы.', CURRENT_DATE:'Возвращает текущую дату.', CURRENT_TIMESTAMP:'Возвращает текущие дату и время с часовым поясом сессии.', INTERVAL:'Задаёт промежуток времени.'
+};
+function renderAnnotatedSql(sql) {
+  const source=String(sql||'');
+  const pattern=/(--[^\n]*|\/\*[\s\S]*?\*\/|'(?:''|[^'])*'|\b[A-Za-z_][A-Za-z0-9_$]*\b|\b\d+(?:\.\d+)?\b|<>|!=|<=|>=|::|[=<>])/g;
+  let output='',last=0;
+  for(const match of source.matchAll(pattern)){
+    output+=esc(source.slice(last,match.index)); const token=match[0]; let tip='';
+    if(token.startsWith('--')||token.startsWith('/*'))tip='Комментарий для читателя. PostgreSQL не выполняет его как команду.';
+    else if(token.startsWith("'"))tip='Строковый литерал: текстовое значение, записанное непосредственно в запросе.';
+    else if(/^\d/.test(token))tip='Числовой литерал: конкретное число в выражении.';
+    else if(sqlTokenTips[token.toUpperCase()])tip=sqlTokenTips[token.toUpperCase()];
+    else if(['=','<>','!=','<','>','<=','>=','::'].includes(token))tip=({'=':'Оператор равенства.','<>':'Оператор «не равно».','!=':'Альтернативная запись «не равно».','<':'Оператор «меньше».','>':'Оператор «больше».','<=':'Оператор «меньше или равно».','>=':'Оператор «больше или равно».','::':'Приведение значения к указанному типу в PostgreSQL.'})[token];
+    output+=tip?'<span class="sql-tip" tabindex="0" data-tip="'+esc(tip)+'">'+esc(token)+'</span>':esc(token); last=match.index+token.length;
+  }
+  return output+esc(source.slice(last));
+}
+function explainSqlLine(line) {
+  const s=line.trim(); if(!s)return '';
+  if(/^--|^\/\*/.test(s))return 'Комментарий для человека. Он объясняет замысел и не исполняется как SQL.';
+  if(/^EXPLAIN\b/i.test(s))return 'Просим PostgreSQL показать план выполнения следующего запроса. Обычный EXPLAIN не запускает сам SELECT.';
+  if(/^SELECT\b/i.test(s))return 'Начинается список столбцов и выражений, которые попадут в итоговый набор строк.';
+  if(/^FROM\b/i.test(s))return 'Указываем основной источник строк для запроса.';
+  if(/^(LEFT|RIGHT|FULL|INNER|CROSS)?\s*JOIN\b/i.test(s))return 'Добавляем второй источник данных и выбираем тип соединения. Физический алгоритм JOIN PostgreSQL выберет отдельно.';
+  if(/^ON\b/i.test(s))return 'Задаём условие сопоставления строк двух источников.';
+  if(/^WHERE\b/i.test(s))return 'Оставляем только строки, удовлетворяющие условию. Фильтр применяется до группировки.';
+  if(/^(AND|OR)\b/i.test(s))return 'Добавляем часть логического условия. Проверь приоритет AND и OR; при необходимости используй скобки.';
+  if(/^GROUP\s+BY\b/i.test(s))return 'Формируем группы по указанным ключам. Агрегаты вычисляются отдельно для каждой группы.';
+  if(/^HAVING\b/i.test(s))return 'Фильтруем уже сформированные группы, часто по результату COUNT, SUM или другого агрегата.';
+  if(/^ORDER\s+BY\b/i.test(s))return 'Задаём порядок строк. Без ORDER BY SQL не гарантирует определённую сортировку.';
+  if(/^LIMIT\b/i.test(s))return 'Ограничиваем число строк, возвращаемых запросом.';
+  if(/^OFFSET\b/i.test(s))return 'Пропускаем заданное число строк перед возвратом результата.';
+  if(/^WITH\b/i.test(s))return 'Объявляем CTE — именованный промежуточный запрос, на который можно сослаться ниже.';
+  if(/^CREATE\s+(UNIQUE\s+)?INDEX\b/i.test(s))return 'Создаём индекс. Он может ускорить подходящие чтения, но занимает место и добавляет стоимость изменения данных.';
+  if(/^UPDATE\b/i.test(s))return 'Выбираем таблицу, в которой будут изменяться существующие строки.';
+  if(/^SET\b/i.test(s))return 'Указываем новые значения столбцов для UPDATE.';
+  if(/^INSERT\b/i.test(s))return 'Начинаем добавление новых строк в таблицу.';
+  if(/^INTO\b/i.test(s))return 'Указываем целевую таблицу, в которую добавляются строки.';
+  if(/^VALUES\b/i.test(s))return 'Задаём конкретные значения новой строки или набора строк.';
+  if(/^DELETE\b/i.test(s))return 'Начинаем удаление строк. Без WHERE команда удалит все строки таблицы.';
+  if(/^RETURNING\b/i.test(s))return 'Просим вернуть значения строк, которые команда изменила.';
+  if(/^ANALYZE\b/i.test(s))return 'Обновляем статистику таблицы, которую планировщик использует для оценки количества строк.';
+  if(/^VACUUM\b/i.test(s))return 'Запускаем обслуживание таблицы и работу со старыми версиями строк MVCC.';
+  if(/^ON\s+\w+\s*\(/i.test(s))return 'Указываем таблицу и ключевые выражения создаваемого индекса.';
+  if(/^INCLUDE\b/i.test(s))return 'Добавляем в индекс значения, которые могут помочь выполнить Index Only Scan.';
+  if(/^FROM\s+pg_stat_statements/i.test(s))return 'Читаем агрегированную статистику запросов из расширения pg_stat_statements.';
+  if(/^[A-Za-z_][\w.]*\s*(,|$)/.test(s))return 'Продолжение списка столбцов или выражений. Запятая отделяет элементы списка.';
+  return 'Эта строка уточняет выражение или параметры команды. Прочитай её вместе с предыдущей строкой и наведи курсор на подчёркнутые SQL-слова для пояснений.';
+}
+function renderExampleBreakdown(sql) {
+  const items=String(sql||'').split('\n').map((line,index)=>({line,index,explanation:explainSqlLine(line)})).filter(item=>item.line.trim());
+  if(!items.length)return '';
+  const rows=items.map(item=>'<li><code>'+renderAnnotatedSql(item.line)+'</code><p>'+esc(item.explanation)+'</p></li>').join('');
+  return '<section class="example-breakdown"><div class="breakdown-heading"><div><span class="eyebrow">ПОСТРОЧНЫЙ РАЗБОР</span><h3>Что делает каждая строка</h3></div><small>Наведи курсор на подчёркнутые слова в коде</small></div><ol class="breakdown-list">'+rows+'</ol></section>';
+}
 function lessonBody(l,m) {
   const simple=l.simple?`<div class="plain-language"><strong>Коротко</strong><p>${esc(l.simple)}</p></div>`:'';
   const explanation=(l.body||'').split(/\n\s*\n/).filter(Boolean).map(paragraph=>`<p>${esc(paragraph)}</p>`).join('');
   const sources=(m.sources||[]).map((url,i)=>`<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">Документация PostgreSQL ${i+1} ↗</a>`).join(' · ');
-  return `<div class="lesson-explanation">${explanation}</div>${simple}<h2>Разберём на примере</h2><div class="code-block"><div class="code-head"><span>POSTGRESQL</span><button class="btn small" data-copy-code>Копировать</button></div><pre>${esc(l.example)}</pre></div><div class="note-box"><strong>Важно:</strong> ${esc(l.note)}</div><div class="lesson-sources"><strong>Первоисточники:</strong> ${sources}</div>`;
+  return `<div class="lesson-explanation">${explanation}</div>${simple}<h2>Разберём на примере</h2><div class="code-block"><div class="code-head"><span>POSTGRESQL</span><button class="btn small" data-copy-code>Копировать</button></div><pre>${renderAnnotatedSql(l.example)}</pre></div>${renderExampleBreakdown(l.example)}<div class="note-box"><strong>Важно:</strong> ${esc(l.note)}</div><div class="lesson-sources"><strong>Первоисточники:</strong> ${sources}</div>`;
 }
 function renderLessonQuiz(l) {
  const bank=l.quiz||[];if(!bank.length)return '';
@@ -416,6 +480,23 @@ document.addEventListener('click',event=>{
  if(el.dataset.sample){localStorage.setItem(EDITOR_KEY,el.dataset.sample);go('playground');return;}
  if(el.dataset.action){handleAction(el.dataset.action);return;}
 });
+function ensureSqlTooltip() {
+  if(document.querySelector('.sql-tooltip'))return;
+  const tooltip=document.createElement('div'); tooltip.className='sql-tooltip'; tooltip.setAttribute('role','tooltip'); document.body.append(tooltip);
+  const hide=()=>tooltip.classList.remove('visible');
+  const show=target=>{
+    const text=target?.dataset?.tip; if(!text)return; tooltip.textContent=text; tooltip.classList.add('visible');
+    const rect=target.getBoundingClientRect(),width=Math.min(320,window.innerWidth-24);
+    const left=Math.max(12,Math.min(window.innerWidth-width-12,rect.left+rect.width/2-width/2));
+    const above=rect.top>100; tooltip.style.width=width+'px'; tooltip.style.left=left+'px'; tooltip.style.top=(above?rect.top-10:rect.bottom+10)+'px'; tooltip.style.transform=above?'translateY(-100%)':'none';
+  };
+  document.addEventListener('pointerover',event=>{const target=event.target.closest?.('.sql-tip');if(target)show(target);});
+  document.addEventListener('pointerout',event=>{const target=event.target.closest?.('.sql-tip');if(target&&!target.contains(event.relatedTarget))hide();});
+  document.addEventListener('focusin',event=>{const target=event.target.closest?.('.sql-tip');if(target)show(target);});
+  document.addEventListener('focusout',event=>{if(event.target.closest?.('.sql-tip'))hide();});
+  window.addEventListener('scroll',hide,true);
+}
+ensureSqlTooltip();
 loadProgress();
 document.documentElement.classList.toggle('light',state.theme==='light');
 $('#theme-toggle').addEventListener('click',()=>{state.theme=state.theme==='dark'?'light':'dark';document.documentElement.classList.toggle('light',state.theme==='light');localStorage.setItem('sql-academy-theme',state.theme);const meta=$('meta[name="theme-color"]');if(meta)meta.content=state.theme==='light'?'#f3f5fa':'#0a0d14';});
