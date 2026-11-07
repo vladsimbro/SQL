@@ -91,7 +91,7 @@ assert.equal(datetimeModule.lessons.length, 7, 'Date/time module must contain se
 assert.ok(datetimeModule.lessons.every(lesson => (lesson.practiceIds || []).length > 0), 'Every date/time lesson must link to at least one relevant practice task');
 assert.deepEqual(datetimeModule.lessons.flatMap(lesson => lesson.practiceIds || []).sort(), ['e72','e73','e74','e75','e76','e77','e78','e79'].sort(), 'Date/time lessons must link all eight dedicated practice tasks exactly once');
 assert.ok(exercises.filter(exercise => exercise.m === 'datetime').every(exercise => exercise.quiz?.options?.length === 4 && exercise.quiz.explanation), 'Date/time practice tasks must include a concept check');
-assert.ok(appSource.includes("curriculum.js?v=20261107-24") && appSource.includes("sql-utils.js?v=20261107-24") && appSource.includes("sandbox-tasks.js?v=20261107-24"), 'Application module dependencies must use the current cache version');
+assert.ok(appSource.includes("curriculum.js?v=20261107-25") && appSource.includes("sql-utils.js?v=20261107-25") && appSource.includes("sandbox-tasks.js?v=20261107-25"), 'Application module dependencies must use the current cache version');
 
 
 const windowModule = modules.find(module => module.id === 'windows');
@@ -213,5 +213,5 @@ try {
 }
 
 assert.ok((await readFile(new URL('../app.js', import.meta.url), 'utf8')).includes("PGlite.create({dataDir:'memory://'})"), 'Browser playground must initialize an explicit in-memory PGlite database');
-assert.ok(!/\\$\\('[^']+'\\)\\.forEach\\s*\\(/.test(appSource), 'All DOM collection iterations must use querySelectorAll helper');
+assert.ok(!["$('.nav-item').forEach(","$('.sql-editor').forEach(","$('.exercise-item').forEach(","$('.glossary-item').forEach(","$('[data-random-topic]').forEach("].some(fragment=>appSource.includes(fragment)), 'All DOM collection iterations must use querySelectorAll helper');
 assert.ok(appSource.includes("$('[data-random-topic]').forEach("), 'Random topic checkboxes must be selected as a collection');
