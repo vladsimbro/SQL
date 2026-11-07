@@ -90,13 +90,13 @@ assert.equal(datetimeModule.lessons.length, 7, 'Date/time module must contain se
 assert.ok(datetimeModule.lessons.every(lesson => (lesson.practiceIds || []).length > 0), 'Every date/time lesson must link to at least one relevant practice task');
 assert.deepEqual(datetimeModule.lessons.flatMap(lesson => lesson.practiceIds || []).sort(), ['e72','e73','e74','e75','e76','e77','e78','e79'].sort(), 'Date/time lessons must link all eight dedicated practice tasks exactly once');
 assert.ok(exercises.filter(exercise => exercise.m === 'datetime').every(exercise => exercise.quiz?.options?.length === 4 && exercise.quiz.explanation), 'Date/time practice tasks must include a concept check');
-assert.ok(appSource.includes("curriculum.js?v=20261107-15") && appSource.includes("sql-utils.js?v=20261107-15"), 'Application module dependencies must use the current cache version');
+assert.ok(appSource.includes("curriculum.js?v=20261107-16") && appSource.includes("sql-utils.js?v=20261107-16"), 'Application module dependencies must use the current cache version');
 
 
 const windowModule = modules.find(module => module.id === 'windows');
-assert.deepEqual(windowModule.lessons.flatMap(lesson => lesson.practiceIds || []).sort(), ['e35','e36','e39','e37','e38','e80','e81','e82'].sort(), 'Window-function lessons must link their eight dedicated practice tasks exactly once');
+assert.deepEqual(windowModule.lessons.flatMap(lesson => lesson.practiceIds || []).sort(), ['e35','e36','e39','e37','e38','e80','e81','e82','e91'].sort(), 'Window-function lessons must link their eight dedicated practice tasks exactly once');
 const analyticsModule = modules.find(module => module.id === 'analytics');
-assert.deepEqual(analyticsModule.lessons.flatMap(lesson => lesson.practiceIds || []).sort(), ['e42','e43','e40','e41','e56','e83','e84','e85','e86','e87','e88','e89'].sort(), 'Analytics lessons must link all twelve dedicated practice tasks exactly once');
+assert.deepEqual(analyticsModule.lessons.flatMap(lesson => lesson.practiceIds || []).sort(), ['e42','e43','e40','e41','e56','e83','e84','e85','e86','e87','e88','e89','e90','e92'].sort(), 'Analytics lessons must link all twelve dedicated practice tasks exactly once');
 assert.ok([...windowModule.lessons,...analyticsModule.lessons].filter(lesson => lesson.practiceIds?.length).every(lesson => lesson.practiceIds.every(id => exercises.some(exercise => exercise.id === id && exercise.m === (windowModule.lessons.includes(lesson) ? 'windows' : 'analytics')))), 'Window and analytics practice links must belong to their lesson module');
 
 
