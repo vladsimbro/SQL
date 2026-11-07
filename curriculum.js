@@ -8499,7 +8499,7 @@ export const exercises = [
     "requirementsMessage": "Нужен JOIN orders и stores по store_id с выбором order_id/store_name и фильтром customer_id = 1.",
     "hint": "В плане найди узлы чтения обеих таблиц и узел соединения. Не путай INNER JOIN в SQL с конкретным алгоритмом Nested Loop, Hash Join или Merge Join."
   }
-]];
+];
 
 export const glossary = [
   [
