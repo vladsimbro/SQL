@@ -1,6 +1,6 @@
-import { modules, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261107-31';
-import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261107-31';
-import { firstSqlKeyword, explainStatementKeyword, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261107-31';
+import { modules, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261107-32';
+import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261107-32';
+import { firstSqlKeyword, explainStatementKeyword, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261107-32';
 
 const $ = (s, root=document) => root.querySelector(s);
 const $$ = (s, root=document) => [...root.querySelectorAll(s)];
@@ -384,7 +384,8 @@ async function checkExercise() {
     const started=performance.now();
     if(ex.mode==='explain') {
       if(firstSqlKeyword(parts[0])!=='EXPLAIN' || !['SELECT','WITH'].includes(explainStatementKeyword(parts[0]))) throw new Error('Для этой задачи используй EXPLAIN перед SELECT или WITH ... SELECT.');
-      if(ex.id==='e46' && (!/\\bFROM\\s+orders\\b/i.test(parts[0]) || !/\\bWHERE\\s+customer_id\\s*=\\s*1\\b/i.test(parts[0]))) throw new Error('Построй план именно для выборки из orders с фильтром customer_id = 1.');
+      const explainQuery=parts[0].replace(/^EXPLAIN(?:\\s*\\([^)]*\\))?\\s*/i,'');
+      if((ex.requiredPatterns||[]).some(pattern=>!new RegExp(pattern,'i').test(explainQuery))) throw new Error(ex.requirementsMessage||'Запрос не соответствует условию задания. Проверь таблицы, выбранные поля и фильтры.');
       const plan=await state.db.query(parts[0]);
       const elapsed=Math.round(performance.now()-started);
       state.completedExercises.add(ex.id);saveProgress();
