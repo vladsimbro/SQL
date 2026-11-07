@@ -179,6 +179,11 @@ assert.deepEqual(datetimeQualityModule.lessons.find(lesson => lesson.title === '
 
 assert.ok(datetimeQualityModule.lessons.find(lesson => lesson.title === 'Часовые пояса и AT TIME ZONE').example.includes('Europe/Warsaw'), 'Timezone lesson must execute both AT TIME ZONE directions');
 assert.equal(datetimeQualityModule.lessons.find(lesson => lesson.title === 'Генерация календаря и пропущенные периоды').exampleResult.rows.at(-1)[1], 0, 'Calendar example must show a day without events');
+const timeSeriesLesson = analyticsModule.lessons.find(lesson => lesson.title === 'Временные ряды и пропущенные периоды');
+assert.deepEqual(timeSeriesLesson.exampleResult.rows, [['2026-01-10',2],['2026-01-11',0],['2026-01-12',1],['2026-01-13',0],['2026-01-14',0],['2026-01-15',3],['2026-01-16',0]], 'Time series must preserve every calendar day and show zero only for dates with no sample facts');
+const rollingLesson = analyticsModule.lessons.find(lesson => lesson.title === 'Скользящие метрики по времени');
+assert.ok(rollingLesson.example.includes('generate_series') && rollingLesson.example.includes('ROWS BETWEEN 6 PRECEDING AND CURRENT ROW') && rollingLesson.example.includes("DATE '2025-12-26'") && rollingLesson.example.includes("WHERE day >= DATE '2026-01-01'"), 'Seven-day rolling metric must create a continuous daily grain with six warm-up days before the report range');
+assert.deepEqual(rollingLesson.exampleResult.rows.map(row => row[2]), [200,400,360,410,410,350,650], 'Seven-day rolling total must include calendar days without orders and the six warm-up days before the report range');
 const windowQualityModule = modules.find(module => module.id === 'windows');
 assert.ok(windowQualityModule.lessons.find(lesson => lesson.title === 'LAG и LEAD').example.includes('ORDER BY created_at, order_id'), 'LAG example must use a deterministic tie-breaker');
 assert.deepEqual(windowQualityModule.lessons.find(lesson => lesson.title === 'LAG и LEAD').exampleResult.rows.map(row => row.slice(3)), [[null,1800],[1250,990],[1800,null]], 'LAG and LEAD must expose previous and next values with NULL at partition boundaries');
