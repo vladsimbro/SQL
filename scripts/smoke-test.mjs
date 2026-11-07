@@ -3,10 +3,12 @@ import { readFile } from 'node:fs/promises';
 import { PGlite } from '@electric-sql/pglite';
 import { modules, exercises, schema, seedSQL, glossary, reference } from '../curriculum.js';
 
+const curriculumSource = await readFile(new URL('../curriculum.js', import.meta.url), 'utf8');
 const appSource = await readFile(new URL('../app.js', import.meta.url), 'utf8');
 const sqlUtilsSource = await readFile(new URL('../sql-utils.js', import.meta.url), 'utf8');
 const htmlSource = await readFile(new URL('../index.html', import.meta.url), 'utf8');
 const cssSource = await readFile(new URL('../styles.css', import.meta.url), 'utf8');
+assert.ok(curriculumSource.includes('export const exercises = ['), 'Practice exercises must be exported as a named dataset');
 assert.ok(Array.isArray(glossary) && glossary.length >= 30, 'Glossary must contain at least 30 usable terms');
 assert.ok(Array.isArray(reference) && reference.length >= 8, 'SQL quick reference must contain usable topic groups');
 assert.ok(exercises.every(exercise => ['select','explain','mutation','transaction'].includes(exercise.mode)), 'Every exercise must have a supported explicit mode');

@@ -5631,8 +5631,9 @@ export const modules = [
       "https://www.postgresql.org/docs/current/monitoring.html",
       "https://www.postgresql.org/docs/current/backup.html"
     ]
-  }
-][
+  };
+
+export const exercises = [
   {
     "id": "e01",
     "mode": "select",
