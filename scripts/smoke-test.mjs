@@ -225,6 +225,9 @@ assert.equal(subqueryModule.lessons.find(lesson => lesson.title === 'Корре�
 assert.ok(subqueryModule.lessons.find(lesson => lesson.title === 'ANY и ALL: сравнение с набором значений').example.includes("category = 'Посуда'"), 'ALL example must compare against a non-empty teaching dataset');
 const cteModule = modules.find(module => module.id === 'cte');
 assert.equal(cteModule.lessons.find(lesson => lesson.title === 'Рекурсивный WITH').exampleResult.rows.length, 5, 'Recursive CTE example must show its stopping condition');
+const multiCteLesson = cteModule.lessons.find(lesson => lesson.title === 'От фильтрации к выручке магазина');
+assert.ok(multiCteLesson.example.includes('FROM filtered_orders') && multiCteLesson.example.includes('GROUP BY store_id'), 'Multi-CTE lesson must demonstrate a real dependency from filtering to aggregation');
+assert.deepEqual(multiCteLesson.exampleResult.rows, [['Центральный','Москва',3,6340],['Волжский','Казань',2,2900],['Уральский','Пермь',1,1500]], 'CTE chain must preserve the delivered-order filter and aggregate to one row per store');
 assert.ok(cteModule.lessons.find(lesson => lesson.title === 'Материализация и оптимизация CTE').example.includes('NOT MATERIALIZED'), 'CTE optimization lesson must demonstrate PostgreSQL materialization control');
 const setOperationsModule = modules.find(module => module.id === 'setops');
 assert.equal(setOperationsModule.lessons.find(lesson => lesson.title === 'UNION и UNION ALL').exampleResult.rows.length, 8, 'UNION ALL example must retain duplicate customer IDs');
@@ -258,9 +261,13 @@ assert.ok(aggregateModule.lessons.find(lesson => lesson.title === 'DISTINCT вн
 assert.ok(aggregateModule.lessons.find(lesson => lesson.title === 'Агрегатные функции').body.includes('COUNT(DISTINCT employee_id)'), 'Aggregate lesson must distinguish row, non-null and distinct-value counts');
 assert.ok(aggregateModule.lessons.find(lesson => lesson.title === 'GROUP BY и зерно результата').body.includes('COUNT(o.order_id)'), 'GROUP BY lesson must explain COUNT(*) versus COUNT(right_key) after LEFT JOIN');
 assert.ok(aggregateModule.lessons.find(lesson => lesson.title === 'Условная агрегация и FILTER').body.includes('только для того агрегата'), 'FILTER lesson must explain its local scope');
-assert.ok(aggregateModule.lessons.find(lesson => lesson.title === 'Предварительная агрегация до нужного зерна').body.includes('одну строку на order_id'), 'Pre-aggregation lesson must define the target grain');
+const preAggregationLesson = aggregateModule.lessons.find(lesson => lesson.title === 'Предварительная агрегация до нужного зерна');
+assert.ok(preAggregationLesson.body.includes('одну строку на order_id'), 'Pre-aggregation lesson must define the target grain');
+assert.deepEqual(preAggregationLesson.exampleResult.rows, [[101,1200],[102,700],[103,2500],[104,500],[105,1800],[106,2500],[107,1500],[108,900],[109,3400],[110,800],[111,900],[112,2800]], 'Pre-aggregation example must return one item total per order');
 const joinsModule = modules.find(module => module.id === 'joins');
-assert.ok(joinsModule.lessons.find(lesson => lesson.title === 'Кардинальность и размножение строк').body.includes('UNIQUE или PRIMARY KEY'), 'Join cardinality lesson must distinguish foreign keys from uniqueness');
+const cardinalityLesson = joinsModule.lessons.find(lesson => lesson.title === 'Кардинальность и размножение строк');
+assert.ok(cardinalityLesson.body.includes('UNIQUE или PRIMARY KEY'), 'Join cardinality lesson must distinguish foreign keys from uniqueness');
+assert.deepEqual(cardinalityLesson.exampleResult.rows, [[101,3],[102,2],[105,2],[109,2],[111,2],[112,2]], 'Cardinality query must identify every order with multiple item rows');
 assert.ok(joinsModule.lessons.find(lesson => lesson.title === 'Fan-out: соединение нескольких таблиц деталей').exampleResult.rows.length === 6, 'Fan-out lesson must show the 3-by-2 row multiplication');
 assert.ok(joinsModule.lessons.find(lesson => lesson.title === 'INNER JOIN и LEFT JOIN').body.includes('WHERE'), 'Join lesson must explain ON versus WHERE after LEFT JOIN');
 assert.equal(joinsModule.lessons.find(lesson => lesson.title === 'Что делает JOIN').exampleResult.rows.length, 4, 'Basic JOIN example must preserve one row per order when the right key is unique');
