@@ -310,6 +310,13 @@ const progressiveHintExercises = exercises.filter(exercise => exercise.hint2 || 
 assert.equal(progressiveHintExercises.length, 20, 'Advanced analytics practice must expose progressive hints for all twenty tasks');
 assert.ok(progressiveHintExercises.every(exercise => exercise.hint2?.trim() && exercise.hint3?.trim()), 'Progressive hints must provide both reasoning and a query-structure level');
 assert.ok(appSource.includes('function renderExerciseHints') && appSource.includes('exercise.hint3'), 'Practice must render optional hints as separately revealed levels');
+assert.ok(appSource.includes('${renderExerciseHints(active)}'), 'The active practice task must render its own hint data instead of a shared generic hint');
+const hintStart = appSource.indexOf('function renderExerciseHints');
+const hintEnd = appSource.indexOf('function renderPractice()', hintStart);
+const renderHints = new Function('esc', appSource.slice(hintStart, hintEnd) + '; return renderExerciseHints;')(escapeHtml);
+const progressiveHintHtml = renderHints({ hint: 'direction', hint2: 'reasoning', hint3: 'structure' });
+assert.ok(progressiveHintHtml.includes('direction') && progressiveHintHtml.includes('reasoning') && progressiveHintHtml.includes('structure'), 'All supplied hint levels must be rendered');
+assert.equal((progressiveHintHtml.match(/<details/g) || []).length, 3, 'Each hint level must remain independently collapsed until requested');
 assert.ok(appSource.includes('state.expected.size !== exercises.length') && appSource.includes('failures.length'), 'The SQL engine must not become ready when any expected exercise result is missing');
 assert.equal(sandboxTaskTopics.length, 14, 'Expected fourteen selectable random-task topics');
 assert.equal(sandboxTaskCount, 350, 'Expected 350 random sandbox tasks');
