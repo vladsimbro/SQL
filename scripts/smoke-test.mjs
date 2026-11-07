@@ -187,6 +187,13 @@ assert.ok(cteModule.lessons.find(lesson => lesson.title === 'Материали�
 const setOperationsModule = modules.find(module => module.id === 'setops');
 assert.equal(setOperationsModule.lessons.find(lesson => lesson.title === 'UNION и UNION ALL').exampleResult.rows.length, 8, 'UNION ALL example must retain duplicate customer IDs');
 assert.equal(setOperationsModule.lessons.find(lesson => lesson.title === 'INTERSECT').exampleResult.rows.length, 1, 'INTERSECT example must show only the common customer set');
+const foundationsQualityModule = modules.find(module => module.id === 'foundations');
+assert.ok(!foundationsQualityModule.lessons.find(lesson => lesson.title === 'Клиент, сервер и запрос').example.includes('psql'), 'The browser SQL example must not mix terminal connection commands with executable SQL');
+assert.equal(foundationsQualityModule.lessons.find(lesson => lesson.title === 'Диалекты SQL и стандарт').exampleResult.rows.length, 1, 'Dialect example must match a customer in the teaching dataset');
+const anatomyQualityModule = modules.find(module => module.id === 'anatomy');
+assert.equal(anatomyQualityModule.lessons.find(lesson => lesson.title === 'Анатомия SELECT').exampleResult.rows.length, 5, 'SELECT anatomy example must show the five highest delivered orders');
+assert.equal(anatomyQualityModule.lessons.find(lesson => lesson.title === 'Логический порядок обработки').exampleResult.rows.length, 2, 'Logical query order example must return the qualifying delivered cities');
+assert.ok(anatomyQualityModule.lessons.find(lesson => lesson.title === 'Логический порядок обработки').example.includes("status = 'delivered'"), 'Logical order example must use statuses present in the teaching dataset');
 const aggregateModule = modules.find(module => module.id === 'aggregates');
 assert.ok(aggregateModule.lessons.find(lesson => lesson.title === 'Агрегатные функции').body.includes('COUNT(DISTINCT employee_id)'), 'Aggregate lesson must distinguish row, non-null and distinct-value counts');
 assert.ok(aggregateModule.lessons.find(lesson => lesson.title === 'GROUP BY и зерно результата').body.includes('COUNT(o.order_id)'), 'GROUP BY lesson must explain COUNT(*) versus COUNT(right_key) after LEFT JOIN');
