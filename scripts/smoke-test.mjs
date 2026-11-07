@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { PGlite } from '@electric-sql/pglite';
 import { modules, exercises, schema, seedSQL, glossary, reference } from '../curriculum.js';
+import { sandboxTaskTopics, sandboxTaskCount } from '../sandbox-tasks.js';
 
 const curriculumSource = await readFile(new URL('../curriculum.js', import.meta.url), 'utf8');
 const appSource = await readFile(new URL('../app.js', import.meta.url), 'utf8');
@@ -13,11 +14,11 @@ assert.ok(curriculumSource.includes('];\n\nexport const exercises = ['), 'Module
 assert.ok(Array.isArray(glossary) && glossary.length >= 30, 'Glossary must contain at least 30 usable terms');
 assert.ok(Array.isArray(reference) && reference.length >= 8, 'SQL quick reference must contain usable topic groups');
 assert.ok(exercises.every(exercise => ['select','explain','mutation','transaction'].includes(exercise.mode)), 'Every exercise must have a supported explicit mode');
-assert.equal(exercises.filter(exercise => exercise.mode === 'select').length, 80, 'Expected 80 SELECT exercises');
+assert.equal(exercises.filter(exercise => exercise.mode === 'select').length, 88, 'Expected 88 SELECT exercises');
 assert.equal(exercises.filter(exercise => exercise.mode === 'explain').length, 1, 'Expected one EXPLAIN exercise');
 assert.equal(exercises.filter(exercise => exercise.mode === 'mutation').length, 8, 'Expected eight mutation exercises');
 assert.equal(exercises.filter(exercise => exercise.mode === 'transaction').length, 3, 'Expected three transaction exercises');
-assert.equal(exercises.length, 92, 'Expected 92 total practice exercises');
+assert.equal(exercises.length, 100, 'Expected 100 total practice exercises');
 assert.equal(exercises.filter(exercise => exercise.mode === 'mutation').length, 8, 'Expected eight mutation exercises');
 assert.equal(exercises.filter(exercise => exercise.mode === 'transaction').length, 3, 'Expected three transaction exercises');
 assert.ok(exercises.every(exercise => modules.some(module => module.id === exercise.m)), 'Every exercise must belong to a real module');
@@ -90,19 +91,23 @@ assert.equal(datetimeModule.lessons.length, 7, 'Date/time module must contain se
 assert.ok(datetimeModule.lessons.every(lesson => (lesson.practiceIds || []).length > 0), 'Every date/time lesson must link to at least one relevant practice task');
 assert.deepEqual(datetimeModule.lessons.flatMap(lesson => lesson.practiceIds || []).sort(), ['e72','e73','e74','e75','e76','e77','e78','e79'].sort(), 'Date/time lessons must link all eight dedicated practice tasks exactly once');
 assert.ok(exercises.filter(exercise => exercise.m === 'datetime').every(exercise => exercise.quiz?.options?.length === 4 && exercise.quiz.explanation), 'Date/time practice tasks must include a concept check');
-assert.ok(appSource.includes("curriculum.js?v=20261107-16") && appSource.includes("sql-utils.js?v=20261107-16"), 'Application module dependencies must use the current cache version');
+assert.ok(appSource.includes("curriculum.js?v=20261107-17") && appSource.includes("sql-utils.js?v=20261107-17") && appSource.includes("sandbox-tasks.js?v=20261107-17"), 'Application module dependencies must use the current cache version');
 
 
 const windowModule = modules.find(module => module.id === 'windows');
-assert.deepEqual(windowModule.lessons.flatMap(lesson => lesson.practiceIds || []).sort(), ['e35','e36','e39','e37','e38','e80','e81','e82','e91'].sort(), 'Window-function lessons must link their eight dedicated practice tasks exactly once');
+assert.equal(windowModule.lessons.length, 10, 'Window-function module must include advanced value, distribution and filtering lessons');
+assert.deepEqual(windowModule.lessons.flatMap(lesson => lesson.practiceIds || []).sort(), ['e35','e36','e39','e37','e38','e80','e81','e82','e91','e93','e94','e95','e100'].sort(), 'Window-function lessons must link all thirteen dedicated practice tasks exactly once');
 const analyticsModule = modules.find(module => module.id === 'analytics');
-assert.deepEqual(analyticsModule.lessons.flatMap(lesson => lesson.practiceIds || []).sort(), ['e42','e43','e40','e41','e56','e83','e84','e85','e86','e87','e88','e89','e90','e92'].sort(), 'Analytics lessons must link all twelve dedicated practice tasks exactly once');
+assert.equal(analyticsModule.lessons.length, 13, 'Analytics module must include period comparisons, conversion and combined-query workflow');
+assert.deepEqual(analyticsModule.lessons.flatMap(lesson => lesson.practiceIds || []).sort(), ['e42','e43','e40','e41','e56','e83','e84','e85','e86','e87','e88','e89','e90','e92','e96','e97','e98','e99'].sort(), 'Analytics lessons must link all eighteen dedicated practice tasks exactly once');
 assert.ok([...windowModule.lessons,...analyticsModule.lessons].filter(lesson => lesson.practiceIds?.length).every(lesson => lesson.practiceIds.every(id => exercises.some(exercise => exercise.id === id && exercise.m === (windowModule.lessons.includes(lesson) ? 'windows' : 'analytics')))), 'Window and analytics practice links must belong to their lesson module');
 
 
 assert.ok(analyticsModule.lessons.find(lesson => lesson.title === 'Воронка и условные этапы').practiceIds.includes('e92'), 'Sequential funnel task must be linked to its lesson');
 assert.ok(analyticsModule.lessons.find(lesson => lesson.title === 'Временные ряды и пропущенные периоды').practiceIds.includes('e90'), 'Month-over-month task must be linked to time-series analysis');
 assert.ok(windowModule.lessons.find(lesson => lesson.title === 'ROW_NUMBER, RANK и DENSE_RANK').practiceIds.includes('e91'), 'Top-N-per-group task must be linked to ranking lesson');
+assert.ok(windowModule.lessons.find(lesson => lesson.title === 'FIRST_VALUE, LAST_VALUE и NTH_VALUE').practiceIds.includes('e93'), 'Value functions task must be linked to its lesson');
+assert.ok(analyticsModule.lessons.find(lesson => lesson.title === 'Составной аналитический запрос: от фактов до отчёта').practiceIds.includes('e99'), 'Combined-query task must be linked to its lesson');
 
 const relationalModule = modules.find(module => module.id === 'relational');
 assert.ok(relationalModule.lessons.some(lesson => lesson.title === 'Реляционная модель и особенности SQL-таблиц' && lesson.body.includes('мультимножествами') && lesson.body.includes('ORDER BY')), 'Relational foundations must distinguish SQL bag semantics from relation sets');
@@ -139,7 +144,14 @@ assert.ok(appSource.includes('document.addEventListener(\'click\',event=>'), 'Na
 assert.ok(htmlSource.includes('codemirror/5.65.16'), 'The web app must load the SQL editor');
 assert.equal(new Set(exercises.map(exercise => exercise.id)).size, exercises.length, 'Exercise IDs must be unique');
 assert.ok(exercises.every(exercise => ids.has(exercise.m)), 'Every exercise must reference an existing module');
-assert.ok(exercises.every(exercise => exercise.solution && exercise.task), 'Every exercise must have a task and reference solution');
+assert.ok(exercises.every(exercise => exercise.solution && exercise.task && exercise.hint?.trim()), 'Every exercise must have a task, unique hint and reference solution');
+assert.equal(new Set(exercises.map(exercise => exercise.hint)).size, exercises.length, 'Every practical exercise must have a unique task-specific hint');
+assert.equal(sandboxTaskTopics.length, 14, 'Expected fourteen selectable random-task topics');
+assert.equal(sandboxTaskCount, 350, 'Expected 350 random sandbox tasks');
+assert.ok(sandboxTaskTopics.every(topic => topic.tasks.length === 25 && new Set(topic.tasks.map(item => item.prompt)).size === 25 && new Set(topic.tasks.map(item => item.hint)).size === 25), 'Every random-task topic must contain 25 unique prompts and hints');
+assert.ok(appSource.includes('data-random-topic') && appSource.includes('new-random-task') && appSource.includes('check-random-task'), 'Playground must provide topic selection, random task generation and checking');
+assert.deepEqual(modules.map(module => module.stage.split(' · ')[0]), Array.from({length:25},(_,i)=>String(i+1).padStart(2,'0')), 'Roadmap stages must be consecutive and match module order');
+assert.ok(modules.findIndex(module => module.id === 'analytics') === modules.findIndex(module => module.id === 'windows') + 1, 'Professional analytics must follow window functions directly');
 
 const db = new PGlite();
 try {
@@ -152,6 +164,7 @@ try {
 
 
   let checked = 0;
+  let randomChecked = 0;
   for (const exercise of exercises) {
     if (exercise.mode === 'mutation') {
       await db.exec('BEGIN;');
@@ -184,7 +197,15 @@ try {
     }
     checked++;
   }
-  console.log(`SQL Academy smoke test passed: ${modules.length} modules, ${modules.reduce((sum, module) => sum + module.lessons.length, 0)} lessons, ${quizQuestions.length} knowledge checks, ${glossary.length} glossary terms, ${reference.length} reference groups, ${checked} runnable exercises, ${tables.rows.length} seed tables.`);
+  for (const topic of sandboxTaskTopics) {
+    for (const item of topic.tasks) {
+      assert.equal(sqlLexer.readOnlyQueryKeyword(item.solution), 'SELECT', `Random task ${item.id} must be a read-only SELECT/CTE`);
+      const result = await db.query(item.solution);
+      assert.ok(result && Array.isArray(result.rows), `Random task ${item.id} did not execute`);
+      randomChecked++;
+    }
+  }
+  console.log(`SQL Academy smoke test passed: ${modules.length} modules, ${modules.reduce((sum, module) => sum + module.lessons.length, 0)} lessons, ${quizQuestions.length} knowledge checks, ${glossary.length} glossary terms, ${reference.length} reference groups, ${checked} runnable exercises, ${randomChecked} random sandbox tasks, ${tables.rows.length} seed tables.`);
 } finally {
   await db.close();
 }

@@ -150,3 +150,25 @@
  :root.light .lesson-card{padding:18px}
  :root.light .topbar{padding:0 14px}
 }
+
+/* Random SQL challenge picker */
+.random-task-panel{border:1px solid var(--line);background:var(--panel);border-radius:16px;padding:18px;margin:0 0 18px}
+.random-task-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:14px}
+.random-task-head h2{font-size:18px;margin:4px 0}
+.random-task-head p{font-size:12px;color:var(--muted);margin:0;max-width:720px}
+.random-task-actions,.random-task-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.random-topic-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.random-topic-option{display:flex;align-items:center;gap:8px;min-width:0;border:1px solid var(--line);background:var(--panel2);border-radius:9px;padding:8px 10px;font-size:11px;cursor:pointer}
+.random-topic-option input{accent-color:var(--accent);margin:0}
+.random-topic-option span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.random-topic-option small{color:var(--muted);font:10px var(--mono)}
+.random-task-controls{justify-content:space-between;margin-top:13px;padding-top:12px;border-top:1px solid var(--line);font-size:11px;color:var(--muted)}
+.random-task-card{margin-top:14px;border-top:1px solid var(--line);padding-top:14px}
+.random-task-card h3{font-size:16px;margin:5px 0}
+.random-task-card>p{margin:7px 0 12px;line-height:1.7}
+.random-task-card .hint{margin:8px 0}
+.random-solution{white-space:pre-wrap;overflow:auto;background:var(--panel2);padding:12px;border-radius:9px;font:11px/1.6 var(--mono)}
+.random-task-empty{margin-top:12px;padding:14px;border:1px dashed var(--line);border-radius:10px;color:var(--muted);font-size:12px}
+#random-task-feedback{margin:10px 0}
+@media(max-width:900px){.random-topic-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.random-task-panel{padding:13px}.random-task-head{display:block}.random-task-actions{margin-top:10px}.random-topic-grid{grid-template-columns:1fr}.random-task-controls{align-items:flex-start;flex-direction:column}.random-task-controls .btn{width:100%}}

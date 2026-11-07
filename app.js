@@ -1,5 +1,6 @@
-import { modules, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261107-16';
-import { firstSqlKeyword, explainStatementKeyword, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261107-16';
+import { modules, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261107-17';
+import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261107-17';
+import { firstSqlKeyword, explainStatementKeyword, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261107-17';
 
 const $ = (s, root=document) => root.querySelector(s);
 const $$ = (s, root=document) => [...root.querySelectorAll(s)];
@@ -7,7 +8,7 @@ const STORE_KEY = 'sql-academy-progress-v1';
 const EDITOR_KEY = 'sql-academy-editor-v1';
 const state = {
   view:'dashboard', moduleId:modules[0].id, lessonIndex:0, exerciseId:exercises[0].id,
-  completedLessons:new Set(), completedExercises:new Set(), db:null, expected:new Map(),
+  completedLessons:new Set(), completedExercises:new Set(), db:null, expected:new Map(), randomTask:null, randomTopics:new Set(sandboxTaskTopics.map(topic=>topic.id)),
   engineReady:false, currentRows:[], quizAnswers:{}, exerciseQuizAnswers:{}, editors:new Map(), navigationScrollReset:false, theme:localStorage.getItem('sql-academy-theme') || 'dark'
 };
 const moduleById = id => modules.find(m=>m.id===id);
@@ -166,11 +167,18 @@ function formatSql(sql){
  text=text.replace(/\s+(AND|OR)\s+/gi,(_,kw)=>'\n    '+kw.toUpperCase()+' ');
  return text;
 }
+function renderRandomTaskPanel() {
+  const selected=state.randomTopics.size,active=state.randomTask;
+  const topics=sandboxTaskTopics.map(topic=>`<label class="random-topic-option"><input type="checkbox" data-random-topic="${topic.id}" ${state.randomTopics.has(topic.id)?'checked':''}><span>${esc(topic.title)}</span><small>25</small></label>`).join('');
+  const taskCard=active?`<div class="random-task-card"><div class="task-meta">${esc(sandboxTaskTopics.find(topic=>topic.id===active.topic)?.title||'SQL')} · ${esc(active.id)}</div><h3>${esc(active.title)}</h3><p>${esc(active.prompt)}</p><details class="hint"><summary>Подсказка</summary><p>${esc(active.hint)}</p></details><details class="hint"><summary>Показать эталонное решение</summary><pre class="random-solution">${esc(active.solution)}</pre><button class="btn small" data-action="insert-random-solution">Вставить решение в редактор</button></details><div id="random-task-feedback"></div><button class="btn primary small" data-action="check-random-task">Проверить мой запрос</button></div>`:'<div class="random-task-empty">Выбери одну или несколько тем и нажми «Случайное задание». Каждое задание можно проверить на текущей учебной базе.</div>';
+  return `<section class="random-task-panel"><div class="random-task-head"><div><div class="eyebrow">ТРЕНАЖЁР · ${sandboxTaskCount} ЗАДАНИЙ</div><h2>Случайное задание</h2><p>Выбирай несколько тем одновременно. Задания требуют не только знать конструкции, но и сочетать фильтрацию, JOIN, агрегацию, CTE и оконные функции.</p></div><div class="random-task-actions"><button class="btn small" data-action="select-all-random-topics">Все темы</button><button class="btn small" data-action="clear-random-topics">Снять выбор</button></div></div><div class="random-topic-grid">${topics}</div><div class="random-task-controls"><span>${selected} из ${sandboxTaskTopics.length} тем выбрано</span><button class="btn primary" data-action="new-random-task" ${selected?'':'disabled'}>Случайное задание</button></div>${taskCard}</section>`;
+}
 function renderPlayground() {
   const val=localStorage.getItem(EDITOR_KEY)||"SELECT status, COUNT(*) AS orders_count\nFROM orders\nGROUP BY status\nORDER BY orders_count DESC;";
   return `
     ${pageHead('SQL LAB · СВОБОДНЫЙ РЕЖИМ','SQL-песочница','Пиши любые запросы к учебной базе. Можно читать и изменять данные, создавать временные таблицы и экспериментировать. Кнопка сброса пересоздаёт учебную схему и данные.')}
     <div class="grid-2" style="margin-bottom:14px"><div class="callout"><strong>Подключение:</strong> PostgreSQL в WebAssembly, запущенный внутри браузера. Запросы не отправляются на сервер курса. После перезагрузки песочница создаётся заново.</div><div class="callout"><strong>Горячая клавиша:</strong> Ctrl + Enter выполняет SQL. Для нескольких команд можно вводить их через точку с запятой.</div></div>
+    ${renderRandomTaskPanel()}
     ${editor(val,'playground-editor')}
     <div class="editor-actions" style="margin-top:10px"><button class="btn primary" data-action="run-playground">▶ Выполнить SQL</button><button class="btn" data-action="reset-db">Сбросить учебную базу</button><button class="btn" data-action="insert-sample">Вставить пример JOIN</button></div>
     <div id="playground-results"></div>`;
@@ -205,7 +213,8 @@ function bindPage(){
   }else{textarea.addEventListener('keydown',editorKeys);if(textarea.id==='playground-editor')textarea.addEventListener('input',()=>localStorage.setItem(EDITOR_KEY,textarea.value));}
  });
  const exSearch=$('#exercise-search');if(exSearch)exSearch.addEventListener('input',()=>{$$('.exercise-item').forEach(b=>b.style.display=b.textContent.toLowerCase().includes(exSearch.value.toLowerCase())?'flex':'none');});
- const glSearch=$('#glossary-search');if(glSearch)glSearch.addEventListener('input',()=>{$$('.glossary-item').forEach(b=>b.style.display=b.dataset.term.includes(glSearch.value.toLowerCase())?'grid':'none');});
+ const glSearch=$('#glossary-search');if(glSearch)glSearch.addEventListener('input',()=>{$('.glossary-item').forEach(b=>b.style.display=b.dataset.term.includes(glSearch.value.toLowerCase())?'grid':'none');});
+ $('[data-random-topic]').forEach(input=>input.addEventListener('change',()=>{if(input.checked)state.randomTopics.add(input.dataset.randomTopic);else state.randomTopics.delete(input.dataset.randomTopic);render();}));
 }
 function editorKeys(e) {
   if(e.key==='Tab'){e.preventDefault();const a=e.target.selectionStart,b=e.target.selectionEnd;e.target.setRangeText('  ',a,b,'end');}
@@ -224,9 +233,33 @@ function handleAction(action) {
   if(action==='show-solution'){const ex=exercises.find(x=>x.id===state.exerciseId);if(ex){setEditorValue('exercise-editor',formatSql(ex.solution));toast('Эталонное решение показано.');}}
   if(action==='check-exercise')checkExercise();
   if(action==='run-exercise')runEditorQuery(getEditorValue('exercise-editor'),'exercise-results');
+  if(action==='new-random-task'){
+    const pool=sandboxTaskTopics.filter(topic=>state.randomTopics.has(topic.id)).flatMap(topic=>topic.tasks);
+    if(!pool.length){toast('Выбери хотя бы одну тему');return;}
+    const candidates=pool.filter(item=>item.id!==state.randomTask?.id);
+    state.randomTask=(candidates.length?candidates:pool)[Math.floor(Math.random()*(candidates.length||pool.length))];
+    render();return;
+  }
+  if(action==='select-all-random-topics'){state.randomTopics=new Set(sandboxTaskTopics.map(topic=>topic.id));render();return;}
+  if(action==='clear-random-topics'){state.randomTopics.clear();render();return;}
+  if(action==='insert-random-solution'&&state.randomTask){setEditorValue('playground-editor',state.randomTask.solution);localStorage.setItem(EDITOR_KEY,state.randomTask.solution);toast('Решение вставлено в редактор');return;}
+  if(action==='check-random-task')checkRandomTask();
   if(action==='run-playground'){const val=getEditorValue('playground-editor');localStorage.setItem(EDITOR_KEY,val);runEditorQuery(val,'playground-results');}
   if(action==='reset-db')resetDatabase();
   if(action==='insert-sample'){const sample='SELECT o.order_id, s.store_name, c.employee_name, o.total_amount\\nFROM orders o\\nJOIN stores s ON s.store_id = o.store_id\\nLEFT JOIN employees c ON c.employee_id = o.employee_id\\nORDER BY o.order_id;';setEditorValue('playground-editor',sample);localStorage.setItem(EDITOR_KEY,sample);}
+}
+async function checkRandomTask(){
+ const task=state.randomTask,feedback=$('#random-task-feedback'),sql=getEditorValue('playground-editor').trim();
+ if(!task||!feedback)return;
+ if(!sql){feedback.innerHTML='<div class="feedback fail">Сначала напиши запрос в редакторе.</div>';return;}
+ try{
+  const parts=splitStatements(sql);
+  if(parts.length!==1)throw new Error('Для случайного задания используй один SELECT-запрос.');
+  if(readOnlyQueryKeyword(parts[0])!=='SELECT')throw new Error('Проверка случайных заданий принимает только SELECT или WITH ... SELECT. Изменяющие запросы остаются доступны через обычный запуск песочницы.');
+  const [actual,expected]=await Promise.all([state.db.query(parts[0]),state.db.query(task.solution)]);
+  const passed=JSON.stringify(normalizeResult(actual,true))===JSON.stringify(normalizeResult(expected,true));
+  feedback.innerHTML=passed?'<div class="feedback success"><strong>Верно!</strong> Результат совпадает с эталоном.</div>':'<div class="feedback fail"><strong>Пока не совпало.</strong> Запрос выполнился, но набор столбцов, значения или порядок строк отличаются. Проверь зерно результата и условия задачи.</div>';
+ }catch(error){feedback.innerHTML='<div class="feedback fail"><strong>Ошибка:</strong> '+esc(error.message)+'</div>';}
 }
 async function checkExercise() {
   if(!state.db){toast('База ещё загружается');return;}
