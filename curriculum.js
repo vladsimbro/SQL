@@ -1,4 +1,4 @@
-export const modules = [
+export const modules = export const modules = [
   {
     "id": "foundations",
     "title": "Фундамент: что такое SQL и база данных",
@@ -3805,7 +3805,8 @@ export const modules = [
         "practiceIds": [
           "e35",
           "e36",
-          "e39"
+          "e39",
+          "e91"
         ],
         "outcomes": [
           "Различать ROW_NUMBER, RANK и DENSE_RANK",
@@ -4839,7 +4840,8 @@ export const modules = [
         "note": "Этот запрос считает достигших этапов, но не проверяет их временной порядок. Для строгой воронки нужно анализировать последовательность событий.",
         "simple": "Воронка считает уникальные сущности на каждом этапе, а конверсия сравнивает соседние этапы.",
         "practiceIds": [
-          "e40"
+          "e40",
+          "e92"
         ],
         "outcomes": [
           "Считать участников этапов и конверсию",
@@ -4921,7 +4923,8 @@ export const modules = [
         "simple": "GROUP BY показывает периоды с данными. Календарная сетка позволяет показать и периоды без событий.",
         "practiceIds": [
           "e41",
-          "e56"
+          "e56",
+          "e90"
         ],
         "outcomes": [
           "Строить календарную сетку",
@@ -6619,6 +6622,63 @@ export const exercises = [
       ],
       "answer": 0,
       "explanation": "Пустое OVER () считает общий итог по всем строкам результата без разделения на группы."
+    }
+  },
+  {
+    "id": "e90",
+    "mode": "select",
+    "m": "analytics",
+    "title": "Сравни выручку с предыдущим месяцем",
+    "task": "Для каждого месяца покажи выручку, выручку предыдущего месяца и процентное изменение относительно предыдущего месяца. Используй небольшой встроенный набор данных.",
+    "solution": "WITH monthly_revenue(month_start, revenue) AS (VALUES (DATE '2026-01-01', 1000::numeric), (DATE '2026-02-01', 1250::numeric), (DATE '2026-03-01', 1000::numeric)), compared AS (SELECT month_start, revenue, LAG(revenue) OVER (ORDER BY month_start) AS previous_revenue FROM monthly_revenue) SELECT month_start, revenue, previous_revenue, ROUND(100.0 * (revenue - previous_revenue) / NULLIF(previous_revenue, 0), 2) AS growth_pct FROM compared ORDER BY month_start;",
+    "quiz": {
+      "question": "Почему для первого месяца процент изменения будет NULL?",
+      "options": [
+        "У него нет предыдущего месяца, с которым можно сравнить выручку",
+        "Выручка всегда NULL в первом месяце",
+        "LAG удаляет первую строку",
+        "Потому что ROUND не работает с процентами"
+      ],
+      "answer": 0,
+      "explanation": "У первой строки нет предыдущего значения. NULL честно показывает, что база сравнения отсутствует."
+    }
+  },
+  {
+    "id": "e91",
+    "mode": "select",
+    "m": "windows",
+    "title": "Найди два самых продаваемых товара в каждой категории",
+    "task": "Для каждой категории выбери два товара с наибольшей суммой продаж. Если выручка совпадает, порядок должен быть стабильным.",
+    "solution": "WITH product_revenue AS (SELECT p.category, p.product_id, p.product_name, SUM(oi.quantity * oi.unit_price) AS revenue FROM products p JOIN order_items oi ON oi.product_id = p.product_id GROUP BY p.category, p.product_id, p.product_name), ranked AS (SELECT category, product_id, product_name, revenue, ROW_NUMBER() OVER (PARTITION BY category ORDER BY revenue DESC, product_id) AS rn FROM product_revenue) SELECT category, product_id, product_name, revenue FROM ranked WHERE rn <= 2 ORDER BY category, rn;",
+    "quiz": {
+      "question": "Почему ROW_NUMBER здесь разделён по category?",
+      "options": [
+        "Чтобы нумерация начиналась заново для каждой категории",
+        "Чтобы товары сортировались по названию",
+        "Чтобы удалить категории без продаж",
+        "Чтобы суммировать продажи всех категорий вместе"
+      ],
+      "answer": 0,
+      "explanation": "PARTITION BY создаёт независимую нумерацию внутри каждой категории."
+    }
+  },
+  {
+    "id": "e92",
+    "mode": "select",
+    "m": "analytics",
+    "title": "Проверь последовательность этапов воронки",
+    "task": "Рассчитай количество пользователей, которые сначала просмотрели товар, затем добавили его в корзину и после этого совершили покупку. События должны идти строго в указанном порядке.",
+    "solution": "WITH events(user_id, event_name, event_at) AS (VALUES (1,'view',TIMESTAMP '2026-01-01 09:00'),(1,'cart',TIMESTAMP '2026-01-01 10:00'),(1,'purchase',TIMESTAMP '2026-01-01 11:00'),(2,'view',TIMESTAMP '2026-01-01 09:00'),(2,'cart',TIMESTAMP '2026-01-01 10:30'),(3,'view',TIMESTAMP '2026-01-01 09:00'),(3,'purchase',TIMESTAMP '2026-01-01 10:00'),(4,'cart',TIMESTAMP '2026-01-01 08:00'),(4,'view',TIMESTAMP '2026-01-01 09:00'),(4,'purchase',TIMESTAMP '2026-01-01 10:00')), views AS (SELECT user_id, MIN(event_at) AS viewed_at FROM events WHERE event_name='view' GROUP BY user_id), carts AS (SELECT v.user_id, v.viewed_at, MIN(e.event_at) AS cart_at FROM views v JOIN events e ON e.user_id=v.user_id AND e.event_name='cart' AND e.event_at>v.viewed_at GROUP BY v.user_id,v.viewed_at), purchases AS (SELECT c.user_id, MIN(e.event_at) AS purchased_at FROM carts c JOIN events e ON e.user_id=c.user_id AND e.event_name='purchase' AND e.event_at>c.cart_at GROUP BY c.user_id), counts AS (SELECT (SELECT COUNT(*) FROM views) AS viewed, (SELECT COUNT(*) FROM carts) AS added_to_cart, (SELECT COUNT(*) FROM purchases) AS purchased) SELECT 'view' AS stage, viewed AS users_count FROM counts UNION ALL SELECT 'cart_after_view', added_to_cart FROM counts UNION ALL SELECT 'purchase_after_cart', purchased FROM counts;",
+    "quiz": {
+      "question": "Почему пользователя, у которого purchase произошло до cart, нельзя считать прошедшим воронку?",
+      "options": [
+        "Потому что этапы должны выполняться в заданной последовательности",
+        "Потому что COUNT не считает покупки",
+        "Потому что события должны иметь одинаковое время",
+        "Потому что один пользователь может иметь только одно событие"
+      ],
+      "answer": 0,
+      "explanation": "Воронка с последовательностью проверяет не просто наличие событий, а порядок переходов между ними."
     }
   }
 ];
