@@ -2354,7 +2354,7 @@ export const modules = [
       {
         "title": "INNER JOIN и LEFT JOIN",
         "body": "INNER JOIN и LEFT JOIN отличаются тем, что происходит со строками без совпадения. INNER JOIN возвращает только пары, для которых условие ON истинно. LEFT JOIN возвращает все строки левой таблицы; если справа пары нет, правые столбцы становятся NULL.\n\nПредставим отчёт по заказам и сотрудникам. В orders поле employee_id может быть NULL, если заказ ещё не назначен сотруднику. Если использовать INNER JOIN, такие заказы пропадут. Для отчёта о всех заказах нужен LEFT JOIN.\n\nПосле LEFT JOIN важно внимательно писать фильтры. Условие по правой таблице в WHERE может удалить строки, где справа NULL, и фактически превратить результат в поведение INNER JOIN. Если нужно сохранить все строки слева, а справа присоединить только сотрудников с определённым признаком, условие часто следует поместить в ON.\n\nПростой контроль: сравни COUNT(*) до и после соединения и отдельно посчитай строки, где ключ правой стороны IS NULL. Но помни, что число строк может увеличиться при связи один-ко-многим. Проверка количества — сигнал, а не полное доказательство корректности.",
-        "example": "SELECT o.order_id, c.customer_name\nFROM orders AS o\nLEFT JOIN customers AS c\n  ON c.customer_id = o.customer_id;",
+        "example": "SELECT o.order_id::int AS order_id, e.employee_name\nFROM orders AS o\nLEFT JOIN employees AS e\n  ON e.employee_id = o.employee_id\nWHERE o.order_id IN (103, 104, 108)\nORDER BY o.order_id;",
         "note": "Фильтр по правой таблице в WHERE может убрать строки с NULL и разрушить смысл LEFT JOIN.",
         "simple": "INNER оставляет только пары. LEFT сохраняет каждую строку слева, даже если справа ничего не нашлось.",
         "practiceIds": [
@@ -2389,7 +2389,27 @@ export const modules = [
           "result": "Количество заказов не должно уменьшиться. У части строк имя сотрудника будет NULL.",
           "pitfall": "Добавь WHERE e.employee_name IS NOT NULL, и строки без сотрудника исчезнут. Это может быть правильно для другой задачи, но уже не отчёт по всем заказам."
         },
-        "id": "joins.inner-join-i-left-join"
+        "id": "joins.inner-join-i-left-join",
+        "exampleResult": {
+          "columns": [
+            "order_id",
+            "employee_name"
+          ],
+          "rows": [
+            [
+              103,
+              "Иван"
+            ],
+            [
+              104,
+              null
+            ],
+            [
+              108,
+              null
+            ]
+          ]
+        }
       },
       {
         "title": "FULL, CROSS и SELF JOIN",
