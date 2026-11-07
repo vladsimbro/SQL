@@ -75,26 +75,41 @@ export function readOnlyQueryKeyword(sql,depth=0){
  }
  return '';
 }
-export function explainStatementKeyword(sql){
+export function explainStatementBody(sql){
  let rest=sqlAfterKeyword(sql,'EXPLAIN'),i=skipSqlTrivia(rest);
  if(rest[i]==='('){
-  let depth=0,inSingle=false;
+  let depth=0,inSingle=false,inDouble=false,lineComment=false,blockDepth=0;
   for(;i<rest.length;i++){
-   const ch=rest[i];
-   if(ch==="'" ){if(inSingle&&rest[i+1]==="'"){i++;continue;}inSingle=!inSingle;}
-   if(!inSingle&&ch==='(')depth++;
-   if(!inSingle&&ch===')'&&--depth===0){i++;break;}
+   const ch=rest[i],next=rest[i+1];
+   if(lineComment){if(ch==='\\n')lineComment=false;continue;}
+   if(blockDepth){if(ch==='/'&&next==='*'){blockDepth++;i++;}else if(ch==='*'&&next==='/'){blockDepth--;i++;}continue;}
+   if(!inSingle&&!inDouble&&ch==='-'&&next==='-'){lineComment=true;i++;continue;}
+   if(!inSingle&&!inDouble&&ch==='/'&&next==='*'){blockDepth=1;i++;continue;}
+   if(ch==="'"&&!inDouble){if(inSingle&&next==="'"){i++;continue;}inSingle=!inSingle;continue;}
+   if(ch==='"'&&!inSingle){if(inDouble&&next==='"'){i++;continue;}inDouble=!inDouble;continue;}
+   if(inSingle||inDouble)continue;
+   if(ch==='(')depth++;
+   else if(ch===')'&&--depth===0){i++;break;}
   }
+  if(depth!==0||inSingle||inDouble||blockDepth)return '';
   rest=rest.slice(i);
  }else{
   while(true){
    const key=firstSqlKeyword(rest);
    if(['ANALYZE','VERBOSE','COSTS','SETTINGS','BUFFERS','WAL','TIMING','SUMMARY'].includes(key)){rest=sqlAfterKeyword(rest,key);continue;}
-   if(key==='FORMAT'){rest=sqlAfterKeyword(rest,'FORMAT');rest=sqlAfterKeyword(rest,firstSqlKeyword(rest));continue;}
+   if(key==='FORMAT'){
+    rest=sqlAfterKeyword(rest,'FORMAT');
+    const format=firstSqlKeyword(rest);
+    if(!['TEXT','XML','JSON','YAML'].includes(format))return '';
+    rest=sqlAfterKeyword(rest,format);continue;
+   }
    break;
   }
  }
- return readOnlyQueryKeyword(rest);
+ return rest.trim();
+}
+export function explainStatementKeyword(sql){
+ return readOnlyQueryKeyword(explainStatementBody(sql));
 }
 export function splitStatements(sql) {
  const out=[];let cur='',single=false,dbl=false,line=false,blockDepth=0,dollarTag=null,escapeString=false;
