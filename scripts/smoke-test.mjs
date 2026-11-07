@@ -25,11 +25,14 @@ assert.equal(exercises.filter(exercise => exercise.mode === 'transaction').lengt
 assert.equal(exercises.length, 102, 'Expected 102 total practice exercises');
 assert.ok(exercises.every(exercise => modules.some(module => module.id === exercise.m)), 'Every exercise must belong to a real module');
 assert.ok(appSource.includes("from './sql-utils.js?v="), 'Application must use the shared SQL parser module');
-const sqlLexer = new Function(sqlUtilsSource.replaceAll('export function ', 'function ') + '; return { firstSqlKeyword, sqlAfterKeyword, explainStatementKeyword, readOnlyQueryKeyword, splitStatements };')();
+const sqlLexer = new Function(sqlUtilsSource.replaceAll('export function ', 'function ') + '; return { firstSqlKeyword, sqlAfterKeyword, explainStatementKeyword, explainStatementBody, readOnlyQueryKeyword, splitStatements };')();
 assert.equal(sqlLexer.firstSqlKeyword("-- leading comment\nSELECT 1"), 'SELECT', 'Leading line comments must be ignored');
 assert.equal(sqlLexer.firstSqlKeyword('/* outer /* nested */ comment */ WITH q AS (SELECT 1) SELECT * FROM q'), 'WITH', 'Nested block comments must be ignored');
 assert.equal(sqlLexer.firstSqlKeyword(sqlLexer.sqlAfterKeyword('EXPLAIN /* comment */ SELECT 1', 'EXPLAIN')), 'SELECT', 'Comments after EXPLAIN must be ignored');
 assert.equal(sqlLexer.explainStatementKeyword('EXPLAIN ANALYZE SELECT 1'), 'SELECT', 'EXPLAIN ANALYZE must be accepted');
+assert.equal(sqlLexer.explainStatementKeyword('EXPLAIN FORMAT JSON SELECT 1'), 'SELECT', 'EXPLAIN FORMAT JSON must be accepted');
+assert.equal(sqlLexer.explainStatementBody('EXPLAIN FORMAT JSON SELECT order_id FROM orders'), 'SELECT order_id FROM orders', 'EXPLAIN FORMAT JSON options must be removed before task-specific validation');
+assert.equal(sqlLexer.explainStatementBody('EXPLAIN (ANALYZE, BUFFERS) SELECT 1'), 'SELECT 1', 'Parenthesized EXPLAIN options must be removed before task-specific validation');
 assert.equal(sqlLexer.explainStatementKeyword('EXPLAIN (ANALYZE, BUFFERS) SELECT 1'), 'SELECT', 'EXPLAIN options must be accepted');
 assert.equal(sqlLexer.explainStatementKeyword('EXPLAIN (FORMAT JSON) WITH q AS (SELECT 1) SELECT * FROM q'), 'SELECT', 'EXPLAIN FORMAT JSON with CTE must be accepted');
 assert.equal(sqlLexer.readOnlyQueryKeyword('WITH q AS (SELECT 1) SELECT * FROM q'), 'SELECT', 'Read-only CTE must be accepted');
@@ -356,7 +359,7 @@ for (const id of ['e46','e101','e102']) {
   const exercise = exercises.find(item => item.id === id);
   assert.ok(exercise && exercise.mode === 'explain', `EXPLAIN exercise ${id} must exist`);
   assert.ok(exercise.requiredPatterns?.length, `EXPLAIN exercise ${id} must validate its requested query`);
-  const query = exercise.solution.replace(/^EXPLAIN\s+/i, '');
+  const query = sqlLexer.explainStatementBody(exercise.solution);
   assert.ok(exercise.requiredPatterns.every(pattern => new RegExp(pattern, 'i').test(query)), `Reference query for ${id} must satisfy every required pattern`);
   assert.ok(exercise.requiredPatterns.some(pattern => !new RegExp(pattern, 'i').test('SELECT 1')), `EXPLAIN exercise ${id} must reject an unrelated query`);
 }
