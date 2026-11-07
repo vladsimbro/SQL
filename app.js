@@ -17,7 +17,7 @@ const lessonKey = (mid,idx)=>moduleById(mid)?.lessons[idx]?.id || mid+':'+idx;
 const quizKey = (mid,idx,questionIndex)=>lessonKey(mid,idx)+':'+questionIndex;
 const moduleLessons = trackId => modules.filter(module=>module.track===trackId);
 const esc = value => String(value ?? 'NULL').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#39;");
-const label = {dashboard:'Главная',roadmap:'Дорожная карта',study:'Учебник',practice:'Практика',playground:'SQL-песочница',schema:'Учебная база',reference:'Шпаргалка',glossary:'Глоссарий',assessment:'Контрольные работы',assessment:'Контрольные работы'};
+const label = {dashboard:'Главная',roadmap:'Дорожная карта',study:'Учебник',practice:'Практика',playground:'SQL-песочница',schema:'Учебная база',reference:'Шпаргалка',glossary:'Глоссарий',assessment:'Контрольные работы'};
 const loadProgress = () => {
   try {
     const saved=JSON.parse(localStorage.getItem(STORE_KEY)||'{}');
@@ -38,9 +38,8 @@ const loadProgress = () => {
     state.quizAnswers=quizAnswers;
     state.exerciseQuizAnswers=saved.exerciseQuizAnswers||{};
     state.assessmentResults=saved.assessmentResults&&typeof saved.assessmentResults==='object'?saved.assessmentResults:{};
-    state.assessmentResults=saved.assessmentResults&&typeof saved.assessmentResults==='object'?saved.assessmentResults:{};
     if(JSON.stringify(saved.lessons||[])!==JSON.stringify(lessons)||JSON.stringify(saved.quizAnswers||{})!==JSON.stringify(quizAnswers)){
-      localStorage.setItem(STORE_KEY,JSON.stringify({lessons,exercises:[...state.completedExercises],quizAnswers,exerciseQuizAnswers:state.exerciseQuizAnswers}));
+      localStorage.setItem(STORE_KEY,JSON.stringify({lessons,exercises:[...state.completedExercises],quizAnswers,exerciseQuizAnswers:state.exerciseQuizAnswers,assessmentResults:state.assessmentResults}));
     }
   } catch {}
 };
@@ -376,18 +375,6 @@ function editor(value,id,placeholder='') {
 }
 function getEditorValue(id){return state.editors.get(id)?.getValue()??$('#'+id)?.value??'';}
 function setEditorValue(id,value){const cm=state.editors.get(id);if(cm){cm.setValue(value);cm.focus();}else{const el=$('#'+id);if(el)el.value=value;}}
-function formatSql(sql){
- let text=String(sql||'').trim().replace(/[ \t]+/g,' ');
- if(!text)return '';
- const clauses=['UNION ALL','LEFT JOIN','RIGHT JOIN','FULL JOIN','INNER JOIN','CROSS JOIN','GROUP BY','ORDER BY','UNION','INTERSECT','EXCEPT','RETURNING','FROM','WHERE','HAVING','JOIN','ON','SET','VALUES','LIMIT','OFFSET'];
- const pattern=new RegExp('\s+('+clauses.map(x=>x.replace(/ /g,'\s+')).join('|')+')\\b','gi');
- text=text.replace(pattern,(_,kw)=>'\n'+kw.toUpperCase());
- text=text.replace(/,\s*/g,',\n    ');
- text=text.replace(/\nON\b/g,'\n  ON');
- text=text.replace(/^SELECT\s+/i,'SELECT\n    ');
- text=text.replace(/\s+(AND|OR)\s+/gi,(_,kw)=>'\n    '+kw.toUpperCase()+' ');
- return text;
-}
 function renderRandomTaskPanel() {
   const selected=state.randomTopics.size,active=state.randomTask;
   const topics=sandboxTaskTopics.map(topic=>`<label class="random-topic-option"><input type="checkbox" data-random-topic="${topic.id}" ${state.randomTopics.has(topic.id)?'checked':''}><span>${esc(topic.title)}</span><small>25</small></label>`).join('');
@@ -463,7 +450,7 @@ function handleAction(action) {
   if(action==='prev-exercise'||action==='next-exercise'){const i=exercises.findIndex(x=>x.id===state.exerciseId);state.exerciseId=exercises[Math.max(0,Math.min(exercises.length-1,i+(action==='next-exercise'?1:-1)))].id;render();}
   if(action==='clear-editor')setEditorValue(state.view==='practice'?'exercise-editor':'playground-editor','');
   if(action==='reset-editor'){const sample='SELECT status, COUNT(*) AS orders_count\\nFROM orders\\nGROUP BY status\\nORDER BY orders_count DESC;';setEditorValue('playground-editor',sample);localStorage.setItem(EDITOR_KEY,sample);}
-  if(action==='show-solution'){const ex=exercises.find(x=>x.id===state.exerciseId);if(ex){setEditorValue('exercise-editor',formatSql(ex.solution));toast('Эталонное решение показано.');}}
+  if(action==='show-solution'){const ex=exercises.find(x=>x.id===state.exerciseId);if(ex){setEditorValue('exercise-editor',ex.solution);toast('Эталонное решение показано.');}}
   if(action==='check-exercise')checkExercise();
   if(action==='run-exercise')runEditorQuery(getEditorValue('exercise-editor'),'exercise-results');
   if(action==='new-random-task'){
