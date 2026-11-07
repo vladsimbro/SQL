@@ -153,6 +153,17 @@ assert.ok(relationalModule.lessons.find(lesson => lesson.title === 'Внешни
 assert.ok(relationalModule.lessons.find(lesson => lesson.title === 'NULL и неизвестное значение').body.includes('NOT IN'), 'NULL lesson must explain the NOT IN and NULL trap');
 const typesModule = modules.find(module => module.id === 'types');
 assert.ok(typesModule.lessons.find(lesson => lesson.title === 'Выбор типа даты и времени').body.includes('TIMESTAMPTZ') && typesModule.lessons.find(lesson => lesson.title === 'Выбор типа даты и времени').body.includes('модуле временной аналитики'), 'Date/time type lesson must introduce the types and defer session timezone mechanics to the dedicated module');
+const aggregateModule = modules.find(module => module.id === 'aggregates');
+assert.ok(aggregateModule.lessons.find(lesson => lesson.title === 'Агрегатные функции').body.includes('COUNT(DISTINCT employee_id)'), 'Aggregate lesson must distinguish row, non-null and distinct-value counts');
+assert.ok(aggregateModule.lessons.find(lesson => lesson.title === 'GROUP BY и зерно результата').body.includes('COUNT(o.order_id)'), 'GROUP BY lesson must explain COUNT(*) versus COUNT(right_key) after LEFT JOIN');
+assert.ok(aggregateModule.lessons.find(lesson => lesson.title === 'Условная агрегация и FILTER').body.includes('только для того агрегата'), 'FILTER lesson must explain its local scope');
+assert.ok(aggregateModule.lessons.find(lesson => lesson.title === 'Предварительная агрегация до нужного зерна').body.includes('одну строку на order_id'), 'Pre-aggregation lesson must define the target grain');
+const joinsModule = modules.find(module => module.id === 'joins');
+assert.ok(joinsModule.lessons.find(lesson => lesson.title === 'Кардинальность и размножение строк').body.includes('UNIQUE или PRIMARY KEY'), 'Join cardinality lesson must distinguish foreign keys from uniqueness');
+assert.ok(joinsModule.lessons.find(lesson => lesson.title === 'Fan-out: соединение нескольких таблиц деталей').exampleResult.rows.length === 6, 'Fan-out lesson must show the 3-by-2 row multiplication');
+assert.ok(joinsModule.lessons.find(lesson => lesson.title === 'INNER JOIN и LEFT JOIN').body.includes('WHERE'), 'Join lesson must explain ON versus WHERE after LEFT JOIN');
+const conversionLesson = typesModule.lessons.find(lesson => lesson.title === 'Преобразование типов');
+assert.ok(conversionLesson.example.includes('7 / 2') && conversionLesson.example.includes('7::NUMERIC / 2'), 'Type conversion lesson must contrast integer and decimal division');
 const anatomyModule = modules.find(module => module.id === 'anatomy');
 assert.ok(anatomyModule.lessons.find(lesson => lesson.title === 'Логический порядок обработки').body.includes('физически выполняет'), 'Logical query order lesson must distinguish logical semantics from physical execution');
 assert.ok(anatomyModule.lessons.find(lesson => lesson.title === 'Логический порядок обработки').body.includes('Оконные вычисления (WINDOW)'), 'Logical query order lesson must place window calculations');
