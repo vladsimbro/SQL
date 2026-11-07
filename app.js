@@ -390,10 +390,12 @@ function editorKeys(e) {
 }
 function handleAction(action) {
   const m=moduleById(state.moduleId)||modules[0];
-  if(action==='continue'||action==='open-next'){const next=modules.flatMap(x=>x.lessons.map((l,i)=>({m:x,i}))).find(x=>!state.completedLessons.has(lessonKey(x.m.id,x.i)))||{m:modules[0],i:0};state.moduleId=next.m.id;state.lessonIndex=next.i;go('study');}
+  const trackModules=moduleLessons(m.track);
+  const trackIndex=trackModules.findIndex(module=>module.id===m.id);
+  if(action==='continue'||action==='open-next'){const core=moduleLessons('core');const next=core.flatMap(module=>module.lessons.map((lesson,index)=>({module,index}))).find(item=>!state.completedLessons.has(lessonKey(item.module.id,item.index)))||{module:core.at(-1),index:core.at(-1).lessons.length-1};state.moduleId=next.module.id;state.lessonIndex=next.index;go('study');}
   if(action==='complete-lesson'){const key=lessonKey(state.moduleId,state.lessonIndex);if(state.completedLessons.has(key))state.completedLessons.delete(key);else state.completedLessons.add(key);saveProgress();render();}
-  if(action==='prev-lesson'){if(state.lessonIndex>0)state.lessonIndex--;else{const i=modules.indexOf(m);if(i>0){state.moduleId=modules[i-1].id;state.lessonIndex=modules[i-1].lessons.length-1;}}render();}
-  if(action==='next-lesson'){if(state.lessonIndex<m.lessons.length-1)state.lessonIndex++;else{const i=modules.indexOf(m);if(i<modules.length-1){state.moduleId=modules[i+1].id;state.lessonIndex=0;}}render();}
+  if(action==='prev-lesson'){if(state.lessonIndex>0)state.lessonIndex--;else if(trackIndex>0){state.moduleId=trackModules[trackIndex-1].id;state.lessonIndex=trackModules[trackIndex-1].lessons.length-1;}render();}
+  if(action==='next-lesson'){if(state.lessonIndex<m.lessons.length-1)state.lessonIndex++;else if(trackIndex<trackModules.length-1){state.moduleId=trackModules[trackIndex+1].id;state.lessonIndex=0;}render();}
   if(action==='lesson-practice'){const id=m.lessons[state.lessonIndex]?.practiceIds?.[0];if(id){state.exerciseId=id;go('practice');}}
   if(action==='prev-exercise'||action==='next-exercise'){const i=exercises.findIndex(x=>x.id===state.exerciseId);state.exerciseId=exercises[Math.max(0,Math.min(exercises.length-1,i+(action==='next-exercise'?1:-1)))].id;render();}
   if(action==='clear-editor')setEditorValue(state.view==='practice'?'exercise-editor':'playground-editor','');
