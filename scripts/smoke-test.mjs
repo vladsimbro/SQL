@@ -53,7 +53,7 @@ assert.ok(appSource.includes('reference.map(g=>') && appSource.includes('glossar
 assert.ok(appSource.includes('preserveOrder=false'), 'Result normalization must support order-sensitive exercises');
 assert.ok(appSource.includes('function renderAnnotatedSql') && appSource.includes('function renderExampleBreakdown'), 'Lesson examples must include SQL hover explanations and line-by-line breakdowns');
 const walkthroughLessons = modules.flatMap(module => module.lessons.filter(lesson => lesson.walkthrough));
-assert.equal(walkthroughLessons.length, 29, 'Expected twenty-nine deeply worked core lesson scenarios');
+assert.equal(walkthroughLessons.length, 40, 'Expected forty deeply worked core lesson scenarios');
 assert.ok(walkthroughLessons.every(lesson => lesson.walkthrough.title && lesson.walkthrough.scenario && lesson.walkthrough.steps?.length >= 3 && lesson.walkthrough.result && lesson.walkthrough.pitfall), 'Every worked scenario must include context, ordered reasoning, result and common pitfall');
 assert.ok(appSource.includes('function renderWorkedExample') && appSource.includes('renderWorkedExample(l.walkthrough)'), 'Worked lesson scenarios must be rendered in the lesson page');
 assert.ok(cssSource.includes('.worked-example') && cssSource.includes('.worked-steps'), 'Worked scenarios must have dedicated responsive styling');
