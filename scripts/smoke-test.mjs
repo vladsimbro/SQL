@@ -91,7 +91,7 @@ assert.equal(datetimeModule.lessons.length, 7, 'Date/time module must contain se
 assert.ok(datetimeModule.lessons.every(lesson => (lesson.practiceIds || []).length > 0), 'Every date/time lesson must link to at least one relevant practice task');
 assert.deepEqual(datetimeModule.lessons.flatMap(lesson => lesson.practiceIds || []).sort(), ['e72','e73','e74','e75','e76','e77','e78','e79'].sort(), 'Date/time lessons must link all eight dedicated practice tasks exactly once');
 assert.ok(exercises.filter(exercise => exercise.m === 'datetime').every(exercise => exercise.quiz?.options?.length === 4 && exercise.quiz.explanation), 'Date/time practice tasks must include a concept check');
-assert.ok(appSource.includes("curriculum.js?v=20261107-17") && appSource.includes("sql-utils.js?v=20261107-17") && appSource.includes("sandbox-tasks.js?v=20261107-17"), 'Application module dependencies must use the current cache version');
+assert.ok(appSource.includes("curriculum.js?v=20261107-18") && appSource.includes("sql-utils.js?v=20261107-18") && appSource.includes("sandbox-tasks.js?v=20261107-18"), 'Application module dependencies must use the current cache version');
 
 
 const windowModule = modules.find(module => module.id === 'windows');
@@ -149,8 +149,10 @@ assert.equal(new Set(exercises.map(exercise => exercise.hint)).size, exercises.l
 assert.equal(sandboxTaskTopics.length, 14, 'Expected fourteen selectable random-task topics');
 assert.equal(sandboxTaskCount, 350, 'Expected 350 random sandbox tasks');
 assert.ok(sandboxTaskTopics.every(topic => topic.tasks.length === 25 && new Set(topic.tasks.map(item => item.prompt)).size === 25 && new Set(topic.tasks.map(item => item.hint)).size === 25), 'Every random-task topic must contain 25 unique prompts and hints');
+assert.ok(sandboxTaskTopics.every(topic => topic.tasks.every(item => item.title && item.prompt && item.hint && item.solution)), 'Every random task must include a title, task condition, specific hint and reference solution');
 assert.ok(appSource.includes('data-random-topic') && appSource.includes('new-random-task') && appSource.includes('check-random-task'), 'Playground must provide topic selection, random task generation and checking');
 assert.deepEqual(modules.map(module => module.stage.split(' · ')[0]), Array.from({length:25},(_,i)=>String(i+1).padStart(2,'0')), 'Roadmap stages must be consecutive and match module order');
+assert.ok(modules.findIndex(module => module.id === 'select') < modules.findIndex(module => module.id === 'ddl'), 'Read-query fundamentals must be taught before schema modification');
 assert.ok(modules.findIndex(module => module.id === 'analytics') === modules.findIndex(module => module.id === 'windows') + 1, 'Professional analytics must follow window functions directly');
 
 const db = new PGlite();
