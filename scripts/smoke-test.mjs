@@ -53,7 +53,7 @@ assert.ok(appSource.includes('reference.map(g=>') && appSource.includes('glossar
 assert.ok(appSource.includes('preserveOrder=false'), 'Result normalization must support order-sensitive exercises');
 assert.ok(appSource.includes('function renderAnnotatedSql') && appSource.includes('function renderExampleBreakdown'), 'Lesson examples must include SQL hover explanations and line-by-line breakdowns');
 const walkthroughLessons = modules.flatMap(module => module.lessons.filter(lesson => lesson.walkthrough));
-assert.equal(walkthroughLessons.length, 12, 'Expected twelve deeply worked core lesson scenarios');
+assert.equal(walkthroughLessons.length, 29, 'Expected twenty-nine deeply worked core lesson scenarios');
 assert.ok(walkthroughLessons.every(lesson => lesson.walkthrough.title && lesson.walkthrough.scenario && lesson.walkthrough.steps?.length >= 3 && lesson.walkthrough.result && lesson.walkthrough.pitfall), 'Every worked scenario must include context, ordered reasoning, result and common pitfall');
 assert.ok(appSource.includes('function renderWorkedExample') && appSource.includes('renderWorkedExample(l.walkthrough)'), 'Worked lesson scenarios must be rendered in the lesson page');
 assert.ok(cssSource.includes('.worked-example') && cssSource.includes('.worked-steps'), 'Worked scenarios must have dedicated responsive styling');
@@ -207,6 +207,31 @@ try {
       assert.ok(result && Array.isArray(result.rows), `Exercise ${exercise.id} did not return a query result`);
     }
     checked++;
+  }
+  const lessonExampleDb = new PGlite();
+  try {
+    await lessonExampleDb.exec(seedSQL);
+    let runnableExamples = 0;
+    for (const module of modules) {
+      for (const lesson of module.lessons) {
+        const example = lesson.example || '';
+        if (!example.trim() || /pg_stat_statements|^\\s*psql\\b|CREATE\\s+(OR\\s+REPLACE\\s+)?(TEMP(ORARY)?\\s+)?TABLE|CREATE\\s+(OR\\s+REPLACE\\s+)?VIEW|CREATE\\s+(OR\\s+REPLACE\\s+)?FUNCTION|CREATE\\s+TRIGGER/i.test(example)) continue;
+        const statements = sqlLexer.splitStatements(example);
+        if (!statements.length || statements.some(statement => !['SELECT','WITH','EXPLAIN'].includes(sqlLexer.firstSqlKeyword(statement)))) continue;
+        for (const statement of statements) {
+          const keyword = sqlLexer.firstSqlKeyword(statement);
+          if (keyword === 'EXPLAIN') continue;
+          assert.equal(sqlLexer.readOnlyQueryKeyword(statement), 'SELECT', `Lesson example ${module.id}/${lesson.title} must be read-only`);
+          const result = await lessonExampleDb.query(statement);
+          assert.ok(result && Array.isArray(result.rows), `Lesson example ${module.id}/${lesson.title} must execute`);
+        }
+        runnableExamples++;
+      }
+    }
+    assert.ok(runnableExamples >= 90, `Expected at least 90 executable lesson examples, got ${runnableExamples}`);
+    console.log(`Executed ${runnableExamples} read-only lesson examples against the teaching schema.`);
+  } finally {
+    await lessonExampleDb.close();
   }
   for (const topic of sandboxTaskTopics) {
     for (const item of topic.tasks) {
