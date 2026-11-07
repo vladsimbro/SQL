@@ -1,4 +1,4 @@
-export const modules = export const modules = [
+export const modules = [
   {
     "id": "foundations",
     "title": "Фундамент: что такое SQL и база данных",
