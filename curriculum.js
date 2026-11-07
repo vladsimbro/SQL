@@ -2712,8 +2712,8 @@ export const modules = [
       },
       {
         "title": "DISTINCT внутри агрегатов",
-        "body": "DISTINCT внутри агрегата убирает повторы только для аргумента этого агрегата. COUNT(DISTINCT customer_id) считает уникальных клиентов, а SUM(DISTINCT amount) складывает каждую уникальную сумму один раз.\n\nПоследний пример часто вызывает ошибку в логике. Если два разных заказа имеют одинаковую сумму 1000, SUM(DISTINCT amount) учтёт 1000 только один раз. Это не то же самое, что убрать дубли заказов по order_id. Уникальность нужно определять по сущности, которую мы считаем.\n\nПеред DISTINCT внутри агрегата сформулируй, какие именно повторения считаются ошибочными или нежелательными. Уникальный клиент, уникальный заказ и уникальная сумма — три разных понятия.",
-        "example": "SELECT COUNT(DISTINCT customer_id)::int AS unique_customers,\n       COUNT(DISTINCT order_id)::int AS unique_orders\nFROM orders;",
+        "body": "DISTINCT внутри агрегата убирает повторы только для аргумента этого агрегата. COUNT(DISTINCT customer_id) считает уникальных клиентов, а SUM(DISTINCT amount) складывает каждую уникальную сумму один раз.\n\nПоследний пример часто вызывает ошибку в логике. Если два разных заказа имеют одинаковую сумму 1000, SUM(DISTINCT amount) учтёт 1000 только один раз. Это не то же самое, что убрать дубли заказов по order_id. Уникальность нужно определять по сущности, которую мы считаем.\n\nПеред DISTINCT внутри агрегата сформулируй, какие именно повторения считаются ошибочными или нежелательными. Уникальный клиент, уникальный заказ и уникальная сумма — три разных понятия.\n\nВ примере две разные покупки имеют одинаковую сумму 1000. DISTINCT по amount схлопывает одинаковые суммы, а не повторные заказы. Поэтому SUM(DISTINCT amount) даёт 3000 вместо реальной выручки 4000. Если нужно убрать дубли заказов, сначала дедуплицируй по order_id, а затем суммируй суммы заказов.",
+        "example": "WITH sample_orders (order_id, amount) AS (\n  VALUES\n    (101, 1000),\n    (102, 1000),\n    (103, 2000)\n)\nSELECT COUNT(DISTINCT order_id)::int AS unique_orders,\n       SUM(amount)::int AS total_revenue,\n       SUM(DISTINCT amount)::int AS distinct_amount_sum\nFROM sample_orders;",
         "note": "SUM(DISTINCT amount) не защищает от размножения строк JOIN, если разные сущности имеют одинаковые суммы.",
         "simple": "DISTINCT внутри агрегата убирает повторы значений аргумента, а не дубли бизнес-сущности.",
         "practiceIds": [],
@@ -2737,13 +2737,15 @@ export const modules = [
         "id": "aggregates.distinct-vnutri-agregatov",
         "exampleResult": {
           "columns": [
-            "unique_customers",
-            "unique_orders"
+            "unique_orders",
+            "total_revenue",
+            "distinct_amount_sum"
           ],
           "rows": [
             [
-              4,
-              12
+              3,
+              4000,
+              3000
             ]
           ]
         }
