@@ -138,6 +138,7 @@ assert.ok(analyticsModule.lessons.find(lesson => lesson.title === 'Зерно и
 assert.ok(analyticsModule.lessons.find(lesson => lesson.title === 'Воронка и условные этапы').body.includes('не строгую временную воронку'), 'Status snapshot must not be presented as a sequential funnel');
 assert.deepEqual(analyticsModule.lessons.find(lesson => lesson.title === 'Качество данных и проверки').exampleResult.rows, [[19,12,7]], 'Join-grain check must expose row multiplication from order items');
 assert.ok(analyticsModule.lessons.find(lesson => lesson.title === 'Медиана и перцентили').example.includes('event_times') && !analyticsModule.lessons.find(lesson => lesson.title === 'Медиана и перцентили').example.includes('JOIN order_events delivered'), 'Delivery percentile calculation must pre-aggregate event types to one row per order');
+assert.deepEqual(analyticsModule.lessons.find(lesson => lesson.title === 'Медиана и перцентили').exampleResult.rows, [[300,444]], 'Delivery percentiles must be computed once per order');
 
 assert.equal(analyticsModule.lessons.length, 13, 'Analytics module must include period comparisons, conversion and combined-query workflow');
 assert.deepEqual(analyticsModule.lessons.flatMap(lesson => lesson.practiceIds || []).sort(), ['e42','e43','e40','e41','e56','e83','e84','e85','e86','e87','e88','e89','e90','e92','e96','e97','e98','e99'].sort(), 'Analytics lessons must link all eighteen dedicated practice tasks exactly once');
