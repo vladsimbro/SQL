@@ -164,7 +164,7 @@ assert.equal(analyticsQualityModule.lessons.find(lesson => lesson.title === 'С�
 const selectModule = modules.find(module => module.id === 'select');
 assert.ok(selectModule.lessons.find(lesson => lesson.title === 'DISTINCT ON в PostgreSQL').example.includes('order_id DESC'), 'DISTINCT ON must define a deterministic tie-breaker');
 const sortingModule = modules.find(module => module.id === 'sorting');
-assert.ok(sortingModule.lessons.find(lesson => lesson.title === 'Keyset pagination').example.includes("TIMESTAMP '2026-01-12 00:00:00'"), 'Keyset example must use a timestamp literal matching the sample column type');
+assert.ok(sortingModule.lessons.find(lesson => lesson.title === 'Keyset pagination').example.includes("DATE '2026-01-12'"), 'Keyset example must use a timestamp literal matching the sample column type');
 assert.ok(!modules.find(module => module.id === 'anatomy').lessons.find(lesson => lesson.title === 'Логический порядок обработки').example.includes('--'), 'Logical query-order example must not duplicate the explanation with SQL comments');
 const selectModule = modules.find(module => module.id === 'select');
 assert.equal(selectModule.lessons.find(lesson => lesson.title === 'DISTINCT ON в PostgreSQL').exampleResult.rows.length, 4, 'DISTINCT ON example must return one latest order per customer with deterministic tie-breaking');
