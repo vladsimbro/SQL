@@ -172,6 +172,11 @@ assert.ok(!timeExpressionsLesson.example.includes('DATE_TRUNC') && timeExpressio
 assert.deepEqual(expressionsQualityModule.lessons.find(lesson => lesson.title === 'COALESCE, NULLIF и безопасные вычисления').exampleResult.rows, [['12000','0','3000.00']], 'NULL-safe calculation example must show fallback and zero-safe division');
 assert.equal(expressionsQualityModule.lessons.find(lesson => lesson.title === 'CASE: условная логика').exampleResult.rows.length, 4, 'CASE example must show each selected business category');
 const datetimeQualityModule = modules.find(module => module.id === 'datetime');
+assert.deepEqual(datetimeQualityModule.lessons.find(lesson => lesson.title === 'Как PostgreSQL хранит дату и время').exampleResult.rows, [['2026-11-07','09:00:00','2026-11-07 09:00:00','2026-11-07 09:00:00']], 'Date/time types example must distinguish date, local time and an instant');
+assert.deepEqual(datetimeQualityModule.lessons.find(lesson => lesson.title === 'Интервалы и арифметика времени').exampleResult.rows, [['01:35:00','2026-04-01 10:00:00','2026-03-01 11:30:00']], 'Interval example must distinguish calendar months from fixed durations');
+assert.deepEqual(datetimeQualityModule.lessons.find(lesson => lesson.title === 'Фильтрация по датам: полуоткрытые интервалы').exampleResult.rows.map(row => row[0]), [101,102,103,104,105,106], 'Half-open date range must include the start and exclude the next day boundary');
+assert.deepEqual(datetimeQualityModule.lessons.find(lesson => lesson.title === 'Временные метрики: длительность и SLA').exampleResult.rows, [[101,'240.00','within_sla'],[102,'300.00','within_sla'],[103,null,'in_progress'],[105,'480.00','breached']], 'SLA example must preserve unfinished orders and avoid event fan-out');
+
 assert.ok(datetimeQualityModule.lessons.find(lesson => lesson.title === 'Часовые пояса и AT TIME ZONE').example.includes('Europe/Warsaw'), 'Timezone lesson must execute both AT TIME ZONE directions');
 assert.equal(datetimeQualityModule.lessons.find(lesson => lesson.title === 'Генерация календаря и пропущенные периоды').exampleResult.rows.at(-1)[1], 0, 'Calendar example must show a day without events');
 const windowQualityModule = modules.find(module => module.id === 'windows');
