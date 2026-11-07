@@ -3775,7 +3775,9 @@ export const modules = [
         "example": "SELECT order_id, customer_id, total_amount,\n       AVG(total_amount) OVER (PARTITION BY customer_id) AS customer_avg\nFROM orders;",
         "note": "Не путай агрегат с GROUP BY и оконный агрегат: первый меняет зерно результата, второй сохраняет строки.",
         "simple": "GROUP BY уменьшает число строк. Оконная функция добавляет вычисление, не схлопывая строки.",
-        "practiceIds": [],
+        "practiceIds": [
+          "e80"
+        ],
         "outcomes": [
           "Объяснить разницу GROUP BY и OVER",
           "использовать PARTITION BY для независимых групп."
@@ -3883,7 +3885,9 @@ export const modules = [
         "example": "WITH monthly AS (\n  SELECT DATE_TRUNC('month', created_at) AS month,\n         SUM(total_amount) AS revenue\n  FROM orders\n  GROUP BY 1\n)\nSELECT month, revenue,\n       SUM(revenue) OVER () AS total_revenue,\n       revenue / SUM(revenue) OVER () AS revenue_share\nFROM monthly;",
         "note": "Оконная функция после GROUP BY работает с результатом группировки. Не смешивай зерно заказов и зерно месяцев.",
         "simple": "Сначала агрегируй исходные строки, затем оконная функция анализирует строки групп.",
-        "practiceIds": [],
+        "practiceIds": [
+          "e81"
+        ],
         "outcomes": [
           "Применять оконные функции к агрегированным данным",
           "считать долю группы от общего итога."
@@ -3908,7 +3912,9 @@ export const modules = [
         "simple": "ROWS считает позиции строк, RANGE — диапазон значений ключа сортировки и связанные с ним peers.",
         "example": "SELECT created_at, amount,\n       SUM(amount) OVER (\n         ORDER BY created_at\n         ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW\n       ) AS row_running_total,\n       SUM(amount) OVER (\n         ORDER BY created_at\n         RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW\n       ) AS range_running_total\nFROM transactions;",
         "note": "Если важна последовательность отдельных событий с одинаковым временем, добавь tie-breaker и используй подходящую ROWS-рамку.",
-        "practiceIds": [],
+        "practiceIds": [
+          "e82"
+        ],
         "outcomes": [
           "Различать ROWS и RANGE",
           "объяснить влияние одинаковых значений ORDER BY на рамку."
@@ -4859,7 +4865,9 @@ export const modules = [
         "example": "WITH first_purchase AS (\n  SELECT customer_id,\n         DATE_TRUNC('month', MIN(created_at)) AS cohort_month\n  FROM orders\n  GROUP BY customer_id\n)\nSELECT cohort_month, COUNT(*) AS customers\nFROM first_purchase\nGROUP BY cohort_month\nORDER BY cohort_month;",
         "note": "Не смешивай календарный месяц события с возрастом когорты. Это разные оси анализа.",
         "simple": "Когорта — группа пользователей с общим моментом начала. Период 0 — период вступления, период 1 — следующий.",
-        "practiceIds": [],
+        "practiceIds": [
+          "e83"
+        ],
         "outcomes": [
           "Определять когорту по первому событию",
           "различать календарный период и возраст когорты."
@@ -4884,7 +4892,9 @@ export const modules = [
         "example": "WITH ranked AS (\n  SELECT *,\n         ROW_NUMBER() OVER (\n           PARTITION BY order_id\n           ORDER BY updated_at DESC, event_id DESC\n         ) AS rn\n  FROM order_status_history\n)\nSELECT *\nFROM ranked\nWHERE rn = 1;",
         "note": "Сначала сформулируй бизнес-правило выбора победителя. DISTINCT не умеет выбирать самую актуальную запись.",
         "simple": "Дедупликация — это выбор одной записи по явному бизнес-правилу, а не механическое DISTINCT.",
-        "practiceIds": [],
+        "practiceIds": [
+          "e84"
+        ],
         "outcomes": [
           "Выбирать одну запись на сущность через ROW_NUMBER",
           "задавать устойчивую сортировку."
@@ -4937,7 +4947,9 @@ export const modules = [
         "example": "SELECT COUNT(*) AS rows_total,\n       COUNT(DISTINCT order_id) AS unique_orders,\n       COUNT(*) - COUNT(DISTINCT order_id) AS extra_rows\nFROM orders;",
         "note": "Контрольные запросы должны проверять предположения о данных, на которых основан основной отчёт.",
         "simple": "Проверка качества данных формулируется как утверждение, которое должно быть истинным.",
-        "practiceIds": [],
+        "practiceIds": [
+          "e85"
+        ],
         "outcomes": [
           "Создавать проверки уникальности, NULL и согласованности сумм",
           "объяснять, что именно подтверждает каждая проверка."
@@ -4962,7 +4974,9 @@ export const modules = [
         "simple": "Retention — доля исходной когорты, которая активна в последующем периоде.",
         "example": "WITH cohort AS (\n  SELECT user_id, MIN(event_date) AS first_day\n  FROM events\n  GROUP BY user_id\n)\nSELECT first_day, COUNT(*) AS cohort_size\nFROM cohort\nGROUP BY first_day;",
         "note": "Не меняй определение активности между когортами. Знаменатель и календарь должны быть одинаковыми.",
-        "practiceIds": [],
+        "practiceIds": [
+          "e86"
+        ],
         "outcomes": [
           "Определять размер когорты и активных пользователей",
           "объяснить формулу retention и выбор периода."
@@ -4987,7 +5001,9 @@ export const modules = [
         "simple": "Медиана — P50. P90 показывает границу, ниже которой находится около 90% значений.",
         "example": "SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY delivery_minutes) AS median_minutes,\n       percentile_cont(0.9) WITHIN GROUP (ORDER BY delivery_minutes) AS p90_minutes\nFROM deliveries;",
         "note": "Уточняй, нужен интерполированный percentile_cont или фактическое наблюдение percentile_disc.",
-        "practiceIds": [],
+        "practiceIds": [
+          "e87"
+        ],
         "outcomes": [
           "Рассчитывать медиану и перцентили",
           "объяснить, чем они отличаются от среднего."
@@ -5012,7 +5028,9 @@ export const modules = [
         "simple": "Семь строк — не всегда семь дней. Определи, окно считается по записям или по календарному времени.",
         "example": "SELECT day, orders_count,\n       SUM(orders_count) OVER (\n         ORDER BY day\n         ROWS BETWEEN 6 PRECEDING AND CURRENT ROW\n       ) AS rolling_7_rows\nFROM daily_orders;",
         "note": "Перед названием «за 7 дней» убедись, что данные содержат одну строку на каждый календарный день без пропусков.",
-        "practiceIds": [],
+        "practiceIds": [
+          "e88"
+        ],
         "outcomes": [
           "Строить скользящие суммы",
           "отличать ROWS по числу строк от временного окна по календарю."
@@ -5037,7 +5055,9 @@ export const modules = [
         "simple": "PARTITION BY определяет, внутри какой группы рассчитывается знаменатель доли.",
         "example": "WITH store_revenue AS (\n  SELECT DATE_TRUNC('month', created_at) AS month,\n         store_id,\n         SUM(total_amount) AS revenue\n  FROM orders\n  GROUP BY 1, 2\n)\nSELECT month, store_id, revenue,\n       revenue / SUM(revenue) OVER (PARTITION BY month) AS share_in_month\nFROM store_revenue;",
         "note": "Если нужен процент, умножь долю на 100 и выбери тип с достаточной точностью. Убедись, что знаменатель соответствует нужной группе.",
-        "practiceIds": [],
+        "practiceIds": [
+          "e89"
+        ],
         "outcomes": [
           "Считать долю от общего итога и внутри группы",
           "выбирать правильный PARTITION BY."
@@ -6409,6 +6429,196 @@ export const exercises = [
       ],
       "answer": 0,
       "explanation": "Календарные месяцы имеют разную длину. Поэтому месяц нельзя считать фиксированными 30 днями."
+    }
+  },
+  {
+    "id": "e80",
+    "mode": "select",
+    "m": "windows",
+    "title": "Сравни заказ со средним чеком клиента",
+    "task": "Для каждого заказа покажи его сумму и среднюю сумму всех заказов того же клиента. Не сворачивай заказы в одну строку на клиента.",
+    "solution": "SELECT order_id, customer_id, total_amount, AVG(total_amount) OVER (PARTITION BY customer_id) AS customer_avg FROM orders ORDER BY customer_id, order_id;",
+    "quiz": {
+      "question": "Почему здесь подходит оконный AVG, а не обычный GROUP BY?",
+      "options": [
+        "Нужно сохранить каждую строку заказа и добавить к ней среднее по клиенту",
+        "GROUP BY не умеет считать среднее",
+        "Оконные функции всегда быстрее",
+        "AVG нельзя использовать с GROUP BY"
+      ],
+      "answer": 0,
+      "explanation": "Оконный агрегат вычисляет среднее внутри раздела, но сохраняет строки отдельных заказов."
+    }
+  },
+  {
+    "id": "e81",
+    "mode": "select",
+    "m": "windows",
+    "title": "Доля магазина в выручке города",
+    "task": "Рассчитай выручку каждого магазина и покажи, какую долю она составляет от выручки всех магазинов того же города.",
+    "solution": "WITH store_revenue AS (SELECT s.store_id, s.store_name, s.city, SUM(o.total_amount) AS revenue FROM stores s JOIN orders o ON o.store_id = s.store_id GROUP BY s.store_id, s.store_name, s.city) SELECT store_name, city, revenue, ROUND(100.0 * revenue / NULLIF(SUM(revenue) OVER (PARTITION BY city), 0), 2) AS city_share_pct FROM store_revenue ORDER BY city, store_name;",
+    "quiz": {
+      "question": "Что изменится, если убрать PARTITION BY city из оконной суммы?",
+      "options": [
+        "Знаменателем станет выручка всех магазинов, а не только магазинов города",
+        "Запрос перестанет выполняться",
+        "Будет рассчитано среднее значение",
+        "Каждый магазин станет отдельной группой"
+      ],
+      "answer": 0,
+      "explanation": "PARTITION BY city задаёт отдельный общий итог для каждого города."
+    }
+  },
+  {
+    "id": "e82",
+    "mode": "select",
+    "m": "windows",
+    "title": "Увидь разницу между ROWS и RANGE",
+    "task": "На небольшом наборе из трёх событий сравни накопительную сумму по физическим строкам и по одинаковым датам. Покажи, почему две строки одной даты могут получить разные или одинаковые промежуточные итоги.",
+    "solution": "WITH sample(event_id, event_day, amount) AS (VALUES (1, DATE '2026-01-01', 10), (2, DATE '2026-01-01', 20), (3, DATE '2026-01-02', 5)) SELECT event_id, event_day, amount, SUM(amount) OVER (ORDER BY event_day, event_id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS rows_total, SUM(amount) OVER (ORDER BY event_day RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS range_total FROM sample ORDER BY event_day, event_id;",
+    "quiz": {
+      "question": "Почему две строки с одной датой могут иметь одинаковый RANGE-итог?",
+      "options": [
+        "Они являются peers по ключу сортировки и входят в одну рамку RANGE",
+        "RANGE игнорирует сумму",
+        "RANGE всегда считает только текущую строку",
+        "Потому что event_id автоматически удаляется"
+      ],
+      "answer": 0,
+      "explanation": "RANGE ориентируется на значения ключа сортировки. Строки с одинаковой датой являются peers и могут попасть в одну рамку."
+    }
+  },
+  {
+    "id": "e83",
+    "mode": "select",
+    "m": "analytics",
+    "title": "Построй базовую таблицу когорт",
+    "task": "Определи месяц первого заказа каждого клиента и посчитай, сколько клиентов вошло в каждую месячную когорту.",
+    "solution": "WITH first_orders AS (SELECT customer_id, MIN(DATE_TRUNC('month', created_at::timestamp)) AS cohort_month FROM orders GROUP BY customer_id) SELECT cohort_month, COUNT(*) AS customers_in_cohort FROM first_orders GROUP BY cohort_month ORDER BY cohort_month;",
+    "quiz": {
+      "question": "Почему для определения когорты используется MIN по дате первого заказа?",
+      "options": [
+        "Когорта фиксирует момент первого целевого события клиента",
+        "MIN быстрее COUNT",
+        "Когорта должна содержать только последний заказ",
+        "Потому что дата регистрации всегда совпадает с первой покупкой"
+      ],
+      "answer": 0,
+      "explanation": "Клиент относится к когорте по периоду первого целевого события, а не по каждому последующему заказу."
+    }
+  },
+  {
+    "id": "e84",
+    "mode": "select",
+    "m": "analytics",
+    "title": "Оставь последнее событие каждого заказа",
+    "task": "Для каждого заказа найди последнее зарегистрированное событие. Если у нескольких событий совпадает время, выбери запись с наибольшим идентификатором события.",
+    "solution": "WITH ranked_events AS (SELECT event_id, order_id, event_type, event_at, ROW_NUMBER() OVER (PARTITION BY order_id ORDER BY event_at DESC, event_id DESC) AS rn FROM order_events) SELECT event_id, order_id, event_type, event_at FROM ranked_events WHERE rn = 1 ORDER BY order_id;",
+    "quiz": {
+      "question": "Зачем в сортировке ROW_NUMBER добавлен event_id?",
+      "options": [
+        "Чтобы выбор был детерминированным при одинаковом event_at",
+        "Чтобы удалить все события с одинаковым временем",
+        "Чтобы сгруппировать события по типу",
+        "Чтобы заменить PARTITION BY"
+      ],
+      "answer": 0,
+      "explanation": "Уникальный дополнительный критерий разрешает ничьи и делает выбор последней строки предсказуемым."
+    }
+  },
+  {
+    "id": "e85",
+    "mode": "select",
+    "m": "analytics",
+    "title": "Проверь долю неназначенных заказов",
+    "task": "Для каждого статуса рассчитай общее количество заказов, число заказов без назначенного сотрудника и долю таких заказов в процентах.",
+    "solution": "SELECT status, COUNT(*) AS orders_count, COUNT(*) FILTER (WHERE employee_id IS NULL) AS unassigned_count, ROUND(100.0 * COUNT(*) FILTER (WHERE employee_id IS NULL) / NULLIF(COUNT(*), 0), 2) AS unassigned_pct FROM orders GROUP BY status ORDER BY status;",
+    "quiz": {
+      "question": "Почему для доли используется NULLIF(COUNT(*), 0)?",
+      "options": [
+        "Чтобы избежать деления на ноль в группе без строк",
+        "Чтобы заменить все NULL на ноль",
+        "Чтобы удалить пустые статусы",
+        "Чтобы COUNT учитывал только уникальные заказы"
+      ],
+      "answer": 0,
+      "explanation": "NULLIF защищает знаменатель от нуля. В данном наборе группы непустые, но при переиспользовании логики это безопасная практика."
+    }
+  },
+  {
+    "id": "e86",
+    "mode": "select",
+    "m": "analytics",
+    "title": "Рассчитай когортный retention",
+    "task": "На встроенном наборе событий рассчитай для каждой когорты долю пользователей, активных в период 0, 1 и далее месяцев после первого события.",
+    "solution": "WITH events(user_id, event_month) AS (VALUES (1, DATE '2026-01-01'), (1, DATE '2026-02-01'), (2, DATE '2026-01-01'), (2, DATE '2026-03-01'), (3, DATE '2026-02-01'), (3, DATE '2026-03-01')), cohorts AS (SELECT user_id, MIN(event_month) AS cohort_month FROM events GROUP BY user_id), activity AS (SELECT DISTINCT user_id, event_month FROM events), cohort_activity AS (SELECT c.cohort_month, ((EXTRACT(YEAR FROM a.event_month) - EXTRACT(YEAR FROM c.cohort_month)) * 12 + EXTRACT(MONTH FROM a.event_month) - EXTRACT(MONTH FROM c.cohort_month))::int AS period_number, a.user_id FROM cohorts c JOIN activity a ON a.user_id = c.user_id AND a.event_month >= c.cohort_month), cohort_sizes AS (SELECT cohort_month, COUNT(*) AS cohort_size FROM cohorts GROUP BY cohort_month) SELECT ca.cohort_month, ca.period_number, COUNT(DISTINCT ca.user_id) AS active_users, cs.cohort_size, ROUND(100.0 * COUNT(DISTINCT ca.user_id) / cs.cohort_size, 2) AS retention_pct FROM cohort_activity ca JOIN cohort_sizes cs USING (cohort_month) GROUP BY ca.cohort_month, ca.period_number, cs.cohort_size ORDER BY ca.cohort_month, ca.period_number;",
+    "quiz": {
+      "question": "Что является знаменателем retention для каждой когорты?",
+      "options": [
+        "Размер исходной когорты",
+        "Количество всех событий за месяц",
+        "Количество пользователей, активных в последнем месяце",
+        "Число строк в таблице events"
+      ],
+      "answer": 0,
+      "explanation": "Retention показывает долю активных пользователей от исходного размера когорты."
+    }
+  },
+  {
+    "id": "e87",
+    "mode": "select",
+    "m": "analytics",
+    "title": "Сравни медиану и P90 суммы заказа",
+    "task": "Для каждого статуса заказа рассчитай медианную сумму и 90-й перцентиль суммы. Используй непрерывный перцентиль.",
+    "solution": "SELECT status, percentile_cont(0.5) WITHIN GROUP (ORDER BY total_amount) AS median_amount, percentile_cont(0.9) WITHIN GROUP (ORDER BY total_amount) AS p90_amount FROM orders GROUP BY status ORDER BY status;",
+    "quiz": {
+      "question": "Чем percentile_cont отличается от percentile_disc?",
+      "options": [
+        "percentile_cont может интерполировать значение, percentile_disc возвращает наблюдаемое значение",
+        "percentile_disc всегда возвращает среднее",
+        "percentile_cont работает только с целыми числами",
+        "Они всегда возвращают одинаковый результат"
+      ],
+      "answer": 0,
+      "explanation": "Непрерывный перцентиль может вернуть интерполированное значение между наблюдениями."
+    }
+  },
+  {
+    "id": "e88",
+    "mode": "select",
+    "m": "analytics",
+    "title": "Рассчитай скользящее среднее за три дня",
+    "task": "Построй непрерывный календарь с 10 по 15 января 2026 года, рассчитай число заказов за каждый день и скользящее среднее за текущий и два предыдущих дня. Дни без заказов должны учитываться как нулевые.",
+    "solution": "WITH calendar AS (SELECT generate_series(DATE '2026-01-10', DATE '2026-01-15', INTERVAL '1 day')::date AS day), daily AS (SELECT created_at, COUNT(*) AS orders_count FROM orders GROUP BY created_at), series AS (SELECT c.day, COALESCE(d.orders_count, 0) AS orders_count FROM calendar c LEFT JOIN daily d ON d.created_at = c.day) SELECT day, orders_count, ROUND(AVG(orders_count) OVER (ORDER BY day ROWS BETWEEN 2 PRECEDING AND CURRENT ROW), 2) AS moving_avg_3d FROM series ORDER BY day;",
+    "quiz": {
+      "question": "Почему перед оконным AVG создаётся календарная сетка?",
+      "options": [
+        "Чтобы окно из трёх строк соответствовало трём календарным дням даже при отсутствии заказов",
+        "Чтобы AVG игнорировал нули",
+        "Чтобы сортировка была необязательной",
+        "Чтобы создать по одной строке на заказ"
+      ],
+      "answer": 0,
+      "explanation": "Без календаря пропущенные дни исчезнут, и три строки могут охватывать больше трёх календарных дней."
+    }
+  },
+  {
+    "id": "e89",
+    "mode": "select",
+    "m": "analytics",
+    "title": "Рассчитай долю магазина в городе и в общей выручке",
+    "task": "Сначала рассчитай выручку каждого магазина. Затем для каждого магазина покажи долю от выручки его города и долю от общей выручки всех магазинов.",
+    "solution": "WITH store_revenue AS (SELECT s.store_id, s.store_name, s.city, SUM(o.total_amount) AS revenue FROM stores s JOIN orders o ON o.store_id = s.store_id GROUP BY s.store_id, s.store_name, s.city) SELECT store_name, city, revenue, ROUND(100.0 * revenue / NULLIF(SUM(revenue) OVER (PARTITION BY city), 0), 2) AS city_share_pct, ROUND(100.0 * revenue / NULLIF(SUM(revenue) OVER (), 0), 2) AS total_share_pct FROM store_revenue ORDER BY city, store_name;",
+    "quiz": {
+      "question": "Как получить долю магазина от общего итога, а не от города?",
+      "options": [
+        "Использовать оконную сумму OVER () без PARTITION BY",
+        "Добавить PARTITION BY store_id",
+        "Заменить SUM на COUNT",
+        "Удалить предварительную агрегацию"
+      ],
+      "answer": 0,
+      "explanation": "Пустое OVER () считает общий итог по всем строкам результата без разделения на группы."
     }
   }
 ];

@@ -13,11 +13,11 @@ assert.ok(curriculumSource.includes('];\n\nexport const exercises = ['), 'Module
 assert.ok(Array.isArray(glossary) && glossary.length >= 30, 'Glossary must contain at least 30 usable terms');
 assert.ok(Array.isArray(reference) && reference.length >= 8, 'SQL quick reference must contain usable topic groups');
 assert.ok(exercises.every(exercise => ['select','explain','mutation','transaction'].includes(exercise.mode)), 'Every exercise must have a supported explicit mode');
-assert.equal(exercises.filter(exercise => exercise.mode === 'select').length, 67, 'Expected 67 SELECT exercises');
+assert.equal(exercises.filter(exercise => exercise.mode === 'select').length, 77, 'Expected 77 SELECT exercises');
 assert.equal(exercises.filter(exercise => exercise.mode === 'explain').length, 1, 'Expected one EXPLAIN exercise');
 assert.equal(exercises.filter(exercise => exercise.mode === 'mutation').length, 8, 'Expected eight mutation exercises');
 assert.equal(exercises.filter(exercise => exercise.mode === 'transaction').length, 3, 'Expected three transaction exercises');
-assert.equal(exercises.length, 79, 'Expected 79 total practice exercises');
+assert.equal(exercises.length, 89, 'Expected 89 total practice exercises');
 assert.equal(exercises.filter(exercise => exercise.mode === 'mutation').length, 8, 'Expected eight mutation exercises');
 assert.equal(exercises.filter(exercise => exercise.mode === 'transaction').length, 3, 'Expected three transaction exercises');
 assert.ok(exercises.every(exercise => modules.some(module => module.id === exercise.m)), 'Every exercise must belong to a real module');
@@ -90,7 +90,14 @@ assert.equal(datetimeModule.lessons.length, 7, 'Date/time module must contain se
 assert.ok(datetimeModule.lessons.every(lesson => (lesson.practiceIds || []).length > 0), 'Every date/time lesson must link to at least one relevant practice task');
 assert.deepEqual(datetimeModule.lessons.flatMap(lesson => lesson.practiceIds || []).sort(), ['e72','e73','e74','e75','e76','e77','e78','e79'].sort(), 'Date/time lessons must link all eight dedicated practice tasks exactly once');
 assert.ok(exercises.filter(exercise => exercise.m === 'datetime').every(exercise => exercise.quiz?.options?.length === 4 && exercise.quiz.explanation), 'Date/time practice tasks must include a concept check');
-assert.ok(appSource.includes("curriculum.js?v=20261107-10") && appSource.includes("sql-utils.js?v=20261107-10"), 'Application module dependencies must use the current cache version');
+assert.ok(appSource.includes("curriculum.js?v=20261107-11") && appSource.includes("sql-utils.js?v=20261107-10"), 'Application module dependencies must use the current cache version');
+
+
+const windowModule = modules.find(module => module.id === 'windows');
+assert.deepEqual(windowModule.lessons.flatMap(lesson => lesson.practiceIds || []).sort(), ['e35','e36','e39','e37','e38','e80','e81','e82'].sort(), 'Window-function lessons must link their eight dedicated practice tasks exactly once');
+const analyticsModule = modules.find(module => module.id === 'analytics');
+assert.deepEqual(analyticsModule.lessons.flatMap(lesson => lesson.practiceIds || []).sort(), ['e42','e43','e40','e41','e56','e83','e84','e85','e86','e87','e88','e89'].sort(), 'Analytics lessons must link all twelve dedicated practice tasks exactly once');
+assert.ok([...windowModule.lessons,...analyticsModule.lessons].filter(lesson => lesson.practiceIds?.length).every(lesson => lesson.practiceIds.every(id => exercises.some(exercise => exercise.id === id && exercise.m === (windowModule.lessons.includes(lesson) ? 'windows' : 'analytics')))), 'Window and analytics practice links must belong to their lesson module');
 
 const relationalModule = modules.find(module => module.id === 'relational');
 assert.ok(relationalModule.lessons.some(lesson => lesson.title === 'Реляционная модель и особенности SQL-таблиц' && lesson.body.includes('мультимножествами') && lesson.body.includes('ORDER BY')), 'Relational foundations must distinguish SQL bag semantics from relation sets');
