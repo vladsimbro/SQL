@@ -161,6 +161,11 @@ assert.ok(windowQualityModule.lessons.find(lesson => lesson.title === 'LAG и LE
 assert.ok(windowQualityModule.lessons.find(lesson => lesson.title === 'ROWS и RANGE: две разные оконные рамки').exampleResult.rows[0][3] !== windowQualityModule.lessons.find(lesson => lesson.title === 'ROWS и RANGE: две разные оконные рамки').exampleResult.rows[0][4], 'ROWS and RANGE example must expose peer-row behavior');
 const analyticsQualityModule = modules.find(module => module.id === 'analytics');
 assert.equal(analyticsQualityModule.lessons.find(lesson => lesson.title === 'Сравнение периодов: MoM, WoW и YoY').exampleResult.rows.length, 3, 'Period comparison example must include the missing month and zero-denominator case');
+const selectModule = modules.find(module => module.id === 'select');
+assert.ok(selectModule.lessons.find(lesson => lesson.title === 'DISTINCT ON в PostgreSQL').example.includes('order_id DESC'), 'DISTINCT ON must define a deterministic tie-breaker');
+const sortingModule = modules.find(module => module.id === 'sorting');
+assert.ok(sortingModule.lessons.find(lesson => lesson.title === 'Keyset pagination').example.includes("TIMESTAMP '2026-01-12 00:00:00'"), 'Keyset example must use a timestamp literal matching the sample column type');
+assert.ok(!modules.find(module => module.id === 'anatomy').lessons.find(lesson => lesson.title === 'Логический порядок обработки').example.includes('--'), 'Logical query-order example must not duplicate the explanation with SQL comments');
 const aggregateModule = modules.find(module => module.id === 'aggregates');
 assert.ok(aggregateModule.lessons.find(lesson => lesson.title === 'Агрегатные функции').body.includes('COUNT(DISTINCT employee_id)'), 'Aggregate lesson must distinguish row, non-null and distinct-value counts');
 assert.ok(aggregateModule.lessons.find(lesson => lesson.title === 'GROUP BY и зерно результата').body.includes('COUNT(o.order_id)'), 'GROUP BY lesson must explain COUNT(*) versus COUNT(right_key) after LEFT JOIN');
