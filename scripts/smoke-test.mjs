@@ -215,7 +215,7 @@ try {
     for (const module of modules) {
       for (const lesson of module.lessons) {
         const example = lesson.example || '';
-        if (!example.trim() || /pg_stat_statements|^\\s*psql\\b|CREATE\\s+(OR\\s+REPLACE\\s+)?(TEMP(ORARY)?\\s+)?TABLE|CREATE\\s+(OR\\s+REPLACE\\s+)?VIEW|CREATE\\s+(OR\\s+REPLACE\\s+)?FUNCTION|CREATE\\s+TRIGGER/i.test(example)) continue;
+        if (!example.trim() || /pg_stat_statements|^\s*psql\b|CREATE\s+(OR\s+REPLACE\s+)?(TEMP(ORARY)?\s+)?TABLE|CREATE\s+(OR\s+REPLACE\s+)?VIEW|CREATE\s+(OR\s+REPLACE\s+)?FUNCTION|CREATE\s+TRIGGER/i.test(example)) continue;
         const statements = sqlLexer.splitStatements(example);
         if (!statements.length || statements.some(statement => !['SELECT','WITH','EXPLAIN'].includes(sqlLexer.firstSqlKeyword(statement)))) continue;
         for (const statement of statements) {
