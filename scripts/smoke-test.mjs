@@ -10,7 +10,7 @@ const sqlUtilsSource = await readFile(new URL('../sql-utils.js', import.meta.url
 const htmlSource = await readFile(new URL('../index.html', import.meta.url), 'utf8');
 const cssSource = await readFile(new URL('../styles.css', import.meta.url), 'utf8');
 const buildVersion = JSON.parse(await readFile(new URL('../version.json', import.meta.url), 'utf8')).build;
-const importedAssetVersions = [...appSource.matchAll(/from\\s+['\"]\\.\\/[^'\"]+\\.js\\?v=([^'\"]+)['\"]/g)].map(match => match[1]);
+const importedAssetVersions = [...appSource.matchAll(/from\s+['"]\.\/[^'"]+\.js\?v=([^'"]+)['"]/g)].map(match => match[1]);
 assert.equal(importedAssetVersions.length, 3, 'Application must import all three local modules with cache versions');
 assert.ok(importedAssetVersions.every(version => version === buildVersion), 'Local JavaScript imports must use the current release build to avoid stale cached curriculum and SQL utilities');
 assert.ok(curriculumSource.includes('export const exercises = ['), 'Practice exercises must be exported as a named dataset');
