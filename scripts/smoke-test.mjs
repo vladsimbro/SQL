@@ -166,6 +166,14 @@ assert.ok(selectModule.lessons.find(lesson => lesson.title === 'DISTINCT ON в P
 const sortingModule = modules.find(module => module.id === 'sorting');
 assert.ok(sortingModule.lessons.find(lesson => lesson.title === 'Keyset pagination').example.includes("TIMESTAMP '2026-01-12 00:00:00'"), 'Keyset example must use a timestamp literal matching the sample column type');
 assert.ok(!modules.find(module => module.id === 'anatomy').lessons.find(lesson => lesson.title === 'Логический порядок обработки').example.includes('--'), 'Logical query-order example must not duplicate the explanation with SQL comments');
+const selectModule = modules.find(module => module.id === 'select');
+assert.equal(selectModule.lessons.find(lesson => lesson.title === 'DISTINCT ON в PostgreSQL').exampleResult.rows.length, 4, 'DISTINCT ON example must return one latest order per customer with deterministic tie-breaking');
+const sortingModule = modules.find(module => module.id === 'sorting');
+assert.equal(sortingModule.lessons.find(lesson => lesson.title === 'Keyset pagination').exampleResult.rows.length, 4, 'Keyset cursor must continue strictly after the supplied composite key');
+assert.ok(sortingModule.lessons.find(lesson => lesson.title === 'Keyset pagination').example.includes("DATE '2026-01-12'"), 'Keyset cursor literal must match the DATE column type in the teaching schema');
+const rollupLesson = modules.find(module => module.id === 'aggregates').lessons.find(lesson => lesson.title === 'GROUPING SETS, ROLLUP и CUBE');
+assert.equal(rollupLesson.exampleResult.rows.length, 13, 'ROLLUP example must include detail groups, subtotals and the grand total');
+assert.deepEqual(rollupLesson.exampleResult.rows.at(-1), [null, null, 21390, 1, 1], 'GROUPING flags must identify the grand total separately from source NULL values');
 const subqueryModule = modules.find(module => module.id === 'subqueries');
 assert.ok(subqueryModule.lessons.find(lesson => lesson.title === 'Коррелированные подзапросы').example.includes('c.customer_id'), 'Correlated subquery must reference the current outer row');
 assert.equal(subqueryModule.lessons.find(lesson => lesson.title === 'Коррелированные подзапросы').exampleResult.rows.filter(row => row[2] === null).length, 5, 'Scalar correlated subquery must preserve customers without orders');
