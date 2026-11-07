@@ -222,6 +222,9 @@ const transactionQualityModule = modules.find(module => module.id === 'constrain
 assert.ok(transactionQualityModule.lessons.find(lesson => lesson.title === 'ACID').example.includes('ON COMMIT DROP'), 'ACID example must clean up its temporary teaching table');
 assert.ok(transactionQualityModule.lessons.find(lesson => lesson.title === 'SAVEPOINT и частичный откат').example.includes('ROLLBACK TO SAVEPOINT'), 'Savepoint example must demonstrate a partial rollback');
 const aggregateModule = modules.find(module => module.id === 'aggregates');
+assert.deepEqual(aggregateModule.lessons.find(lesson => lesson.title === 'DISTINCT внутри агрегатов').exampleResult.rows, [[3,4000,3000]], 'SUM(DISTINCT amount) must demonstrate lost revenue when two orders share an amount');
+assert.ok(aggregateModule.lessons.find(lesson => lesson.title === 'DISTINCT внутри агрегатов').body.includes('дедуплицируй по order_id'), 'Aggregate DISTINCT lesson must direct entity deduplication to the business key');
+
 assert.ok(aggregateModule.lessons.find(lesson => lesson.title === 'Агрегатные функции').body.includes('COUNT(DISTINCT employee_id)'), 'Aggregate lesson must distinguish row, non-null and distinct-value counts');
 assert.ok(aggregateModule.lessons.find(lesson => lesson.title === 'GROUP BY и зерно результата').body.includes('COUNT(o.order_id)'), 'GROUP BY lesson must explain COUNT(*) versus COUNT(right_key) after LEFT JOIN');
 assert.ok(aggregateModule.lessons.find(lesson => lesson.title === 'Условная агрегация и FILTER').body.includes('только для того агрегата'), 'FILTER lesson must explain its local scope');
