@@ -155,7 +155,7 @@ function tokenIsContextual(token, source, index) {
   if(token==='BY') return ['GROUP','ORDER','PARTITION'].includes(previous);
   if(token==='GROUP'||token==='ORDER'||token==='PARTITION') return /^\s+BY\b/i.test(after);
   if(token==='LEFT'||token==='RIGHT'||token==='FULL'||token==='INNER'||token==='CROSS') return /^\s+JOIN\b/i.test(after);
-  if(token==='ON') return /\bJOIN\s+[\w."]+\s*$/i.test(before) || /\bCREATE\s+(?:UNIQUE\s+)?INDEX\b[\s\S]*$/i.test(before);
+  if(token==='ON') return /\bJOIN\b[\s\S]*$/i.test(before) || /\bCREATE\s+(?:UNIQUE\s+)?INDEX\b[\s\S]*$/i.test(before);
   if(token==='INTO') return previous==='INSERT';
   if(token==='ALL') return previous==='UNION';
   if(token==='SET') return /\bUPDATE\s+[\w."]+\s*$/i.test(before);
