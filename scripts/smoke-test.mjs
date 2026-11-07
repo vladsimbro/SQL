@@ -168,7 +168,7 @@ for (const id of ['e46','e101','e102']) {
   const exercise = exercises.find(item => item.id === id);
   assert.ok(exercise && exercise.mode === 'explain', `EXPLAIN exercise ${id} must exist`);
   assert.ok(exercise.requiredPatterns?.length, `EXPLAIN exercise ${id} must validate its requested query`);
-  const query = exercise.solution.replace(/^EXPLAIN\\s+/i, '');
+  const query = exercise.solution.replace(/^EXPLAIN\s+/i, '');
   assert.ok(exercise.requiredPatterns.every(pattern => new RegExp(pattern, 'i').test(query)), `Reference query for ${id} must satisfy every required pattern`);
   assert.ok(exercise.requiredPatterns.some(pattern => !new RegExp(pattern, 'i').test('SELECT 1')), `EXPLAIN exercise ${id} must reject an unrelated query`);
 }
