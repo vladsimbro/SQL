@@ -143,6 +143,7 @@ const sqlTokenTips = {
   COUNT:'Считает строки или не-NULL значения аргумента.', SUM:'Считает сумму значений.', AVG:'Вычисляет среднее арифметическое.', MIN:'Возвращает минимум.', MAX:'Возвращает максимум.', COALESCE:'Возвращает первый аргумент, который не равен NULL.', NULLIF:'Возвращает NULL, если аргументы равны.', LAG:'Берёт значение из предыдущей строки окна.', LEAD:'Берёт значение из следующей строки окна.', ROW_NUMBER:'Нумерует строки внутри окна без пропусков.', RANK:'Ранжирует значения с пропусками после совпадений.', DENSE_RANK:'Ранжирует значения без пропусков.', NTILE:'Распределяет строки окна по приблизительно равным группам.', DATE_TRUNC:'Округляет дату или время до календарной единицы.', CURRENT_DATE:'Возвращает текущую дату.', CURRENT_TIMESTAMP:'Возвращает текущие дату и время с часовым поясом сессии.', INTERVAL:'Задаёт промежуток времени.'
 };
 function lessonFocusTokens(lesson) {
+  if(Array.isArray(lesson?.tipTokens)) return new Set(lesson.tipTokens.map(token=>String(token).toUpperCase()));
   const title=String(lesson?.title||'').toLowerCase();
   const simple=String(lesson?.simple||'').toLowerCase();
   const topic=title+' '+simple;
@@ -284,10 +285,10 @@ function renderWorkedExample(w) {
   return '<section class="worked-example"><div class="eyebrow">РАЗОБРАННЫЙ СЦЕНАРИЙ</div><h3>'+esc(w.title||'Пройдём пример по шагам')+'</h3><p class="worked-scenario">'+esc(w.scenario)+'</p><ol class="worked-steps">'+w.steps.map(step=>'<li>'+esc(step)+'</li>').join('')+'</ol><div class="worked-result"><strong>Что должно получиться</strong><p>'+esc(w.result||'')+'</p></div>'+(w.pitfall?'<div class="worked-pitfall"><strong>Типичная ошибка</strong><p>'+esc(w.pitfall)+'</p></div>':'')+'</section>';
 }
 function lessonBody(l,m) {
-  const simple=l.simple?`<div class="plain-language"><strong>Коротко</strong><p>${esc(l.simple)}</p></div>`:'';
+  const simple=l.showSimple&&l.simple?`<div class="plain-language"><strong>Коротко</strong><p>${esc(l.simple)}</p></div>`:'';
   const explanation=(l.body||'').split(/\n\s*\n/).filter(Boolean).map(paragraph=>`<p>${esc(paragraph)}</p>`).join('');
   const sources=(m.sources||[]).map((url,i)=>`<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">Документация PostgreSQL ${i+1} ↗</a>`).join(' · ');
-  return `<div class="lesson-explanation">${explanation}</div>${simple}${renderWorkedExample(l.walkthrough)}<h2>Разберём на примере</h2><div class="code-block"><div class="code-head"><span>POSTGRESQL</span><button class="btn small" data-copy-code>Копировать</button></div><pre>${renderAnnotatedSql(l.example,l)}</pre></div>${renderExampleResult(l)}${renderExampleBreakdown(l.example,l)}<div class="note-box"><strong>Важно:</strong> ${esc(l.note)}</div><div class="lesson-sources"><strong>Первоисточники:</strong> ${sources}</div>`;
+  return `<div class="lesson-explanation">${explanation}</div>${simple}${renderWorkedExample(l.walkthrough)}<h2>Разберём на примере</h2><div class="code-block"><div class="code-head"><span>POSTGRESQL</span><button class="btn small" data-copy-code>Копировать</button></div><pre>${renderAnnotatedSql(l.example,l)}</pre></div>${renderExampleResult(l)}${l.note?`<div class="note-box"><strong>Важно:</strong> ${esc(l.note)}</div>`:''}${sources?`<div class="lesson-sources"><strong>Первоисточники:</strong> ${sources}</div>`:''}`;
 }
 function renderLessonQuiz(l) {
  const bank=l.quiz||[];if(!bank.length)return '';
