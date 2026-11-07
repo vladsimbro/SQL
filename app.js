@@ -1,6 +1,6 @@
-import { modules, learningTracks, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261107-72';
-import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261107-72';
-import { firstSqlKeyword, explainStatementKeyword, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261107-72';
+import { modules, learningTracks, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261107-73';
+import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261107-73';
+import { firstSqlKeyword, explainStatementKeyword, explainStatementBody, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261107-73';
 
 const $ = (s, root=document) => root.querySelector(s);
 const $$ = (s, root=document) => [...root.querySelectorAll(s)];
@@ -493,7 +493,7 @@ async function checkExercise() {
     const started=performance.now();
     if(ex.mode==='explain') {
       if(firstSqlKeyword(parts[0])!=='EXPLAIN' || !['SELECT','WITH'].includes(explainStatementKeyword(parts[0]))) throw new Error('Для этой задачи используй EXPLAIN перед SELECT или WITH ... SELECT.');
-      const explainQuery=parts[0].replace(/^EXPLAIN(?:\s*\([^)]*\))?\s*/i,'');
+      const explainQuery=explainStatementBody(parts[0]);
       if((ex.requiredPatterns||[]).some(pattern=>!new RegExp(pattern,'i').test(explainQuery))) throw new Error(ex.requirementsMessage||'Запрос не соответствует условию задания. Проверь таблицы, выбранные поля и фильтры.');
       const plan=await state.db.query(parts[0]);
       const elapsed=Math.round(performance.now()-started);
