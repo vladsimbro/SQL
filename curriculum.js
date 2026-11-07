@@ -2,7 +2,7 @@ export const modules = [
   {
     "id": "foundations",
     "title": "Фундамент: что такое SQL и база данных",
-    "stage": "01 · Основа",
+    "stage": "01 · Фундамент данных",
     "desc": "Разобраться, что именно мы изучаем, как устроена база данных и какую роль SQL играет в приложениях.",
     "lessons": [
       {
@@ -28,7 +28,8 @@ export const modules = [
             "answer": 1,
             "explanation": "СУБД — программа, которая управляет базой: хранением, проверками, параллельным доступом и выполнением SQL-команд."
           }
-        ]
+        ],
+        "id": "foundations.dannye-informatsiya-i-baza-dannykh"
       },
       {
         "title": "Зачем нужен SQL",
@@ -53,7 +54,8 @@ export const modules = [
             "answer": 1,
             "explanation": "SELECT читает данные. WHERE отбирает строки, а список после SELECT определяет столбцы результата."
           }
-        ]
+        ],
+        "id": "foundations.zachem-nuzhen-sql"
       },
       {
         "title": "Клиент, сервер и запрос",
@@ -78,7 +80,8 @@ export const modules = [
             "answer": 1,
             "explanation": "Connection refused возникает на этапе соединения. До разбора SELECT сервер, скорее всего, ещё не дошёл."
           }
-        ]
+        ],
+        "id": "foundations.klient-server-i-zapros"
       },
       {
         "title": "Диалекты SQL и стандарт",
@@ -103,7 +106,8 @@ export const modules = [
             "answer": 0,
             "explanation": "ILIKE — оператор PostgreSQL для сравнения текста без учёта регистра. В других СУБД обычно используют другие средства."
           }
-        ]
+        ],
+        "id": "foundations.dialekty-sql-i-standart"
       },
       {
         "title": "Установка PostgreSQL и первое подключение",
@@ -128,7 +132,8 @@ export const modules = [
             "answer": 1,
             "explanation": "current_database() возвращает имя текущей базы. current_user показывает роль, version() — сведения о сервере."
           }
-        ]
+        ],
+        "id": "foundations.ustanovka-postgresql-i-pervoe-podklyuchenie"
       }
     ],
     "quiz": [
@@ -179,12 +184,14 @@ export const modules = [
     ],
     "sources": [
       "https://www.postgresql.org/docs/current/tutorial.html"
-    ]
+    ],
+    "track": "core",
+    "trackOrder": 1
   },
   {
     "id": "relational",
     "title": "Реляционная модель и устройство таблиц",
-    "stage": "02 · Модель данных",
+    "stage": "01 · Фундамент данных",
     "desc": "Понять таблицы, строки, столбцы, ключи, связи и почему реляционная модель до сих пор основа аналитики.",
     "lessons": [
       {
@@ -223,7 +230,8 @@ export const modules = [
           ],
           "result": "Заказ будет представлен тремя строками. COUNT(*) посчитает позиции, а не уникальные заказы.",
           "pitfall": "Не называй результат «таблицей заказов», если в нём уже одна строка на позицию. Неверное описание зерна приводит к неверным агрегатам."
-        }
+        },
+        "id": "relational.zerno-dannykh-chto-predstavlyaet-odna-stroka"
       },
       {
         "title": "Таблица, строка и столбец",
@@ -248,7 +256,8 @@ export const modules = [
             "answer": 1,
             "explanation": "Строка представляет одну запись сущности. Для orders это обычно один заказ, но точное зерно нужно подтвердить схемой."
           }
-        ]
+        ],
+        "id": "relational.tablitsa-stroka-i-stolbets"
       },
       {
         "title": "Реляционная модель и особенности SQL-таблиц",
@@ -274,7 +283,8 @@ export const modules = [
             "answer": 1,
             "explanation": "Обычный SELECT не удаляет дубликаты. Для устранения повторяющихся значений нужен DISTINCT, а для сортировки — ORDER BY."
           }
-        ]
+        ],
+        "id": "relational.relyatsionnaya-model-i-osobennosti-sql-tablits"
       },
       {
         "title": "База данных, схема и таблица: уровни организации",
@@ -300,7 +310,8 @@ export const modules = [
             "answer": 1,
             "explanation": "В записи schema.table первая часть — схема, вторая — объект внутри неё. База данных выбирается при подключении отдельно."
           }
-        ]
+        ],
+        "id": "relational.baza-dannykh-skhema-i-tablitsa-urovni-organizatsii"
       },
       {
         "title": "Первичный ключ",
@@ -325,7 +336,8 @@ export const modules = [
             "answer": 1,
             "explanation": "Уникальность проверяется для пары целиком. Один order_id может повторяться для разных товаров, а product_id — в разных заказах."
           }
-        ]
+        ],
+        "id": "relational.pervichnyy-klyuch"
       },
       {
         "title": "Внешний ключ и связи",
@@ -350,7 +362,8 @@ export const modules = [
             "answer": 1,
             "explanation": "FOREIGN KEY не позволяет сохранить ссылку на отсутствующую родительскую запись, если ограничение не настроено иначе."
           }
-        ]
+        ],
+        "id": "relational.vneshniy-klyuch-i-svyazi"
       },
       {
         "title": "NULL и неизвестное значение",
@@ -390,7 +403,8 @@ export const modules = [
           ],
           "result": "Условие employee_id IS NULL найдёт все заказы без назначенного сотрудника.",
           "pitfall": "NOT IN тоже может вести себя неожиданно, если подзапрос возвращает NULL. Для антисоединения часто безопаснее NOT EXISTS."
-        }
+        },
+        "id": "relational.null-i-neizvestnoe-znachenie"
       },
       {
         "title": "Нормализация и дублирование",
@@ -415,7 +429,8 @@ export const modules = [
             "answer": 1,
             "explanation": "Если название хранится в одном месте, его изменение не требует обновлять каждую строку orders."
           }
-        ]
+        ],
+        "id": "relational.normalizatsiya-i-dublirovanie"
       },
       {
         "title": "Функциональные зависимости и нормальные формы",
@@ -440,7 +455,8 @@ export const modules = [
             "answer": 1,
             "explanation": "Уникальный store_id однозначно определяет остальные атрибуты конкретного магазина, включая store_name."
           }
-        ]
+        ],
+        "id": "relational.funktsionalnye-zavisimosti-i-normalnye-formy"
       },
       {
         "title": "Связи многие-ко-многим и таблицы-связки",
@@ -465,7 +481,8 @@ export const modules = [
             "answer": 2,
             "explanation": "Количество зависит не только от товара и не только от заказа, а от конкретной позиции товара в конкретном заказе."
           }
-        ]
+        ],
+        "id": "relational.svyazi-mnogie-ko-mnogim-i-tablitsy-svyazki"
       }
     ],
     "quiz": [
@@ -517,12 +534,14 @@ export const modules = [
     "sources": [
       "https://www.postgresql.org/docs/current/ddl.html",
       "https://www.postgresql.org/docs/current/ddl-constraints.html"
-    ]
+    ],
+    "track": "core",
+    "trackOrder": 2
   },
   {
     "id": "types",
     "title": "Типы данных, значения и проектирование",
-    "stage": "03 · Типы данных",
+    "stage": "01 · Фундамент данных",
     "desc": "Научиться понимать типы, точность, даты, строки, логические значения и преобразования.",
     "lessons": [
       {
@@ -548,7 +567,8 @@ export const modules = [
             "answer": 0,
             "explanation": "NUMERIC предназначен для точной десятичной арифметики. DOUBLE PRECISION хранит приближённое двоичное значение."
           }
-        ]
+        ],
+        "id": "types.chislovye-tipy"
       },
       {
         "title": "Строки и текст",
@@ -573,7 +593,8 @@ export const modules = [
             "answer": 1,
             "explanation": "TEXT не задаёт лимит длины, а NOT NULL запрещает отсутствие значения. Пустая строка остаётся допустимой."
           }
-        ]
+        ],
+        "id": "types.stroki-i-tekst"
       },
       {
         "title": "Дата, время и часовые пояса",
@@ -598,7 +619,8 @@ export const modules = [
             "answer": 2,
             "explanation": "TIMESTAMPTZ представляет момент времени и отображает его с учётом часового пояса текущей сессии."
           }
-        ]
+        ],
+        "id": "types.data-vremya-i-chasovye-poyasa"
       },
       {
         "title": "Преобразование типов",
@@ -623,7 +645,8 @@ export const modules = [
             "answer": 2,
             "explanation": "Строка 'abc' не представляет целое число, поэтому PostgreSQL не может выполнить такое преобразование."
           }
-        ]
+        ],
+        "id": "types.preobrazovanie-tipov"
       },
       {
         "title": "BOOLEAN, UUID и специальные типы",
@@ -648,7 +671,8 @@ export const modules = [
             "answer": 2,
             "explanation": "Если NULL разрешён, столбец может хранить TRUE, FALSE или отсутствие известного значения."
           }
-        ]
+        ],
+        "id": "types.boolean-uuid-i-spetsialnye-tipy"
       },
       {
         "title": "ENUM, DOMAIN и пользовательские типы",
@@ -673,7 +697,8 @@ export const modules = [
             "answer": 0,
             "explanation": "Справочник позволяет хранить описание, порядок, признак активности и другие свойства статуса без изменения типа."
           }
-        ]
+        ],
+        "id": "types.enum-domain-i-polzovatelskie-tipy"
       }
     ],
     "quiz": [
@@ -725,12 +750,14 @@ export const modules = [
     "sources": [
       "https://www.postgresql.org/docs/current/datatype.html",
       "https://www.postgresql.org/docs/current/functions-datetime.html"
-    ]
+    ],
+    "track": "core",
+    "trackOrder": 3
   },
   {
     "id": "anatomy",
     "title": "Как SQL читает и выполняет запрос",
-    "stage": "04 · Логика запросов",
+    "stage": "01 · Фундамент данных",
     "desc": "Понять синтаксис, порядок логических этапов SELECT и разницу между текстом запроса и результатом.",
     "lessons": [
       {
@@ -769,7 +796,8 @@ export const modules = [
           ],
           "result": "Получится не более пяти строк. В каждой будут номер заказа, его сумма и вычисленная комиссия. Исходные данные таблицы не изменятся.",
           "pitfall": "LIMIT без ORDER BY не означает «пять самых дорогих». Это просто пять строк, которые сервер вернул первыми в выбранном плане."
-        }
+        },
+        "id": "anatomy.anatomiya-select"
       },
       {
         "title": "Логический порядок обработки",
@@ -794,7 +822,8 @@ export const modules = [
             "answer": 1,
             "explanation": "WHERE обрабатывает строки до формирования списка SELECT. Поэтому алиас агрегата ещё не существует на этом этапе. Для условий на группы нужен HAVING, а для фильтрации уже готового результата — внешний запрос."
           }
-        ]
+        ],
+        "id": "anatomy.logicheskiy-poryadok-obrabotki"
       },
       {
         "title": "Алиасы и читаемость",
@@ -819,7 +848,8 @@ export const modules = [
             "answer": 0,
             "explanation": "c — алиас источника customers. Запись c.full_name указывает на столбец full_name именно этой таблицы."
           }
-        ]
+        ],
+        "id": "anatomy.aliasy-i-chitaemost"
       },
       {
         "title": "SELECT без таблицы и вычисляемые значения",
@@ -844,7 +874,8 @@ export const modules = [
             "answer": 1,
             "explanation": "Без FROM PostgreSQL вычисляет выражение один раз и возвращает одну строку."
           }
-        ]
+        ],
+        "id": "anatomy.select-bez-tablitsy-i-vychislyaemye-znacheniya"
       }
     ],
     "quiz": [
@@ -895,12 +926,14 @@ export const modules = [
     ],
     "sources": [
       "https://www.postgresql.org/docs/current/sql-select.html"
-    ]
+    ],
+    "track": "core",
+    "trackOrder": 4
   },
   {
     "id": "select",
     "title": "SELECT: выбор столбцов и строк результата",
-    "stage": "05 · Чтение данных",
+    "stage": "02 · Основы запросов",
     "desc": "Освоить выборку, проекцию, DISTINCT, выражения, псевдонимы и аккуратную работу с результатом.",
     "lessons": [
       {
@@ -929,7 +962,8 @@ export const modules = [
             "answer": 0,
             "explanation": "Звёздочка означает все столбцы, поэтому после изменения схемы состав результата SELECT * может измениться."
           }
-        ]
+        ],
+        "id": "select.vybrat-vse-stolbtsy-ili-nuzhnye"
       },
       {
         "title": "Выражения в списке SELECT",
@@ -956,7 +990,8 @@ export const modules = [
             "answer": 1,
             "explanation": "Обычное выражение SELECT вычисляет значение для результата запроса. Чтобы сохранить его в таблице, нужна отдельная команда изменения данных."
           }
-        ]
+        ],
+        "id": "select.vyrazheniya-v-spiske-select"
       },
       {
         "title": "DISTINCT и устранение повторов",
@@ -995,7 +1030,8 @@ export const modules = [
           ],
           "result": "Уникальность проверяется по всей комбинации столбцов после SELECT, а не отдельно по каждому полю.",
           "pitfall": "DISTINCT не исправляет fan-out после JOIN и может скрыть ошибку, если ты выбрал неверное зерно."
-        }
+        },
+        "id": "select.distinct-i-ustranenie-povtorov"
       },
       {
         "title": "DISTINCT ON в PostgreSQL",
@@ -1022,7 +1058,8 @@ export const modules = [
             "answer": 0,
             "explanation": "Группировка DISTINCT ON идёт по клиенту, а сортировка по дате DESC ставит самый новый заказ первым в каждой группе."
           }
-        ]
+        ],
+        "id": "select.distinct-on-v-postgresql"
       }
     ],
     "quiz": [
@@ -1073,12 +1110,14 @@ export const modules = [
     ],
     "sources": [
       "https://www.postgresql.org/docs/current/sql-select.html"
-    ]
+    ],
+    "track": "core",
+    "trackOrder": 5
   },
   {
     "id": "where",
     "title": "WHERE: фильтрация строк",
-    "stage": "06 · Фильтрация",
+    "stage": "02 · Основы запросов",
     "desc": "Изучить сравнения, логические операторы, IN, BETWEEN, LIKE, даты и сложные условия.",
     "lessons": [
       {
@@ -1106,7 +1145,8 @@ export const modules = [
             "answer": 1,
             "explanation": "Нижняя граница включена через >=, верхняя исключена через <."
           }
-        ]
+        ],
+        "id": "where.operatory-sravneniya"
       },
       {
         "title": "AND, OR и NOT",
@@ -1146,7 +1186,8 @@ export const modules = [
           ],
           "result": "Paid из Warsaw: включить. Shipped из Warsaw: включить. Paid из Krakow: исключить. Cancelled из Warsaw: исключить.",
           "pitfall": "Без скобок AND выполнится раньше OR. Тогда paid из любого города пройдёт фильтр, что обычно не соответствует условию задачи."
-        }
+        },
+        "id": "where.and-or-i-not"
       },
       {
         "title": "IN, BETWEEN и диапазоны",
@@ -1173,7 +1214,8 @@ export const modules = [
             "answer": 1,
             "explanation": "Полуоткрытый интервал включает начало и исключает начало следующего месяца. Он корректно охватывает любое время 31 января, включая дробные секунды."
           }
-        ]
+        ],
+        "id": "where.in-between-i-diapazony"
       },
       {
         "title": "LIKE, ILIKE и шаблоны",
@@ -1198,7 +1240,8 @@ export const modules = [
             "answer": 1,
             "explanation": "Подчёркивание заменяет ровно один символ, а процент — ноль или больше символов после n."
           }
-        ]
+        ],
+        "id": "where.like-ilike-i-shablony"
       },
       {
         "title": "Фильтрация дат и времени",
@@ -1235,7 +1278,8 @@ export const modules = [
           ],
           "result": "Получается полный март независимо от точности timestamp и количества знаков после секунды.",
           "pitfall": "BETWEEN с верхней границей DATE '2026-03-31' для timestamp обычно включает только полночь в начале 31 марта, а не весь день."
-        }
+        },
+        "id": "where.filtratsiya-dat-i-vremeni"
       },
       {
         "title": "IS DISTINCT FROM и сравнение с NULL",
@@ -1260,7 +1304,8 @@ export const modules = [
             "answer": 0,
             "explanation": "NULL и 5 считаются различными значениями для IS DISTINCT FROM, поэтому результат TRUE."
           }
-        ]
+        ],
+        "id": "where.is-distinct-from-i-sravnenie-s-null"
       }
     ],
     "quiz": [
@@ -1312,12 +1357,14 @@ export const modules = [
     "sources": [
       "https://www.postgresql.org/docs/current/functions-comparison.html",
       "https://www.postgresql.org/docs/current/functions-matching.html"
-    ]
+    ],
+    "track": "core",
+    "trackOrder": 6
   },
   {
     "id": "sorting",
     "title": "ORDER BY, LIMIT и пагинация",
-    "stage": "07 · Сортировка и пагинация",
+    "stage": "02 · Основы запросов",
     "desc": "Научиться сортировать и ограничивать набор строк, понимать NULLS FIRST/LAST и стабильную пагинацию.",
     "lessons": [
       {
@@ -1358,7 +1405,8 @@ export const modules = [
           ],
           "result": "Сначала идут самые новые даты. Внутри дня заказы расположены по убыванию суммы, а при равенстве суммы — по номеру.",
           "pitfall": "Если сортировать только по дате, строки с одинаковой датой могут менять взаимный порядок между запусками."
-        }
+        },
+        "id": "sorting.order-by-i-neskolko-kriteriev"
       },
       {
         "title": "NULLS FIRST и NULLS LAST",
@@ -1383,7 +1431,8 @@ export const modules = [
             "answer": 0,
             "explanation": "В PostgreSQL DESC по умолчанию соответствует NULLS FIRST. Для размещения в конце укажи NULLS LAST."
           }
-        ]
+        ],
+        "id": "sorting.nulls-first-i-nulls-last"
       },
       {
         "title": "LIMIT и OFFSET",
@@ -1410,7 +1459,8 @@ export const modules = [
             "answer": 1,
             "explanation": "Реляционная таблица не имеет гарантированного порядка. Без ORDER BY сервер вправе вернуть строки в любом порядке."
           }
-        ]
+        ],
+        "id": "sorting.limit-i-offset"
       },
       {
         "title": "Keyset pagination",
@@ -1447,7 +1497,8 @@ export const modules = [
           ],
           "result": "Сервер продолжает выдачу от последнего ключа, не пропуская тысячи строк через OFFSET.",
           "pitfall": "Для корректной пагинации нужен уникальный стабильный порядок. Если оставить только created_at, одинаковые даты могут приводить к пропускам или повторениям."
-        }
+        },
+        "id": "sorting.keyset-pagination"
       }
     ],
     "quiz": [
@@ -1498,12 +1549,14 @@ export const modules = [
     ],
     "sources": [
       "https://www.postgresql.org/docs/current/queries-limit.html"
-    ]
+    ],
+    "track": "core",
+    "trackOrder": 7
   },
   {
     "id": "expressions",
     "title": "Выражения, функции и CASE",
-    "stage": "08 · Вычисления",
+    "stage": "02 · Основы запросов",
     "desc": "Строковые, числовые, временные функции, условная логика, преобразования и обработка пропусков.",
     "lessons": [
       {
@@ -1529,7 +1582,8 @@ export const modules = [
             "answer": 1,
             "explanation": "Деление целых чисел выполняется как целочисленное деление, дробная часть отбрасывается. Для 2.5 нужен, например, 5 / 2.0."
           }
-        ]
+        ],
+        "id": "expressions.arifmetika-i-operatornye-vyrazheniya"
       },
       {
         "title": "Строковые функции",
@@ -1556,7 +1610,8 @@ export const modules = [
             "answer": 1,
             "explanation": "LOWER преобразует буквенные символы строки в нижний регистр."
           }
-        ]
+        ],
+        "id": "expressions.strokovye-funktsii"
       },
       {
         "title": "Числовые функции",
@@ -1581,7 +1636,8 @@ export const modules = [
             "answer": 2,
             "explanation": "Третья цифра после точки равна 5, поэтому значение округляется до 12.35."
           }
-        ]
+        ],
+        "id": "expressions.chislovye-funktsii"
       },
       {
         "title": "Функции даты и времени",
@@ -1607,7 +1663,8 @@ export const modules = [
             "answer": 0,
             "explanation": "DATE_TRUNC обрезает временную метку до указанной точности и возвращает начало соответствующего периода."
           }
-        ]
+        ],
+        "id": "expressions.funktsii-daty-i-vremeni"
       },
       {
         "title": "CASE: условная логика",
@@ -1646,7 +1703,8 @@ export const modules = [
           ],
           "result": "Каждый заказ получает одну категорию. Порядок WHEN важен, если диапазоны пересекаются.",
           "pitfall": "Без ELSE неподошедшие строки получат NULL. Продумай отдельно, как классифицировать NULL в исходной сумме."
-        }
+        },
+        "id": "expressions.case-uslovnaya-logika"
       },
       {
         "title": "COALESCE, NULLIF и безопасные вычисления",
@@ -1686,7 +1744,8 @@ export const modules = [
           ],
           "result": "Расчёт безопасен при нулевом знаменателе, а решение о подмене NULL принимается осознанно.",
           "pitfall": "COALESCE не является косметическим форматированием: замена неизвестного значения на 0 меняет смысл метрики."
-        }
+        },
+        "id": "expressions.coalesce-nullif-i-bezopasnye-vychisleniya"
       }
     ],
     "quiz": [
@@ -1738,12 +1797,14 @@ export const modules = [
     "sources": [
       "https://www.postgresql.org/docs/current/functions-conditional.html",
       "https://www.postgresql.org/docs/current/functions-datetime.html"
-    ]
+    ],
+    "track": "core",
+    "trackOrder": 8
   },
   {
     "id": "aggregates",
     "title": "Агрегация: COUNT, SUM, GROUP BY, HAVING",
-    "stage": "09 · Агрегация",
+    "stage": "03 · Работа с данными",
     "desc": "Перейти от строк к группам, научиться считать метрики и не допускать двойного счёта.",
     "lessons": [
       {
@@ -1773,7 +1834,8 @@ export const modules = [
             "answer": 1,
             "explanation": "COUNT(*) считает все строки, а COUNT(amount) пропускает две строки, где amount равен NULL."
           }
-        ]
+        ],
+        "id": "aggregates.agregatnye-funktsii"
       },
       {
         "title": "GROUP BY и зерно результата",
@@ -1812,7 +1874,8 @@ export const modules = [
           ],
           "result": "Итог содержит две строки, по одной на город. Общее число строк результата равно числу различных значений city, а не числу заказов.",
           "pitfall": "Если добавить order_id в GROUP BY, зерно станет «один город и один заказ». Группировка перестанет сворачивать заказы до уровня города."
-        }
+        },
+        "id": "aggregates.group-by-i-zerno-rezultata"
       },
       {
         "title": "HAVING против WHERE",
@@ -1851,7 +1914,8 @@ export const modules = [
           ],
           "result": "В результате останутся только города с пятью или более доставленными заказами. Количество считается после фильтра по статусу.",
           "pitfall": "Если сначала сгруппировать все статусы и использовать HAVING COUNT(*) >= 5, ты посчитаешь все заказы, а не только доставленные."
-        }
+        },
+        "id": "aggregates.having-protiv-where"
       },
       {
         "title": "Условная агрегация и FILTER",
@@ -1890,7 +1954,8 @@ export const modules = [
           ],
           "result": "Одна строка на магазин содержит общее число заказов и несколько отдельных счётчиков по статусам.",
           "pitfall": "Не ставь статус delivered в общий WHERE, если тебе одновременно нужно показать количество всех заказов."
-        }
+        },
+        "id": "aggregates.uslovnaya-agregatsiya-i-filter"
       },
       {
         "title": "DISTINCT внутри агрегатов",
@@ -1915,7 +1980,8 @@ export const modules = [
             "answer": 1,
             "explanation": "DISTINCT применяется к значениям amount. Одинаковая сумма учитывается один раз, хотя заказы разные."
           }
-        ]
+        ],
+        "id": "aggregates.distinct-vnutri-agregatov"
       },
       {
         "title": "GROUPING SETS, ROLLUP и CUBE",
@@ -1943,7 +2009,8 @@ export const modules = [
             "answer": 0,
             "explanation": "ROLLUP строит иерархию: сначала пары, затем подытог по city, затем общий итог без группировки."
           }
-        ]
+        ],
+        "id": "aggregates.grouping-sets-rollup-i-cube"
       },
       {
         "title": "Зерно данных и безопасная агрегация",
@@ -1968,7 +2035,8 @@ export const modules = [
             "answer": 1,
             "explanation": "Агрегат складывает значения строк результата JOIN. Одна сумма заказа будет учтена три раза, если сначала не вернуть зерно к одному заказу."
           }
-        ]
+        ],
+        "id": "aggregates.zerno-dannykh-i-bezopasnaya-agregatsiya"
       }
     ],
     "quiz": [
@@ -2020,12 +2088,14 @@ export const modules = [
     "sources": [
       "https://www.postgresql.org/docs/current/functions-aggregate.html",
       "https://www.postgresql.org/docs/current/queries-table-expressions.html"
-    ]
+    ],
+    "track": "core",
+    "trackOrder": 9
   },
   {
     "id": "joins",
     "title": "JOIN: соединение нескольких таблиц",
-    "stage": "10 · Соединения",
+    "stage": "03 · Работа с данными",
     "desc": "Разобраться в типах соединений, кардинальности, NULL и главной аналитической ловушке: размножении строк.",
     "lessons": [
       {
@@ -2065,7 +2135,8 @@ export const modules = [
           ],
           "result": "Каждая строка результата содержит заказ и данные его клиента. Если использовать INNER JOIN, заказы без подходящего клиента исчезнут; LEFT JOIN сохранил бы их.",
           "pitfall": "Не соединяй таблицы по столбцам только потому, что у них похожие значения. Сначала установи реальную связь ключей в схеме."
-        }
+        },
+        "id": "joins.chto-delaet-join"
       },
       {
         "title": "INNER JOIN и LEFT JOIN",
@@ -2104,7 +2175,8 @@ export const modules = [
           ],
           "result": "Количество заказов не должно уменьшиться. У части строк имя сотрудника будет NULL.",
           "pitfall": "Добавь WHERE e.employee_name IS NOT NULL, и строки без сотрудника исчезнут. Это может быть правильно для другой задачи, но уже не отчёт по всем заказам."
-        }
+        },
+        "id": "joins.inner-join-i-left-join"
       },
       {
         "title": "FULL, CROSS и SELF JOIN",
@@ -2129,7 +2201,8 @@ export const modules = [
             "answer": 1,
             "explanation": "CROSS JOIN создаёт каждую пару строк: 8 × 3 = 24."
           }
-        ]
+        ],
+        "id": "joins.full-cross-i-self-join"
       },
       {
         "title": "Соединение трёх и более таблиц",
@@ -2158,7 +2231,8 @@ export const modules = [
             "answer": 0,
             "explanation": "Сравнение количества строк помогает обнаружить связь один-ко-многим, потерянные строки или неверное условие соединения."
           }
-        ]
+        ],
+        "id": "joins.soedinenie-tryokh-i-bolee-tablits"
       },
       {
         "title": "Кардинальность и размножение строк",
@@ -2199,7 +2273,8 @@ export const modules = [
           ],
           "result": "Фактическая выручка заказа равна 900. Значение 2700 возникло из-за fan-out, а не из-за ошибки агрегатной функции.",
           "pitfall": "SUM(DISTINCT o.total_amount) не является универсальным исправлением: два разных заказа могут иметь одинаковую сумму, и DISTINCT ошибочно склеит их."
-        }
+        },
+        "id": "joins.kardinalnost-i-razmnozhenie-strok"
       },
       {
         "title": "Anti join и semi join через EXISTS",
@@ -2236,7 +2311,8 @@ export const modules = [
           ],
           "result": "Semi join через EXISTS возвращает клиентов, для которых существует хотя бы один заказ, не размножая их по числу заказов.",
           "pitfall": "Обычный JOIN вернёт клиента столько раз, сколько у него заказов. DISTINCT может скрыть это, но EXISTS точнее выражает намерение."
-        }
+        },
+        "id": "joins.anti-join-i-semi-join-cherez-exists"
       },
       {
         "title": "JOIN ... USING, NATURAL JOIN и LATERAL",
@@ -2263,7 +2339,8 @@ export const modules = [
             "answer": 0,
             "explanation": "LATERAL разрешает подзапросу использовать значения из предшествующих элементов FROM, например искать последние заказы для каждого магазина."
           }
-        ]
+        ],
+        "id": "joins.join-using-natural-join-i-lateral"
       },
       {
         "title": "Fan-out: почему JOIN умножает строки",
@@ -2289,7 +2366,8 @@ export const modules = [
             "answer": 1,
             "explanation": "Каждая из трёх позиций может сочетаться с каждым из двух платежей. Получается 3 × 2 = 6 строк, и метрики обеих деталей могут размножиться."
           }
-        ]
+        ],
+        "id": "joins.fan-out-pochemu-join-umnozhaet-stroki"
       }
     ],
     "quiz": [
@@ -2340,12 +2418,608 @@ export const modules = [
     ],
     "sources": [
       "https://www.postgresql.org/docs/current/queries-table-expressions.html"
-    ]
+    ],
+    "track": "core",
+    "trackOrder": 10
+  },
+  {
+    "id": "subqueries",
+    "title": "Подзапросы и коррелированные запросы",
+    "stage": "03 · Работа с данными",
+    "desc": "Научиться вкладывать запросы, сравнивать с агрегатами и использовать EXISTS, ANY, ALL.",
+    "lessons": [
+      {
+        "title": "Подзапрос как значение",
+        "body": "Подзапрос — запрос, вложенный в другой SQL-запрос. Он может вернуть одно значение, один столбец или целую таблицу. В зависимости от результата подзапрос используют как скалярное выражение, источник в FROM или условие фильтрации.\n\nСкалярный подзапрос должен вернуть не более одной строки и одного столбца. Например, можно сравнить цену заказа со средней ценой всех заказов. Если скалярный подзапрос вернёт несколько строк, PostgreSQL выдаст ошибку.\n\nПодзапрос помогает разделить задачу на этапы: сначала вычислить значение, затем использовать его во внешнем запросе. Но не нужно вкладывать запросы автоматически: иногда JOIN или CTE читаются проще.",
+        "example": "SELECT order_id, total_amount\nFROM orders\nWHERE total_amount > (\n  SELECT AVG(total_amount)\n  FROM orders\n);",
+        "note": "Если подзапрос должен быть скалярным, проверь, что он действительно возвращает не более одной строки.",
+        "simple": "Скалярный подзапрос возвращает одно значение, которое внешний запрос использует как выражение.",
+        "practiceIds": [
+          "e27"
+        ],
+        "outcomes": [
+          "Использовать скалярный подзапрос",
+          "объяснить ограничение по числу возвращаемых строк."
+        ],
+        "quiz": [
+          {
+            "question": "Что произойдёт, если скалярный подзапрос вернёт две строки?",
+            "options": [
+              "Внешний запрос автоматически возьмёт первую строку",
+              "PostgreSQL выдаст ошибку: скалярное подвыражение вернуло больше одной строки",
+              "PostgreSQL объединит две строки в массив",
+              "Внешний запрос вернёт две копии каждой строки"
+            ],
+            "answer": 1,
+            "explanation": "Скалярный подзапрос в позиции выражения должен возвращать максимум одну строку и один столбец."
+          }
+        ],
+        "walkthrough": {
+          "title": "Подзапрос должен вернуть одно значение",
+          "scenario": "Нужно найти заказы, сумма которых выше средней суммы всех заказов.",
+          "steps": [
+            "Внешний SELECT перебирает отдельные заказы.",
+            "Подзапрос SELECT AVG(total_amount) вычисляет одно агрегированное значение.",
+            "Оператор > сравнивает сумму каждой строки с этим скалярным значением.",
+            "Агрегат без GROUP BY возвращает одну строку, поэтому его можно использовать как одно значение."
+          ],
+          "result": "Вернутся только заказы, сумма которых выше общей средней суммы.",
+          "pitfall": "Если скалярный подзапрос неожиданно вернёт больше одной строки, PostgreSQL выдаст ошибку. Для набора значений используй IN, EXISTS или JOIN."
+        },
+        "id": "subqueries.podzapros-kak-znachenie"
+      },
+      {
+        "title": "IN и подзапрос с набором значений",
+        "body": "IN проверяет, входит ли значение в набор, возвращённый подзапросом. Например, можно выбрать заказы клиентов, которые совершали хотя бы одну покупку в конкретном регионе.\n\nПодзапрос внутри IN обычно возвращает один столбец и любое количество строк. Если набор пуст, совпадений не будет. Если подзапрос содержит NULL, поведение NOT IN может стать неожиданным: отсутствие совпадения не всегда превращается в TRUE, потому что результат может быть UNKNOWN.\n\nДля положительной проверки IN часто понятен. Для проверки отсутствия связи обычно безопаснее NOT EXISTS, особенно если столбец в подзапросе допускает NULL.",
+        "example": "SELECT order_id\nFROM orders\nWHERE customer_id IN (\n  SELECT customer_id\n  FROM customers\n  WHERE city = 'Warsaw'\n);",
+        "note": "Если подзапрос для NOT IN может вернуть NULL, рассмотрите NOT EXISTS.",
+        "simple": "IN сопоставляет значение с набором. Для NOT IN учитывай возможность NULL в этом наборе.",
+        "practiceIds": [],
+        "outcomes": [
+          "Использовать IN с подзапросом",
+          "объяснить, почему NULL опасен для NOT IN."
+        ],
+        "quiz": [
+          {
+            "question": "Почему NOT IN может не вернуть ожидаемые строки, если подзапрос содержит NULL?",
+            "options": [
+              "Потому что NULL делает проверку отсутствия UNKNOWN, а WHERE не оставляет UNKNOWN",
+              "Потому что NOT IN удаляет все значения из внешней таблицы",
+              "Потому что подзапрос обязан вернуть только одну строку",
+              "Потому что NULL автоматически превращается в 0"
+            ],
+            "answer": 0,
+            "explanation": "Если совпадения нет, но набор содержит NULL, результат NOT IN может быть UNKNOWN, а не TRUE. WHERE отбрасывает UNKNOWN."
+          }
+        ],
+        "id": "subqueries.in-i-podzapros-s-naborom-znacheniy"
+      },
+      {
+        "title": "EXISTS и NOT EXISTS",
+        "body": "EXISTS проверяет, вернул ли подзапрос хотя бы одну строку. Значения в SELECT внутри EXISTS обычно не важны: часто пишут SELECT 1. Важно только существование строки, удовлетворяющей условию.\n\nEXISTS особенно удобен для поиска родительских записей с дочерними: клиенты, у которых есть хотя бы один заказ. NOT EXISTS ищет записи без соответствий. В отличие от JOIN, EXISTS не размножает строку внешнего источника при нескольких совпадениях.\n\nОптимизатор PostgreSQL часто превращает EXISTS в semi join, поэтому это не обязательно медленный способ. Выбирай EXISTS по смыслу задачи, а затем проверяй план, если производительность важна.",
+        "example": "SELECT c.customer_id, c.customer_name\nFROM customers AS c\nWHERE EXISTS (\n  SELECT 1\n  FROM orders AS o\n  WHERE o.customer_id = c.customer_id\n);",
+        "note": "Для поиска отсутствующих связей используй NOT EXISTS. Он не страдает от NULL в наборе так, как NOT IN.",
+        "simple": "EXISTS задаёт вопрос «есть ли хотя бы одна подходящая строка?», а не «какие значения вернуть?».",
+        "practiceIds": [
+          "e28",
+          "e29",
+          "e58"
+        ],
+        "outcomes": [
+          "Находить строки через EXISTS и NOT EXISTS",
+          "объяснить, почему несколько совпадений не дублируют внешний ряд."
+        ],
+        "quiz": [
+          {
+            "question": "Сколько раз клиент попадёт в результат EXISTS, если у него 15 заказов?",
+            "options": [
+              "15 раз",
+              "Один раз, если существует хотя бы один заказ",
+              "Ни разу, потому что EXISTS возвращает только TRUE",
+              "Зависит от суммы заказов"
+            ],
+            "answer": 1,
+            "explanation": "EXISTS проверяет наличие строк. Внешняя строка клиента сохраняется один раз независимо от числа совпадений."
+          }
+        ],
+        "walkthrough": {
+          "title": "Проверяем существование, а не считаем совпадения",
+          "scenario": "Нужно получить клиентов, у которых есть хотя бы один заказ.",
+          "steps": [
+            "Внешний запрос перебирает customers.",
+            "Подзапрос ищет заказы с тем же customer_id.",
+            "EXISTS становится TRUE при первой найденной строке.",
+            "Внешний запрос возвращает клиента один раз, независимо от числа его заказов."
+          ],
+          "result": "Каждый подходящий клиент появляется один раз, даже если оформил десять заказов.",
+          "pitfall": "JOIN вернёт несколько строк на клиента при нескольких заказах. EXISTS лучше выражает задачу «есть хотя бы один»."
+        },
+        "id": "subqueries.exists-i-not-exists"
+      },
+      {
+        "title": "Коррелированные подзапросы",
+        "body": "Коррелированный подзапрос ссылается на столбцы внешнего запроса. Он выполняет логическую проверку для каждой внешней строки, например ищет максимальную дату заказа именно текущего клиента.\n\nТакой запрос удобно читать, когда внутреннее условие зависит от конкретной внешней записи. Но наивное представление «подзапрос обязательно запускается заново для каждой строки» не всегда верно: оптимизатор может преобразовать его в JOIN или другой план.\n\nКоррелированный подзапрос может быть менее очевиден, чем агрегированный JOIN. Сравнивай оба варианта по ясности и EXPLAIN ANALYZE на реальных объёмах, если есть проблема производительности.",
+        "example": "SELECT c.customer_id, c.customer_name\nFROM customers AS c\nWHERE c.registered_at = (\n  SELECT MIN(o.created_at)\n  FROM orders AS o\n  WHERE o.customer_id = c.customer_id\n);",
+        "note": "Не делай вывод о скорости только по вложенности. Оптимизатор может преобразовать запрос.",
+        "simple": "Коррелированный подзапрос использует значение текущей строки внешнего запроса.",
+        "practiceIds": [
+          "e30"
+        ],
+        "outcomes": [
+          "Читать коррелированные ссылки",
+          "объяснить, как внутренний запрос зависит от внешней строки."
+        ],
+        "quiz": [
+          {
+            "question": "Что делает условие o.customer_id = c.customer_id внутри подзапроса?",
+            "options": [
+              "Сравнивает заказ с клиентом из текущей строки внешнего запроса",
+              "Соединяет все заказы со всеми клиентами",
+              "Создаёт внешний ключ",
+              "Сортирует клиентов по ID"
+            ],
+            "answer": 0,
+            "explanation": "c.customer_id — значение текущей внешней строки. Подзапрос ищет заказы именно этого клиента."
+          }
+        ],
+        "id": "subqueries.korrelirovannye-podzaprosy"
+      },
+      {
+        "title": "ANY, ALL и сравнение с массивом значений",
+        "body": "ANY и ALL сравнивают значение с результатами набора. x > ANY (subquery) означает, что x больше хотя бы одного значения набора. x > ALL означает, что x больше каждого значения набора.\n\nANY похож на «существует хотя бы одно сравнение TRUE», а ALL — на «все сравнения TRUE». Для пустого набора ANY даёт FALSE, а ALL — TRUE. NULL в наборе может привести к UNKNOWN, если ни одно сравнение не даёт однозначного ответа.\n\nЭти операторы полезны для сравнений с распределением значений, но часто можно выразить ту же идею через MIN, MAX или EXISTS. Выбирай форму, которую проще проверить на крайних случаях.",
+        "example": "SELECT product_id, price\nFROM products\nWHERE price > ALL (\n  SELECT price\n  FROM products\n  WHERE category = 'coffee'\n);",
+        "note": "ALL не означает «большинство». Достаточно одного FALSE, чтобы результат сравнения с ALL стал FALSE.",
+        "simple": "ANY требует хотя бы одного истинного сравнения, ALL — истинности каждого сравнения.",
+        "practiceIds": [],
+        "outcomes": [
+          "Различать ANY и ALL",
+          "объяснить поведение на пустом наборе и при NULL."
+        ],
+        "quiz": [
+          {
+            "question": "Что означает price > ALL (subquery)?",
+            "options": [
+              "Цена выше хотя бы одной цены из набора",
+              "Цена выше каждой цены из набора",
+              "Цена равна средней цене",
+              "Цена выше нуля независимо от подзапроса"
+            ],
+            "answer": 1,
+            "explanation": "ALL требует, чтобы сравнение было истинным для каждого значения, возвращённого подзапросом."
+          }
+        ],
+        "id": "subqueries.any-all-i-sravnenie-s-massivom-znacheniy"
+      }
+    ],
+    "quiz": [
+      {
+        "question": "Что проверяет EXISTS?",
+        "options": [
+          "Есть ли хотя бы одна строка в подзапросе",
+          "Сколько строк в таблице",
+          "Совпадает ли порядок сортировки",
+          "Есть ли индекс"
+        ],
+        "answer": 0,
+        "explanation": "EXISTS возвращает TRUE, если подзапрос нашёл хотя бы одну строку. Он не возвращает сами строки подзапроса."
+      },
+      {
+        "question": "Почему NOT EXISTS часто безопаснее, чем NOT IN?",
+        "options": [
+          "NOT EXISTS всегда быстрее",
+          "NOT IN может дать UNKNOWN, если набор содержит NULL",
+          "NOT EXISTS работает только с числами",
+          "NOT IN удаляет NULL"
+        ],
+        "answer": 1,
+        "explanation": "NULL внутри набора может сделать результат NOT IN неизвестным. NOT EXISTS обычно проще контролировать через условие связи."
+      },
+      {
+        "question": "Что произойдёт, если скалярный подзапрос вернёт две строки?",
+        "options": [
+          "Возьмётся первая",
+          "PostgreSQL выдаст ошибку: скалярный подзапрос вернул больше одной строки",
+          "Они объединятся через запятую",
+          "Вернётся NULL"
+        ],
+        "answer": 1,
+        "explanation": "Подзапрос в позиции одного значения должен вернуть не более одной строки и одного столбца."
+      },
+      {
+        "question": "Что означает x > ALL (подзапрос)?",
+        "options": [
+          "x больше хотя бы одного значения",
+          "x больше каждого значения набора",
+          "x равен сумме набора",
+          "Набор пуст"
+        ],
+        "answer": 1,
+        "explanation": "ALL требует, чтобы сравнение было истинным для всех значений набора."
+      }
+    ],
+    "sources": [
+      "https://www.postgresql.org/docs/current/functions-subquery.html"
+    ],
+    "track": "core",
+    "trackOrder": 11
+  },
+  {
+    "id": "cte",
+    "title": "CTE и рекурсивные запросы",
+    "stage": "03 · Работа с данными",
+    "desc": "Разбивать большие запросы на понятные этапы, повторно использовать промежуточные наборы и строить рекурсию.",
+    "lessons": [
+      {
+        "title": "Обычный WITH",
+        "body": "CTE (Common Table Expression) — именованный результат подзапроса, объявленный через WITH. Он существует в рамках одного SQL-оператора и позволяет разбить сложную задачу на логические этапы.\n\nНапример, сначала можно выбрать доставленные заказы, а затем посчитать их выручку по магазинам. Первый этап получает имя delivered_orders. Основной SELECT читает этот набор как временный источник данных. Это не новая постоянная таблица и не отдельный запуск, который нужно вручную сохранять.\n\nCTE особенно полезен, когда запрос состоит из нескольких преобразований: фильтрация, соединение, агрегация, ранжирование. Имена должны описывать смысл этапа, а не просто называться q1 или temp. Тогда запрос можно читать как последовательность действий над данными.\n\nНе думай, что каждый CTE обязательно физически сохраняется в памяти. В современных версиях PostgreSQL простые CTE могут быть встроены в основной запрос. MATERIALIZED и NOT MATERIALIZED позволяют влиять на это поведение в подходящих случаях, но их не нужно добавлять без измеримой причины.\n\nCTE не исправляет неправильную логику JOIN и не делает запрос автоматически быстрее. Его главная польза — ясная структура и возможность отдельно проверить промежуточный результат.",
+        "example": "WITH delivered_orders AS (\n  SELECT o.order_id, s.city, o.total_amount\n  FROM orders AS o\n  JOIN stores AS s ON s.store_id = o.store_id\n  WHERE o.status = 'delivered'\n)\nSELECT city, SUM(total_amount) AS revenue\nFROM delivered_orders\nGROUP BY city;",
+        "note": "CTE существует только в пределах одного SQL-оператора. Не путай его с CREATE TEMP TABLE.",
+        "simple": "WITH даёт имя промежуточному набору строк. Это способ организовать запрос, а не создать постоянную таблицу.",
+        "practiceIds": [
+          "e31"
+        ],
+        "outcomes": [
+          "Объявлять CTE через WITH",
+          "объяснить его область действия и отличие от таблицы."
+        ],
+        "quiz": [
+          {
+            "question": "Сколько времени существует обычный CTE delivered_orders?",
+            "options": [
+              "До удаления базы данных",
+              "Только в рамках SQL-оператора, в котором он объявлен",
+              "До закрытия PostgreSQL",
+              "Пока пользователь не выполнит DROP TABLE"
+            ],
+            "answer": 1,
+            "explanation": "CTE — часть одного SQL-оператора. Он не создаёт постоянный объект схемы."
+          }
+        ],
+        "walkthrough": {
+          "title": "Разделяем запрос на два понятных шага",
+          "scenario": "Сначала отобрать доставленные заказы, затем посчитать их количество и сумму по магазинам.",
+          "steps": [
+            "WITH delivered_orders AS (...) объявляет промежуточный набор строк.",
+            "Внутри CTE WHERE status = 'delivered' оставляет только нужные заказы.",
+            "Основной SELECT читает delivered_orders так же, как обычную таблицу.",
+            "GROUP BY store_id формирует одну строку на магазин, а COUNT и SUM считают показатели."
+          ],
+          "result": "Результат содержит по одной строке на магазин с количеством доставленных заказов и их суммой.",
+          "pitfall": "CTE доступен только в пределах одного SQL-оператора. Следующий отдельный запрос уже не сможет обратиться к delivered_orders."
+        },
+        "id": "cte.obychnyy-with"
+      },
+      {
+        "title": "Несколько CTE и цепочка преобразований",
+        "body": "В одном WITH можно объявить несколько CTE. Следующий CTE может ссылаться на предыдущий, поэтому запрос удобно строить как цепочку преобразований: отобрать строки, агрегировать, присоединить справочник, сформировать итог.\n\nКаждый этап желательно делать с понятным зерном. Например, первый CTE содержит одну строку на заказ, второй — одну строку на клиента. Если соединить их на неверном уровне, дубли могут появиться даже внутри аккуратно названной цепочки.\n\nCTE не гарантирует, что данные вычисляются один раз или материализуются. Это зависит от версии PostgreSQL, настроек и конструкции запроса. Не используй CTE как обещание производительности: он прежде всего делает логику явной.",
+        "example": "WITH monthly_orders AS (\n  SELECT DATE_TRUNC('month', created_at) AS month,\n         COUNT(*) AS orders_count\n  FROM orders\n  GROUP BY 1\n),\nmonthly_revenue AS (\n  SELECT DATE_TRUNC('month', created_at) AS month,\n         SUM(total_amount) AS revenue\n  FROM orders\n  GROUP BY 1\n)\nSELECT m.month, m.orders_count, r.revenue\nFROM monthly_orders AS m\nJOIN monthly_revenue AS r USING (month);",
+        "note": "Одинаковое число строк в двух CTE не означает, что их можно соединять без ключа. Соединяй по смысловому ключу.",
+        "simple": "Несколько CTE позволяют читать сложный запрос как последовательность именованных этапов.",
+        "practiceIds": [
+          "e32"
+        ],
+        "outcomes": [
+          "Строить цепочки CTE",
+          "проверять зерно каждого промежуточного результата."
+        ],
+        "quiz": [
+          {
+            "question": "Почему monthly_orders и monthly_revenue безопасно соединяются через USING (month) в примере?",
+            "options": [
+              "Потому что оба CTE имеют одну строку на месяц",
+              "Потому что в обоих одинаковое количество столбцов",
+              "Потому что JOIN по имени столбца всегда безопасен",
+              "Потому что CTE автоматически сортируются по month"
+            ],
+            "answer": 0,
+            "explanation": "Каждый CTE агрегирован до зерна «одна строка на месяц». Поэтому month задаёт соответствие между наборами."
+          }
+        ],
+        "walkthrough": {
+          "title": "Каждый CTE отвечает за один этап",
+          "scenario": "Нужно отобрать доставленные заказы, затем посчитать выручку по магазинам.",
+          "steps": [
+            "Первый CTE filtered_orders оставляет только подходящие факты.",
+            "Второй CTE store_revenue группирует эти факты по store_id.",
+            "Финальный SELECT выводит уже готовую агрегированную таблицу.",
+            "Каждый этап можно временно проверить отдельным SELECT, чтобы увидеть количество строк и ключи."
+          ],
+          "result": "Запрос читается как конвейер: фильтрация → агрегация → выдача результата.",
+          "pitfall": "Не создавай CTE ради каждой строки SQL. Разделяй запрос там, где меняется смысл или зерно данных."
+        },
+        "id": "cte.neskolko-cte-i-tsepochka-preobrazovaniy"
+      },
+      {
+        "title": "Материализация и оптимизация CTE",
+        "body": "В PostgreSQL CTE может быть встроен в основной запрос или материализован как отдельный промежуточный результат. MATERIALIZED просит вычислить CTE отдельно, NOT MATERIALIZED разрешает встроить его, если это возможно.\n\nМатериализация может быть полезна, если результат используется несколько раз или если нужно избежать повторного выполнения дорогого этапа. Но она может мешать проталкиванию фильтров и оптимизации. NOT MATERIALIZED может дать оптимизатору больше свободы, но иногда приводит к повторному вычислению.\n\nНе добавляй эти ключевые слова наугад. Сначала посмотри EXPLAIN (ANALYZE, BUFFERS), найди реальную проблему и сравни планы. Поведение зависит от версии PostgreSQL и свойств CTE.",
+        "example": "WITH filtered_orders AS NOT MATERIALIZED (\n  SELECT *\n  FROM orders\n  WHERE store_id IN (\n    SELECT store_id\n    FROM stores\n    WHERE city = 'Warsaw'\n  )\n)\nSELECT *\nFROM filtered_orders\nWHERE status = 'delivered';",
+        "note": "Материализация — не универсальное ускорение. Проверяй план выполнения и реальное время.",
+        "simple": "MATERIALIZED фиксирует отдельное вычисление CTE, NOT MATERIALIZED позволяет встроить его в запрос.",
+        "practiceIds": [],
+        "outcomes": [
+          "Объяснить различие MATERIALIZED и NOT MATERIALIZED",
+          "не путать структуру запроса с гарантией скорости."
+        ],
+        "quiz": [
+          {
+            "question": "Какой риск может возникнуть, если принудительно материализовать CTE, используемый один раз?",
+            "options": [
+              "Фильтр внешнего запроса может не протолкнуться внутрь CTE, и будет обработано больше строк",
+              "PostgreSQL удалит исходную таблицу",
+              "CTE станет постоянной таблицей",
+              "Запрос потеряет возможность использовать SELECT"
+            ],
+            "answer": 0,
+            "explanation": "Материализация может ограничить оптимизацию и pushdown фильтров. Это иногда приводит к обработке большего промежуточного набора."
+          }
+        ],
+        "id": "cte.materializatsiya-i-optimizatsiya-cte"
+      },
+      {
+        "title": "Рекурсивный WITH",
+        "body": "Рекурсивный CTE позволяет обходить иерархии и строить последовательности. В нём есть начальная часть (anchor), которая задаёт первые строки, и рекурсивная часть, которая ссылается на сам CTE и добавляет следующий уровень.\n\nТипичный пример — дерево категорий или организационная структура. Начинаем с корневого узла, затем на каждом шаге находим дочерние записи. UNION ALL объединяет начальный и рекурсивный наборы. Процесс продолжается, пока рекурсивная часть не перестанет возвращать новые строки.\n\nСледи за условием остановки и циклами. В графе с циклическими ссылками рекурсия может продолжаться бесконечно или до ограничения ресурсов. Для защиты можно хранить путь посещённых узлов и не посещать один ID повторно.",
+        "example": "WITH RECURSIVE numbers(n) AS (\n  SELECT 1\n  UNION ALL\n  SELECT n + 1\n  FROM numbers\n  WHERE n < 5\n)\nSELECT n\nFROM numbers;",
+        "note": "Всегда продумывай остановку рекурсии. В иерархии с циклами нужна защита от повторного посещения узлов.",
+        "simple": "Рекурсивный CTE состоит из стартового набора и шага, который строит следующий уровень.",
+        "practiceIds": [
+          "e59"
+        ],
+        "outcomes": [
+          "Писать anchor и рекурсивную часть",
+          "добавлять условие остановки",
+          "объяснить риск циклов."
+        ],
+        "quiz": [
+          {
+            "question": "Какая часть рекурсивного CTE задаёт начальные строки?",
+            "options": [
+              "Рекурсивная часть, ссылающаяся на саму себя",
+              "Anchor-часть до UNION ALL",
+              "Внешний ORDER BY",
+              "WITH MATERIALIZED"
+            ],
+            "answer": 1,
+            "explanation": "Anchor-часть запускает рекурсию. Рекурсивная часть затем строит новые строки на основе уже полученных."
+          }
+        ],
+        "walkthrough": {
+          "title": "Рекурсия строит последовательность шаг за шагом",
+          "scenario": "Нужно получить числа от 1 до 5 без отдельной таблицы.",
+          "steps": [
+            "Начальная часть SELECT 1 создаёт первую строку.",
+            "UNION ALL объединяет начальный набор с результатом рекурсивной части.",
+            "Рекурсивная часть читает уже найденное число и прибавляет единицу.",
+            "WHERE n < 5 задаёт условие продолжения. Когда оно перестаёт выполняться, новые строки не появляются."
+          ],
+          "result": "CTE вернёт пять строк: 1, 2, 3, 4 и 5.",
+          "pitfall": "У рекурсивного CTE обязательно должно быть условие остановки или другая гарантия конечности. Иначе запрос может генерировать строки бесконечно."
+        },
+        "id": "cte.rekursivnyy-with"
+      }
+    ],
+    "quiz": [
+      {
+        "question": "Что такое обычный CTE?",
+        "options": [
+          "Индекс",
+          "Именованный результат запроса внутри WITH",
+          "Тип данных",
+          "Триггер"
+        ],
+        "answer": 1,
+        "explanation": "CTE даёт имя промежуточному набору строк, чтобы запрос было проще читать и делить на шаги."
+      },
+      {
+        "question": "Из каких частей обычно состоит рекурсивный CTE?",
+        "options": [
+          "Только ORDER BY",
+          "Начальная часть и рекурсивная часть",
+          "Только DELETE",
+          "Два индекса"
+        ],
+        "answer": 1,
+        "explanation": "Начальная часть задаёт первые строки, а рекурсивная добавляет следующие, пока условие продолжения выполняется."
+      },
+      {
+        "question": "Что делает WITH RECURSIVE?",
+        "options": [
+          "Создаёт обычный индекс",
+          "Позволяет запросу ссылаться на собственный результат для обхода иерархий или последовательностей",
+          "Удаляет дубликаты",
+          "Создаёт постоянную таблицу"
+        ],
+        "answer": 1,
+        "explanation": "Рекурсивный CTE полезен для деревьев, иерархий и последовательностей, но обязательно продумай условие остановки."
+      },
+      {
+        "question": "Означает ли MATERIALIZED, что CTE всегда быстрее?",
+        "options": [
+          "Да",
+          "Нет, материализация может помочь или помешать оптимизации",
+          "Да, если есть JOIN",
+          "Это команда создания индекса"
+        ],
+        "answer": 1,
+        "explanation": "Материализация сохраняет промежуточный результат на время запроса, но может лишить оптимизатор возможности протолкнуть фильтр внутрь."
+      }
+    ],
+    "sources": [
+      "https://www.postgresql.org/docs/current/queries-with.html"
+    ],
+    "track": "core",
+    "trackOrder": 12
+  },
+  {
+    "id": "setops",
+    "title": "UNION, INTERSECT и EXCEPT",
+    "stage": "03 · Работа с данными",
+    "desc": "Комбинировать результаты нескольких запросов и понимать разницу между множествами и строками.",
+    "lessons": [
+      {
+        "title": "UNION и UNION ALL",
+        "body": "UNION объединяет результаты двух SELECT и удаляет полностью повторяющиеся строки. UNION ALL делает то же объединение, но сохраняет повторы. Для объединения запросы должны возвращать одинаковое количество столбцов с совместимыми типами в соответствующих позициях.\n\nUNION выполняет работу по устранению дублей, поэтому часто дороже UNION ALL. Если повторы допустимы или важны для подсчёта событий, используй UNION ALL. Если нужно получить общий список уникальных комбинаций, UNION подходит.\n\nНазвания столбцов результата обычно берутся из первого SELECT. Порядок строк не гарантируется без общего ORDER BY в конце.",
+        "example": "SELECT customer_id\nFROM customers\nWHERE city = 'Warsaw'\nUNION ALL\nSELECT customer_id\nFROM orders\nWHERE status = 'delivered';",
+        "note": "UNION удаляет дубли по всей строке результата, а не только по одному столбцу, если выбрано несколько полей.",
+        "simple": "UNION убирает одинаковые строки результата, UNION ALL сохраняет их.",
+        "practiceIds": [
+          "e33"
+        ],
+        "outcomes": [
+          "Различать UNION и UNION ALL",
+          "проверять совместимость структуры двух SELECT."
+        ],
+        "quiz": [
+          {
+            "question": "В первом SELECT одна строка email='a@x', и во втором такая же. Что вернёт UNION ALL?",
+            "options": [
+              "Одну строку",
+              "Две одинаковые строки",
+              "Ноль строк",
+              "Ошибка из-за одинакового значения"
+            ],
+            "answer": 1,
+            "explanation": "UNION ALL сохраняет все строки обоих наборов, включая полные дубликаты."
+          }
+        ],
+        "id": "setops.union-i-union-all"
+      },
+      {
+        "title": "INTERSECT",
+        "body": "INTERSECT возвращает строки, которые присутствуют в обоих результатах SELECT. INTERSECT по умолчанию удаляет дубликаты, а INTERSECT ALL сохраняет кратность совпадений по правилам мультимножеств.\n\nЭта операция полезна для пересечения наборов: например, получить клиентов, которые присутствуют и в списке покупателей, и в списке участников программы лояльности. Иногда ту же задачу можно решить через JOIN или EXISTS, но INTERSECT может ясно показать именно операцию над двумя наборами.\n\nКак и UNION, INTERSECT требует одинакового количества совместимых столбцов. Порядок строк не гарантируется без ORDER BY.",
+        "example": "SELECT customer_id\nFROM customers\nINTERSECT\nSELECT customer_id\nFROM customer_profiles;",
+        "note": "INTERSECT сравнивает всю строку выбранных столбцов. Выбери только те поля, по которым действительно определяешь пересечение.",
+        "simple": "INTERSECT оставляет общие строки двух наборов.",
+        "practiceIds": [],
+        "outcomes": [
+          "Получать пересечение двух наборов",
+          "объяснить, какие столбцы участвуют в сравнении."
+        ],
+        "quiz": [
+          {
+            "question": "Что вернёт INTERSECT для наборов {1, 2, 2, 3} и {2, 3, 4} без ALL?",
+            "options": [
+              "1, 2, 2, 3, 4",
+              "2 и 3 по одному разу",
+              "Только 2 дважды",
+              "Пустой результат"
+            ],
+            "answer": 1,
+            "explanation": "INTERSECT возвращает общие уникальные строки. Значения 2 и 3 присутствуют в обоих наборах."
+          }
+        ],
+        "id": "setops.intersect"
+      },
+      {
+        "title": "EXCEPT",
+        "body": "EXCEPT возвращает строки из первого SELECT, которых нет во втором. EXCEPT по умолчанию удаляет дубли; EXCEPT ALL учитывает количество повторов.\n\nПорядок запросов важен: A EXCEPT B не равно B EXCEPT A. Это операция разности множеств. Её удобно применять для поиска отсутствующих записей: клиенты из CRM, которых нет в выгрузке оплат, или ожидаемые ID без фактических событий.\n\nКак и другие операции над наборами, EXCEPT требует совместимой структуры SELECT. NULL значения сравниваются по правилам set operations, а не обычного оператора = в WHERE.",
+        "example": "SELECT customer_id\nFROM customers\nEXCEPT\nSELECT customer_id\nFROM orders;",
+        "note": "Если поменять местами SELECT, смысл разности изменится.",
+        "simple": "EXCEPT оставляет строки из левого набора, которых нет в правом. Порядок частей имеет значение.",
+        "practiceIds": [
+          "e34"
+        ],
+        "outcomes": [
+          "Находить разность наборов",
+          "правильно выбирать левую и правую часть EXCEPT."
+        ],
+        "quiz": [
+          {
+            "question": "Что означает A EXCEPT B?",
+            "options": [
+              "Строки, которые есть только в B",
+              "Строки из A, отсутствующие в B",
+              "Все строки A и B вместе",
+              "Только строки, общие для A и B"
+            ],
+            "answer": 1,
+            "explanation": "EXCEPT направлен: результатом являются строки первого набора, которых нет во втором."
+          }
+        ],
+        "id": "setops.except"
+      },
+      {
+        "title": "Скобки и порядок операций",
+        "body": "Операции UNION, INTERSECT и EXCEPT можно комбинировать. При нескольких операциях важно понимать приоритет и использовать скобки, если требуется конкретная последовательность.\n\nORDER BY обычно ставится один раз после всего выражения и сортирует итоговый набор. Нельзя воспринимать ORDER BY внутри каждой части как сортировку окончательного результата без соответствующих скобок и ограничений.\n\nДля читаемости сложные комбинации лучше разбивать на CTE с именами. Тогда каждый набор можно проверить отдельно, а затем объединить. Это особенно полезно, если в запросе есть разные правила фильтрации или дедупликации.",
+        "example": "(SELECT customer_id\n FROM customers\n WHERE city = 'Warsaw'\n EXCEPT\n SELECT customer_id\n FROM orders\n WHERE status = 'cancelled')\nUNION\n(SELECT customer_id\n FROM customers\n WHERE city = 'Krakow')\nORDER BY customer_id;",
+        "note": "Не полагайся на визуальный порядок строк в частях set operation. Сортируй общий результат внешним ORDER BY.",
+        "simple": "Скобки и CTE помогают явно показать, в каком порядке объединяются наборы.",
+        "practiceIds": [],
+        "outcomes": [
+          "Комбинировать set operations",
+          "задавать порядок вычисления через скобки и CTE."
+        ],
+        "quiz": [
+          {
+            "question": "Где ORDER BY сортирует результат выражения с UNION?",
+            "options": [
+              "Только первый SELECT",
+              "Только второй SELECT",
+              "Общий результат после объединения",
+              "Каждую исходную таблицу физически"
+            ],
+            "answer": 2,
+            "explanation": "Внешний ORDER BY применяется к итоговому набору, полученному после операции над SELECT."
+          }
+        ],
+        "id": "setops.skobki-i-poryadok-operatsiy"
+      }
+    ],
+    "quiz": [
+      {
+        "question": "Чем UNION отличается от UNION ALL?",
+        "options": [
+          "UNION сохраняет дубли, UNION ALL удаляет",
+          "UNION удаляет дубли результата, UNION ALL оставляет все строки",
+          "Они работают только с таблицами",
+          "UNION сортирует по дате"
+        ],
+        "answer": 1,
+        "explanation": "UNION устраняет повторяющиеся строки. UNION ALL объединяет наборы без удаления повторов и часто дешевле."
+      },
+      {
+        "question": "Что требуется для UNION?",
+        "options": [
+          "Одинаковое число столбцов и совместимые типы по позициям",
+          "Одинаковые имена таблиц",
+          "Одинаковые первичные ключи",
+          "Общий индекс"
+        ],
+        "answer": 0,
+        "explanation": "Столбцы сопоставляются по позиции. Число столбцов должно совпадать, а типы должны быть совместимыми."
+      },
+      {
+        "question": "Что делает INTERSECT?",
+        "options": [
+          "Возвращает строки, которые есть в обоих наборах",
+          "Объединяет все строки",
+          "Удаляет таблицу",
+          "Сортирует оба источника"
+        ],
+        "answer": 0,
+        "explanation": "INTERSECT оставляет общие строки двух запросов. По умолчанию дубли устраняются."
+      },
+      {
+        "question": "Что делает EXCEPT?",
+        "options": [
+          "Возвращает строки первого набора, которых нет во втором",
+          "Возвращает только пересечение",
+          "Объединяет наборы с дублями",
+          "Меняет схему"
+        ],
+        "answer": 0,
+        "explanation": "EXCEPT — разность наборов: результат первого запроса минус строки, присутствующие во втором."
+      }
+    ],
+    "sources": [
+      "https://www.postgresql.org/docs/current/queries-union.html"
+    ],
+    "track": "core",
+    "trackOrder": 13
   },
   {
     "id": "datetime",
     "title": "Дата, время и временная аналитика",
-    "stage": "11 · Даты и время",
+    "stage": "04 · Аналитический SQL",
     "desc": "Научиться корректно хранить временные значения, фильтровать периоды, работать с часовыми поясами и строить временные метрики.",
     "lessons": [
       {
@@ -2374,7 +3048,8 @@ export const modules = [
             "answer": 1,
             "explanation": "TIMESTAMPTZ представляет конкретный момент времени. PostgreSQL выводит его с учётом часового пояса текущей сессии, но не сохраняет исходное имя зоны."
           }
-        ]
+        ],
+        "id": "datetime.kak-postgresql-khranit-datu-i-vremya"
       },
       {
         "title": "Интервалы и арифметика времени",
@@ -2402,7 +3077,8 @@ export const modules = [
             "answer": 1,
             "explanation": "Календарные месяцы имеют 28–31 день, поэтому месяц не является фиксированным количеством дней."
           }
-        ]
+        ],
+        "id": "datetime.intervaly-i-arifmetika-vremeni"
       },
       {
         "title": "Часовые пояса и AT TIME ZONE",
@@ -2430,7 +3106,8 @@ export const modules = [
             "answer": 3,
             "explanation": "Локальное время интерпретируется в указанной зоне и превращается в конкретный момент TIMESTAMPTZ."
           }
-        ]
+        ],
+        "id": "datetime.chasovye-poyasa-i-at-time-zone"
       },
       {
         "title": "Фильтрация по датам: полуоткрытые интервалы",
@@ -2470,7 +3147,8 @@ export const modules = [
           ],
           "result": "Интервалы [начало месяца, начало следующего месяца) стыкуются без пересечений и пропусков.",
           "pitfall": "Сравнение по локальной дате без учёта часового пояса может отнести события к неправильному календарному дню."
-        }
+        },
+        "id": "datetime.filtratsiya-po-datam-poluotkrytye-intervaly"
       },
       {
         "title": "DATE_TRUNC, EXTRACT и календарные периоды",
@@ -2499,7 +3177,8 @@ export const modules = [
             "answer": 1,
             "explanation": "Число месяца одинаково для разных лет. Для отдельного периода нужно учитывать и год, например через DATE_TRUNC('month', ...)."
           }
-        ]
+        ],
+        "id": "datetime.date-trunc-extract-i-kalendarnye-periody"
       },
       {
         "title": "Генерация календаря и пропущенные периоды",
@@ -2527,7 +3206,8 @@ export const modules = [
             "answer": 1,
             "explanation": "GROUP BY создаёт группы только из существующих строк. Для пустых периодов нужна отдельная календарная сетка."
           }
-        ]
+        ],
+        "id": "datetime.generatsiya-kalendarya-i-propushchennye-periody"
       },
       {
         "title": "Временные метрики: длительность и SLA",
@@ -2556,7 +3236,8 @@ export const modules = [
             "answer": 1,
             "explanation": "NULL не означает нулевую длительность. Он может обозначать незавершённую доставку или отсутствие известного времени."
           }
-        ]
+        ],
+        "id": "datetime.vremennye-metriki-dlitelnost-i-sla"
       }
     ],
     "quiz": [
@@ -2609,1454 +3290,14 @@ export const modules = [
       "https://www.postgresql.org/docs/current/datatype-datetime.html",
       "https://www.postgresql.org/docs/current/functions-datetime.html",
       "https://www.postgresql.org/docs/current/functions-srf.html"
-    ]
-  },
-  {
-    "id": "subqueries",
-    "title": "Подзапросы и коррелированные запросы",
-    "stage": "12 · Подзапросы",
-    "desc": "Научиться вкладывать запросы, сравнивать с агрегатами и использовать EXISTS, ANY, ALL.",
-    "lessons": [
-      {
-        "title": "Подзапрос как значение",
-        "body": "Подзапрос — запрос, вложенный в другой SQL-запрос. Он может вернуть одно значение, один столбец или целую таблицу. В зависимости от результата подзапрос используют как скалярное выражение, источник в FROM или условие фильтрации.\n\nСкалярный подзапрос должен вернуть не более одной строки и одного столбца. Например, можно сравнить цену заказа со средней ценой всех заказов. Если скалярный подзапрос вернёт несколько строк, PostgreSQL выдаст ошибку.\n\nПодзапрос помогает разделить задачу на этапы: сначала вычислить значение, затем использовать его во внешнем запросе. Но не нужно вкладывать запросы автоматически: иногда JOIN или CTE читаются проще.",
-        "example": "SELECT order_id, total_amount\nFROM orders\nWHERE total_amount > (\n  SELECT AVG(total_amount)\n  FROM orders\n);",
-        "note": "Если подзапрос должен быть скалярным, проверь, что он действительно возвращает не более одной строки.",
-        "simple": "Скалярный подзапрос возвращает одно значение, которое внешний запрос использует как выражение.",
-        "practiceIds": [
-          "e27"
-        ],
-        "outcomes": [
-          "Использовать скалярный подзапрос",
-          "объяснить ограничение по числу возвращаемых строк."
-        ],
-        "quiz": [
-          {
-            "question": "Что произойдёт, если скалярный подзапрос вернёт две строки?",
-            "options": [
-              "Внешний запрос автоматически возьмёт первую строку",
-              "PostgreSQL выдаст ошибку: скалярное подвыражение вернуло больше одной строки",
-              "PostgreSQL объединит две строки в массив",
-              "Внешний запрос вернёт две копии каждой строки"
-            ],
-            "answer": 1,
-            "explanation": "Скалярный подзапрос в позиции выражения должен возвращать максимум одну строку и один столбец."
-          }
-        ],
-        "walkthrough": {
-          "title": "Подзапрос должен вернуть одно значение",
-          "scenario": "Нужно найти заказы, сумма которых выше средней суммы всех заказов.",
-          "steps": [
-            "Внешний SELECT перебирает отдельные заказы.",
-            "Подзапрос SELECT AVG(total_amount) вычисляет одно агрегированное значение.",
-            "Оператор > сравнивает сумму каждой строки с этим скалярным значением.",
-            "Агрегат без GROUP BY возвращает одну строку, поэтому его можно использовать как одно значение."
-          ],
-          "result": "Вернутся только заказы, сумма которых выше общей средней суммы.",
-          "pitfall": "Если скалярный подзапрос неожиданно вернёт больше одной строки, PostgreSQL выдаст ошибку. Для набора значений используй IN, EXISTS или JOIN."
-        }
-      },
-      {
-        "title": "IN и подзапрос с набором значений",
-        "body": "IN проверяет, входит ли значение в набор, возвращённый подзапросом. Например, можно выбрать заказы клиентов, которые совершали хотя бы одну покупку в конкретном регионе.\n\nПодзапрос внутри IN обычно возвращает один столбец и любое количество строк. Если набор пуст, совпадений не будет. Если подзапрос содержит NULL, поведение NOT IN может стать неожиданным: отсутствие совпадения не всегда превращается в TRUE, потому что результат может быть UNKNOWN.\n\nДля положительной проверки IN часто понятен. Для проверки отсутствия связи обычно безопаснее NOT EXISTS, особенно если столбец в подзапросе допускает NULL.",
-        "example": "SELECT order_id\nFROM orders\nWHERE customer_id IN (\n  SELECT customer_id\n  FROM customers\n  WHERE city = 'Warsaw'\n);",
-        "note": "Если подзапрос для NOT IN может вернуть NULL, рассмотрите NOT EXISTS.",
-        "simple": "IN сопоставляет значение с набором. Для NOT IN учитывай возможность NULL в этом наборе.",
-        "practiceIds": [],
-        "outcomes": [
-          "Использовать IN с подзапросом",
-          "объяснить, почему NULL опасен для NOT IN."
-        ],
-        "quiz": [
-          {
-            "question": "Почему NOT IN может не вернуть ожидаемые строки, если подзапрос содержит NULL?",
-            "options": [
-              "Потому что NULL делает проверку отсутствия UNKNOWN, а WHERE не оставляет UNKNOWN",
-              "Потому что NOT IN удаляет все значения из внешней таблицы",
-              "Потому что подзапрос обязан вернуть только одну строку",
-              "Потому что NULL автоматически превращается в 0"
-            ],
-            "answer": 0,
-            "explanation": "Если совпадения нет, но набор содержит NULL, результат NOT IN может быть UNKNOWN, а не TRUE. WHERE отбрасывает UNKNOWN."
-          }
-        ]
-      },
-      {
-        "title": "EXISTS и NOT EXISTS",
-        "body": "EXISTS проверяет, вернул ли подзапрос хотя бы одну строку. Значения в SELECT внутри EXISTS обычно не важны: часто пишут SELECT 1. Важно только существование строки, удовлетворяющей условию.\n\nEXISTS особенно удобен для поиска родительских записей с дочерними: клиенты, у которых есть хотя бы один заказ. NOT EXISTS ищет записи без соответствий. В отличие от JOIN, EXISTS не размножает строку внешнего источника при нескольких совпадениях.\n\nОптимизатор PostgreSQL часто превращает EXISTS в semi join, поэтому это не обязательно медленный способ. Выбирай EXISTS по смыслу задачи, а затем проверяй план, если производительность важна.",
-        "example": "SELECT c.customer_id, c.customer_name\nFROM customers AS c\nWHERE EXISTS (\n  SELECT 1\n  FROM orders AS o\n  WHERE o.customer_id = c.customer_id\n);",
-        "note": "Для поиска отсутствующих связей используй NOT EXISTS. Он не страдает от NULL в наборе так, как NOT IN.",
-        "simple": "EXISTS задаёт вопрос «есть ли хотя бы одна подходящая строка?», а не «какие значения вернуть?».",
-        "practiceIds": [
-          "e28",
-          "e29",
-          "e58"
-        ],
-        "outcomes": [
-          "Находить строки через EXISTS и NOT EXISTS",
-          "объяснить, почему несколько совпадений не дублируют внешний ряд."
-        ],
-        "quiz": [
-          {
-            "question": "Сколько раз клиент попадёт в результат EXISTS, если у него 15 заказов?",
-            "options": [
-              "15 раз",
-              "Один раз, если существует хотя бы один заказ",
-              "Ни разу, потому что EXISTS возвращает только TRUE",
-              "Зависит от суммы заказов"
-            ],
-            "answer": 1,
-            "explanation": "EXISTS проверяет наличие строк. Внешняя строка клиента сохраняется один раз независимо от числа совпадений."
-          }
-        ],
-        "walkthrough": {
-          "title": "Проверяем существование, а не считаем совпадения",
-          "scenario": "Нужно получить клиентов, у которых есть хотя бы один заказ.",
-          "steps": [
-            "Внешний запрос перебирает customers.",
-            "Подзапрос ищет заказы с тем же customer_id.",
-            "EXISTS становится TRUE при первой найденной строке.",
-            "Внешний запрос возвращает клиента один раз, независимо от числа его заказов."
-          ],
-          "result": "Каждый подходящий клиент появляется один раз, даже если оформил десять заказов.",
-          "pitfall": "JOIN вернёт несколько строк на клиента при нескольких заказах. EXISTS лучше выражает задачу «есть хотя бы один»."
-        }
-      },
-      {
-        "title": "Коррелированные подзапросы",
-        "body": "Коррелированный подзапрос ссылается на столбцы внешнего запроса. Он выполняет логическую проверку для каждой внешней строки, например ищет максимальную дату заказа именно текущего клиента.\n\nТакой запрос удобно читать, когда внутреннее условие зависит от конкретной внешней записи. Но наивное представление «подзапрос обязательно запускается заново для каждой строки» не всегда верно: оптимизатор может преобразовать его в JOIN или другой план.\n\nКоррелированный подзапрос может быть менее очевиден, чем агрегированный JOIN. Сравнивай оба варианта по ясности и EXPLAIN ANALYZE на реальных объёмах, если есть проблема производительности.",
-        "example": "SELECT c.customer_id, c.customer_name\nFROM customers AS c\nWHERE c.registered_at = (\n  SELECT MIN(o.created_at)\n  FROM orders AS o\n  WHERE o.customer_id = c.customer_id\n);",
-        "note": "Не делай вывод о скорости только по вложенности. Оптимизатор может преобразовать запрос.",
-        "simple": "Коррелированный подзапрос использует значение текущей строки внешнего запроса.",
-        "practiceIds": [
-          "e30"
-        ],
-        "outcomes": [
-          "Читать коррелированные ссылки",
-          "объяснить, как внутренний запрос зависит от внешней строки."
-        ],
-        "quiz": [
-          {
-            "question": "Что делает условие o.customer_id = c.customer_id внутри подзапроса?",
-            "options": [
-              "Сравнивает заказ с клиентом из текущей строки внешнего запроса",
-              "Соединяет все заказы со всеми клиентами",
-              "Создаёт внешний ключ",
-              "Сортирует клиентов по ID"
-            ],
-            "answer": 0,
-            "explanation": "c.customer_id — значение текущей внешней строки. Подзапрос ищет заказы именно этого клиента."
-          }
-        ]
-      },
-      {
-        "title": "ANY, ALL и сравнение с массивом значений",
-        "body": "ANY и ALL сравнивают значение с результатами набора. x > ANY (subquery) означает, что x больше хотя бы одного значения набора. x > ALL означает, что x больше каждого значения набора.\n\nANY похож на «существует хотя бы одно сравнение TRUE», а ALL — на «все сравнения TRUE». Для пустого набора ANY даёт FALSE, а ALL — TRUE. NULL в наборе может привести к UNKNOWN, если ни одно сравнение не даёт однозначного ответа.\n\nЭти операторы полезны для сравнений с распределением значений, но часто можно выразить ту же идею через MIN, MAX или EXISTS. Выбирай форму, которую проще проверить на крайних случаях.",
-        "example": "SELECT product_id, price\nFROM products\nWHERE price > ALL (\n  SELECT price\n  FROM products\n  WHERE category = 'coffee'\n);",
-        "note": "ALL не означает «большинство». Достаточно одного FALSE, чтобы результат сравнения с ALL стал FALSE.",
-        "simple": "ANY требует хотя бы одного истинного сравнения, ALL — истинности каждого сравнения.",
-        "practiceIds": [],
-        "outcomes": [
-          "Различать ANY и ALL",
-          "объяснить поведение на пустом наборе и при NULL."
-        ],
-        "quiz": [
-          {
-            "question": "Что означает price > ALL (subquery)?",
-            "options": [
-              "Цена выше хотя бы одной цены из набора",
-              "Цена выше каждой цены из набора",
-              "Цена равна средней цене",
-              "Цена выше нуля независимо от подзапроса"
-            ],
-            "answer": 1,
-            "explanation": "ALL требует, чтобы сравнение было истинным для каждого значения, возвращённого подзапросом."
-          }
-        ]
-      }
     ],
-    "quiz": [
-      {
-        "question": "Что проверяет EXISTS?",
-        "options": [
-          "Есть ли хотя бы одна строка в подзапросе",
-          "Сколько строк в таблице",
-          "Совпадает ли порядок сортировки",
-          "Есть ли индекс"
-        ],
-        "answer": 0,
-        "explanation": "EXISTS возвращает TRUE, если подзапрос нашёл хотя бы одну строку. Он не возвращает сами строки подзапроса."
-      },
-      {
-        "question": "Почему NOT EXISTS часто безопаснее, чем NOT IN?",
-        "options": [
-          "NOT EXISTS всегда быстрее",
-          "NOT IN может дать UNKNOWN, если набор содержит NULL",
-          "NOT EXISTS работает только с числами",
-          "NOT IN удаляет NULL"
-        ],
-        "answer": 1,
-        "explanation": "NULL внутри набора может сделать результат NOT IN неизвестным. NOT EXISTS обычно проще контролировать через условие связи."
-      },
-      {
-        "question": "Что произойдёт, если скалярный подзапрос вернёт две строки?",
-        "options": [
-          "Возьмётся первая",
-          "PostgreSQL выдаст ошибку: скалярный подзапрос вернул больше одной строки",
-          "Они объединятся через запятую",
-          "Вернётся NULL"
-        ],
-        "answer": 1,
-        "explanation": "Подзапрос в позиции одного значения должен вернуть не более одной строки и одного столбца."
-      },
-      {
-        "question": "Что означает x > ALL (подзапрос)?",
-        "options": [
-          "x больше хотя бы одного значения",
-          "x больше каждого значения набора",
-          "x равен сумме набора",
-          "Набор пуст"
-        ],
-        "answer": 1,
-        "explanation": "ALL требует, чтобы сравнение было истинным для всех значений набора."
-      }
-    ],
-    "sources": [
-      "https://www.postgresql.org/docs/current/functions-subquery.html"
-    ]
-  },
-  {
-    "id": "cte",
-    "title": "CTE и рекурсивные запросы",
-    "stage": "13 · CTE",
-    "desc": "Разбивать большие запросы на понятные этапы, повторно использовать промежуточные наборы и строить рекурсию.",
-    "lessons": [
-      {
-        "title": "Обычный WITH",
-        "body": "CTE (Common Table Expression) — именованный результат подзапроса, объявленный через WITH. Он существует в рамках одного SQL-оператора и позволяет разбить сложную задачу на логические этапы.\n\nНапример, сначала можно выбрать доставленные заказы, а затем посчитать их выручку по магазинам. Первый этап получает имя delivered_orders. Основной SELECT читает этот набор как временный источник данных. Это не новая постоянная таблица и не отдельный запуск, который нужно вручную сохранять.\n\nCTE особенно полезен, когда запрос состоит из нескольких преобразований: фильтрация, соединение, агрегация, ранжирование. Имена должны описывать смысл этапа, а не просто называться q1 или temp. Тогда запрос можно читать как последовательность действий над данными.\n\nНе думай, что каждый CTE обязательно физически сохраняется в памяти. В современных версиях PostgreSQL простые CTE могут быть встроены в основной запрос. MATERIALIZED и NOT MATERIALIZED позволяют влиять на это поведение в подходящих случаях, но их не нужно добавлять без измеримой причины.\n\nCTE не исправляет неправильную логику JOIN и не делает запрос автоматически быстрее. Его главная польза — ясная структура и возможность отдельно проверить промежуточный результат.",
-        "example": "WITH delivered_orders AS (\n  SELECT o.order_id, s.city, o.total_amount\n  FROM orders AS o\n  JOIN stores AS s ON s.store_id = o.store_id\n  WHERE o.status = 'delivered'\n)\nSELECT city, SUM(total_amount) AS revenue\nFROM delivered_orders\nGROUP BY city;",
-        "note": "CTE существует только в пределах одного SQL-оператора. Не путай его с CREATE TEMP TABLE.",
-        "simple": "WITH даёт имя промежуточному набору строк. Это способ организовать запрос, а не создать постоянную таблицу.",
-        "practiceIds": [
-          "e31"
-        ],
-        "outcomes": [
-          "Объявлять CTE через WITH",
-          "объяснить его область действия и отличие от таблицы."
-        ],
-        "quiz": [
-          {
-            "question": "Сколько времени существует обычный CTE delivered_orders?",
-            "options": [
-              "До удаления базы данных",
-              "Только в рамках SQL-оператора, в котором он объявлен",
-              "До закрытия PostgreSQL",
-              "Пока пользователь не выполнит DROP TABLE"
-            ],
-            "answer": 1,
-            "explanation": "CTE — часть одного SQL-оператора. Он не создаёт постоянный объект схемы."
-          }
-        ],
-        "walkthrough": {
-          "title": "Разделяем запрос на два понятных шага",
-          "scenario": "Сначала отобрать доставленные заказы, затем посчитать их количество и сумму по магазинам.",
-          "steps": [
-            "WITH delivered_orders AS (...) объявляет промежуточный набор строк.",
-            "Внутри CTE WHERE status = 'delivered' оставляет только нужные заказы.",
-            "Основной SELECT читает delivered_orders так же, как обычную таблицу.",
-            "GROUP BY store_id формирует одну строку на магазин, а COUNT и SUM считают показатели."
-          ],
-          "result": "Результат содержит по одной строке на магазин с количеством доставленных заказов и их суммой.",
-          "pitfall": "CTE доступен только в пределах одного SQL-оператора. Следующий отдельный запрос уже не сможет обратиться к delivered_orders."
-        }
-      },
-      {
-        "title": "Несколько CTE и цепочка преобразований",
-        "body": "В одном WITH можно объявить несколько CTE. Следующий CTE может ссылаться на предыдущий, поэтому запрос удобно строить как цепочку преобразований: отобрать строки, агрегировать, присоединить справочник, сформировать итог.\n\nКаждый этап желательно делать с понятным зерном. Например, первый CTE содержит одну строку на заказ, второй — одну строку на клиента. Если соединить их на неверном уровне, дубли могут появиться даже внутри аккуратно названной цепочки.\n\nCTE не гарантирует, что данные вычисляются один раз или материализуются. Это зависит от версии PostgreSQL, настроек и конструкции запроса. Не используй CTE как обещание производительности: он прежде всего делает логику явной.",
-        "example": "WITH monthly_orders AS (\n  SELECT DATE_TRUNC('month', created_at) AS month,\n         COUNT(*) AS orders_count\n  FROM orders\n  GROUP BY 1\n),\nmonthly_revenue AS (\n  SELECT DATE_TRUNC('month', created_at) AS month,\n         SUM(total_amount) AS revenue\n  FROM orders\n  GROUP BY 1\n)\nSELECT m.month, m.orders_count, r.revenue\nFROM monthly_orders AS m\nJOIN monthly_revenue AS r USING (month);",
-        "note": "Одинаковое число строк в двух CTE не означает, что их можно соединять без ключа. Соединяй по смысловому ключу.",
-        "simple": "Несколько CTE позволяют читать сложный запрос как последовательность именованных этапов.",
-        "practiceIds": [
-          "e32"
-        ],
-        "outcomes": [
-          "Строить цепочки CTE",
-          "проверять зерно каждого промежуточного результата."
-        ],
-        "quiz": [
-          {
-            "question": "Почему monthly_orders и monthly_revenue безопасно соединяются через USING (month) в примере?",
-            "options": [
-              "Потому что оба CTE имеют одну строку на месяц",
-              "Потому что в обоих одинаковое количество столбцов",
-              "Потому что JOIN по имени столбца всегда безопасен",
-              "Потому что CTE автоматически сортируются по month"
-            ],
-            "answer": 0,
-            "explanation": "Каждый CTE агрегирован до зерна «одна строка на месяц». Поэтому month задаёт соответствие между наборами."
-          }
-        ],
-        "walkthrough": {
-          "title": "Каждый CTE отвечает за один этап",
-          "scenario": "Нужно отобрать доставленные заказы, затем посчитать выручку по магазинам.",
-          "steps": [
-            "Первый CTE filtered_orders оставляет только подходящие факты.",
-            "Второй CTE store_revenue группирует эти факты по store_id.",
-            "Финальный SELECT выводит уже готовую агрегированную таблицу.",
-            "Каждый этап можно временно проверить отдельным SELECT, чтобы увидеть количество строк и ключи."
-          ],
-          "result": "Запрос читается как конвейер: фильтрация → агрегация → выдача результата.",
-          "pitfall": "Не создавай CTE ради каждой строки SQL. Разделяй запрос там, где меняется смысл или зерно данных."
-        }
-      },
-      {
-        "title": "Материализация и оптимизация CTE",
-        "body": "В PostgreSQL CTE может быть встроен в основной запрос или материализован как отдельный промежуточный результат. MATERIALIZED просит вычислить CTE отдельно, NOT MATERIALIZED разрешает встроить его, если это возможно.\n\nМатериализация может быть полезна, если результат используется несколько раз или если нужно избежать повторного выполнения дорогого этапа. Но она может мешать проталкиванию фильтров и оптимизации. NOT MATERIALIZED может дать оптимизатору больше свободы, но иногда приводит к повторному вычислению.\n\nНе добавляй эти ключевые слова наугад. Сначала посмотри EXPLAIN (ANALYZE, BUFFERS), найди реальную проблему и сравни планы. Поведение зависит от версии PostgreSQL и свойств CTE.",
-        "example": "WITH filtered_orders AS NOT MATERIALIZED (\n  SELECT *\n  FROM orders\n  WHERE store_id IN (\n    SELECT store_id\n    FROM stores\n    WHERE city = 'Warsaw'\n  )\n)\nSELECT *\nFROM filtered_orders\nWHERE status = 'delivered';",
-        "note": "Материализация — не универсальное ускорение. Проверяй план выполнения и реальное время.",
-        "simple": "MATERIALIZED фиксирует отдельное вычисление CTE, NOT MATERIALIZED позволяет встроить его в запрос.",
-        "practiceIds": [],
-        "outcomes": [
-          "Объяснить различие MATERIALIZED и NOT MATERIALIZED",
-          "не путать структуру запроса с гарантией скорости."
-        ],
-        "quiz": [
-          {
-            "question": "Какой риск может возникнуть, если принудительно материализовать CTE, используемый один раз?",
-            "options": [
-              "Фильтр внешнего запроса может не протолкнуться внутрь CTE, и будет обработано больше строк",
-              "PostgreSQL удалит исходную таблицу",
-              "CTE станет постоянной таблицей",
-              "Запрос потеряет возможность использовать SELECT"
-            ],
-            "answer": 0,
-            "explanation": "Материализация может ограничить оптимизацию и pushdown фильтров. Это иногда приводит к обработке большего промежуточного набора."
-          }
-        ]
-      },
-      {
-        "title": "Рекурсивный WITH",
-        "body": "Рекурсивный CTE позволяет обходить иерархии и строить последовательности. В нём есть начальная часть (anchor), которая задаёт первые строки, и рекурсивная часть, которая ссылается на сам CTE и добавляет следующий уровень.\n\nТипичный пример — дерево категорий или организационная структура. Начинаем с корневого узла, затем на каждом шаге находим дочерние записи. UNION ALL объединяет начальный и рекурсивный наборы. Процесс продолжается, пока рекурсивная часть не перестанет возвращать новые строки.\n\nСледи за условием остановки и циклами. В графе с циклическими ссылками рекурсия может продолжаться бесконечно или до ограничения ресурсов. Для защиты можно хранить путь посещённых узлов и не посещать один ID повторно.",
-        "example": "WITH RECURSIVE numbers(n) AS (\n  SELECT 1\n  UNION ALL\n  SELECT n + 1\n  FROM numbers\n  WHERE n < 5\n)\nSELECT n\nFROM numbers;",
-        "note": "Всегда продумывай остановку рекурсии. В иерархии с циклами нужна защита от повторного посещения узлов.",
-        "simple": "Рекурсивный CTE состоит из стартового набора и шага, который строит следующий уровень.",
-        "practiceIds": [
-          "e59"
-        ],
-        "outcomes": [
-          "Писать anchor и рекурсивную часть",
-          "добавлять условие остановки",
-          "объяснить риск циклов."
-        ],
-        "quiz": [
-          {
-            "question": "Какая часть рекурсивного CTE задаёт начальные строки?",
-            "options": [
-              "Рекурсивная часть, ссылающаяся на саму себя",
-              "Anchor-часть до UNION ALL",
-              "Внешний ORDER BY",
-              "WITH MATERIALIZED"
-            ],
-            "answer": 1,
-            "explanation": "Anchor-часть запускает рекурсию. Рекурсивная часть затем строит новые строки на основе уже полученных."
-          }
-        ],
-        "walkthrough": {
-          "title": "Рекурсия строит последовательность шаг за шагом",
-          "scenario": "Нужно получить числа от 1 до 5 без отдельной таблицы.",
-          "steps": [
-            "Начальная часть SELECT 1 создаёт первую строку.",
-            "UNION ALL объединяет начальный набор с результатом рекурсивной части.",
-            "Рекурсивная часть читает уже найденное число и прибавляет единицу.",
-            "WHERE n < 5 задаёт условие продолжения. Когда оно перестаёт выполняться, новые строки не появляются."
-          ],
-          "result": "CTE вернёт пять строк: 1, 2, 3, 4 и 5.",
-          "pitfall": "У рекурсивного CTE обязательно должно быть условие остановки или другая гарантия конечности. Иначе запрос может генерировать строки бесконечно."
-        }
-      }
-    ],
-    "quiz": [
-      {
-        "question": "Что такое обычный CTE?",
-        "options": [
-          "Индекс",
-          "Именованный результат запроса внутри WITH",
-          "Тип данных",
-          "Триггер"
-        ],
-        "answer": 1,
-        "explanation": "CTE даёт имя промежуточному набору строк, чтобы запрос было проще читать и делить на шаги."
-      },
-      {
-        "question": "Из каких частей обычно состоит рекурсивный CTE?",
-        "options": [
-          "Только ORDER BY",
-          "Начальная часть и рекурсивная часть",
-          "Только DELETE",
-          "Два индекса"
-        ],
-        "answer": 1,
-        "explanation": "Начальная часть задаёт первые строки, а рекурсивная добавляет следующие, пока условие продолжения выполняется."
-      },
-      {
-        "question": "Что делает WITH RECURSIVE?",
-        "options": [
-          "Создаёт обычный индекс",
-          "Позволяет запросу ссылаться на собственный результат для обхода иерархий или последовательностей",
-          "Удаляет дубликаты",
-          "Создаёт постоянную таблицу"
-        ],
-        "answer": 1,
-        "explanation": "Рекурсивный CTE полезен для деревьев, иерархий и последовательностей, но обязательно продумай условие остановки."
-      },
-      {
-        "question": "Означает ли MATERIALIZED, что CTE всегда быстрее?",
-        "options": [
-          "Да",
-          "Нет, материализация может помочь или помешать оптимизации",
-          "Да, если есть JOIN",
-          "Это команда создания индекса"
-        ],
-        "answer": 1,
-        "explanation": "Материализация сохраняет промежуточный результат на время запроса, но может лишить оптимизатор возможности протолкнуть фильтр внутрь."
-      }
-    ],
-    "sources": [
-      "https://www.postgresql.org/docs/current/queries-with.html"
-    ]
-  },
-  {
-    "id": "setops",
-    "title": "UNION, INTERSECT и EXCEPT",
-    "stage": "14 · Операции над наборами",
-    "desc": "Комбинировать результаты нескольких запросов и понимать разницу между множествами и строками.",
-    "lessons": [
-      {
-        "title": "UNION и UNION ALL",
-        "body": "UNION объединяет результаты двух SELECT и удаляет полностью повторяющиеся строки. UNION ALL делает то же объединение, но сохраняет повторы. Для объединения запросы должны возвращать одинаковое количество столбцов с совместимыми типами в соответствующих позициях.\n\nUNION выполняет работу по устранению дублей, поэтому часто дороже UNION ALL. Если повторы допустимы или важны для подсчёта событий, используй UNION ALL. Если нужно получить общий список уникальных комбинаций, UNION подходит.\n\nНазвания столбцов результата обычно берутся из первого SELECT. Порядок строк не гарантируется без общего ORDER BY в конце.",
-        "example": "SELECT customer_id\nFROM customers\nWHERE city = 'Warsaw'\nUNION ALL\nSELECT customer_id\nFROM orders\nWHERE status = 'delivered';",
-        "note": "UNION удаляет дубли по всей строке результата, а не только по одному столбцу, если выбрано несколько полей.",
-        "simple": "UNION убирает одинаковые строки результата, UNION ALL сохраняет их.",
-        "practiceIds": [
-          "e33"
-        ],
-        "outcomes": [
-          "Различать UNION и UNION ALL",
-          "проверять совместимость структуры двух SELECT."
-        ],
-        "quiz": [
-          {
-            "question": "В первом SELECT одна строка email='a@x', и во втором такая же. Что вернёт UNION ALL?",
-            "options": [
-              "Одну строку",
-              "Две одинаковые строки",
-              "Ноль строк",
-              "Ошибка из-за одинакового значения"
-            ],
-            "answer": 1,
-            "explanation": "UNION ALL сохраняет все строки обоих наборов, включая полные дубликаты."
-          }
-        ]
-      },
-      {
-        "title": "INTERSECT",
-        "body": "INTERSECT возвращает строки, которые присутствуют в обоих результатах SELECT. INTERSECT по умолчанию удаляет дубликаты, а INTERSECT ALL сохраняет кратность совпадений по правилам мультимножеств.\n\nЭта операция полезна для пересечения наборов: например, получить клиентов, которые присутствуют и в списке покупателей, и в списке участников программы лояльности. Иногда ту же задачу можно решить через JOIN или EXISTS, но INTERSECT может ясно показать именно операцию над двумя наборами.\n\nКак и UNION, INTERSECT требует одинакового количества совместимых столбцов. Порядок строк не гарантируется без ORDER BY.",
-        "example": "SELECT customer_id\nFROM customers\nINTERSECT\nSELECT customer_id\nFROM customer_profiles;",
-        "note": "INTERSECT сравнивает всю строку выбранных столбцов. Выбери только те поля, по которым действительно определяешь пересечение.",
-        "simple": "INTERSECT оставляет общие строки двух наборов.",
-        "practiceIds": [],
-        "outcomes": [
-          "Получать пересечение двух наборов",
-          "объяснить, какие столбцы участвуют в сравнении."
-        ],
-        "quiz": [
-          {
-            "question": "Что вернёт INTERSECT для наборов {1, 2, 2, 3} и {2, 3, 4} без ALL?",
-            "options": [
-              "1, 2, 2, 3, 4",
-              "2 и 3 по одному разу",
-              "Только 2 дважды",
-              "Пустой результат"
-            ],
-            "answer": 1,
-            "explanation": "INTERSECT возвращает общие уникальные строки. Значения 2 и 3 присутствуют в обоих наборах."
-          }
-        ]
-      },
-      {
-        "title": "EXCEPT",
-        "body": "EXCEPT возвращает строки из первого SELECT, которых нет во втором. EXCEPT по умолчанию удаляет дубли; EXCEPT ALL учитывает количество повторов.\n\nПорядок запросов важен: A EXCEPT B не равно B EXCEPT A. Это операция разности множеств. Её удобно применять для поиска отсутствующих записей: клиенты из CRM, которых нет в выгрузке оплат, или ожидаемые ID без фактических событий.\n\nКак и другие операции над наборами, EXCEPT требует совместимой структуры SELECT. NULL значения сравниваются по правилам set operations, а не обычного оператора = в WHERE.",
-        "example": "SELECT customer_id\nFROM customers\nEXCEPT\nSELECT customer_id\nFROM orders;",
-        "note": "Если поменять местами SELECT, смысл разности изменится.",
-        "simple": "EXCEPT оставляет строки из левого набора, которых нет в правом. Порядок частей имеет значение.",
-        "practiceIds": [
-          "e34"
-        ],
-        "outcomes": [
-          "Находить разность наборов",
-          "правильно выбирать левую и правую часть EXCEPT."
-        ],
-        "quiz": [
-          {
-            "question": "Что означает A EXCEPT B?",
-            "options": [
-              "Строки, которые есть только в B",
-              "Строки из A, отсутствующие в B",
-              "Все строки A и B вместе",
-              "Только строки, общие для A и B"
-            ],
-            "answer": 1,
-            "explanation": "EXCEPT направлен: результатом являются строки первого набора, которых нет во втором."
-          }
-        ]
-      },
-      {
-        "title": "Скобки и порядок операций",
-        "body": "Операции UNION, INTERSECT и EXCEPT можно комбинировать. При нескольких операциях важно понимать приоритет и использовать скобки, если требуется конкретная последовательность.\n\nORDER BY обычно ставится один раз после всего выражения и сортирует итоговый набор. Нельзя воспринимать ORDER BY внутри каждой части как сортировку окончательного результата без соответствующих скобок и ограничений.\n\nДля читаемости сложные комбинации лучше разбивать на CTE с именами. Тогда каждый набор можно проверить отдельно, а затем объединить. Это особенно полезно, если в запросе есть разные правила фильтрации или дедупликации.",
-        "example": "(SELECT customer_id\n FROM customers\n WHERE city = 'Warsaw'\n EXCEPT\n SELECT customer_id\n FROM orders\n WHERE status = 'cancelled')\nUNION\n(SELECT customer_id\n FROM customers\n WHERE city = 'Krakow')\nORDER BY customer_id;",
-        "note": "Не полагайся на визуальный порядок строк в частях set operation. Сортируй общий результат внешним ORDER BY.",
-        "simple": "Скобки и CTE помогают явно показать, в каком порядке объединяются наборы.",
-        "practiceIds": [],
-        "outcomes": [
-          "Комбинировать set operations",
-          "задавать порядок вычисления через скобки и CTE."
-        ],
-        "quiz": [
-          {
-            "question": "Где ORDER BY сортирует результат выражения с UNION?",
-            "options": [
-              "Только первый SELECT",
-              "Только второй SELECT",
-              "Общий результат после объединения",
-              "Каждую исходную таблицу физически"
-            ],
-            "answer": 2,
-            "explanation": "Внешний ORDER BY применяется к итоговому набору, полученному после операции над SELECT."
-          }
-        ]
-      }
-    ],
-    "quiz": [
-      {
-        "question": "Чем UNION отличается от UNION ALL?",
-        "options": [
-          "UNION сохраняет дубли, UNION ALL удаляет",
-          "UNION удаляет дубли результата, UNION ALL оставляет все строки",
-          "Они работают только с таблицами",
-          "UNION сортирует по дате"
-        ],
-        "answer": 1,
-        "explanation": "UNION устраняет повторяющиеся строки. UNION ALL объединяет наборы без удаления повторов и часто дешевле."
-      },
-      {
-        "question": "Что требуется для UNION?",
-        "options": [
-          "Одинаковое число столбцов и совместимые типы по позициям",
-          "Одинаковые имена таблиц",
-          "Одинаковые первичные ключи",
-          "Общий индекс"
-        ],
-        "answer": 0,
-        "explanation": "Столбцы сопоставляются по позиции. Число столбцов должно совпадать, а типы должны быть совместимыми."
-      },
-      {
-        "question": "Что делает INTERSECT?",
-        "options": [
-          "Возвращает строки, которые есть в обоих наборах",
-          "Объединяет все строки",
-          "Удаляет таблицу",
-          "Сортирует оба источника"
-        ],
-        "answer": 0,
-        "explanation": "INTERSECT оставляет общие строки двух запросов. По умолчанию дубли устраняются."
-      },
-      {
-        "question": "Что делает EXCEPT?",
-        "options": [
-          "Возвращает строки первого набора, которых нет во втором",
-          "Возвращает только пересечение",
-          "Объединяет наборы с дублями",
-          "Меняет схему"
-        ],
-        "answer": 0,
-        "explanation": "EXCEPT — разность наборов: результат первого запроса минус строки, присутствующие во втором."
-      }
-    ],
-    "sources": [
-      "https://www.postgresql.org/docs/current/queries-union.html"
-    ]
-  },
-  {
-    "id": "ddl",
-    "title": "DDL: создание и изменение структуры",
-    "stage": "15 · Структура базы",
-    "desc": "Создавать таблицы, столбцы, схемы, ограничения, последовательности и управлять объектами.",
-    "lessons": [
-      {
-        "title": "CREATE TABLE",
-        "body": "CREATE TABLE создаёт новую таблицу и определяет её столбцы, типы и ограничения. При проектировании сначала определи, что означает одна строка, затем выбери столбцы и их типы. После этого добавь ключи и правила целостности.\n\nИмя таблицы и столбцов должно отражать смысл данных. Типы выбирай не по внешнему виду примера, а по допустимым значениям и операциям: идентификатор — целое число или UUID, денежная сумма — NUMERIC, момент события — TIMESTAMPTZ.\n\nCREATE TABLE можно дополнить IF NOT EXISTS, но это не проверяет, что уже существующая таблица имеет нужную структуру. Такая запись только не выдаст ошибку из-за существующего имени.",
-        "example": "CREATE TABLE example_products (\n  product_id BIGINT PRIMARY KEY,\n  product_name TEXT NOT NULL,\n  price NUMERIC(10, 2) NOT NULL CHECK (price >= 0),\n  created_at TIMESTAMPTZ NOT NULL DEFAULT now()\n);",
-        "note": "IF NOT EXISTS не сравнивает схему существующей таблицы с тем, что ты хотел создать.",
-        "simple": "CREATE TABLE задаёт структуру будущих строк: столбцы, типы и ограничения.",
-        "practiceIds": [
-          "e61"
-        ],
-        "outcomes": [
-          "Создавать таблицу с подходящими типами и базовыми ограничениями",
-          "объяснить зерно таблицы."
-        ],
-        "quiz": [
-          {
-            "question": "Что гарантирует CREATE TABLE ... IF NOT EXISTS?",
-            "options": [
-              "Что существующая таблица имеет именно указанную структуру",
-              "Что команда не создаст таблицу повторно и не завершится ошибкой только из-за совпадающего имени",
-              "Что все столбцы автоматически станут уникальными",
-              "Что таблица заполнится тестовыми данными"
-            ],
-            "answer": 1,
-            "explanation": "IF NOT EXISTS подавляет ошибку при существующем объекте с таким именем. Структуру он не сверяет."
-          }
-        ]
-      },
-      {
-        "title": "ALTER TABLE и эволюция схемы",
-        "body": "ALTER TABLE изменяет уже существующий объект: добавляет или удаляет столбцы, меняет тип, задаёт ограничения и переименовывает поля. Это часть эволюции схемы, когда требования приложения меняются.\n\nДобавление столбца с DEFAULT может затронуть большую таблицу и повлиять на блокировки и время миграции. Для больших объёмов иногда безопаснее добавить nullable-столбец, заполнить его порциями, проверить данные и только затем установить NOT NULL.\n\nИзменение типа может требовать преобразования существующих значений. Если хотя бы одно значение нельзя привести к новому типу, операция завершится ошибкой. Перед миграцией оцени объём, блокировки, индексы и возможность отката.",
-        "example": "ALTER TABLE customers\nADD COLUMN phone TEXT;\n\nALTER TABLE customers\nRENAME COLUMN phone TO phone_number;",
-        "note": "Перед ALTER TABLE проверь существующие данные и возможные блокировки. Не считай DDL автоматически мгновенным.",
-        "simple": "ALTER TABLE меняет структуру, но не заменяет план миграции для большой рабочей таблицы.",
-        "practiceIds": [],
-        "outcomes": [
-          "Добавлять и переименовывать столбцы",
-          "объяснить риск изменения типа и ограничения на большой таблице."
-        ],
-        "quiz": [
-          {
-            "question": "Почему добавление NOT NULL к новому столбцу на большой таблице требует плана миграции?",
-            "options": [
-              "Потому что существующие строки должны удовлетворять ограничению, а операция может потребовать проверки и блокировок",
-              "Потому что ALTER TABLE всегда удаляет все строки",
-              "Потому что NOT NULL разрешён только для чисел",
-              "Потому что PostgreSQL не поддерживает добавление столбцов"
-            ],
-            "answer": 0,
-            "explanation": "Ограничение должно быть истинным для существующих строк. На большой таблице проверка и блокировки могут быть существенными."
-          }
-        ]
-      },
-      {
-        "title": "Ограничения целостности",
-        "body": "Ограничения целостности не дают сохранить данные, нарушающие правила предметной области. NOT NULL запрещает отсутствие значения, UNIQUE запрещает дубли, CHECK проверяет логическое условие, PRIMARY KEY задаёт идентификатор, FOREIGN KEY защищает ссылку на другую таблицу.\n\nОграничения работают на уровне базы, поэтому защищают данные независимо от того, кто отправил запрос: приложение, BI-клиент или ручной SQL. Это надёжнее, чем надеяться, что каждый пользовательский интерфейс проверит все правила.\n\nОграничение CHECK должно учитывать NULL отдельно: выражение CHECK считается нарушенным, только если оно FALSE. Если результат UNKNOWN из-за NULL, строка может пройти проверку. Поэтому для обязательного значения сочетай CHECK с NOT NULL.",
-        "example": "CREATE TABLE example_payments (\n  payment_id BIGINT PRIMARY KEY,\n  amount NUMERIC(12, 2) NOT NULL CHECK (amount >= 0),\n  external_id TEXT UNIQUE\n);",
-        "note": "CHECK (amount > 0) сам по себе не запрещает NULL. Для обязательного значения нужен NOT NULL.",
-        "simple": "Ограничения защищают качество данных независимо от приложения, которое выполняет INSERT или UPDATE.",
-        "practiceIds": [
-          "e66"
-        ],
-        "outcomes": [
-          "Выбирать подходящие ограничения",
-          "объяснить, почему CHECK и NOT NULL решают разные задачи."
-        ],
-        "quiz": [
-          {
-            "question": "Почему CHECK (amount > 0) не заменяет NOT NULL?",
-            "options": [
-              "Потому что CHECK допускает результат UNKNOWN, когда amount равен NULL",
-              "Потому что CHECK работает только с текстом",
-              "Потому что NOT NULL автоматически разрешает отрицательные суммы",
-              "Потому что CHECK проверяется только при SELECT"
-            ],
-            "answer": 0,
-            "explanation": "В PostgreSQL CHECK отклоняет FALSE, но пропускает TRUE и UNKNOWN. NULL нужно запретить отдельным NOT NULL."
-          }
-        ]
-      },
-      {
-        "title": "DEFAULT, IDENTITY и последовательности",
-        "body": "DEFAULT задаёт значение, которое используется, если INSERT не передал столбец или явно указал DEFAULT. Это удобно для даты создания, статуса по умолчанию или числового счётчика.\n\nIDENTITY генерирует значения числового столбца на основе последовательности. GENERATED ALWAYS строже ограничивает ручную подстановку, а GENERATED BY DEFAULT позволяет передать значение явно. Последовательность выдаёт новые значения, но не гарантирует отсутствие пропусков: откат транзакции не возвращает уже полученное значение.\n\nDEFAULT не срабатывает, если явно передать NULL. NULL — это переданное значение, а не отсутствие столбца в INSERT. Если столбец NOT NULL, такая вставка завершится ошибкой.",
-        "example": "CREATE TABLE example_orders (\n  order_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,\n  status TEXT NOT NULL DEFAULT 'new',\n  created_at TIMESTAMPTZ NOT NULL DEFAULT now()\n);",
-        "note": "Последовательность может иметь пропуски. Не используй IDENTITY как счётчик без пропусков.",
-        "simple": "DEFAULT применяется, когда значение не передали. Явный NULL не заменяется значением по умолчанию.",
-        "practiceIds": [],
-        "outcomes": [
-          "Объяснить разницу DEFAULT, явного NULL и пропущенного столбца",
-          "использовать IDENTITY."
-        ],
-        "quiz": [
-          {
-            "question": "В столбце status задан DEFAULT 'new'. Что произойдёт, если INSERT явно передаст status = NULL?",
-            "options": [
-              "PostgreSQL подставит 'new' автоматически",
-              "Будет сохранён NULL, если это разрешено ограничениями",
-              "DEFAULT заменит NULL только для TEXT",
-              "Строка всегда удалится"
-            ],
-            "answer": 1,
-            "explanation": "DEFAULT применяется при отсутствии значения или ключевом слове DEFAULT. Явный NULL считается переданным значением."
-          }
-        ]
-      },
-      {
-        "title": "Схемы, представления и объекты",
-        "body": "Схема PostgreSQL — пространство имён внутри базы данных. В одной базе могут существовать public.orders и archive.orders: это разные таблицы с одинаковым коротким именем.\n\nОбращение schema_name.table_name делает источник однозначным. search_path определяет, в каких схемах PostgreSQL ищет объект, если схема не указана. Это удобно, но может привести к неоднозначности и риску подмены объектов, если права и путь поиска настроены неосторожно.\n\nПредставления (VIEW) выглядят как таблицы для чтения, но хранят определение запроса. Индексы, последовательности, функции и типы также являются объектами схемы. Не путай схему с базой данных: это разные уровни организации.",
-        "example": "SELECT table_schema, table_name\nFROM information_schema.tables\nWHERE table_type = 'BASE TABLE'\nORDER BY table_schema, table_name;",
-        "note": "search_path влияет на разрешение коротких имён. Для важных запросов и миграций полезно явно указывать схему.",
-        "simple": "Схема группирует объекты внутри базы. Полное имя public.orders указывает и схему, и таблицу.",
-        "practiceIds": [],
-        "outcomes": [
-          "Объяснить различие базы и схемы",
-          "находить таблицы через information_schema."
-        ],
-        "quiz": [
-          {
-            "question": "Что обозначает имя archive.orders?",
-            "options": [
-              "Базу данных archive и пользователя orders",
-              "Таблицу orders в схеме archive",
-              "Схему orders внутри таблицы archive",
-              "Два алиаса одного объекта"
-            ],
-            "answer": 1,
-            "explanation": "В PostgreSQL schema.table — это имя объекта в конкретной схеме текущей базы."
-          }
-        ]
-      },
-      {
-        "title": "CHECK: проверка бизнес-правил",
-        "body": "Ограничение CHECK заставляет базу отклонять строки, нарушающие выражение. Например, цена не должна быть отрицательной, количество должно быть положительным, а дата закрытия не должна предшествовать дате создания. Такое правило лучше хранить в базе, а не надеяться, что каждый клиент приложения проверит его одинаково.\n\nВажная особенность PostgreSQL: CHECK считается выполненным, если выражение вернуло TRUE или NULL (UNKNOWN). Поэтому CHECK (price > 0) сам по себе не запрещает NULL. Если значение обязательно, добавь NOT NULL отдельно. Это частая ловушка: разработчик думает, что проверил обязательность, а на деле проверил только неотрицательное или положительное значение, когда оно присутствует.\n\nCHECK предназначен для проверки текущей строки и не должен использоваться для проверки других строк или таблиц. Для межстрочных правил нужны UNIQUE, EXCLUDE, FOREIGN KEY, триггер или транзакционная логика в зависимости от задачи. Ограничения именуй осмысленно: так проще читать ошибки и менять схему.",
-        "example": "CREATE TABLE products_demo (\n  product_id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,\n  name text NOT NULL,\n  price numeric(10,2) NOT NULL,\n  stock integer NOT NULL,\n  CONSTRAINT products_price_positive CHECK (price > 0),\n  CONSTRAINT products_stock_nonnegative CHECK (stock >= 0)\n);\n\n-- CHECK допускает NULL, если выражение стало UNKNOWN\nCREATE TABLE example (\n  value integer CHECK (value > 0)\n);",
-        "note": "CHECK не заменяет NOT NULL. В PostgreSQL NULL в выражении CHECK не означает нарушение.",
-        "simple": "CHECK защищает правило для значения строки. Если значение обязательно, добавь NOT NULL.",
-        "outcomes": [
-          "Объяснять назначение CHECK",
-          "Различать CHECK и NOT NULL",
-          "Понимать трёхзначную логику в ограничениях"
-        ],
-        "practiceIds": [],
-        "quiz": [
-          {
-            "question": "Почему строка с NULL может пройти ограничение CHECK (price > 0)?",
-            "options": [
-              "Потому что CHECK автоматически заменяет NULL на ноль",
-              "Потому что CHECK считает TRUE и UNKNOWN допустимыми результатами",
-              "Потому что CHECK работает только с текстом",
-              "Потому что PostgreSQL игнорирует все ограничения"
-            ],
-            "answer": 1,
-            "explanation": "PostgreSQL отклоняет строку, когда CHECK возвращает FALSE. TRUE и NULL/UNKNOWN считаются допустимыми, поэтому обязательность нужно задавать NOT NULL."
-          }
-        ]
-      },
-      {
-        "title": "Составные ограничения и составные внешние ключи",
-        "body": "Ограничение может относиться не к одному столбцу, а к комбинации столбцов. Например, в таблице позиций заказа одна пара (order_id, line_number) должна быть уникальной. Это составное ограничение UNIQUE. Оно гарантирует уникальность комбинации, но не уникальность каждого столбца отдельно.\n\nСоставной первичный ключ задаётся так же: PRIMARY KEY (order_id, line_number). На такую пару может ссылаться составной FOREIGN KEY. Количество и типы столбцов в ссылающейся и целевой паре должны соответствовать друг другу, а целевая комбинация должна быть уникальной или первичным ключом.\n\nНе выбирай составной ключ механически. Он должен отражать реальную идентичность записи. Если одна и та же комбинация может повторяться по правилам предметной области, добавь отдельный идентификатор строки или включи в ключ недостающую часть бизнес-идентичности.",
-        "example": "CREATE TABLE order_lines (\n  order_id bigint NOT NULL,\n  line_number integer NOT NULL,\n  product_id bigint NOT NULL,\n  quantity integer NOT NULL CHECK (quantity > 0),\n  CONSTRAINT order_lines_pk PRIMARY KEY (order_id, line_number),\n  CONSTRAINT order_lines_order_fk FOREIGN KEY (order_id)\n    REFERENCES orders(order_id)\n);",
-        "note": "Уникальность составного ключа проверяется по всей комбинации. Две строки могут иметь одинаковый order_id, если line_number различается.",
-        "simple": "Составной ключ — это один идентификатор, собранный из нескольких столбцов.",
-        "outcomes": [
-          "Создавать составные PRIMARY KEY и UNIQUE",
-          "Объяснять, как работает составной FOREIGN KEY",
-          "Выбирать ключ в соответствии с зерном таблицы"
-        ],
-        "practiceIds": [],
-        "quiz": [
-          {
-            "question": "Что гарантирует UNIQUE (order_id, line_number)?",
-            "options": [
-              "Что каждый order_id встречается только один раз",
-              "Что каждый line_number встречается только один раз",
-              "Что комбинация order_id и line_number не повторяется",
-              "Что оба столбца обязательно уникальны по отдельности"
-            ],
-            "answer": 2,
-            "explanation": "Ограничение гарантирует уникальность пары значений, а не каждого столбца отдельно."
-          }
-        ]
-      },
-      {
-        "title": "Безопасное изменение схемы и миграции",
-        "body": "Изменение структуры существующей базы — это миграция схемы. В реальном проекте таблица уже содержит данные, а приложение может продолжать читать и записывать их во время изменения. Поэтому миграция должна учитывать не только желаемую конечную структуру, но и промежуточные состояния.\n\nДобавление столбца с простым DEFAULT в современных версиях PostgreSQL часто выполняется без переписывания каждой строки, но не любое изменение одинаково дешёво. Добавление ограничения может потребовать проверки существующих данных и блокировок. Для больших таблиц PostgreSQL поддерживает NOT VALID для некоторых ограничений, после чего их можно проверить отдельно через VALIDATE CONSTRAINT. Новые и изменяемые строки при этом уже проверяются.\n\nБезопасный шаблон: сначала добавить совместимое изменение, затем заполнить или преобразовать данные, проверить результат и только после этого переключить приложение на новую структуру. Не удаляй старый столбец в той же выкладке, в которой приложение ещё может его использовать. Сначала проверь зависимости и резервный план отката.\n\nDDL в PostgreSQL во многих случаях транзакционен, но не все команды разрешены внутри транзакционного блока. Например, CREATE INDEX CONCURRENTLY нельзя выполнять внутри обычного BEGIN/COMMIT. Всегда сверяй ограничения конкретной команды с документацией своей версии.",
-        "example": "BEGIN;\nALTER TABLE orders\n  ADD COLUMN source text;\n\nUPDATE orders\nSET source = 'unknown'\nWHERE source IS NULL;\n\nALTER TABLE orders\n  ADD CONSTRAINT orders_source_not_empty\n  CHECK (source <> '') NOT VALID;\n\nALTER TABLE orders\n  VALIDATE CONSTRAINT orders_source_not_empty;\nCOMMIT;",
-        "note": "NOT VALID не означает «ограничение не работает». Оно откладывает проверку старых строк, но новые изменения уже должны соответствовать правилу.",
-        "simple": "Миграция — это безопасный переход от старой структуры к новой, а не просто команда ALTER TABLE.",
-        "outcomes": [
-          "Объяснять назначение миграций схемы",
-          "Понимать разницу NOT VALID и VALIDATE CONSTRAINT",
-          "Учитывать блокировки и транзакционные ограничения DDL"
-        ],
-        "practiceIds": [],
-        "quiz": [
-          {
-            "question": "Для чего используют CHECK ... NOT VALID при миграции большой таблицы?",
-            "options": [
-              "Чтобы навсегда отключить проверку новых строк",
-              "Чтобы добавить ограничение без немедленной полной проверки старых строк, а проверить их отдельно",
-              "Чтобы разрешить любые значения в столбце",
-              "Чтобы автоматически удалить старые строки"
-            ],
-            "answer": 1,
-            "explanation": "NOT VALID позволяет добавить ограничение без немедленного сканирования всех существующих строк. Новые и изменяемые строки проверяются, а старые можно проверить позже через VALIDATE CONSTRAINT."
-          }
-        ]
-      }
-    ],
-    "quiz": [
-      {
-        "question": "Какое ограничение запрещает записать отрицательную цену?",
-        "options": [
-          "ORDER BY",
-          "CHECK (price >= 0)",
-          "DISTINCT",
-          "LIMIT"
-        ],
-        "answer": 1,
-        "explanation": "CHECK проверяет условие для каждой новой или изменяемой строки. Если условие ложно, запись отклоняется."
-      },
-      {
-        "question": "Что делает ALTER TABLE?",
-        "options": [
-          "Меняет структуру существующей таблицы",
-          "Сортирует строки",
-          "Создаёт резервную копию",
-          "Удаляет только дубликаты"
-        ],
-        "answer": 0,
-        "explanation": "ALTER TABLE добавляет, меняет или удаляет столбцы и ограничения существующей таблицы."
-      },
-      {
-        "question": "Чем NOT NULL отличается от CHECK (price > 0)?",
-        "options": [
-          "Ничем",
-          "NOT NULL запрещает отсутствие значения, CHECK проверяет заданное условие",
-          "CHECK проверяет только NULL",
-          "NOT NULL сортирует данные"
-        ],
-        "answer": 1,
-        "explanation": "NOT NULL запрещает NULL. CHECK задаёт логическое условие, например price > 0; учитывай, что CHECK пропускает UNKNOWN."
-      },
-      {
-        "question": "Что делает GENERATED ... AS IDENTITY?",
-        "options": [
-          "Создаёт автоматически генерируемое значение для столбца",
-          "Создаёт внешний ключ",
-          "Запрещает UPDATE всей таблицы",
-          "Сортирует записи"
-        ],
-        "answer": 0,
-        "explanation": "IDENTITY удобно для генерации числового ключа. Это стандартный механизм PostgreSQL вместо ручного управления последовательностью."
-      }
-    ],
-    "sources": [
-      "https://www.postgresql.org/docs/current/ddl.html",
-      "https://www.postgresql.org/docs/current/sql-createtable.html"
-    ]
-  },
-  {
-    "id": "inserts",
-    "title": "Вставка данных: INSERT",
-    "stage": "16 · Первые данные",
-    "desc": "Научиться добавлять строки, работать с DEFAULT, несколькими наборами значений и результатом INSERT.",
-    "lessons": [
-      {
-        "title": "INSERT: добавление строк",
-        "body": "INSERT добавляет новые строки в таблицу. В списке столбцов указывай, какие поля заполняешь, а в VALUES — соответствующие значения в том же порядке. Явный список столбцов делает запрос устойчивее к изменению структуры и не заставляет помнить физический порядок колонок.\n\nЕсли столбец пропущен, PostgreSQL использует DEFAULT, если он задан, иначе — NULL, если это разрешено. Если обязательное поле не заполнено и не имеет значения по умолчанию, вставка завершится ошибкой.\n\nINSERT может добавить одну строку или несколько. Типы значений должны быть совместимы с типами столбцов, а ограничения проверяются при вставке.",
-        "example": "INSERT INTO customers (customer_id, customer_name, city, registered_at)\nVALUES (999, 'Anna Petrova', 'Warsaw', DATE '2026-11-07');",
-        "note": "Всегда указывай список столбцов. INSERT INTO table VALUES (...) хрупок при изменении схемы.",
-        "simple": "INSERT добавляет строки. Список столбцов и VALUES должны соответствовать друг другу по порядку.",
-        "practiceIds": [
-          "e62"
-        ],
-        "outcomes": [
-          "Добавлять строки через INSERT",
-          "использовать явный список столбцов."
-        ],
-        "quiz": [
-          {
-            "question": "Почему лучше писать INSERT INTO customers (full_name, email) VALUES (...), а не полагаться на порядок всех столбцов?",
-            "options": [
-              "Явный список защищает запрос от изменения порядка столбцов и показывает, какие поля заполняются",
-              "Потому что VALUES без списка столбцов запрещён в PostgreSQL",
-              "Потому что список столбцов автоматически создаёт PRIMARY KEY",
-              "Потому что PostgreSQL иначе сортирует строки"
-            ],
-            "answer": 0,
-            "explanation": "Явный список связывает значения с именами полей и не зависит от физического порядка столбцов."
-          }
-        ]
-      },
-      {
-        "title": "Вставка нескольких строк и INSERT ... SELECT",
-        "body": "Один INSERT может добавить несколько строк, если перечислить несколько наборов VALUES. Также можно вставить результат SELECT: это полезно для переноса или преобразования данных внутри базы.\n\nINSERT ... SELECT не требует промежуточного CSV. Количество и типы столбцов SELECT должны соответствовать списку столбцов INSERT. Если целевая таблица имеет ограничения, они проверяются так же, как при обычной вставке.\n\nПри копировании данных подумай о повторном запуске. Если ключи могут уже существовать, используй подходящую стратегию: очистку тестовой таблицы, ON CONFLICT или предварительную проверку. Не запускай повторную загрузку без понимания, создаст ли она дубли.",
-        "example": "INSERT INTO archived_orders (order_id, customer_id, total_amount)\nSELECT order_id, customer_id, total_amount\nFROM orders\nWHERE created_at < DATE '2025-01-01';",
-        "note": "Число, порядок и типы выражений в SELECT должны соответствовать целевому списку столбцов.",
-        "simple": "INSERT ... SELECT переносит результат одного запроса в другую таблицу.",
-        "practiceIds": [
-          "e67"
-        ],
-        "outcomes": [
-          "Вставлять несколько строк и результат SELECT",
-          "проверять соответствие колонок источника и цели."
-        ],
-        "quiz": [
-          {
-            "question": "Что должно совпадать между списком столбцов INSERT и SELECT в INSERT ... SELECT?",
-            "options": [
-              "Количество и совместимые типы значений в соответствующих позициях",
-              "Только имена таблиц",
-              "Порядок сортировки строк",
-              "Количество индексов на обеих таблицах"
-            ],
-            "answer": 0,
-            "explanation": "Каждое выражение SELECT поставляет значение для соответствующего целевого столбца. Позиции и типы должны быть совместимы."
-          }
-        ]
-      },
-      {
-        "title": "DEFAULT, RETURNING и безопасная проверка",
-        "body": "DEFAULT позволяет попросить PostgreSQL применить значение по умолчанию для конкретного столбца. RETURNING возвращает вставленные строки, в том числе сгенерированные ID и значения DEFAULT.\n\nЭто особенно полезно, если ключ генерируется IDENTITY: не нужно отдельным запросом искать последнюю вставленную запись. RETURNING возвращает точный ID той строки, которую создал текущий INSERT.\n\nПроверяй результат вставки до продолжения процесса. Если INSERT выполняется внутри транзакции, можно посмотреть RETURNING и при необходимости откатить операцию. Но RETURNING не заменяет проверки уникальности и бизнес-ограничений.",
-        "example": "INSERT INTO orders (customer_id, status)\nVALUES (42, DEFAULT)\nRETURNING order_id, status, created_at;",
-        "note": "Не ищи последний ID через MAX(id): при параллельной работе это может вернуть чужую запись.",
-        "simple": "DEFAULT использует настройку столбца, RETURNING показывает фактически вставленные значения.",
-        "practiceIds": [],
-        "outcomes": [
-          "Использовать DEFAULT и RETURNING",
-          "получать созданный идентификатор безопасным способом."
-        ],
-        "quiz": [
-          {
-            "question": "Почему RETURNING order_id надёжнее, чем SELECT MAX(order_id) после INSERT?",
-            "options": [
-              "RETURNING отдаёт ID именно вставленной текущей командой строки, а MAX может увидеть чужую параллельную вставку",
-              "MAX не работает с BIGINT",
-              "RETURNING удаляет другие строки",
-              "MAX возвращает только NULL"
-            ],
-            "answer": 0,
-            "explanation": "При параллельных вставках максимальный ID может принадлежать другой транзакции. RETURNING связан с конкретным INSERT."
-          }
-        ]
-      },
-      {
-        "title": "COPY и импорт CSV",
-        "body": "COPY предназначен для массовой загрузки и выгрузки данных. Он обычно эффективнее множества отдельных INSERT, особенно при больших объёмах. PostgreSQL поддерживает COPY FROM и COPY TO, а клиент psql имеет команды \\copy для работы с файлами на машине клиента.\n\nВажно различать COPY и \\copy. Серверный COPY читает или записывает файл с точки зрения сервера и требует соответствующих прав на файловую систему. \\copy выполняется клиентом psql и использует файл на компьютере пользователя.\n\nCSV требует аккуратной обработки разделителей, кавычек, NULL и кодировки. Перед массовым импортом проверь формат, заголовок и типы данных на небольшой тестовой выборке.",
-        "example": "\\copy staging_orders (order_id, customer_id, total_amount)\nFROM './orders.csv'\nWITH (FORMAT csv, HEADER true, ENCODING 'UTF8');",
-        "note": "Не путай права PostgreSQL на серверный файл с доступом psql к локальному файлу пользователя.",
-        "simple": "COPY оптимизирован для массового обмена данными. \\copy в psql читает файл на стороне клиента.",
-        "practiceIds": [],
-        "outcomes": [
-          "Объяснить COPY и \\copy",
-          "выбрать подходящий способ импорта CSV."
-        ],
-        "quiz": [
-          {
-            "question": "Где ищет файл команда \\copy в psql?",
-            "options": [
-              "На компьютере, где запущен клиент psql",
-              "Только в каталоге данных PostgreSQL на сервере",
-              "В папке установки SQL-стандарта",
-              "Внутри таблицы staging_orders"
-            ],
-            "answer": 0,
-            "explanation": "\\copy выполняет файловый ввод-вывод со стороны клиента psql. Обычный COPY FROM использует путь, доступный серверному процессу."
-          }
-        ]
-      }
-    ],
-    "quiz": [
-      {
-        "question": "Что произойдёт, если столбец со значением DEFAULT не указать в INSERT?",
-        "options": [
-          "Всегда запишется NULL",
-          "СУБД применит значение DEFAULT, если оно задано",
-          "Запрос всегда завершится ошибкой",
-          "Столбец удалится"
-        ],
-        "answer": 1,
-        "explanation": "Если столбец пропущен в списке INSERT, PostgreSQL использует DEFAULT, а если его нет — NULL (при условии, что это разрешено)."
-      },
-      {
-        "question": "Для чего используют INSERT ... SELECT?",
-        "options": [
-          "Чтобы вставить результат другого запроса в таблицу",
-          "Чтобы удалить таблицу",
-          "Чтобы отсортировать результат",
-          "Чтобы создать индекс"
-        ],
-        "answer": 0,
-        "explanation": "SELECT выбирает исходные строки, а INSERT записывает их в целевую таблицу."
-      },
-      {
-        "question": "Что возвращает INSERT ... RETURNING?",
-        "options": [
-          "Список ошибок сервера",
-          "Столбцы добавленных строк",
-          "Все строки таблицы",
-          "План запроса"
-        ],
-        "answer": 1,
-        "explanation": "RETURNING позволяет сразу получить ID и другие значения вставленных строк, не выполняя отдельный SELECT."
-      },
-      {
-        "question": "Можно ли вставить несколько строк одним INSERT?",
-        "options": [
-          "Нет",
-          "Да, через несколько наборов VALUES",
-          "Только через цикл",
-          "Только если таблица пустая"
-        ],
-        "answer": 1,
-        "explanation": "Один INSERT может содержать несколько наборов значений через запятую."
-      }
-    ],
-    "sources": [
-      "https://www.postgresql.org/docs/current/sql-insert.html"
-    ]
-  },
-  {
-    "id": "dml",
-    "title": "DML: изменение и удаление данных",
-    "stage": "17 · Изменение данных",
-    "desc": "Освоить INSERT, UPDATE, DELETE, RETURNING, UPSERT и безопасный порядок действий.",
-    "lessons": [
-      {
-        "title": "UPDATE",
-        "body": "UPDATE изменяет значения существующих строк. SET задаёт новые значения столбцов, а WHERE определяет, какие строки будут затронуты. Если WHERE отсутствует, PostgreSQL обновит все строки таблицы.\n\nВ SET можно использовать старые значения строки: например, price = price * 1.05 увеличит цену на 5%. Можно обновлять несколько столбцов одновременно. Условие WHERE нужно проверить отдельно до запуска, особенно в рабочей базе.\n\nRETURNING позволяет получить изменённые строки прямо из UPDATE. Для безопасной проверки в транзакционной среде можно начать BEGIN, выполнить UPDATE с RETURNING, проверить результат и завершить COMMIT или ROLLBACK.",
-        "example": "UPDATE products\nSET price = price * 1.05\nWHERE category = 'coffee'\nRETURNING product_id, price;",
-        "note": "Перед UPDATE выполни SELECT с тем же WHERE и проверь число строк. Не запускай изменение наугад.",
-        "simple": "UPDATE меняет строки. Самая опасная часть — неверное или отсутствующее WHERE.",
-        "practiceIds": [
-          "e63"
-        ],
-        "outcomes": [
-          "Писать UPDATE с точным WHERE",
-          "использовать RETURNING для проверки изменённых строк."
-        ],
-        "quiz": [
-          {
-            "question": "Что сделает UPDATE products SET active = FALSE без WHERE?",
-            "options": [
-              "Обновит только одну случайную строку",
-              "Обновит active во всех строках таблицы",
-              "Удалит таблицу products",
-              "Вернёт ошибку, потому что WHERE обязателен"
-            ],
-            "answer": 1,
-            "explanation": "WHERE необязателен синтаксически. Без него UPDATE затронет каждую строку таблицы."
-          }
-        ]
-      },
-      {
-        "title": "DELETE и TRUNCATE",
-        "body": "DELETE удаляет строки, удовлетворяющие WHERE. Без WHERE будут удалены все строки таблицы, но сама таблица и её структура останутся. TRUNCATE быстро очищает таблицу целиком и имеет особенности блокировок, триггеров и последовательностей.\n\nDELETE можно ограничить условием и получить удалённые строки через RETURNING. TRUNCATE не принимает обычный WHERE. Внешние ключи могут запретить очистку или потребовать CASCADE, если явно разрешено удалить связанные данные.\n\nУдаление данных необратимо без транзакции, резервной копии или другого механизма восстановления. Перед DELETE сначала выполни SELECT с тем же условием и проверь выборку.",
-        "example": "DELETE FROM orders\nWHERE status = 'cancelled'\n  AND created_at < DATE '2025-01-01'\nRETURNING order_id;",
-        "note": "Не путай DELETE без WHERE и DROP TABLE: первое удаляет строки, второе удаляет сам объект таблицы.",
-        "simple": "DELETE удаляет выбранные строки, TRUNCATE очищает таблицу целиком.",
-        "practiceIds": [
-          "e64"
-        ],
-        "outcomes": [
-          "Различать DELETE, TRUNCATE и DROP",
-          "безопасно проверять условие удаления."
-        ],
-        "quiz": [
-          {
-            "question": "Какая разница между DELETE FROM orders и DROP TABLE orders?",
-            "options": [
-              "Обе команды удаляют только строки",
-              "DELETE удаляет строки, DROP TABLE удаляет саму таблицу и её структуру",
-              "DROP TABLE быстрее выполняет SELECT",
-              "DELETE удаляет структуру, DROP TABLE оставляет строки"
-            ],
-            "answer": 1,
-            "explanation": "DELETE работает с содержимым таблицы. DROP TABLE удаляет объект таблицы из схемы."
-          }
-        ]
-      },
-      {
-        "title": "RETURNING",
-        "body": "RETURNING позволяет получить значения строк, которые были затронуты INSERT, UPDATE или DELETE. Это полезно, когда после изменения нужно узнать сгенерированный ID или проверить новое состояние.\n\nВ INSERT RETURNING часто используют для получения ID, созданных DEFAULT или IDENTITY. В UPDATE можно увидеть обновлённые значения, а в DELETE — данные удалённых строк. Возвращаемые значения не требуют отдельного SELECT после изменения.\n\nRETURNING не делает изменение безопасным само по себе. Он только показывает, какие строки затронуты. Для контроля используй точное условие и транзакцию там, где это уместно.",
-        "example": "INSERT INTO customers (customer_id, customer_name, city, registered_at)\nVALUES (999, 'Anna Petrova', 'Warsaw', DATE '2026-11-07')\nRETURNING customer_id, customer_name;",
-        "note": "Если UPDATE или DELETE вернул неожиданное число строк, не подтверждай транзакцию до выяснения причины.",
-        "simple": "RETURNING возвращает строки, затронутые изменяющей командой.",
-        "practiceIds": [],
-        "outcomes": [
-          "Получать изменённые строки через RETURNING",
-          "объяснить разницу с отдельным SELECT."
-        ],
-        "quiz": [
-          {
-            "question": "Что вернёт DELETE FROM orders WHERE order_id = 10 RETURNING order_id?",
-            "options": [
-              "Номер удалённой строки, если она была удалена",
-              "Все оставшиеся заказы",
-              "Только число строк без значений",
-              "Схему таблицы orders"
-            ],
-            "answer": 0,
-            "explanation": "RETURNING возвращает значения строк, удалённых данной командой. Если совпадений нет, результат будет пустым."
-          }
-        ]
-      },
-      {
-        "title": "UPSERT: ON CONFLICT",
-        "body": "UPSERT в PostgreSQL реализуется через INSERT ... ON CONFLICT. Если вставка нарушает указанный уникальный или exclusion-конфликт, можно выполнить DO NOTHING или DO UPDATE.\n\nON CONFLICT требует подходящего ограничения или индекса, который определяет конфликт. Например, уникальный email может означать, что при повторном импорте клиента нужно обновить имя. EXCLUDED содержит значения, которые пытались вставить.\n\nUPSERT удобен для идемпотентной загрузки, но нужно аккуратно выбирать поля для обновления. Не перезаписывай свежие данные устаревшей выгрузкой. Также учитывай, что конкурирующие транзакции могут влиять на то, какая версия записи останется.",
-        "example": "INSERT INTO products (product_id, product_name, category, price)\nVALUES (1, 'Updated coffee', 'Drinks', 499.00)\nON CONFLICT (product_id)\nDO UPDATE SET product_name = EXCLUDED.product_name,\n              price = EXCLUDED.price;",
-        "note": "ON CONFLICT не сработает без подходящего уникального ограничения или индекса на указанном ключе.",
-        "simple": "ON CONFLICT обрабатывает нарушение уникальности в момент INSERT. EXCLUDED — строка, которую пытались вставить.",
-        "practiceIds": [
-          "e65"
-        ],
-        "outcomes": [
-          "Применять ON CONFLICT DO NOTHING и DO UPDATE",
-          "объяснить EXCLUDED и требование уникального ключа."
-        ],
-        "quiz": [
-          {
-            "question": "Что означает EXCLUDED.full_name в ON CONFLICT DO UPDATE?",
-            "options": [
-              "Текущее значение full_name из существующей строки",
-              "Значение full_name из строки, которую пытались вставить",
-              "Имя исключённого столбца",
-              "Значение NULL, которое PostgreSQL подставляет при конфликте"
-            ],
-            "answer": 1,
-            "explanation": "EXCLUDED обращается к предлагаемой строке INSERT, которая не была вставлена из-за конфликта."
-          }
-        ]
-      },
-      {
-        "title": "MERGE: синхронизация двух наборов",
-        "body": "MERGE сопоставляет целевой набор строк с источником по условию ON и позволяет выполнять разные действия в зависимости от результата сопоставления. Можно обновить совпавшие строки, вставить отсутствующие или удалить строки, которые больше не нужны.\n\nMERGE полезен для синхронизации таблиц и пакетной загрузки изменений. В отличие от простого UPSERT, он может обрабатывать несколько типов совпадений в одном операторе. Но правила WHEN MATCHED и WHEN NOT MATCHED нужно проектировать осторожно: неверное условие ON может массово обновить или вставить неправильные записи.\n\nПеред запуском MERGE проверь, что источник не содержит несколько строк, совпадающих с одной целевой записью, если логика этого не допускает. Поведение и доступные возможности зависят от версии PostgreSQL.",
-        "example": "MERGE INTO customers AS t\nUSING (VALUES\n  (1, 'Updated customer', 'Warsaw', DATE '2026-01-01'),\n  (999, 'New customer', 'Krakow', DATE '2026-11-07')\n) AS s(customer_id, customer_name, city, registered_at)\nON t.customer_id = s.customer_id\nWHEN MATCHED THEN\n  UPDATE SET customer_name = s.customer_name\nWHEN NOT MATCHED THEN\n  INSERT (customer_id, customer_name, city, registered_at)\n  VALUES (s.customer_id, s.customer_name, s.city, s.registered_at);",
-        "note": "До MERGE проверь уникальность ключа в источнике и точность условия ON.",
-        "simple": "MERGE сопоставляет источник и цель, а затем выбирает действие для совпавших и несовпавших строк.",
-        "practiceIds": [],
-        "outcomes": [
-          "Объяснить ветви MERGE",
-          "отличать MERGE от ON CONFLICT",
-          "проверить уникальность источника."
-        ],
-        "quiz": [
-          {
-            "question": "Чем MERGE отличается от простого INSERT ... ON CONFLICT?",
-            "options": [
-              "MERGE может обрабатывать несколько условий сопоставления и действий для совпавших и несовпавших строк",
-              "MERGE работает только с одной строкой",
-              "ON CONFLICT умеет удалять всю таблицу",
-              "MERGE не использует условие ON"
-            ],
-            "answer": 0,
-            "explanation": "MERGE задаёт действия для разных состояний совпадения источника и цели. UPSERT через ON CONFLICT специализируется на конфликте уникальности при INSERT."
-          }
-        ]
-      }
-    ],
-    "quiz": [
-      {
-        "question": "Что произойдёт с UPDATE без WHERE?",
-        "options": [
-          "Ничего",
-          "Изменятся все строки таблицы",
-          "Удалится таблица",
-          "Изменится только первая строка"
-        ],
-        "answer": 1,
-        "explanation": "Без WHERE условие не ограничивает строки. Поэтому UPDATE применится ко всей таблице."
-      },
-      {
-        "question": "На чём основан ON CONFLICT DO UPDATE?",
-        "options": [
-          "На наличии UNIQUE или PRIMARY KEY конфликта",
-          "На сортировке",
-          "На CHECK без уникальности",
-          "На внешнем ключе любой таблицы"
-        ],
-        "answer": 0,
-        "explanation": "PostgreSQL должен понимать, по какому уникальному ключу обнаруживать конфликт."
-      },
-      {
-        "question": "Чем TRUNCATE отличается от DELETE?",
-        "options": [
-          "TRUNCATE обычно быстро очищает всю таблицу, DELETE удаляет выбранные строки и может иметь WHERE",
-          "TRUNCATE всегда удаляет только одну строку",
-          "DELETE нельзя откатить",
-          "Ничем"
-        ],
-        "answer": 0,
-        "explanation": "TRUNCATE предназначен для очистки таблицы целиком или набора связанных таблиц. DELETE позволяет фильтровать строки."
-      },
-      {
-        "question": "Для чего нужен RETURNING в UPDATE?",
-        "options": [
-          "Чтобы получить значения изменённых строк",
-          "Чтобы откатить UPDATE",
-          "Чтобы обновить только первый столбец",
-          "Чтобы включить индекс"
-        ],
-        "answer": 0,
-        "explanation": "UPDATE ... RETURNING показывает новые значения строк, которые действительно были изменены."
-      }
-    ],
-    "sources": [
-      "https://www.postgresql.org/docs/current/dml.html",
-      "https://www.postgresql.org/docs/current/sql-merge.html"
-    ]
-  },
-  {
-    "id": "constraints",
-    "title": "Транзакции и согласованность изменений",
-    "stage": "18 · Транзакции",
-    "desc": "Понять ACID, COMMIT, ROLLBACK, уровни изоляции, блокировки и конкурентное выполнение.",
-    "lessons": [
-      {
-        "title": "Что такое транзакция",
-        "body": "Транзакция объединяет несколько операций в одну логическую единицу. BEGIN начинает транзакцию, COMMIT подтверждает изменения, ROLLBACK отменяет изменения текущей транзакции.\n\nЕсли одна операция из нескольких завершается ошибкой, транзакция в PostgreSQL переходит в состояние aborted. До ROLLBACK или отката к savepoint обычные команды в ней не выполняются. Это защищает от ситуации, когда половина связанного набора изменений уже сохранена.\n\nАвтокоммит в клиенте может автоматически фиксировать каждую отдельную команду. Для последовательности связанных изменений явно используй транзакцию и проверь итог перед COMMIT.",
-        "example": "BEGIN;\nCREATE TEMP TABLE accounts (\n  account_id integer PRIMARY KEY,\n  balance numeric(12,2) NOT NULL CHECK (balance >= 0)\n);\nINSERT INTO accounts VALUES (1, 1000), (2, 500);\n\nUPDATE accounts\nSET balance = balance - 100\nWHERE account_id = 1;\n\nUPDATE accounts\nSET balance = balance + 100\nWHERE account_id = 2;\nCOMMIT;\n\nSELECT * FROM accounts ORDER BY account_id;",
-        "note": "Не оставляй транзакции открытыми надолго: они могут удерживать блокировки и мешать очистке старых версий строк.",
-        "simple": "Транзакция позволяет подтвердить все связанные изменения вместе или отменить их вместе.",
-        "practiceIds": [
-          "e69",
-          "e70"
-        ],
-        "outcomes": [
-          "Начинать и завершать транзакции",
-          "объяснить, что происходит после ошибки."
-        ],
-        "quiz": [
-          {
-            "question": "Что произойдёт с транзакцией PostgreSQL после ошибки SQL-команды внутри BEGIN?",
-            "options": [
-              "Транзакция обычно перейдёт в aborted и потребует ROLLBACK или отката к savepoint",
-              "Все предыдущие изменения немедленно фиксируются",
-              "PostgreSQL автоматически продолжит следующую команду как ни в чём не бывало",
-              "Сервер удалит базу"
-            ],
-            "answer": 0,
-            "explanation": "После ошибки транзакция помечается как прерванная. Нужно выполнить ROLLBACK или ROLLBACK TO SAVEPOINT."
-          }
-        ]
-      },
-      {
-        "title": "ACID",
-        "body": "ACID описывает свойства надёжной транзакционной обработки. Atomicity означает «всё или ничего». Consistency — переход из одного допустимого состояния базы в другое при соблюдении ограничений. Isolation — контроль взаимодействия параллельных транзакций. Durability — сохранность подтверждённых изменений при сбое в рамках гарантий СУБД.\n\nACID не означает, что любая бизнес-логика автоматически корректна. Если запрос неверно посчитал сумму и успешно закоммитился, база надёжно сохранит неправильный результат. Ограничения и проверки приложения должны обеспечивать смысловую корректность.\n\nИзоляция не всегда означает полную последовательность транзакций. Разные уровни изоляции допускают разные эффекты параллельного выполнения.",
-        "example": "BEGIN;\nUPDATE inventory\nSET quantity = quantity - 1\nWHERE product_id = 10 AND quantity > 0;\nCOMMIT;",
-        "note": "ACID не спасает от логически ошибочного SQL. Проверяй условия и инварианты отдельно.",
-        "simple": "ACID описывает надёжность выполнения транзакций, а не правильность бизнес-формулы в запросе.",
-        "practiceIds": [],
-        "outcomes": [
-          "Объяснить четыре свойства ACID",
-          "отличать техническую целостность от корректности бизнес-логики."
-        ],
-        "quiz": [
-          {
-            "question": "Какое свойство ACID означает, что подтверждённые изменения сохраняются после сбоя?",
-            "options": [
-              "Atomicity",
-              "Consistency",
-              "Isolation",
-              "Durability"
-            ],
-            "answer": 3,
-            "explanation": "Durability гарантирует устойчивость зафиксированных изменений в пределах гарантий PostgreSQL и настроек хранения."
-          }
-        ],
-        "walkthrough": {
-          "title": "Что защищает транзакция",
-          "scenario": "Переводим 500 рублей со счёта A на счёт B. Операция состоит из списания и зачисления.",
-          "steps": [
-            "Atomicity: обе операции должны выполниться вместе или не выполниться вовсе.",
-            "Consistency: после перевода должны сохраняться ограничения и бизнес-правила, например допустимый баланс.",
-            "Isolation: параллельные операции не должны увидеть некорректное промежуточное состояние.",
-            "Durability: после COMMIT подтверждённый результат должен пережить сбой в пределах гарантий PostgreSQL."
-          ],
-          "result": "Транзакция не позволяет сохранить только списание или только зачисление, если обе операции являются одной бизнес-операцией.",
-          "pitfall": "ACID не означает, что бизнес-логика автоматически правильная. База защищает транзакционные свойства, но корректные правила и ограничения нужно спроектировать."
-        }
-      },
-      {
-        "title": "Уровни изоляции",
-        "body": "Уровень изоляции определяет, какие эффекты параллельных транзакций могут быть видны друг другу. PostgreSQL поддерживает READ COMMITTED, REPEATABLE READ и SERIALIZABLE; READ UNCOMMITTED трактуется как READ COMMITTED.\n\nREAD COMMITTED по умолчанию даёт новый снимок данных для каждой команды. Поэтому два SELECT в одной транзакции могут увидеть разные подтверждённые изменения других транзакций. REPEATABLE READ использует стабильный снимок для транзакции, но может завершиться ошибкой сериализации при конфликтующих изменениях.\n\nSERIALIZABLE стремится обеспечить результат, эквивалентный последовательному выполнению транзакций. Приложение должно быть готово повторить транзакцию после serialization failure. Более строгая изоляция требует продуманной обработки ошибок и не является бесплатной.",
-        "example": "BEGIN ISOLATION LEVEL REPEATABLE READ;\nSELECT COUNT(*) FROM orders;\n-- другие транзакции могут менять данные,\n-- но снимок этой транзакции остаётся стабильным\nCOMMIT;",
-        "note": "Не путай REPEATABLE READ с блокировкой всех читаемых строк. В PostgreSQL стабильный снимок обеспечивается MVCC.",
-        "simple": "Изоляция определяет, что транзакция видит от параллельных изменений и какие конфликты может обнаружить.",
-        "practiceIds": [],
-        "outcomes": [
-          "Сравнить READ COMMITTED и REPEATABLE READ",
-          "объяснить назначение SERIALIZABLE."
-        ],
-        "quiz": [
-          {
-            "question": "Что характерно для READ COMMITTED в PostgreSQL?",
-            "options": [
-              "Каждая команда получает снимок на начало этой команды",
-              "Вся транзакция всегда видит один и тот же снимок",
-              "Все строки таблиц блокируются от чтения",
-              "Другие транзакции не могут выполнять INSERT"
-            ],
-            "answer": 0,
-            "explanation": "В READ COMMITTED каждый SQL-оператор видит данные, подтверждённые до начала этого оператора."
-          }
-        ]
-      },
-      {
-        "title": "Блокировки и взаимные блокировки",
-        "body": "Блокировка координирует конкурентный доступ к данным. UPDATE и DELETE блокируют изменяемые строки, а SELECT обычно читает согласованный снимок благодаря MVCC и не блокирует обычные изменения так, как многие ожидают.\n\nВзаимная блокировка (deadlock) возникает, когда транзакции ждут ресурсы друг друга по кругу. PostgreSQL обнаруживает deadlock и отменяет одну из транзакций. Это не означает, что база сломалась: приложение должно обработать ошибку и при необходимости повторить безопасную операцию.\n\nСнижать риск deadlock помогает единый порядок захвата строк, короткие транзакции и отсутствие ожидания пользователя внутри транзакции. Не удерживай блокировки дольше, чем требуется.",
-        "example": "BEGIN;\nSELECT *\nFROM orders\nWHERE order_id IN (101, 102)\nORDER BY order_id\nFOR UPDATE;\nCOMMIT;",
-        "note": "Если несколько транзакций блокируют одни и те же записи, захватывай их в одинаковом порядке.",
-        "simple": "Deadlock — цикл взаимного ожидания. PostgreSQL прерывает одну транзакцию, чтобы остальные могли продолжить.",
-        "practiceIds": [],
-        "outcomes": [
-          "Объяснить механизм deadlock",
-          "назвать способы уменьшить риск взаимных блокировок."
-        ],
-        "quiz": [
-          {
-            "question": "Что делает PostgreSQL при обнаружении deadlock?",
-            "options": [
-              "Ожидает бесконечно, пока пользователь вмешается",
-              "Отменяет одну из конфликтующих транзакций, чтобы разорвать цикл ожидания",
-              "Автоматически отключает все соединения",
-              "Удаляет заблокированные строки"
-            ],
-            "answer": 1,
-            "explanation": "PostgreSQL обнаруживает цикл ожидания и прерывает одну транзакцию с ошибкой deadlock detected."
-          }
-        ]
-      },
-      {
-        "title": "SAVEPOINT и частичный откат",
-        "body": "SAVEPOINT создаёт точку внутри транзакции, к которой можно откатиться, не отменяя всю транзакцию. ROLLBACK TO SAVEPOINT отменяет команды после точки, а RELEASE SAVEPOINT удаляет саму точку.\n\nЭто полезно, когда часть операции можно отменить, а остальные изменения сохранить. Например, пакетная обработка может попытаться вставить необязательную запись, обработать конфликт и продолжить работу.\n\nSAVEPOINT не заменяет общую транзакционную стратегию. Если ошибка нарушила бизнес-инвариант всей операции, лучше откатить транзакцию полностью. После ROLLBACK TO SAVEPOINT транзакция остаётся активной.",
-        "example": "BEGIN;\nUPDATE orders SET status = 'processing' WHERE order_id = 10;\nSAVEPOINT optional_step;\nINSERT INTO order_notes (order_id, note)\nVALUES (10, 'Автоматическая пометка');\nROLLBACK TO SAVEPOINT optional_step;\nCOMMIT;",
-        "note": "ROLLBACK TO SAVEPOINT не завершает всю транзакцию. После него можно продолжить работу и выполнить COMMIT.",
-        "simple": "SAVEPOINT — промежуточная точка отката внутри одной транзакции.",
-        "practiceIds": [
-          "e71"
-        ],
-        "outcomes": [
-          "Создавать SAVEPOINT",
-          "откатывать часть транзакции и продолжать оставшиеся действия."
-        ],
-        "quiz": [
-          {
-            "question": "Что произойдёт после ROLLBACK TO SAVEPOINT s1?",
-            "options": [
-              "Вся транзакция завершится и изменения до s1 тоже отменятся",
-              "Будут отменены изменения после s1, а транзакция останется активной",
-              "Точка s1 превратится в отдельную таблицу",
-              "Все изменения будут зафиксированы"
-            ],
-            "answer": 1,
-            "explanation": "Откат к savepoint отменяет только более позднюю часть работы. Транзакция продолжается с состояния на момент savepoint."
-          }
-        ]
-      },
-      {
-        "title": "Действия внешних ключей и отложенные ограничения",
-        "body": "Внешние ключи могут управлять поведением при удалении или изменении родительской строки. RESTRICT и NO ACTION запрещают операцию, если остались ссылки. CASCADE автоматически удаляет или обновляет связанные строки. SET NULL записывает NULL во внешний ключ, SET DEFAULT использует его значение по умолчанию.\n\nВыбор действия зависит от смысла данных. Если удаление клиента не должно удалять историю заказов, CASCADE для orders может быть опасен. Если дочерняя запись не имеет смысла без родителя, каскадное удаление может быть оправдано.\n\nОграничения могут быть DEFERRABLE: проверка откладывается до конца транзакции или до SET CONSTRAINTS. Это помогает при некоторых циклических или пакетных изменениях, но требует внимательного управления моментом проверки.",
-        "example": "CREATE TABLE order_items (\n  order_id BIGINT REFERENCES orders(order_id)\n    ON DELETE CASCADE,\n  product_id BIGINT REFERENCES products(product_id)\n);",
-        "note": "CASCADE может удалить большой объём связанных данных. Перед его использованием проследи всю цепочку внешних ключей.",
-        "simple": "ON DELETE задаёт судьбу дочерних строк, когда удаляется родительская запись.",
-        "practiceIds": [],
-        "outcomes": [
-          "Выбирать действия ON DELETE по смыслу данных",
-          "объяснить DEFERRABLE и отложенную проверку."
-        ],
-        "quiz": [
-          {
-            "question": "Что делает ON DELETE SET NULL?",
-            "options": [
-              "Удаляет дочернюю строку целиком",
-              "Устанавливает NULL во внешнем ключе дочерней строки, если это допускает схема",
-              "Удаляет родительскую строку и все таблицы",
-              "Запрещает удаление родителя"
-            ],
-            "answer": 1,
-            "explanation": "SET NULL сохраняет дочернюю запись, но очищает ссылку на удалённую родительскую строку. Столбец должен допускать NULL."
-          }
-        ]
-      },
-      {
-        "title": "SERIALIZABLE и повтор транзакции",
-        "body": "SERIALIZABLE — самый строгий стандартный уровень изоляции PostgreSQL. Он допускает параллельное выполнение, но отслеживает зависимости так, чтобы успешный результат был эквивалентен некоторому последовательному порядку транзакций.\n\nЕсли обнаружен конфликт сериализации, PostgreSQL отменяет одну транзакцию с SQLSTATE 40001. Это ожидаемая часть работы уровня SERIALIZABLE, а не обязательно признак ошибки данных. Приложение должно повторить всю транзакцию целиком, а не только последнюю команду.\n\nПовтор безопасен только если операция не вызвала необратимые внешние эффекты до фиксации: например, не отправила письмо или не списала деньги через сторонний сервис. Такие действия требуют отдельной архитектуры, например transactional outbox.",
-        "simple": "SERIALIZABLE обеспечивает последовательную семантику, но приложение должно уметь повторять транзакции после конфликта.",
-        "example": "BEGIN ISOLATION LEVEL SERIALIZABLE;\nUPDATE inventory\nSET quantity = quantity - 1\nWHERE product_id = 10 AND quantity > 0;\nCOMMIT;",
-        "note": "При SQLSTATE 40001 повторяй всю транзакцию с самого начала и учитывай внешние побочные эффекты.",
-        "practiceIds": [],
-        "outcomes": [
-          "Объяснить serialization failure",
-          "спроектировать безопасный повтор транзакции."
-        ],
-        "quiz": [
-          {
-            "question": "Что следует повторить после SQLSTATE 40001 при SERIALIZABLE?",
-            "options": [
-              "Только последнюю команду COMMIT",
-              "Всю транзакцию от BEGIN с повторной проверкой условий",
-              "Только SELECT, который завершился успешно",
-              "Ничего: это означает, что данные уже зафиксированы"
-            ],
-            "answer": 1,
-            "explanation": "Ошибка сериализации означает, что транзакция не была успешно зафиксирована. Повторять нужно всю логическую транзакцию, чтобы заново проверить исходные условия."
-          }
-        ]
-      }
-    ],
-    "quiz": [
-      {
-        "question": "Что означает атомарность транзакции?",
-        "options": [
-          "Каждая команда фиксируется отдельно",
-          "Все изменения транзакции фиксируются вместе или отменяются вместе",
-          "Транзакция всегда выполняется быстрее",
-          "Данные всегда сортируются"
-        ],
-        "answer": 1,
-        "explanation": "Транзакция — единый блок работы: либо COMMIT сохраняет всё, либо ROLLBACK отменяет изменения."
-      },
-      {
-        "question": "Для чего нужен SAVEPOINT?",
-        "options": [
-          "Чтобы создать таблицу",
-          "Чтобы откатить часть транзакции, не отменяя всю транзакцию",
-          "Чтобы ускорить SELECT",
-          "Чтобы выдать права"
-        ],
-        "answer": 1,
-        "explanation": "SAVEPOINT ставит внутреннюю точку возврата. Можно отменить команды после неё и продолжить транзакцию."
-      },
-      {
-        "question": "Какой уровень изоляции PostgreSQL используется по умолчанию?",
-        "options": [
-          "READ UNCOMMITTED",
-          "READ COMMITTED",
-          "REPEATABLE READ",
-          "SERIALIZABLE"
-        ],
-        "answer": 1,
-        "explanation": "По умолчанию PostgreSQL использует READ COMMITTED: каждый оператор видит снимок данных на момент начала этого оператора."
-      },
-      {
-        "question": "Что обычно происходит при deadlock?",
-        "options": [
-          "Обе транзакции бесконечно ждут",
-          "PostgreSQL обнаруживает взаимную блокировку и отменяет одну транзакцию",
-          "Все таблицы удаляются",
-          "База выключается"
-        ],
-        "answer": 1,
-        "explanation": "PostgreSQL обнаруживает цикл ожидания и прерывает одну транзакцию. Приложение должно уметь повторить операцию."
-      }
-    ],
-    "sources": [
-      "https://www.postgresql.org/docs/current/tutorial-transactions.html",
-      "https://www.postgresql.org/docs/current/transaction-iso.html",
-      "https://www.postgresql.org/docs/current/explicit-locking.html"
-    ]
+    "track": "core",
+    "trackOrder": 14
   },
   {
     "id": "windows",
     "title": "Оконные функции",
-    "stage": "19 · Оконные функции",
+    "stage": "04 · Аналитический SQL",
     "desc": "Изучить OVER, PARTITION BY, ORDER BY, рамки окна, ранжирование, LAG/LEAD и накопительные метрики.",
     "lessons": [
       {
@@ -4096,7 +3337,8 @@ export const modules = [
           ],
           "result": "Если у клиента три заказа, результат содержит три строки и одинаковый customer_total в каждой из них.",
           "pitfall": "Если убрать OVER и написать обычный SUM с GROUP BY customer_id, ты получишь одну строку на клиента и потеряешь детализацию отдельных заказов."
-        }
+        },
+        "id": "windows.chem-okno-otlichaetsya-ot-group-by"
       },
       {
         "title": "ROW_NUMBER, RANK и DENSE_RANK",
@@ -4137,7 +3379,8 @@ export const modules = [
           ],
           "result": "Для top-1 без пропуска дублей используй ROW_NUMBER. Чтобы вернуть все строки, разделившие первое место, используй RANK или DENSE_RANK с фильтром rank = 1.",
           "pitfall": "ORDER BY только по сумме не определяет стабильный порядок строк с одинаковой суммой. Для ROW_NUMBER добавляй уникальный tie-breaker."
-        }
+        },
+        "id": "windows.row-number-rank-i-dense-rank"
       },
       {
         "title": "LAG и LEAD",
@@ -4176,7 +3419,8 @@ export const modules = [
           ],
           "result": "В результате остаётся по одной строке на заказ, рядом появляется сумма предыдущего заказа. Разницу можно вычислить как total_amount - previous_amount.",
           "pitfall": "LAG не ищет запись ровно за предыдущий день. Он берёт предыдущую строку, которая существует в отсортированном наборе."
-        }
+        },
+        "id": "windows.lag-i-lead"
       },
       {
         "title": "Накопительные итоги и рамки окна",
@@ -4215,7 +3459,8 @@ export const modules = [
           ],
           "result": "У каждого клиента первая строка содержит сумму первого заказа, следующая — сумму первых двух и так далее.",
           "pitfall": "Без ORDER BY сумма будет общей по разделу, а не накопительной. Если даты совпадают, добавь уникальный ключ для стабильной последовательности."
-        }
+        },
+        "id": "windows.nakopitelnye-itogi-i-ramki-okna"
       },
       {
         "title": "Оконные функции после группировки",
@@ -4242,7 +3487,8 @@ export const modules = [
             "answer": 1,
             "explanation": "Внешний запрос получает уже сгруппированный набор monthly. Оконная сумма складывает месячные значения."
           }
-        ]
+        ],
+        "id": "windows.okonnye-funktsii-posle-gruppirovki"
       },
       {
         "title": "ROWS и RANGE: две разные оконные рамки",
@@ -4281,7 +3527,8 @@ export const modules = [
           ],
           "result": "Правильная рамка зависит от смысла: последние семь записей или последние семь календарных дней.",
           "pitfall": "Название rolling_7_days не делает ROWS BETWEEN 6 PRECEDING семидневным окном. Это всего лишь семь строк."
-        }
+        },
+        "id": "windows.rows-i-range-dve-raznye-okonnye-ramki"
       },
       {
         "title": "FIRST_VALUE, LAST_VALUE и NTH_VALUE",
@@ -4308,7 +3555,8 @@ export const modules = [
         ],
         "practiceIds": [
           "e93"
-        ]
+        ],
+        "id": "windows.first-value-last-value-i-nth-value"
       },
       {
         "title": "NTILE, PERCENT_RANK и CUME_DIST",
@@ -4335,7 +3583,8 @@ export const modules = [
         ],
         "practiceIds": [
           "e94"
-        ]
+        ],
+        "id": "windows.ntile-percent-rank-i-cume-dist"
       },
       {
         "title": "Именованные окна и несколько вычислений",
@@ -4362,7 +3611,8 @@ export const modules = [
         ],
         "practiceIds": [
           "e95"
-        ]
+        ],
+        "id": "windows.imenovannye-okna-i-neskolko-vychisleniy"
       },
       {
         "title": "Фильтрация оконного результата и top-N на группу",
@@ -4389,7 +3639,8 @@ export const modules = [
         ],
         "practiceIds": [
           "e100"
-        ]
+        ],
+        "id": "windows.filtratsiya-okonnogo-rezultata-i-top-n-na-gruppu"
       }
     ],
     "quiz": [
@@ -4441,12 +3692,14 @@ export const modules = [
     "sources": [
       "https://www.postgresql.org/docs/current/tutorial-window.html",
       "https://www.postgresql.org/docs/current/functions-window.html"
-    ]
+    ],
+    "track": "core",
+    "trackOrder": 15
   },
   {
     "id": "analytics",
     "title": "SQL для анализа данных",
-    "stage": "20 · Аналитика данных",
+    "stage": "04 · Аналитический SQL",
     "desc": "Применить SQL к реальным вопросам: метрики, воронки, когорты, дедупликация и временные ряды.",
     "lessons": [
       {
@@ -4475,7 +3728,8 @@ export const modules = [
             "answer": 1,
             "explanation": "После соединения один заказ может встречаться несколько раз. DISTINCT по order_id считает уникальные заказы."
           }
-        ]
+        ],
+        "id": "analytics.zerno-i-opredelenie-metriki"
       },
       {
         "title": "Воронка и условные этапы",
@@ -4504,7 +3758,8 @@ export const modules = [
             "answer": 0,
             "explanation": "Если пользователь создал несколько событий visit, COUNT(*) считает каждую строку. Для числа пользователей нужно считать DISTINCT user_id."
           }
-        ]
+        ],
+        "id": "analytics.voronka-i-uslovnye-etapy"
       },
       {
         "title": "Когортный анализ",
@@ -4531,7 +3786,8 @@ export const modules = [
             "answer": 0,
             "explanation": "Старые когорты имеют больше завершённых периодов наблюдения. Сравнивай одинаковый возраст когорты."
           }
-        ]
+        ],
+        "id": "analytics.kogortnyy-analiz"
       },
       {
         "title": "Дедупликация и выбор последней записи",
@@ -4558,7 +3814,8 @@ export const modules = [
             "answer": 0,
             "explanation": "Если timestamp совпадает, уникальный ID разрешает ничью и делает выбор последней записи воспроизводимым."
           }
-        ]
+        ],
+        "id": "analytics.deduplikatsiya-i-vybor-posledney-zapisi"
       },
       {
         "title": "Временные ряды и пропущенные периоды",
@@ -4599,7 +3856,8 @@ export const modules = [
           ],
           "result": "В отчёте есть все семь дней. Дни без заказов показываются с нулевым количеством.",
           "pitfall": "Не заменяй NULL нулём, если пустая дата означает не отсутствие заказов, а сбой или задержку загрузки данных."
-        }
+        },
+        "id": "analytics.vremennye-ryady-i-propushchennye-periody"
       },
       {
         "title": "Качество данных и проверки",
@@ -4638,7 +3896,8 @@ export const modules = [
           ],
           "result": "Проверки показывают не только то, что SQL выполняется, но и то, что результат сохраняет ожидаемое зерно и бизнес-инварианты.",
           "pitfall": "Успешное выполнение запроса не доказывает корректность цифры. Синтаксически правильный запрос может считать не ту сущность."
-        }
+        },
+        "id": "analytics.kachestvo-dannykh-i-proverki"
       },
       {
         "title": "Retention: когортное удержание",
@@ -4665,7 +3924,8 @@ export const modules = [
             "answer": 0,
             "explanation": "Retention показывает долю вернувшихся от исходной группы. Поэтому знаменатель — размер когорты, определённой в период 0."
           }
-        ]
+        ],
+        "id": "analytics.retention-kogortnoe-uderzhanie"
       },
       {
         "title": "Медиана и перцентили",
@@ -4704,7 +3964,8 @@ export const modules = [
           ],
           "result": "Медиана описывает середину, а P90 помогает понять опыт клиентов в медленной части распределения.",
           "pitfall": "P90 не означает, что 90% доставок занимают ровно столько минут. Это порог распределения."
-        }
+        },
+        "id": "analytics.mediana-i-pertsentili"
       },
       {
         "title": "Скользящие метрики по времени",
@@ -4731,7 +3992,8 @@ export const modules = [
             "answer": 0,
             "explanation": "ROWS считает физические строки в упорядоченном наборе. Для календарных семи дней нужно убедиться, что зерно — один день без пропусков."
           }
-        ]
+        ],
+        "id": "analytics.skolzyashchie-metriki-po-vremeni"
       },
       {
         "title": "Доля от общего итога и доля внутри группы",
@@ -4758,7 +4020,8 @@ export const modules = [
             "answer": 0,
             "explanation": "Без PARTITION BY окно охватывает все строки результата, поэтому доля будет от общего итога за все месяцы."
           }
-        ]
+        ],
+        "id": "analytics.dolya-ot-obshchego-itoga-i-dolya-vnutri-gruppy"
       },
       {
         "title": "Сравнение периодов: MoM, WoW и YoY",
@@ -4797,7 +4060,8 @@ export const modules = [
           ],
           "result": "Март сравнивается с февралем, даже если в феврале не было заказов и его выручка представлена нулём.",
           "pitfall": "Если февральской строки нет, LAG для марта сравнит январь с мартом. Это не MoM, а предыдущая доступная запись."
-        }
+        },
+        "id": "analytics.sravnenie-periodov-mom-wow-i-yoy"
       },
       {
         "title": "Конверсия и правильный знаменатель",
@@ -4836,7 +4100,8 @@ export const modules = [
           ],
           "result": "Если у магазина 20 заказов, из которых 15 доставлены, конверсия равна 75%. Это доля доставленных среди всех заказов, а не среди отправленных.",
           "pitfall": "Не меняй знаменатель незаметно. «Доставленные / все созданные» и «доставленные / отправленные» — разные метрики, даже если обе называются конверсией доставки."
-        }
+        },
+        "id": "analytics.konversiya-i-pravilnyy-znamenatel"
       },
       {
         "title": "Составной аналитический запрос: от фактов до отчёта",
@@ -4864,7 +4129,8 @@ export const modules = [
         ],
         "practiceIds": [
           "e99"
-        ]
+        ],
+        "id": "analytics.sostavnoy-analiticheskiy-zapros-ot-faktov-do-otchyota"
       }
     ],
     "quiz": [
@@ -4916,1236 +4182,14 @@ export const modules = [
     "sources": [
       "https://www.postgresql.org/docs/current/queries-table-expressions.html",
       "https://www.postgresql.org/docs/current/functions-window.html"
-    ]
-  },
-  {
-    "id": "views",
-    "title": "Представления, функции и триггеры",
-    "stage": "21 · Объекты базы данных",
-    "desc": "Понять переиспользуемые запросы и серверную логику, а также их ограничения.",
-    "lessons": [
-      {
-        "title": "VIEW",
-        "body": "VIEW — сохранённое определение SELECT-запроса, которое можно использовать как источник строк. Представление обычно не хранит собственную копию результата: при обращении PostgreSQL выполняет запрос, лежащий в основе view.\n\nVIEW помогает скрыть сложность запроса, повторно использовать логику и ограничить набор доступных столбцов. Но представление само по себе не гарантирует производительность: оптимизатор может встроить его запрос в основной запрос.\n\nИзменение исходных таблиц может повлиять на представление. Перед изменением схемы проверь зависимости. Права на view и базовые таблицы тоже нужно проектировать осознанно.",
-        "example": "CREATE VIEW delivered_orders AS\nSELECT order_id, customer_id, total_amount\nFROM orders\nWHERE status = 'delivered';\n\nSELECT * FROM delivered_orders;",
-        "note": "Обычный VIEW не является снимком данных. Для сохранённого результата существует materialized view.",
-        "simple": "VIEW — именованный SELECT, который выглядит как таблица, но обычно не хранит результат.",
-        "practiceIds": [],
-        "outcomes": [
-          "Объяснить, что хранит VIEW",
-          "создавать и использовать представление."
-        ],
-        "quiz": [
-          {
-            "question": "Что хранит обычный VIEW в PostgreSQL?",
-            "options": [
-              "Определение запроса, а не отдельную копию всех строк результата",
-              "Полную копию таблицы, обновляемую автоматически",
-              "Только индекс исходной таблицы",
-              "Резервную копию базы"
-            ],
-            "answer": 0,
-            "explanation": "Обычное представление хранит определение запроса. При обращении к нему PostgreSQL получает актуальные данные через этот запрос."
-          }
-        ]
-      },
-      {
-        "title": "Материализованное представление",
-        "body": "Materialized view сохраняет результат запроса физически. Чтение может быть быстрее, чем повторное вычисление сложной агрегации, но данные не обновляются автоматически при изменении исходных таблиц.\n\nREFRESH MATERIALIZED VIEW пересчитывает сохранённый результат. CONCURRENTLY позволяет обновлять представление без блокировки обычного чтения, но требует подходящего уникального индекса и имеет дополнительные условия.\n\nMaterialized view полезно для отчётных данных, которые можно обновлять по расписанию или после загрузки. Нужно определить допустимую задержку: насколько свежими должны быть показатели и как часто можно пересчитывать результат.",
-        "example": "CREATE MATERIALIZED VIEW monthly_revenue AS\nSELECT DATE_TRUNC('month', created_at) AS month,\n       SUM(total_amount) AS revenue\nFROM orders\nGROUP BY 1;\n\nREFRESH MATERIALIZED VIEW monthly_revenue;",
-        "note": "Материализованное представление может содержать устаревшие данные между обновлениями.",
-        "simple": "Materialized view хранит результат и требует обновления, когда источник меняется.",
-        "practiceIds": [],
-        "outcomes": [
-          "Объяснить отличие VIEW и MATERIALIZED VIEW",
-          "выбирать частоту обновления по требованиям свежести."
-        ],
-        "quiz": [
-          {
-            "question": "Что произойдёт с данными materialized view после изменения orders, если REFRESH не запускать?",
-            "options": [
-              "Результат автоматически обновится при следующем SELECT",
-              "Сохранённый результат останется прежним и может устареть",
-              "Представление автоматически удалится",
-              "PostgreSQL заблокирует UPDATE orders"
-            ],
-            "answer": 1,
-            "explanation": "Materialized view хранит физический результат. Изменения исходных таблиц не отражаются до обновления."
-          }
-        ]
-      },
-      {
-        "title": "Функции PostgreSQL",
-        "body": "Функция PostgreSQL — именованный программный объект, который принимает аргументы и возвращает значение или набор строк. Функции могут быть написаны на SQL или PL/pgSQL и использоваться в выражениях SELECT, WHERE и FROM.\n\nФункции отличаются по типу возвращаемого значения, волатильности (IMMUTABLE, STABLE, VOLATILE), безопасности и поведению при NULL. Метки волатильности помогают оптимизатору понимать, можно ли повторно использовать результат или перемещать вычисления.\n\nНе объявляй функцию IMMUTABLE, если она зависит от текущего времени, таблиц, настроек сессии или внешнего состояния. Неверная метка может привести к некорректной оптимизации.",
-        "example": "CREATE FUNCTION add_tax(amount NUMERIC, rate NUMERIC)\nRETURNS NUMERIC\nLANGUAGE SQL\nIMMUTABLE\nAS $\n  SELECT amount * (1 + rate);\n$;",
-        "note": "IMMUTABLE означает одинаковый результат для одинаковых аргументов всегда. Не ставь эту метку просто ради скорости.",
-        "simple": "Функция — повторно используемая логика с аргументами и определённым результатом.",
-        "practiceIds": [],
-        "outcomes": [
-          "Создавать простую SQL-функцию",
-          "объяснить назначение RETURNS и volatility."
-        ],
-        "quiz": [
-          {
-            "question": "Какую метку волатильности обычно следует выбрать функции, которая возвращает CURRENT_TIMESTAMP?",
-            "options": [
-              "IMMUTABLE: результат зависит только от аргументов",
-              "STABLE: значение не меняется в пределах транзакции",
-              "VOLATILE: значение обязательно меняется при каждом вызове",
-              "STRICT: функция всегда возвращает NULL"
-            ],
-            "answer": 1,
-            "explanation": "В PostgreSQL CURRENT_TIMESTAMP фиксируется на начало текущей транзакции. Функция, возвращающая его, обычно соответствует STABLE, а не IMMUTABLE или VOLATILE."
-          }
-        ]
-      },
-      {
-        "title": "Триггеры",
-        "body": "Триггер — механизм, который автоматически запускает функцию при INSERT, UPDATE, DELETE или TRUNCATE. Триггер может выполняться до изменения (BEFORE), после изменения (AFTER) или вместо операции над представлением (INSTEAD OF).\n\nТриггеры используют для аудита, вычисления производных значений, проверки сложных правил и поддержки истории. Но скрытая логика усложняет отладку: INSERT может изменить больше таблиц, чем видно из самого запроса.\n\nТриггерная функция в PostgreSQL обычно написана на PL/pgSQL и использует специальные значения NEW и OLD. NEW описывает новую строку, OLD — старую. Для BEFORE-триггера можно изменить NEW и повлиять на сохраняемую запись.",
-        "example": "CREATE TABLE customer_demo (\n  customer_id integer PRIMARY KEY,\n  customer_name text NOT NULL,\n  updated_at timestamptz NOT NULL DEFAULT now()\n);\n\nCREATE FUNCTION set_updated_at()\nRETURNS trigger\nLANGUAGE plpgsql\nAS $\nBEGIN\n  NEW.updated_at := now();\n  RETURN NEW;\nEND;\n$;\n\nCREATE TRIGGER trg_set_updated_at\nBEFORE UPDATE ON customer_demo\nFOR EACH ROW\nEXECUTE FUNCTION set_updated_at();",
-        "note": "Триггеры полезны, но не прячь в них бизнес-процесс, который должен быть явно виден и контролируем в приложении.",
-        "simple": "Триггер запускает функцию автоматически в ответ на событие изменения данных.",
-        "practiceIds": [],
-        "outcomes": [
-          "Объяснить BEFORE и AFTER",
-          "читать NEW и OLD",
-          "описать риск скрытых побочных изменений."
-        ],
-        "quiz": [
-          {
-            "question": "Что позволяет сделать BEFORE UPDATE row-level trigger с NEW?",
-            "options": [
-              "Изменить значения новой версии строки до её сохранения",
-              "Прочитать только удалённые строки",
-              "Запустить триггер на другой базе",
-              "Отменить все SELECT в таблице"
-            ],
-            "answer": 0,
-            "explanation": "В BEFORE-триггере можно изменить NEW и вернуть его. PostgreSQL сохранит изменённую версию строки."
-          }
-        ]
-      },
-      {
-        "title": "Основы PL/pgSQL: переменные и ветвления",
-        "body": "PL/pgSQL добавляет к SQL процедурные конструкции: переменные, IF, циклы, обработку ошибок и вызов SQL-команд. Функция на PL/pgSQL подходит, когда логика состоит из нескольких шагов и её удобно выполнять внутри сервера.\n\nПеременная объявляется в блоке DECLARE, значение присваивается через := или SELECT ... INTO. IF ... THEN ... ELSE управляет ветвлением. Блоки BEGIN и END в PL/pgSQL ограничивают тело блока, но это не то же самое, что транзакционные BEGIN и COMMIT.\n\nНе переноси сложные циклы в базу автоматически. SQL-наборные операции обычно эффективнее построчного цикла. PL/pgSQL полезен там, где действительно нужна процедурная логика.",
-        "example": "CREATE FUNCTION order_label(amount NUMERIC)\nRETURNS TEXT\nLANGUAGE plpgsql\nAS $\nBEGIN\n  IF amount >= 10000 THEN\n    RETURN 'large';\n  ELSE\n    RETURN 'regular';\n  END IF;\nEND;\n$;",
-        "note": "Если задачу можно выразить одним SQL-запросом над набором строк, не заменяй его циклом по одной строке.",
-        "simple": "PL/pgSQL — язык процедурной логики внутри PostgreSQL, который дополняет SQL.",
-        "practiceIds": [],
-        "outcomes": [
-          "Объявлять переменные и ветвления IF",
-          "отличать PL/pgSQL BEGIN/END от транзакционных команд."
-        ],
-        "quiz": [
-          {
-            "question": "Что делает RETURN внутри функции PL/pgSQL?",
-            "options": [
-              "Завершает функцию и возвращает указанное значение вызывающему запросу",
-              "Фиксирует транзакцию",
-              "Создаёт новую таблицу",
-              "Переходит к следующей итерации цикла"
-            ],
-            "answer": 0,
-            "explanation": "RETURN завершает выполнение функции и возвращает значение, соответствующее типу RETURNS."
-          }
-        ]
-      },
-      {
-        "title": "Обработка ошибок и EXCEPTION",
-        "body": "Блок EXCEPTION перехватывает ошибки, возникшие в соответствующем блоке PL/pgSQL. Это позволяет обработать ожидаемую ситуацию, например уникальный конфликт, и вернуть понятный результат или выполнить альтернативное действие.\n\nОбработка исключения не должна скрывать любые ошибки без разбора. Если перехватить OTHERS и ничего не сделать, настоящие проблемы могут остаться незамеченными. Лучше перехватывать конкретные SQLSTATE или именованные условия и логировать контекст.\n\nВ PostgreSQL блок с EXCEPTION работает как подблок с собственным откатом изменений внутри него. Но внешние побочные эффекты и действия вне транзакции могут не отмениться.",
-        "example": "DO $\nBEGIN\n  INSERT INTO customers (customer_id, customer_name)\n  VALUES (1, 'Test');\nEXCEPTION\n  WHEN unique_violation THEN\n    RAISE NOTICE 'Customer already exists';\nEND;\n$;",
-        "note": "Не используй WHEN OTHERS без повторного выброса или осмысленной обработки неизвестной ошибки.",
-        "simple": "EXCEPTION позволяет обработать ожидаемую ошибку, но не должен превращаться в заглушку для всех проблем.",
-        "practiceIds": [],
-        "outcomes": [
-          "Перехватывать конкретные ошибки",
-          "объяснить, почему нельзя молча проглатывать все исключения."
-        ],
-        "quiz": [
-          {
-            "question": "Почему опасно перехватывать WHEN OTHERS и ничего не делать?",
-            "options": [
-              "Потому что можно скрыть неожиданные ошибки и продолжить работу с некорректным состоянием",
-              "Потому что WHEN OTHERS удаляет таблицы",
-              "Потому что EXCEPTION работает только с SELECT",
-              "Потому что PostgreSQL запрещает обработку ошибок"
-            ],
-            "answer": 0,
-            "explanation": "Неизвестная ошибка может означать серьёзную проблему. Если её молча проглотить, вызывающий код не узнает, что операция не удалась."
-          }
-        ]
-      }
     ],
-    "quiz": [
-      {
-        "question": "Чем обычное VIEW отличается от MATERIALIZED VIEW?",
-        "options": [
-          "VIEW хранит готовые строки",
-          "VIEW сохраняет запрос, MATERIALIZED VIEW хранит результат на момент обновления",
-          "VIEW нельзя использовать в SELECT",
-          "Ничем"
-        ],
-        "answer": 1,
-        "explanation": "Обычное представление выполняет свой запрос при обращении. Материализованное хранит снимок результата и его нужно обновлять."
-      },
-      {
-        "question": "Когда срабатывает триггер?",
-        "options": [
-          "Только по расписанию",
-          "При событии, для которого он настроен, например INSERT или UPDATE",
-          "При открытии редактора",
-          "При создании индекса"
-        ],
-        "answer": 1,
-        "explanation": "Триггер автоматически вызывает функцию в ответ на определённое событие с таблицей или представлением."
-      },
-      {
-        "question": "Нужно ли вручную обновлять обычное VIEW?",
-        "options": [
-          "Да, каждый час",
-          "Нет, оно выполняет сохранённый запрос при обращении",
-          "Только после INSERT",
-          "Только после VACUUM"
-        ],
-        "answer": 1,
-        "explanation": "Обычное представление не хранит готовые строки. Материализованное представление, наоборот, нужно обновлять."
-      },
-      {
-        "question": "Что делает триггер BEFORE UPDATE?",
-        "options": [
-          "Выполняется до изменения строки",
-          "Выполняется после SELECT",
-          "Создаёт индекс",
-          "Отключает ограничения"
-        ],
-        "answer": 0,
-        "explanation": "BEFORE-триггер запускается перед событием и может, например, проверить или изменить NEW."
-      }
-    ],
-    "sources": [
-      "https://www.postgresql.org/docs/current/sql-createview.html",
-      "https://www.postgresql.org/docs/current/plpgsql.html"
-    ]
-  },
-  {
-    "id": "performance",
-    "title": "Индексы и производительность",
-    "stage": "22 · Производительность",
-    "desc": "Читать планы, понимать B-tree и составные индексы, оценивать стоимость запросов и избегать преждевременной оптимизации.",
-    "lessons": [
-      {
-        "title": "Как СУБД выполняет запрос",
-        "body": "PostgreSQL выполняет запрос не как простой построчный скрипт. Он разбирает SQL, проверяет имена и типы, переписывает запрос, выбирает план и выполняет его. План определяет, как читать таблицы, соединять строки, сортировать и агрегировать результат.\n\nОдин и тот же запрос может иметь разные планы в зависимости от размера таблиц, статистики, индексов и параметров. Seq Scan читает таблицу целиком, Index Scan использует индекс для поиска строк, Bitmap Scan сочетает индексный поиск с чтением страниц.\n\nСам факт использования индекса не означает, что план лучше. Если нужно прочитать большую часть таблицы, последовательное чтение может быть дешевле. Оптимизатор выбирает оценочно самый выгодный план на основе статистики и стоимости операций.",
-        "example": "EXPLAIN\nSELECT order_id, total_amount\nFROM orders\nWHERE customer_id = 42;",
-        "note": "Не оценивай план по наличию Index Scan. Смотри на объём данных, оценки строк, стоимость и фактическое время.",
-        "simple": "План выполнения — выбранный PostgreSQL способ получить результат запроса.",
-        "practiceIds": [],
-        "outcomes": [
-          "Объяснить роль планировщика",
-          "различать Seq Scan, Index Scan и Bitmap Scan."
-        ],
-        "quiz": [
-          {
-            "question": "Почему Seq Scan иногда быстрее Index Scan?",
-            "options": [
-              "Когда нужно прочитать большую долю таблицы, последовательное чтение может быть дешевле множества обращений по индексу",
-              "Потому что индексы всегда повреждены",
-              "Потому что Seq Scan использует только одну строку",
-              "Потому что PostgreSQL не умеет читать индексы"
-            ],
-            "answer": 0,
-            "explanation": "Если запросу нужны многие строки, последовательное чтение страниц может быть эффективнее обхода индекса и случайных обращений к таблице."
-          }
-        ]
-      },
-      {
-        "title": "EXPLAIN и EXPLAIN ANALYZE",
-        "body": "EXPLAIN показывает план, который PostgreSQL собирается использовать. Он выводит типы операций, оценочную стоимость, ожидаемое число строк и ширину строк. EXPLAIN ANALYZE действительно выполняет запрос и показывает фактические строки и время.\n\nСравни estimated rows и actual rows. Большая разница может указывать на устаревшую статистику, корреляцию столбцов или неравномерное распределение значений. EXPLAIN ANALYZE также показывает loops: узел может выполняться много раз, например внутри Nested Loop.\n\nОсторожно с изменяющими командами: EXPLAIN ANALYZE запускает их. Для UPDATE и DELETE используй тестовую базу или транзакцию с ROLLBACK, если все эффекты действительно транзакционные.",
-        "example": "EXPLAIN (ANALYZE, BUFFERS)\nSELECT customer_id, COUNT(*)\nFROM orders\nGROUP BY customer_id;",
-        "note": "EXPLAIN ANALYZE выполняет запрос. Не запускай его на опасном UPDATE или DELETE без защиты.",
-        "simple": "EXPLAIN оценивает план, EXPLAIN ANALYZE выполняет запрос и показывает фактическое поведение.",
-        "practiceIds": [
-          "e46"
-        ],
-        "outcomes": [
-          "Читать оценочные и фактические строки",
-          "объяснить риск EXPLAIN ANALYZE."
-        ],
-        "quiz": [
-          {
-            "question": "Что добавляет EXPLAIN ANALYZE по сравнению с обычным EXPLAIN?",
-            "options": [
-              "Фактическое выполнение запроса и измеренные показатели узлов плана",
-              "Автоматическое создание индексов",
-              "Гарантию, что запрос будет быстрее",
-              "Резервную копию таблиц"
-            ],
-            "answer": 0,
-            "explanation": "EXPLAIN ANALYZE запускает запрос и сообщает фактические строки, время и число циклов выполнения."
-          }
-        ],
-        "walkthrough": {
-          "title": "Оценка плана и фактическое выполнение",
-          "scenario": "Нужно понять, почему фильтр по customer_id выполняется медленно.",
-          "steps": [
-            "EXPLAIN показывает выбранные узлы плана и оценочную стоимость без запуска SELECT.",
-            "EXPLAIN ANALYZE выполняет запрос и добавляет фактическое время и число строк.",
-            "Сравни estimated rows с actual rows, чтобы увидеть ошибку оценки.",
-            "BUFFERS помогает понять, сколько страниц было найдено в кеше или прочитано."
-          ],
-          "result": "Ты видишь не просто «индекс есть или нет», а конкретные операции и фактическую работу запроса.",
-          "pitfall": "EXPLAIN ANALYZE действительно запускает запрос. Не применяй его бездумно к UPDATE, DELETE или другим командам с побочными эффектами."
-        }
-      },
-      {
-        "title": "B-tree и обычный индекс",
-        "body": "B-tree — индекс по умолчанию в PostgreSQL и универсальный выбор для равенства, диапазонов и сортировки. Он хранит ключи в упорядоченной структуре, поэтому подходит для условий =, <, BETWEEN и ORDER BY при подходящем порядке столбцов.\n\nИндекс ускоряет поиск ценой дополнительного места и затрат на INSERT, UPDATE и DELETE: при изменении данных нужно обновлять и индекс. Поэтому индекс на каждом столбце не является бесплатным ускорением.\n\nИндекс особенно полезен, когда запрос выбирает небольшую долю строк или использует сортировку, которую можно получить из индекса. Но для маленькой таблицы или широкого результата Seq Scan может быть дешевле.",
-        "example": "CREATE INDEX idx_orders_customer\nON orders (customer_id);\n\nEXPLAIN\nSELECT * FROM orders\nWHERE customer_id = 42;",
-        "note": "Индекс ускоряет некоторые чтения, но замедляет изменения и занимает место. Создавай его под реальные запросы.",
-        "simple": "B-tree полезен для равенства, диапазонов и многих вариантов сортировки.",
-        "practiceIds": [
-          "e68"
-        ],
-        "outcomes": [
-          "Объяснить назначение B-tree",
-          "оценивать компромисс между чтением и записью."
-        ],
-        "quiz": [
-          {
-            "question": "Какой тип условия обычно хорошо поддерживается B-tree индексом по created_at?",
-            "options": [
-              "created_at >= TIMESTAMP '2026-01-01' AND created_at < TIMESTAMP '2026-02-01'",
-              "WHERE lower(description) LIKE '%abc%' без функционального индекса",
-              "WHERE random() > 0.5",
-              "WHERE description IS JSON"
-            ],
-            "answer": 0,
-            "explanation": "B-tree поддерживает диапазонные условия по индексированному столбцу, если выражение и типы соответствуют индексу."
-          }
-        ],
-        "walkthrough": {
-          "title": "Когда B-tree помогает фильтру",
-          "scenario": "Нужно быстро находить заказы конкретного клиента.",
-          "steps": [
-            "B-tree хранит ключи в упорядоченной структуре и подходит для равенства и диапазонов.",
-            "Индекс по customer_id может помочь найти строки, где customer_id = 42.",
-            "После поиска PostgreSQL может обратиться к самой таблице, чтобы прочитать остальные столбцы.",
-            "Если запрос возвращает большую долю таблицы, последовательное чтение может оказаться дешевле."
-          ],
-          "result": "Индекс даёт планировщику дополнительный способ доступа, но не гарантирует Index Scan для каждого запроса.",
-          "pitfall": "Наличие индекса не означает, что он обязан использоваться. Проверяй план на реальном объёме и распределении данных."
-        }
-      },
-      {
-        "title": "Составные, частичные и покрывающие индексы",
-        "body": "Составной индекс содержит несколько ключевых столбцов. Для B-tree важен порядок: индекс (customer_id, created_at) хорошо подходит для поиска по customer_id и затем по диапазону created_at. Он не так полезен для запроса только по created_at, потому что ведущий столбец customer_id не ограничен.\n\nЧастичный индекс содержит только строки, удовлетворяющие WHERE в определении индекса. Он может быть меньше и полезнее для запросов по активным или незавершённым записям. Покрывающий индекс с INCLUDE хранит дополнительные значения для возможности index-only scan, хотя видимость строк и другие условия всё равно влияют на результат.\n\nПроектируй составной индекс по реальным фильтрам и сортировке. Не добавляй столбцы «на всякий случай»: каждый ключ влияет на размер и стоимость обновления.",
-        "example": "CREATE INDEX idx_orders_customer_date\nON orders (customer_id, created_at DESC)\nINCLUDE (total_amount);",
-        "note": "Индекс (a,b) обычно не заменяет индекс только по b для всех запросов. Проверяй план.",
-        "simple": "В составном B-tree индексе порядок столбцов важен: сначала выбирай ведущие фильтры и группировки.",
-        "practiceIds": [],
-        "outcomes": [
-          "Объяснить ведущий столбец составного индекса",
-          "различать частичный индекс и INCLUDE."
-        ],
-        "quiz": [
-          {
-            "question": "Для какого условия индекс (customer_id, created_at) наиболее естественен?",
-            "options": [
-              "customer_id = 42 AND created_at >= DATE '2026-01-01'",
-              "Только created_at >= DATE '2026-01-01' при любом customer_id",
-              "Только status = 'paid'",
-              "Только total_amount > 100"
-            ],
-            "answer": 0,
-            "explanation": "Ведущий столбец customer_id ограничен равенством, затем используется диапазон по created_at."
-          }
-        ]
-      },
-      {
-        "title": "Статистика, ANALYZE и VACUUM",
-        "body": "PostgreSQL собирает статистику о распределении значений, чтобы оценивать количество строк после фильтров и выбирать план. ANALYZE обновляет статистику, а autovacuum обычно запускает ANALYZE и VACUUM автоматически по порогам.\n\nVACUUM освобождает место, занятое старыми версиями строк, для повторного использования и поддерживает visibility map. В модели MVCC UPDATE и DELETE не всегда удаляют старую версию сразу. Без очистки таблицы могут разрастаться.\n\nVACUUM FULL переписывает таблицу и требует более серьёзной блокировки. Не запускай его как обычную регулярную команду без оценки влияния. Обычно сначала проверяют autovacuum, статистику и признаки bloat.",
-        "example": "ANALYZE orders;\nVACUUM (ANALYZE) orders;",
-        "note": "Не путай VACUUM с удалением всех данных и не запускай VACUUM FULL без оценки блокировок.",
-        "simple": "ANALYZE обновляет статистику для планировщика. VACUUM обслуживает старые версии строк MVCC.",
-        "practiceIds": [],
-        "outcomes": [
-          "Объяснить роль статистики",
-          "различать ANALYZE, VACUUM и VACUUM FULL."
-        ],
-        "quiz": [
-          {
-            "question": "Для чего планировщику нужна статистика ANALYZE?",
-            "options": [
-              "Чтобы оценивать число строк после условий и выбирать план выполнения",
-              "Чтобы хранить резервную копию таблицы",
-              "Чтобы автоматически исправлять значения NULL",
-              "Чтобы гарантировать уникальность ключей"
-            ],
-            "answer": 0,
-            "explanation": "Оценки селективности и количества строк влияют на выбор способов чтения, JOIN и агрегации."
-          }
-        ]
-      },
-      {
-        "title": "Поиск узких мест",
-        "body": "Если запрос медленный, сначала найди конкретный узел или этап, который создаёт основную задержку. Проверь EXPLAIN (ANALYZE, BUFFERS), фактические строки, loops, чтение блоков и сортировки на диск.\n\nПроблема может быть не в отсутствии индекса. Частые причины: неверная кардинальность JOIN, большой fan-out, функция над индексируемым столбцом, сортировка большого набора, устаревшая статистика или слишком широкий SELECT.\n\nОптимизируй измеряемую проблему. Сохрани исходный план, измени одну вещь, сравни фактические показатели и проверь, что результат запроса не изменился по смыслу.",
-        "example": "EXPLAIN (ANALYZE, BUFFERS)\nSELECT order_id, total_amount\nFROM orders\nWHERE customer_id = 42\nORDER BY created_at DESC\nLIMIT 20;",
-        "note": "Сравнивай планы на сопоставимых данных и условиях. Не оптимизируй только оценочную cost как будто это миллисекунды.",
-        "simple": "Оптимизация начинается с измерения узкого места, а не с добавления случайных индексов.",
-        "practiceIds": [],
-        "outcomes": [
-          "Находить узкий узел плана",
-          "проверять влияние одного изменения на время и корректность результата."
-        ],
-        "quiz": [
-          {
-            "question": "Что разумнее сделать первым при медленном запросе?",
-            "options": [
-              "Посмотреть EXPLAIN (ANALYZE, BUFFERS) и найти фактический узкий узел",
-              "Добавить индекс на каждый столбец",
-              "Удалить все JOIN",
-              "Увеличить LIMIT"
-            ],
-            "answer": 0,
-            "explanation": "Сначала нужно измерить, где запрос тратит время и какие оценки не совпадают с фактом. Иначе оптимизация будет гаданием."
-          }
-        ]
-      },
-      {
-        "title": "Expression, partial, GIN, GiST и BRIN индексы",
-        "body": "Expression index индексирует результат выражения, например lower(email), а не исходное значение email напрямую. Такой индекс помогает, если запрос использует то же выражение.\n\nPartial index содержит только строки, удовлетворяющие условию WHERE, например незавершённые заказы. GIN подходит для поиска внутри составных значений, например JSONB и массивов. GiST — обобщённый тип индекса для диапазонов, геометрии и других операторных классов. BRIN хранит сводную информацию о диапазонах физических блоков и может быть очень компактным для больших таблиц, где значения коррелируют с физическим порядком.\n\nВыбирай тип индекса по операторам запроса и типу данных. Универсального «самого быстрого индекса» не существует.",
-        "example": "CREATE INDEX idx_customers_lower_name\nON customers (lower(customer_name));\n\nCREATE INDEX idx_orders_open\nON orders (created_at)\nWHERE status = 'open';",
-        "note": "Expression index полезен только при совпадающем выражении запроса и подходящем операторном классе.",
-        "simple": "B-tree не единственный вариант. GIN, GiST и BRIN решают другие классы задач.",
-        "practiceIds": [],
-        "outcomes": [
-          "Различать expression, partial, GIN, GiST и BRIN",
-          "выбирать индекс под оператор и данные."
-        ],
-        "quiz": [
-          {
-            "question": "Какой индекс чаще рассматривают для поиска по ключам и значениям внутри JSONB?",
-            "options": [
-              "GIN с подходящим операторным классом",
-              "Обычный B-tree по unrelated id",
-              "BRIN по случайному тексту",
-              "Уникальный индекс на каждой JSON-строке"
-            ],
-            "answer": 0,
-            "explanation": "GIN поддерживает эффективный поиск по структурам вроде JSONB и массивов для соответствующих операторов."
-          }
-        ]
-      },
-      {
-        "title": "Чтение плана: Scan, Join и Aggregate",
-        "body": "План выполнения состоит из узлов. Scan читает источник, Join объединяет наборы, Aggregate считает группы или агрегаты, Sort сортирует строки, Limit ограничивает результат.\n\nNested Loop для каждой строки внешнего набора ищет совпадения во внутреннем. Он может быть быстрым для малого внешнего набора и индексного поиска, но дорогим при большом числе внешних строк. Hash Join строит хеш-таблицу по одной стороне и ищет совпадения по другой; Merge Join использует упорядоченные входы.\n\nУзел сам по себе не плохой. Смотри на actual rows, loops и время. Nested Loop с десятью строками и быстрым индексным поиском может быть отличным планом, а Hash Join может быть невыгоден для маленького результата.",
-        "example": "EXPLAIN (ANALYZE, BUFFERS)\nSELECT o.order_id, c.customer_name\nFROM orders AS o\nJOIN customers AS c USING (customer_id);",
-        "note": "Nested Loop не означает ошибку. Важны размер внешнего набора, число loops и стоимость внутреннего поиска.",
-        "simple": "Название узла описывает способ выполнения, а не его качество. Оцени фактический объём и число циклов.",
-        "practiceIds": [
-          "e101"
-        ],
-        "outcomes": [
-          "Читать Scan, Join и Aggregate",
-          "сравнивать план по фактическим строкам и циклам."
-        ],
-        "quiz": [
-          {
-            "question": "Когда Nested Loop может быть хорошим выбором?",
-            "options": [
-              "Когда внешний набор мал и для внутреннего поиска есть эффективный индекс",
-              "Только когда обе таблицы содержат миллионы строк",
-              "Когда условие JOIN отсутствует",
-              "Когда результат всегда пустой"
-            ],
-            "answer": 0,
-            "explanation": "Для небольшого внешнего набора индексный поиск по каждой строке может быть дешевле построения хеша или сортировки больших наборов."
-          }
-        ]
-      },
-      {
-        "title": "Параметры запроса и prepared statements",
-        "body": "Prepared statement позволяет подготовить запрос один раз и выполнять его многократно с разными параметрами. Это уменьшает повторный разбор и может использовать план выполнения повторно.\n\nВ PostgreSQL план может быть custom или generic. Custom учитывает конкретные значения параметров, generic использует общий план. Если распределение данных сильно неравномерно, один общий план может оказаться плохим для некоторых параметров.\n\nПараметризованные запросы важны и для безопасности: значения передаются отдельно от текста SQL, что защищает от SQL injection. Но параметр нельзя использовать вместо имени таблицы или столбца обычным способом.",
-        "example": "PREPARE orders_by_customer(BIGINT) AS\nSELECT order_id, total_amount\nFROM orders\nWHERE customer_id = $1;\n\nEXECUTE orders_by_customer(42);",
-        "note": "Не склеивай SQL из пользовательских строк. Параметры защищают значения, но не динамические имена объектов.",
-        "simple": "Prepared statement отделяет структуру SQL от значений параметров и может повторно использовать подготовленный запрос.",
-        "practiceIds": [],
-        "outcomes": [
-          "Объяснить prepared statements",
-          "различать параметры значений и динамические идентификаторы."
-        ],
-        "quiz": [
-          {
-            "question": "Почему параметр $1 нельзя использовать вместо имени таблицы в SELECT * FROM $1?",
-            "options": [
-              "Параметры предназначены для значений, а имя таблицы является частью структуры SQL",
-              "Потому что $1 работает только с датами",
-              "Потому что PostgreSQL запрещает SELECT с параметрами",
-              "Потому что имена таблиц всегда являются числами"
-            ],
-            "answer": 0,
-            "explanation": "Параметры связываются после разбора структуры запроса. Для динамических имён нужны белый список и безопасное форматирование идентификаторов."
-          }
-        ]
-      },
-      {
-        "title": "Составной индекс и порядок столбцов",
-        "body": "Порядок столбцов составного B-tree индекса определяет, какие запросы смогут эффективно использовать его ведущую часть. Индекс (status, created_at) подходит для status = 'open' и диапазона по created_at внутри этого статуса.\n\nЕсли фильтр использует только created_at, такой индекс обычно менее полезен, потому что сначала идут записи, сгруппированные по status. Поэтому порядок выбирают исходя из реальных WHERE, JOIN и ORDER BY, а не просто из списка столбцов.\n\nСелективность важна, но не является единственным фактором. Индекс может использоваться и для столбца с небольшим числом уникальных значений, если он ведущий в составном индексе и запрос ограничивает комбинацию полей.",
-        "simple": "В составном индексе ведущие столбцы задают доступный путь поиска. Порядок проектируется под запросы.",
-        "example": "CREATE INDEX idx_orders_status_date\nON orders (status, created_at DESC);",
-        "note": "Не существует универсального правила «самый селективный столбец всегда первый». Учитывай паттерны запросов и сортировку.",
-        "practiceIds": [],
-        "outcomes": [
-          "Подбирать порядок столбцов индекса по шаблонам фильтрации и сортировки.",
-          "Объяснить, почему индекс с другим ведущим столбцом может не подойти запросу."
-        ],
-        "quiz": [
-          {
-            "question": "Для запроса WHERE status = 'open' AND created_at >= ... какой индекс наиболее естественен?",
-            "options": [
-              "(status, created_at)",
-              "(total_amount, order_id)",
-              "(created_at, unrelated_text) без условия по ведущему столбцу",
-              "Индекс только на full_name"
-            ],
-            "answer": 0,
-            "explanation": "Равенство по ведущему status и диапазон по следующему created_at соответствуют левому префиксу B-tree индекса."
-          }
-        ]
-      },
-      {
-        "title": "Как читать BUFFERS, loops и actual rows",
-        "body": "В EXPLAIN ANALYZE BUFFERS показывает работу с блоками: shared hit — страницы найдены в буферном кеше PostgreSQL, shared read — страницы пришлось прочитать в буфер. Это не всегда означает физическое чтение с диска: ОС тоже может кэшировать данные.\n\nloops показывает, сколько раз выполнялся узел. actual rows обычно указывается в среднем за цикл, поэтому для оценки общего числа обработанных строк учитывай loops. Большое значение loops вместе с большим actual time может объяснить медленный Nested Loop.\n\nСравнивай actual rows с estimated rows: сильное расхождение может привести к неудачному плану. BUFFERS помогает понять объём чтения, но сам по себе не заменяет анализ времени и структуры узлов.",
-        "simple": "BUFFERS показывает попадания и чтения страниц, loops — число запусков узла.",
-        "example": "EXPLAIN (ANALYZE, BUFFERS, VERBOSE)\nSELECT *\nFROM orders\nWHERE customer_id = 42;",
-        "note": "actual rows часто приводится на один loop. Для общего объёма учитывай оба показателя.",
-        "practiceIds": [],
-        "outcomes": [
-          "Читать shared hit/read и loops",
-          "находить расхождение estimated и actual rows."
-        ],
-        "quiz": [
-          {
-            "question": "У узла указано actual rows=5 и loops=100. Какой приблизительный суммарный объём строк он обработал?",
-            "options": [
-              "Около 500 строк",
-              "Около 5 строк",
-              "Около 100 строк",
-              "Около 105 строк"
-            ],
-            "answer": 0,
-            "explanation": "actual rows указывается в среднем на один цикл. При 100 циклах и 5 строках за цикл суммарно получается примерно 500 строк."
-          }
-        ]
-      },
-      {
-        "title": "Nested Loop, Hash Join и Merge Join",
-        "body": "PostgreSQL соединяет таблицы не одним универсальным способом. Планировщик выбирает алгоритм JOIN по оценкам количества строк, доступным индексам, сортировке и стоимости чтения. В плане название узла показывает именно физический алгоритм, а не тип SQL-синтаксиса INNER или LEFT JOIN.\n\nNested Loop берёт строки внешнего источника и для каждой ищет совпадения во внутреннем. Он особенно хорош, когда внешний набор небольшой, а для внутреннего есть подходящий индекс. Если внешних строк тысячи, а внутренний источник каждый раз читается целиком, стоимость может резко вырасти. Смотри на loops у внутреннего узла.\n\nHash Join строит хеш-таблицу по одной стороне соединения, а затем проверяет строки второй стороны. Он часто удобен для больших несортированных наборов при равенстве ключей. Если хеш не помещается в доступную память, возможны batches и дополнительные обращения к временным файлам.\n\nMerge Join проходит два отсортированных набора по ключам. Он полезен, когда входы уже упорядочены или сортировка всё равно нужна. Само наличие Merge Join не гарантирует скорость: учитывай стоимость Sort и объём входных строк.",
-        "example": "EXPLAIN (ANALYZE, BUFFERS)\nSELECT o.order_id, s.store_name\nFROM orders o\nJOIN stores s ON s.store_id = o.store_id\nWHERE o.customer_id = 1;",
-        "note": "Не пытайся вручную заставить PostgreSQL всегда использовать один алгоритм. Сначала проверь оценки строк, loops, сортировки и фактические буферы.",
-        "simple": "Nested Loop повторяет поиск для каждой внешней строки, Hash Join сопоставляет через хеш-таблицу, Merge Join соединяет два упорядоченных потока.",
-        "practiceIds": [
-          "e102"
-        ],
-        "outcomes": [
-          "Различать Nested Loop, Hash Join и Merge Join",
-          "объяснять, почему размер внешнего набора и loops влияют на Nested Loop."
-        ],
-        "quiz": [
-          {
-            "question": "В каком сценарии Nested Loop часто оказывается хорошим выбором?",
-            "options": [
-              "Внешний набор мал, а внутренний источник быстро ищется по индексу",
-              "Обе таблицы всегда содержат миллионы строк и индексов нет",
-              "Нужно обязательно отсортировать оба набора",
-              "Планировщик не знает структуру таблиц"
-            ],
-            "answer": 0,
-            "explanation": "Небольшое число внешних строк и индексный поиск по внутренней таблице позволяют выполнить мало точечных обращений."
-          }
-        ]
-      },
-      {
-        "title": "Bitmap Scan и Index Only Scan",
-        "body": "Index Scan и Bitmap Scan используют индекс по-разному. При обычном Index Scan PostgreSQL находит TID строк в индексе и обращается к соответствующим страницам таблицы. Если подходящих строк много и они разбросаны по таблице, множество отдельных обращений может оказаться дорогим.\n\nBitmap Index Scan собирает адреса подходящих строк в bitmap, а Bitmap Heap Scan читает страницы таблицы более сгруппированно. Несколько индексов могут объединяться узлами BitmapAnd или BitmapOr. При потере точности bitmap возможны lossy pages и дополнительный Recheck Cond.\n\nIndex Only Scan потенциально получает все нужные значения из индекса и не читает таблицу для каждой строки. Но PostgreSQL должен убедиться, что версия строки видима текущей транзакции. Для этого помогает visibility map. Поэтому в плане смотри на Heap Fetches: ноль или малое число означает, что чтение таблицы удалось избежать для большинства строк.",
-        "example": "CREATE INDEX idx_orders_customer_amount\nON orders (customer_id) INCLUDE (total_amount);\n\nEXPLAIN (ANALYZE, BUFFERS)\nSELECT customer_id, total_amount\nFROM orders\nWHERE customer_id = 1;",
-        "note": "Покрывающий индекс создаёт возможность Index Only Scan, но не гарантирует его: важны visibility map, селективность и стоимость плана.",
-        "simple": "Bitmap Scan группирует найденные адреса страниц, а Index Only Scan старается получить результат прямо из индекса.",
-        "practiceIds": [],
-        "outcomes": [
-          "Объяснить пару Bitmap Index Scan и Bitmap Heap Scan",
-          "понимать значение Heap Fetches в Index Only Scan."
-        ],
-        "quiz": [
-          {
-            "question": "Что помогает понять показатель Heap Fetches у Index Only Scan?",
-            "options": [
-              "Сколько строк всё равно пришлось проверять через таблицу",
-              "Сколько индексов создано на базе",
-              "Сколько раз запускался VACUUM FULL",
-              "Сколько столбцов было в SELECT"
-            ],
-            "answer": 0,
-            "explanation": "Index Only Scan зависит от visibility map. Heap Fetches показывает обращения к heap, которые всё же потребовались для проверки видимости."
-          }
-        ]
-      },
-      {
-        "title": "Sargable-условия: не мешай индексу",
-        "body": "Условие называют sargable, если планировщик может эффективно использовать его для поиска по индексу. Важна не магическая формулировка, а соответствие выражения структуре индекса и операторному классу.\n\nНапример, обычный B-tree индекс по created_at подходит для диапазона created_at >= начало AND created_at < конец. Если написать created_at::date = DATE '2026-01-15', PostgreSQL должен применить преобразование к значению столбца. Обычный индекс по исходному timestamp может не подойти так же естественно. Полуоткрытый диапазон сохраняет точность времени и обычно лучше соответствует B-tree.\n\nАналогично lower(email) = 'a@example.com' не эквивалентен простому поиску по исходному email для обычного индекса. Можно создать expression index по lower(email), а затем использовать то же выражение в запросе. Шаблон LIKE '%слово%' с ведущим wildcard тоже не является обычным B-tree-префиксным поиском; для такого поиска изучают trigram или полнотекстовый поиск.\n\nНе переписывай запрос только ради индекса. Сначала проверь EXPLAIN (ANALYZE, BUFFERS), убедись, что условие действительно узкое, и сравни варианты на сопоставимых данных.",
-        "example": "-- Менее удачный для обычного индекса по created_at вариант\nSELECT order_id\nFROM orders\nWHERE created_at::date = DATE '2026-01-15';\n\n-- Диапазон по исходному столбцу\nSELECT order_id\nFROM orders\nWHERE created_at >= TIMESTAMP '2026-01-15 00:00:00'\n  AND created_at <  TIMESTAMP '2026-01-16 00:00:00';",
-        "note": "Не объявляй функцию или CAST проблемой автоматически: expression index, типы операторов и оценки планировщика могут изменить результат. Проверяй план.",
-        "simple": "Чем ближе условие к диапазону или сравнению самого индексированного значения, тем проще B-tree применить его напрямую.",
-        "practiceIds": [],
-        "outcomes": [
-          "Переписывать фильтр по дате в полуоткрытый диапазон",
-          "понимать, когда нужен expression index и почему ведущий wildcard мешает обычному B-tree."
-        ],
-        "quiz": [
-          {
-            "question": "Какой фильтр естественнее соответствует обычному B-tree индексу по created_at?",
-            "options": [
-              "created_at >= TIMESTAMP '2026-01-15' AND created_at < TIMESTAMP '2026-01-16'",
-              "created_at::date = DATE '2026-01-15' при отсутствии expression index",
-              "lower(created_at::text) LIKE '%2026%'",
-              "random() > 0.5"
-            ],
-            "answer": 0,
-            "explanation": "Полуоткрытый диапазон сравнивает исходный столбец с границами и хорошо соответствует диапазонному поиску B-tree."
-          }
-        ],
-        "walkthrough": {
-          "title": "Сравниваем столбец напрямую",
-          "scenario": "Нужно выбрать заказы за конкретный день из timestamp-столбца.",
-          "steps": [
-            "Обычный B-tree по created_at хорошо подходит для диапазона >= начало и < следующий день.",
-            "Выражение created_at::date применяет преобразование к столбцу и может не использовать обычный индекс так же эффективно.",
-            "Если фильтр по выражению нужен постоянно, можно рассмотреть expression index по тому же выражению.",
-            "Сравни варианты через EXPLAIN ANALYZE на сопоставимых данных."
-          ],
-          "result": "Полуоткрытый диапазон часто позволяет использовать обычный индекс по исходному timestamp без потери точности.",
-          "pitfall": "Не объявляй CAST ошибкой автоматически. Expression index, тип данных и селективность могут изменить выбранный план."
-        }
-      },
-      {
-        "title": "Расширенная статистика и ошибки оценок",
-        "body": "Обычная статистика ANALYZE в основном описывает распределение значений отдельных столбцов. Но реальные данные часто зависимы: например, определённые статусы встречаются преимущественно в одном регионе, а некоторые сочетания категории и бренда почти не встречаются.\n\nЕсли планировщик считает условия независимыми, он может перемножить селективности и сильно ошибиться в оценке числа строк. Это влияет на выбор Scan, порядка JOIN и алгоритма соединения. Сравни estimated rows с actual rows в EXPLAIN ANALYZE, прежде чем менять индексы.\n\nPostgreSQL поддерживает расширенную статистику для нескольких столбцов одной таблицы: dependencies описывает функциональные зависимости, ndistinct помогает оценивать число различных комбинаций, а mcv хранит наиболее частые сочетания значений. Создание объекта статистики само по себе не собирает данные: после CREATE STATISTICS нужно выполнить ANALYZE соответствующей таблицы.\n\nРасширенная статистика не является универсальным лечением плохого плана и не описывает все межтабличные зависимости. Создавай её под конкретный повторяющийся перекос оценок, а затем сравнивай estimated и actual rows.",
-        "example": "CREATE STATISTICS orders_status_customer_stats\n  (dependencies, ndistinct, mcv)\nON status, customer_id\nFROM orders;\n\nANALYZE orders;\n\nEXPLAIN (ANALYZE, BUFFERS)\nSELECT *\nFROM orders\nWHERE status = 'delivered'\n  AND customer_id = 1;",
-        "note": "CREATE STATISTICS описывает совместное распределение столбцов одной таблицы. Не путай её с индексом: она помогает оценкам, но сама не ускоряет поиск строк.",
-        "simple": "Если PostgreSQL ошибается в числе ожидаемых строк из-за связи между столбцами, расширенная статистика может улучшить оценку.",
-        "practiceIds": [],
-        "outcomes": [
-          "Объяснить, почему независимые оценки фильтров могут ошибаться",
-          "различать CREATE STATISTICS и CREATE INDEX."
-        ],
-        "quiz": [
-          {
-            "question": "Что делает CREATE STATISTICS?",
-            "options": [
-              "Создаёт статистику распределения значений, но не индекс для поиска строк",
-              "Создаёт уникальный индекс",
-              "Автоматически переписывает SELECT",
-              "Физически сортирует таблицу"
-            ],
-            "answer": 0,
-            "explanation": "Расширенная статистика помогает планировщику оценивать сочетания столбцов. Для её обновления после создания объекта выполняют ANALYZE."
-          }
-        ]
-      },
-      {
-        "title": "pg_stat_statements и поиск дорогих запросов",
-        "body": "EXPLAIN подробно разбирает отдельный запрос, но в рабочей системе сначала нужно понять, какие запросы вообще создают нагрузку. Для этого PostgreSQL часто используют расширение pg_stat_statements. Оно агрегирует статистику по нормализованным формам запросов, заменяя конкретные литералы параметрами.\n\nВ статистике можно смотреть число вызовов, суммарное и среднее время, строки, shared blocks hit/read и другие показатели. Один запрос может быть медленным из-за большого времени одного выполнения, а другой — из-за огромного количества частых запусков. Поэтому total_exec_time и mean_exec_time отвечают на разные вопросы.\n\nПрактический порядок такой: найди запросы с большой суммарной нагрузкой, проверь частоту и среднее время, выбери конкретный запрос и исследуй его план через EXPLAIN (ANALYZE, BUFFERS) на безопасных репрезентативных данных. После изменения сравни показатели и убедись, что результат не изменился.\n\npg_stat_statements нужно предварительно подключить и настроить на сервере. Это не встроенная команда песочницы, а расширение PostgreSQL, поэтому локальная учебная база PGlite может его не поддерживать. В рабочей среде следуй правилам администратора и не публикуй SQL с чувствительными значениями.",
-        "example": "SELECT queryid,\n       calls,\n       total_exec_time,\n       mean_exec_time,\n       rows,\n       shared_blks_hit,\n       shared_blks_read\nFROM pg_stat_statements\nORDER BY total_exec_time DESC\nLIMIT 20;",
-        "note": "pg_stat_statements — расширение сервера. Если оно не установлено или не включено администратором, представление будет недоступно.",
-        "simple": "Сначала найди самые дорогие запросы по реальной нагрузке, затем исследуй конкретный план.",
-        "practiceIds": [],
-        "outcomes": [
-          "Различать суммарное и среднее время запроса",
-          "понимать назначение pg_stat_statements и его отличие от EXPLAIN."
-        ],
-        "quiz": [
-          {
-            "question": "Почему запрос с небольшим mean_exec_time всё равно может быть важным для оптимизации?",
-            "options": [
-              "Он может запускаться очень часто и давать большую суммарную нагрузку",
-              "Среднее время всегда равно нулю",
-              "pg_stat_statements автоматически добавляет индексы",
-              "Любой частый запрос обязательно содержит ошибку"
-            ],
-            "answer": 0,
-            "explanation": "Большое число вызовов может превратить короткий запрос в заметную долю общей нагрузки. Смотри на calls и total_exec_time вместе."
-          }
-        ]
-      }
-    ],
-    "quiz": [
-      {
-        "question": "Что даёт индекс?",
-        "options": [
-          "Гарантирует ускорение любого запроса",
-          "Может ускорить поиск и сортировку, но занимает место и замедляет изменения",
-          "Автоматически исправляет SQL",
-          "Сжимает все таблицы"
-        ],
-        "answer": 1,
-        "explanation": "Индекс помогает находить строки, но его нужно поддерживать при INSERT, UPDATE и DELETE. Планировщик сам решает, использовать ли его."
-      },
-      {
-        "question": "Что делает EXPLAIN ANALYZE?",
-        "options": [
-          "Только показывает предполагаемый план",
-          "Реально выполняет запрос и показывает фактические показатели",
-          "Создаёт индекс",
-          "Исправляет статистику"
-        ],
-        "answer": 1,
-        "explanation": "EXPLAIN ANALYZE выполняет запрос. Будь осторожен с UPDATE/DELETE и другими командами с побочными эффектами."
-      },
-      {
-        "question": "Почему индекс может замедлить INSERT?",
-        "options": [
-          "Потому что индекс тоже нужно обновить",
-          "Потому что индекс удаляет строку",
-          "Потому что индекс отключает транзакции",
-          "Потому что INSERT не работает с индексами"
-        ],
-        "answer": 0,
-        "explanation": "Каждую вставку нужно отразить не только в таблице, но и во всех подходящих индексах."
-      },
-      {
-        "question": "Для чего нужен ANALYZE?",
-        "options": [
-          "Для обновления статистики планировщика",
-          "Для удаления таблиц",
-          "Для запуска всех запросов",
-          "Для шифрования данных"
-        ],
-        "answer": 0,
-        "explanation": "Планировщик использует статистику, чтобы оценивать число строк и выбирать план выполнения."
-      }
-    ],
-    "sources": [
-      "https://www.postgresql.org/docs/current/indexes.html",
-      "https://www.postgresql.org/docs/current/using-explain.html",
-      "https://www.postgresql.org/docs/current/performance-tips.html"
-    ]
-  },
-  {
-    "id": "advanced",
-    "title": "Продвинутые возможности PostgreSQL",
-    "stage": "23 · Продвинутый PostgreSQL",
-    "desc": "Освоить JSONB, массивы, полнотекстовый поиск, партиционирование и специальные типы.",
-    "lessons": [
-      {
-        "title": "JSON и JSONB",
-        "body": "JSON — формат хранения структурированных данных в виде объектов, массивов, строк, чисел, boolean и null. В PostgreSQL есть JSON и JSONB. JSON сохраняет исходный текст документа, а JSONB хранит разобранное бинарное представление и обычно удобнее для поиска и операторов.\n\nJSONB полезен, когда структура документа меняется или часть полей заранее неизвестна. Но если поле стабильно и участвует в связях, фильтрах и отчётах, обычные типизированные столбцы часто лучше. Не превращай всю базу в один JSONB только ради гибкости.\n\nДля чтения JSONB используют операторы извлечения: -> возвращает JSON, ->> возвращает текст. При извлечении отсутствующего ключа результатом будет NULL. Для числовых расчётов значение нужно привести к подходящему типу.",
-        "example": "SELECT attributes -> 'segment' AS segment_json,\n       attributes ->> 'segment' AS segment_text,\n       attributes ->> 'source' AS source\nFROM customer_profiles;",
-        "note": "Если значение участвует в регулярной аналитике и ограничениях, подумай, не лучше ли вынести его в отдельный столбец.",
-        "simple": "JSONB хранит структурированный документ и позволяет обращаться к его ключам и значениям.",
-        "practiceIds": [
-          "e44"
-        ],
-        "outcomes": [
-          "Различать JSON и JSONB",
-          "извлекать вложенные ключи через -> и ->>."
-        ],
-        "quiz": [
-          {
-            "question": "Чем отличается результат payload -> 'name' от payload ->> 'name'?",
-            "options": [
-              "-> возвращает JSON-значение, а ->> возвращает текст",
-              "->> возвращает JSONB, а -> число",
-              "Оба оператора удаляют ключ из документа",
-              "-> работает только с массивами"
-            ],
-            "answer": 0,
-            "explanation": "Оператор -> сохраняет JSON-тип значения, а ->> извлекает его как текст. Для арифметики текст часто нужно привести к числу."
-          }
-        ]
-      },
-      {
-        "title": "Массивы",
-        "body": "Массив в PostgreSQL хранит несколько значений одного типа в одном столбце. Он может быть удобен для небольших упорядоченных наборов, например тегов или кодов, если элементы не требуют самостоятельных атрибутов и связей.\n\nОператор ANY позволяет проверить, встречается ли значение среди элементов массива. Оператор @> проверяет содержимое массива. Для эффективного поиска по массивам может применяться GIN индекс.\n\nМассив не всегда заменяет таблицу-связку. Если элементу нужны собственный ID, описание, внешние ключи или частые JOIN, отдельная таблица обычно лучше. Также учитывай, что массив может быть NULL или содержать NULL-элементы.",
-        "example": "-- Проверяем, содержит ли массив тег coffee\nSELECT customer_id\nFROM customer_profiles\nWHERE 'coffee' = ANY(tags);\n\n-- Проверяем, содержит ли массив оба указанных тега\nSELECT customer_id\nFROM customer_profiles\nWHERE tags @> ARRAY['coffee', 'regular'];",
-        "note": "Если элемент массива должен иметь свойства и связи, вынеси его в отдельную таблицу.",
-        "simple": "Массив подходит для компактного набора однотипных значений, но не для полноценной связанной сущности.",
-        "practiceIds": [
-          "e45",
-          "e54"
-        ],
-        "outcomes": [
-          "Использовать ANY и @> для массивов",
-          "выбирать между массивом и таблицей-связкой."
-        ],
-        "quiz": [
-          {
-            "question": "Когда отдельная таблица-связка обычно лучше массива ID?",
-            "options": [
-              "Когда элементам нужны собственные атрибуты, внешние ключи или отдельные связи",
-              "Когда список содержит всего два коротких значения",
-              "Когда массив нужно вывести через SELECT",
-              "Когда все элементы имеют один тип"
-            ],
-            "answer": 0,
-            "explanation": "Таблица-связка позволяет обеспечить ссылочную целостность и хранить свойства каждой связи. Массив этого не даёт автоматически."
-          }
-        ]
-      },
-      {
-        "title": "Полнотекстовый поиск",
-        "body": "Полнотекстовый поиск предназначен для поиска слов и лексем в больших текстах с учётом языковых правил. В PostgreSQL текст преобразуется в tsvector, а поисковая фраза — в tsquery. @@ проверяет совпадение документа и запроса.\n\nВ отличие от LIKE '%слово%', полнотекстовый поиск может учитывать нормализацию слов и индексироваться через GIN. Это полезно для описаний, статей и комментариев, где нужно искать по смыслу словоформ, а не по точной подстроке.\n\nДля ранжирования результатов применяют ts_rank или ts_rank_cd. Конфигурация языка влияет на разбор слов и стемминг, поэтому выбирай её осознанно.",
-        "example": "SELECT product_id, product_name,\n       ts_rank(to_tsvector('simple', product_name), plainto_tsquery('simple', 'coffee')) AS rank\nFROM products\nWHERE to_tsvector('simple', product_name) @@ plainto_tsquery('simple', 'coffee')\nORDER BY rank DESC;",
-        "note": "Для частых запросов создай GIN индекс по tsvector и проверь план.",
-        "simple": "Полнотекстовый поиск сравнивает нормализованные лексемы, а не просто подстроки.",
-        "practiceIds": [],
-        "outcomes": [
-          "Объяснить tsvector и tsquery",
-          "применять @@ и ранжирование результатов."
-        ],
-        "quiz": [
-          {
-            "question": "Чем полнотекстовый поиск отличается от LIKE '%доставка%'?",
-            "options": [
-              "Он работает с лексемами и языковой обработкой, а не только с буквальной подстрокой",
-              "Он ищет только числовые значения",
-              "LIKE всегда быстрее на больших текстах",
-              "Полнотекстовый поиск удаляет исходный текст"
-            ],
-            "answer": 0,
-            "explanation": "Полнотекстовый поиск анализирует слова и может учитывать морфологию языка. LIKE ищет буквальное совпадение шаблона."
-          }
-        ]
-      },
-      {
-        "title": "Партиционирование",
-        "body": "Партиционирование делит одну логическую таблицу на физические части по ключу, например дате или региону. PostgreSQL поддерживает range, list и hash partitioning. Запрос может читать только нужные разделы, если условие позволяет partition pruning.\n\nПартиционирование помогает управлять очень большими таблицами: старые периоды можно архивировать или удалять целыми разделами. Но оно усложняет уникальные ограничения, индексы и обслуживание схемы. Для маленькой таблицы оно обычно не нужно.\n\nКлюч партиционирования выбирают под реальные запросы и жизненный цикл данных. Если отчёты почти всегда фильтруют created_at по месяцу, range partitioning по дате может быть разумным. Но само наличие партиций не гарантирует ускорения всех запросов.",
-        "example": "CREATE TABLE events (\n  event_id BIGINT NOT NULL,\n  occurred_at DATE NOT NULL,\n  payload JSONB\n) PARTITION BY RANGE (occurred_at);",
-        "note": "Не партиционируй маленькие таблицы без причины. Учитывай ограничения уникальности и эксплуатационную сложность.",
-        "simple": "Партиционирование делит большую таблицу на разделы, которые PostgreSQL может исключать из чтения.",
-        "practiceIds": [],
-        "outcomes": [
-          "Объяснить partition pruning",
-          "выбирать ключ партиционирования по фильтрам и жизненному циклу."
-        ],
-        "quiz": [
-          {
-            "question": "Когда partition pruning может исключить часть разделов?",
-            "options": [
-              "Когда WHERE ограничивает ключ партиционирования подходящим диапазоном или значениями",
-              "Когда запрос использует SELECT *",
-              "Когда таблица не имеет индексов",
-              "Когда ORDER BY отсутствует"
-            ],
-            "answer": 0,
-            "explanation": "Планировщик может не читать разделы, диапазон или список значений которых не пересекается с условием по ключу партиционирования."
-          }
-        ]
-      },
-      {
-        "title": "Ограничения переносимости",
-        "body": "SQL стандартизирован, но разные СУБД реализуют дополнительные функции и синтаксис по-разному. PostgreSQL поддерживает FILTER, DISTINCT ON, JSONB, массивы, LATERAL и ряд других возможностей. ClickHouse ориентирован на аналитические колоночные нагрузки и имеет собственные функции и движки таблиц.\n\nПереносимость важна, если запросы должны работать в нескольких системах или переезжать между платформами. Старайся использовать стандартные конструкции, когда это не ухудшает ясность. PostgreSQL-специфичные решения применяй осознанно и помечай в документации.\n\nНе делай вывод, что два запроса эквивалентны только потому, что выглядят похоже. Различия в NULL, датах, типах и оптимизаторе могут влиять на результат и производительность.",
-        "example": "-- Стандартная условная агрегация через CASE\nSELECT SUM(CASE WHEN status = 'paid' THEN 1 ELSE 0 END) AS paid_count\nFROM orders;",
-        "note": "Проверяй диалект и версию, прежде чем переносить сложный запрос между PostgreSQL и другой СУБД.",
-        "simple": "Переносимость — это не только синтаксис. Поведение типов, NULL и функций тоже может отличаться.",
-        "practiceIds": [],
-        "outcomes": [
-          "Отличать стандартный SQL от PostgreSQL-расширений",
-          "оценивать риски переноса."
-        ],
-        "quiz": [
-          {
-            "question": "Почему при переносе запроса между СУБД нужно проверять не только синтаксис?",
-            "options": [
-              "Потому что могут отличаться типы, NULL-семантика, функции и поведение оптимизатора",
-              "Потому что все базы хранят строки в разном порядке",
-              "Потому что SQL-стандарт запрещает JOIN",
-              "Потому что названия таблиц автоматически меняются"
-            ],
-            "answer": 0,
-            "explanation": "Запрос может синтаксически выполниться, но дать другое поведение из-за различий диалектов, типов и семантики."
-          }
-        ]
-      },
-      {
-        "title": "Системные каталоги и information_schema",
-        "body": "information_schema — стандартный набор представлений для изучения объектов базы: таблиц, столбцов, ограничений и прав. Он удобен для переносимых запросов и доступен в PostgreSQL.\n\nСистемный каталог PostgreSQL (pg_catalog) содержит более подробные сведения о внутренних объектах: индексы, типы, статистику, настройки и зависимости. Часто для диагностики нужны pg_class, pg_attribute, pg_index и pg_constraint.\n\nНачинай с information_schema, если нужно найти таблицу или столбец. Переходи к pg_catalog, когда стандартных сведений недостаточно. Учитывай права: часть объектов может быть скрыта или недоступна для чтения конкретной роли.",
-        "example": "SELECT table_name, column_name, data_type\nFROM information_schema.columns\nWHERE table_schema = 'public'\nORDER BY table_name, ordinal_position;",
-        "note": "Не угадывай схему по названию. Проверяй реальные столбцы и ограничения.",
-        "simple": "information_schema — переносимый обзор схемы, pg_catalog — подробные внутренние каталоги PostgreSQL.",
-        "practiceIds": [],
-        "outcomes": [
-          "Находить таблицы и столбцы через information_schema",
-          "понимать, когда нужен pg_catalog."
-        ],
-        "quiz": [
-          {
-            "question": "С чего разумно начать поиск неизвестного столбца в PostgreSQL?",
-            "options": [
-              "С information_schema.columns с фильтром по схеме и имени таблицы",
-              "С таблицы pg_stat_activity, потому что она хранит все столбцы",
-              "С EXPLAIN ANALYZE без запроса",
-              "С SELECT * из всех баз сразу"
-            ],
-            "answer": 0,
-            "explanation": "information_schema.columns показывает имена, типы и порядок столбцов доступных таблиц."
-          }
-        ]
-      },
-      {
-        "title": "Операторы JSONB: проверка и индексация",
-        "body": "Для JSONB доступны операторы проверки содержимого и извлечения значений. @> проверяет, содержит ли документ заданный JSON-фрагмент. ? проверяет наличие ключа верхнего уровня, а -> и ->> извлекают значение.\n\nGIN индекс может ускорить containment-запросы по JSONB. Но важно выбрать операторный класс: jsonb_ops поддерживает более широкий набор операций, jsonb_path_ops оптимизирован для определённых containment-поисков.\n\nНе индексируй JSONB автоматически целиком, если запросы используют только одно поле. Для часто фильтруемого ключа иногда лучше expression index по конкретному выражению или вынесение значения в обычный столбец.",
-        "example": "SELECT customer_id, attributes\nFROM customer_profiles\nWHERE attributes @> '{\"segment\":\"vip\"}'::jsonb;",
-        "note": "Операторный класс определяет поддерживаемые операции. Проверь, совпадает ли он с реальными условиями WHERE.",
-        "simple": "@> проверяет включение JSON-структуры, ? — наличие ключа, GIN ускоряет подходящие поиски.",
-        "practiceIds": [
-          "e55"
-        ],
-        "outcomes": [
-          "Применять JSONB @> и ?",
-          "выбирать GIN operator class под запросы."
-        ],
-        "quiz": [
-          {
-            "question": "Какой оператор проверяет, что JSONB-объект содержит ключ верхнего уровня 'source'?",
-            "options": [
-              "payload ? 'source'",
-              "payload -> 'source' = TRUE",
-              "payload || 'source'",
-              "payload #> 'source'"
-            ],
-            "answer": 0,
-            "explanation": "Оператор ? проверяет наличие ключа верхнего уровня в JSONB-объекте или элемента в JSONB-массиве."
-          }
-        ]
-      },
-      {
-        "title": "Временные и UNLOGGED-таблицы",
-        "body": "TEMPORARY TABLE существует в пределах сессии или транзакции в зависимости от ON COMMIT. Она полезна для промежуточных результатов, которые нужно использовать в нескольких командах.\n\nUNLOGGED TABLE не записывает обычные изменения в WAL так же, как logged-таблица, поэтому может быть быстрее для временных или восстанавливаемых данных. Но после аварийного завершения сервера содержимое unlogged-таблицы очищается, а репликация не переносит её содержимое как обычные logged-таблицы.\n\nВыбирай временную таблицу, если данные нужны только текущей сессии. UNLOGGED подходит для данных, которые можно восстановить и которые не должны быть гарантированно сохранены после сбоя.",
-        "simple": "TEMP TABLE ограничивает время жизни объекта. UNLOGGED TABLE снижает требования к журналированию, но теряет содержимое после аварии.",
-        "example": "CREATE TEMP TABLE selected_orders AS\nSELECT * FROM orders WHERE status = 'open';\n\nCREATE UNLOGGED TABLE staging_events (\n  event_id BIGINT,\n  payload JSONB\n);",
-        "note": "Не храни единственную копию важных данных в UNLOGGED TABLE.",
-        "practiceIds": [],
-        "outcomes": [
-          "Различать TEMP и UNLOGGED",
-          "объяснить ограничения сохранности и репликации."
-        ],
-        "quiz": [
-          {
-            "question": "Что произойдёт с содержимым UNLOGGED TABLE после аварийного завершения PostgreSQL?",
-            "options": [
-              "Содержимое может быть очищено при восстановлении сервера",
-              "Таблица автоматически станет обычной logged-таблицей",
-              "Все строки перенесутся в резервную копию",
-              "Сервер восстановит каждую строку из WAL"
-            ],
-            "answer": 0,
-            "explanation": "UNLOGGED-таблицы не обеспечивают обычную WAL-гарантию сохранности данных. После аварийного восстановления их содержимое очищается."
-          }
-        ]
-      }
-    ],
-    "quiz": [
-      {
-        "question": "Какой индекс часто используют для поиска по JSONB?",
-        "options": [
-          "GIN",
-          "Только HASH",
-          "Нет индексов для JSONB",
-          "BRIN всегда обязателен"
-        ],
-        "answer": 0,
-        "explanation": "GIN поддерживает многие операции поиска по JSONB. Конкретный операторный класс влияет на доступные операции."
-      },
-      {
-        "question": "Что нужно, чтобы партиционирование помогло запросу?",
-        "options": [
-          "Любая таблица автоматически станет быстрее",
-          "Фильтр запроса должен позволять исключить неподходящие партиции",
-          "Нужно удалить индексы",
-          "Нужно сортировать все строки"
-        ],
-        "answer": 1,
-        "explanation": "Partition pruning экономит чтение, когда планировщик может определить, какие разделы не нужны."
-      },
-      {
-        "question": "Чем JSONB обычно удобнее JSON в PostgreSQL?",
-        "options": [
-          "JSONB хранит разобранное представление и поддерживает индексацию",
-          "JSONB всегда сохраняет пробелы исходного текста",
-          "JSONB не допускает вложенные объекты",
-          "JSONB — это обычный TEXT"
-        ],
-        "answer": 0,
-        "explanation": "JSONB удобен для запросов и индексов, но не сохраняет исходное форматирование JSON-текста."
-      },
-      {
-        "question": "Для чего нужен to_tsvector?",
-        "options": [
-          "Чтобы подготовить документ к полнотекстовому поиску",
-          "Чтобы преобразовать число в дату",
-          "Чтобы создать таблицу",
-          "Чтобы сжать строку"
-        ],
-        "answer": 0,
-        "explanation": "to_tsvector разбирает текст на нормализованные лексемы, которые затем можно сравнивать с tsquery."
-      }
-    ],
-    "sources": [
-      "https://www.postgresql.org/docs/current/functions-json.html",
-      "https://www.postgresql.org/docs/current/arrays.html",
-      "https://www.postgresql.org/docs/current/ddl-partitioning.html"
-    ]
-  },
-  {
-    "id": "security",
-    "title": "Безопасность SQL и эксплуатация",
-    "stage": "24 · Безопасность",
-    "desc": "Понимать роли, права, SQL-инъекции, параметризацию и безопасное выполнение запросов.",
-    "lessons": [
-      {
-        "title": "Роли и права",
-        "body": "Роль PostgreSQL определяет, какие действия разрешены пользователю или группе пользователей. Роли могут иметь LOGIN для подключения и членство в других ролях для наследования прав.\n\nGRANT выдаёт привилегии, REVOKE отзывает. Права на базу, схему, таблицу, последовательность и функцию задаются отдельно. Например, разрешение CONNECT на базу не означает, что пользователь может читать таблицу.\n\nСледуй принципу минимальных привилегий: выдавай только необходимые права и разделяй роли чтения, записи и администрирования. Не используй суперпользователя для обычных аналитических запросов.",
-        "example": "CREATE ROLE analyst LOGIN;\nGRANT CONNECT ON DATABASE shop TO analyst;\nGRANT USAGE ON SCHEMA public TO analyst;\nGRANT SELECT ON ALL TABLES IN SCHEMA public TO analyst;",
-        "note": "GRANT SELECT на таблицу не даёт автоматически права на все будущие таблицы. Для будущих объектов нужны default privileges.",
-        "simple": "Роль — набор прав и принадлежностей. Доступ к базе, схеме и таблице проверяется отдельно.",
-        "practiceIds": [],
-        "outcomes": [
-          "Объяснить роли и привилегии",
-          "выдавать минимально необходимые права на объекты."
-        ],
-        "quiz": [
-          {
-            "question": "Что нужно дополнительно выдать роли, чтобы она могла читать public.orders?",
-            "options": [
-              "USAGE на схему public и SELECT на таблицу orders, а также доступ к базе",
-              "Только CREATE на базу",
-              "Только LOGIN без прав на объекты",
-              "SUPERUSER для каждого аналитика"
-            ],
-            "answer": 0,
-            "explanation": "Для подключения нужен CONNECT, для обращения к объекту схемы — USAGE, для чтения таблицы — SELECT."
-          }
-        ]
-      },
-      {
-        "title": "SQL-инъекции",
-        "body": "SQL injection возникает, когда пользовательский ввод склеивается с текстом SQL и начинает интерпретироваться как часть команды. Злоумышленник может изменить условие WHERE, добавить оператор или попытаться выполнить нежелательное действие.\n\nПараметризованный запрос передаёт SQL-код и значения отдельно. Драйвер связывает параметры как данные, поэтому строка пользователя не превращается в исполняемый фрагмент. Экранирование вручную менее надёжно и зависит от контекста.\n\nПараметры подходят для значений, но не для имён таблиц и столбцов. Для динамических идентификаторов используй белый список допустимых значений и безопасные средства форматирования конкретного драйвера.",
-        "example": "-- Пример параметризованного запроса в приложении:\nSELECT order_id\nFROM orders\nWHERE customer_id = $1;",
-        "note": "Не защищай запрос простой заменой кавычек. Используй параметризацию на уровне драйвера.",
-        "simple": "Пользовательский ввод должен передаваться как значение, а не склеиваться в SQL-код.",
-        "practiceIds": [],
-        "outcomes": [
-          "Объяснить механизм SQL injection",
-          "отличать параметры значений от динамических SQL-фрагментов."
-        ],
-        "quiz": [
-          {
-            "question": "Почему параметризация защищает от SQL injection?",
-            "options": [
-              "Потому что пользовательское значение передаётся отдельно и не разбирается как часть SQL-синтаксиса",
-              "Потому что параметр автоматически шифрует всю базу",
-              "Потому что параметр запрещает пользователю вводить кавычки",
-              "Потому что SQL injection возможна только в SELECT"
-            ],
-            "answer": 0,
-            "explanation": "Драйвер передаёт значение отдельно от текста команды. Оно остаётся данными, даже если содержит кавычки или SQL-подобный текст."
-          }
-        ]
-      },
-      {
-        "title": "Чтение, запись и доступ к продакшену",
-        "body": "Доступ на чтение и запись должен соответствовать задаче. Аналитической роли часто достаточно SELECT на нужные схемы и таблицы. Для загрузки данных могут понадобиться INSERT и UPDATE, но DELETE и DDL-права обычно не нужны.\n\nProduction — рабочая среда с реальными данными. Ошибочный UPDATE или DELETE может повлиять на клиентов и процессы. Используй read-only подключения для анализа, тестовую базу для экспериментов и транзакции для проверяемых изменений.\n\nДаже read-only доступ не делает любые данные безопасными для выгрузки. Учитывай персональные данные, коммерческую тайну, правила хранения и минимизацию набора полей.",
-        "example": "BEGIN READ ONLY;\nSELECT COUNT(*) FROM orders;\nCOMMIT;",
-        "note": "Read-only роль снижает риск изменения данных, но не отменяет правила доступа к чувствительным данным.",
-        "simple": "Для аналитики достаточно прав чтения. Не используй production как песочницу для обучения.",
-        "practiceIds": [],
-        "outcomes": [
-          "Выбирать минимальные права под задачу",
-          "объяснить безопасную работу с production."
-        ],
-        "quiz": [
-          {
-            "question": "Какой доступ предпочтительнее для аналитика, которому нужно только строить отчёты?",
-            "options": [
-              "Read-only роль с SELECT на нужные таблицы",
-              "SUPERUSER на production",
-              "Полный доступ DELETE и DROP",
-              "Общий аккаунт администратора команды"
-            ],
-            "answer": 0,
-            "explanation": "Минимальные привилегии ограничивают последствия ошибки и соответствуют реальной задаче аналитика."
-          }
-        ]
-      },
-      {
-        "title": "Резервные копии и миграции",
-        "body": "Резервная копия должна позволять восстановить базу до пригодного состояния. pg_dump создаёт логическую копию, pg_restore восстанавливает custom или directory формат, а физические backup и архив WAL применяются для восстановления на момент времени.\n\nМиграции схемы — версионированные изменения, которые применяются в определённом порядке. Они должны быть воспроизводимыми, проверяться на тестовой среде и иметь план отката или исправления. Для больших таблиц изменения иногда выполняют несколькими этапами.\n\nФакт успешного создания backup не доказывает, что его можно восстановить. Регулярно проверяй восстановление и контрольные данные. Для production важны RPO и RTO: сколько данных можно потерять и сколько времени допустимо восстанавливать сервис.",
-        "example": "pg_dump -Fc -d shop -f shop.dump\n\npg_restore -d shop_restore shop.dump",
-        "note": "Не считай backup надёжным, пока не проверил реальное восстановление.",
-        "simple": "Backup — это возможность восстановиться, миграция — контролируемое изменение схемы. Оба процесса нужно проверять.",
-        "practiceIds": [],
-        "outcomes": [
-          "Объяснить pg_dump и pg_restore",
-          "планировать тест восстановления и безопасные миграции."
-        ],
-        "quiz": [
-          {
-            "question": "Что подтверждает, что резервная копия пригодна для восстановления?",
-            "options": [
-              "Успешное тестовое восстановление и проверка целостности данных",
-              "Наличие файла с расширением .dump",
-              "То, что команда backup завершилась без сообщения об ошибке",
-              "То, что файл занимает больше 1 ГБ"
-            ],
-            "answer": 0,
-            "explanation": "Только восстановление подтверждает, что копия читается и позволяет вернуть базу в рабочее состояние."
-          }
-        ]
-      },
-      {
-        "title": "Row-Level Security и безопасные функции",
-        "body": "Row-Level Security ограничивает строки, доступные роли. После включения RLS политика USING определяет, какие существующие строки видны или могут изменяться, а WITH CHECK проверяет новые значения при INSERT и UPDATE.\n\nRLS полезен, когда разные пользователи должны видеть только свою организацию, магазин или набор клиентов. Но политики нужно тестировать под реальными ролями. Владелец таблицы и роли с BYPASSRLS могут обходить обычные политики, если не включён FORCE ROW LEVEL SECURITY для владельца.\n\nRLS не заменяет GRANT. Пользователь сначала должен иметь право обращаться к таблице, а затем политика ограничивает строки. Ошибка в выражении политики может раскрыть данные или неожиданно закрыть доступ.",
-        "example": "ALTER TABLE orders ENABLE ROW LEVEL SECURITY;\nCREATE POLICY store_scope ON orders\nUSING (store_id = current_setting('app.store_id')::BIGINT)\nWITH CHECK (store_id = current_setting('app.store_id')::BIGINT);",
-        "note": "Проверяй RLS не только владельцем таблицы, но и обычной ролью приложения.",
-        "simple": "GRANT разрешает действие над таблицей, RLS ограничивает, какие строки доступны.",
-        "practiceIds": [],
-        "outcomes": [
-          "Объяснить USING и WITH CHECK",
-          "различать права таблицы и ограничения строк."
-        ],
-        "quiz": [
-          {
-            "question": "Что проверяет WITH CHECK в политике RLS для INSERT?",
-            "options": [
-              "Что новая строка удовлетворяет условию политики",
-              "Что пользователь имеет право создавать схемы",
-              "Что все старые строки соответствуют условию",
-              "Что таблица отсортирована по ключу"
-            ],
-            "answer": 0,
-            "explanation": "WITH CHECK проверяет значения новой или обновлённой строки перед тем, как разрешить изменение."
-          }
-        ]
-      },
-      {
-        "title": "SQL injection и параметризованные запросы",
-        "body": "Параметризованный запрос передаёт значения отдельно от SQL-текста. В PostgreSQL драйверы используют плейсхолдеры, например $1, $2, или собственный синтаксис. Это защищает строковые значения, даты и числа от превращения в SQL-код.\n\nПараметр нельзя использовать как имя таблицы, столбца или направление сортировки. Такие части формируют структуру SQL до связывания значений. Если пользователь выбирает сортировку, сопоставь его выбор с заранее разрешённым списком имён.\n\nПараметризация должна выполняться средствами драйвера. Не подставляй значение через конкатенацию и не пытайся самостоятельно обрамлять ввод кавычками.",
-        "simple": "Значения передавай параметрами. Имена объектов выбирай из белого списка.",
-        "example": "-- Значение customer_id передаётся драйвером отдельно\nSELECT order_id\nFROM orders\nWHERE customer_id = $1;",
-        "note": "Для динамического ORDER BY используй разрешённый список имён, а не прямую подстановку пользовательского текста.",
-        "practiceIds": [],
-        "outcomes": [
-          "Применять параметры для значений",
-          "безопасно выбирать динамические идентификаторы из белого списка."
-        ],
-        "quiz": [
-          {
-            "question": "Как безопасно дать пользователю выбрать сортировку по created_at или total_amount?",
-            "options": [
-              "Сопоставить выбор с белым списком заранее заданных SQL-идентификаторов",
-              "Вставить введённый текст напрямую после ORDER BY",
-              "Передать имя столбца как $1 и ожидать, что PostgreSQL подставит идентификатор",
-              "Отключить проверку синтаксиса"
-            ],
-            "answer": 0,
-            "explanation": "Параметры связывают значения, но не имена объектов. Динамические идентификаторы нужно выбирать из разрешённого набора."
-          }
-        ],
-        "walkthrough": {
-          "title": "Значение не должно становиться SQL-кодом",
-          "scenario": "Пользователь вводит имя клиента, по которому приложение выполняет поиск.",
-          "steps": [
-            "Опасный вариант собирает SQL строковой конкатенацией и вставляет пользовательский ввод в текст запроса.",
-            "Если ввод содержит кавычки и SQL-фрагмент, он может изменить структуру команды.",
-            "Параметризованный запрос передаёт значение отдельно от SQL-шаблона.",
-            "Драйвер связывает параметр как значение, а не исполняемый фрагмент SQL."
-          ],
-          "result": "Ввод пользователя остаётся обычным текстовым значением и не может самостоятельно добавить условие или вторую команду.",
-          "pitfall": "Параметры обычно нельзя использовать вместо имени таблицы или направления ORDER BY. Структурные части выбирай через белый список."
-        }
-      },
-      {
-        "title": "Безопасный динамический SQL",
-        "body": "Для динамического SQL в PL/pgSQL используют EXECUTE. Если нужно подставить имя таблицы или столбца, применяй format с %I, который корректно экранирует идентификатор. Для значений используй USING, а не конкатенацию.\n\n%L форматирует литерал, но для обычных параметров предпочтительнее USING: значения остаются параметрами запроса. %s вставляет текст без экранирования и опасен для пользовательского ввода.\n\nДаже корректное экранирование идентификатора не означает, что пользователю можно разрешить любую таблицу. Проверяй имена по белому списку и ограничивай права роли.",
-        "simple": "%I — идентификатор, USING — значения. Не склеивай пользовательский ввод в SQL.",
-        "example": "EXECUTE format(\n  'SELECT COUNT(*) FROM %I WHERE status = $1',\n  table_name\n)\nINTO row_count\nUSING wanted_status;",
-        "note": "%I защищает синтаксис имени, но белый список всё равно нужен для ограничения допустимых объектов.",
-        "practiceIds": [],
-        "outcomes": [
-          "Использовать format('%I') для идентификаторов и USING для значений",
-          "объяснить разницу с конкатенацией."
-        ],
-        "quiz": [
-          {
-            "question": "Как правильно передать динамическое имя таблицы и значение status в EXECUTE?",
-            "options": [
-              "format('%I', table_name) для имени и USING status для значения",
-              "Конкатенировать оба значения в строку без экранирования",
-              "Передать оба значения через один $1",
-              "Использовать %s для пользовательского ввода и отказаться от USING"
-            ],
-            "answer": 0,
-            "explanation": "%I безопасно форматирует идентификатор, а USING передаёт значение как параметр. Дополнительно проверяй имя по белому списку."
-          }
-        ]
-      }
-    ],
-    "quiz": [
-      {
-        "question": "Как безопаснее передавать пользовательское значение в запрос?",
-        "options": [
-          "Склеить строку SQL вручную",
-          "Использовать параметры подготовленного запроса",
-          "Вставить значение в имя таблицы",
-          "Отключить проверки"
-        ],
-        "answer": 1,
-        "explanation": "Параметры отделяют данные от кода SQL и защищают значения от превращения в часть команды."
-      },
-      {
-        "question": "Что означает принцип наименьших привилегий?",
-        "options": [
-          "Выдать всем суперпользователя",
-          "Дать роли только те права, которые ей действительно нужны",
-          "Запретить все SELECT",
-          "Использовать один пароль для всех"
-        ],
-        "answer": 1,
-        "explanation": "Чем меньше ненужных прав, тем меньше ущерб от ошибки или компрометации учётной записи."
-      },
-      {
-        "question": "Для чего нужны GRANT и REVOKE?",
-        "options": [
-          "Выдавать и отзывать права",
-          "Сортировать строки",
-          "Обновлять статистику",
-          "Создавать резервные копии"
-        ],
-        "answer": 0,
-        "explanation": "GRANT выдаёт привилегии, REVOKE отзывает. Используй роли и минимально необходимые права."
-      },
-      {
-        "question": "Почему резервную копию нужно проверять восстановлением?",
-        "options": [
-          "Потому что файл копии сам по себе не доказывает, что восстановление сработает",
-          "Потому что PostgreSQL не умеет читать backup",
-          "Потому что копии нельзя хранить",
-          "Потому что восстановление удаляет таблицы"
-        ],
-        "answer": 0,
-        "explanation": "Надёжность резервной копии подтверждается тестовым восстановлением и проверкой целостности."
-      }
-    ],
-    "sources": [
-      "https://www.postgresql.org/docs/current/user-manag.html",
-      "https://www.postgresql.org/docs/current/ddl-rowsecurity.html",
-      "https://www.postgresql.org/docs/current/sql-prepare.html"
-    ]
+    "track": "core",
+    "trackOrder": 16
   },
   {
     "id": "workflow",
     "title": "Рабочий процесс и отладка SQL",
-    "stage": "25 · Практический процесс",
+    "stage": "05 · Рабочий процесс аналитика",
     "desc": "Организовать работу с SQL-клиентом и BI-системой, разбирать ошибки, проверять гипотезы и читать документацию.",
     "lessons": [
       {
@@ -6183,7 +4227,8 @@ export const modules = [
           ],
           "result": "Вместо случайного переименования столбцов ты проверяешь фактическую схему и исправляешь конкретное обращение.",
           "pitfall": "Не угадывай названия полей по смыслу. В учебной и рабочей базе customer_name, full_name и name могут быть разными колонками."
-        }
+        },
+        "id": "workflow.kak-chitat-oshibku-postgresql"
       },
       {
         "title": "Пошаговая отладка",
@@ -6220,7 +4265,8 @@ export const modules = [
           ],
           "result": "Ты находишь конкретный JOIN, который изменил зерно, вместо того чтобы маскировать результат DISTINCT.",
           "pitfall": "Не переписывай одновременно WHERE, JOIN и GROUP BY. Тогда будет непонятно, какое изменение исправило или сломало расчёт."
-        }
+        },
+        "id": "workflow.poshagovaya-otladka"
       },
       {
         "title": "SQL-клиент и BI-система",
@@ -6245,7 +4291,8 @@ export const modules = [
             "answer": 0,
             "explanation": "Metabase обрабатывает шаблонные переменные до отправки SQL в базу. В psql такой шаблон останется неизвестным синтаксисом."
           }
-        ]
+        ],
+        "id": "workflow.sql-klient-i-bi-sistema"
       },
       {
         "title": "Документация и версия сервера",
@@ -6270,7 +4317,8 @@ export const modules = [
             "answer": 0,
             "explanation": "Версия и воспроизводимый пример позволяют проверить конкретный синтаксис и локализовать проблему без раскрытия чувствительных данных."
           }
-        ]
+        ],
+        "id": "workflow.dokumentatsiya-i-versiya-servera"
       },
       {
         "title": "Финальный проект: аналитика интернет-магазина",
@@ -6297,7 +4345,8 @@ export const modules = [
             "answer": 0,
             "explanation": "Заказы, позиции и платежи имеют разное зерно. Их прямое соединение может перемножить строки и завысить метрики."
           }
-        ]
+        ],
+        "id": "workflow.finalnyy-proekt-analitika-internet-magazina"
       },
       {
         "title": "Исследование неизвестной схемы",
@@ -6324,7 +4373,8 @@ export const modules = [
             "answer": 0,
             "explanation": "Одинаковое имя — лишь подсказка. Нужно проверить, что один столбец действительно ссылается на другой и что уникальность соответствует ожидаемой связи."
           }
-        ]
+        ],
+        "id": "workflow.issledovanie-neizvestnoy-skhemy"
       },
       {
         "title": "Миграции схемы и безопасный релиз",
@@ -6349,7 +4399,8 @@ export const modules = [
             "answer": 0,
             "explanation": "Поэтапная миграция позволяет заполнить данные контролируемо и только после проверки включить более строгие ограничения."
           }
-        ]
+        ],
+        "id": "workflow.migratsii-skhemy-i-bezopasnyy-reliz"
       },
       {
         "title": "Контроль результата: сверка и инварианты",
@@ -6376,7 +4427,8 @@ export const modules = [
             "answer": 0,
             "explanation": "JOIN может размножить строки и исказить суммы. Сверка метрик и зерна помогает обнаружить такую ошибку."
           }
-        ]
+        ],
+        "id": "workflow.kontrol-rezultata-sverka-i-invarianty"
       },
       {
         "title": "Проверка изменяющих запросов перед выполнением",
@@ -6401,7 +4453,8 @@ export const modules = [
             "answer": 0,
             "explanation": "База может откатить свои транзакционные изменения, но не отменить отправленное сообщение, HTTP-запрос или другое внешнее действие."
           }
-        ]
+        ],
+        "id": "workflow.proverka-izmenyayushchikh-zaprosov-pered-vypolneniem"
       }
     ],
     "quiz": [
@@ -6454,7 +4507,2223 @@ export const modules = [
       "https://www.postgresql.org/docs/current/app-psql.html",
       "https://www.postgresql.org/docs/current/monitoring.html",
       "https://www.postgresql.org/docs/current/backup.html"
-    ]
+    ],
+    "track": "core",
+    "trackOrder": 17
+  },
+  {
+    "id": "ddl",
+    "title": "DDL: создание и изменение структуры",
+    "stage": "01 · Изменение данных",
+    "desc": "Создавать таблицы, столбцы, схемы, ограничения, последовательности и управлять объектами.",
+    "lessons": [
+      {
+        "title": "CREATE TABLE",
+        "body": "CREATE TABLE создаёт новую таблицу и определяет её столбцы, типы и ограничения. При проектировании сначала определи, что означает одна строка, затем выбери столбцы и их типы. После этого добавь ключи и правила целостности.\n\nИмя таблицы и столбцов должно отражать смысл данных. Типы выбирай не по внешнему виду примера, а по допустимым значениям и операциям: идентификатор — целое число или UUID, денежная сумма — NUMERIC, момент события — TIMESTAMPTZ.\n\nCREATE TABLE можно дополнить IF NOT EXISTS, но это не проверяет, что уже существующая таблица имеет нужную структуру. Такая запись только не выдаст ошибку из-за существующего имени.",
+        "example": "CREATE TABLE example_products (\n  product_id BIGINT PRIMARY KEY,\n  product_name TEXT NOT NULL,\n  price NUMERIC(10, 2) NOT NULL CHECK (price >= 0),\n  created_at TIMESTAMPTZ NOT NULL DEFAULT now()\n);",
+        "note": "IF NOT EXISTS не сравнивает схему существующей таблицы с тем, что ты хотел создать.",
+        "simple": "CREATE TABLE задаёт структуру будущих строк: столбцы, типы и ограничения.",
+        "practiceIds": [
+          "e61"
+        ],
+        "outcomes": [
+          "Создавать таблицу с подходящими типами и базовыми ограничениями",
+          "объяснить зерно таблицы."
+        ],
+        "quiz": [
+          {
+            "question": "Что гарантирует CREATE TABLE ... IF NOT EXISTS?",
+            "options": [
+              "Что существующая таблица имеет именно указанную структуру",
+              "Что команда не создаст таблицу повторно и не завершится ошибкой только из-за совпадающего имени",
+              "Что все столбцы автоматически станут уникальными",
+              "Что таблица заполнится тестовыми данными"
+            ],
+            "answer": 1,
+            "explanation": "IF NOT EXISTS подавляет ошибку при существующем объекте с таким именем. Структуру он не сверяет."
+          }
+        ],
+        "id": "ddl.create-table"
+      },
+      {
+        "title": "ALTER TABLE и эволюция схемы",
+        "body": "ALTER TABLE изменяет уже существующий объект: добавляет или удаляет столбцы, меняет тип, задаёт ограничения и переименовывает поля. Это часть эволюции схемы, когда требования приложения меняются.\n\nДобавление столбца с DEFAULT может затронуть большую таблицу и повлиять на блокировки и время миграции. Для больших объёмов иногда безопаснее добавить nullable-столбец, заполнить его порциями, проверить данные и только затем установить NOT NULL.\n\nИзменение типа может требовать преобразования существующих значений. Если хотя бы одно значение нельзя привести к новому типу, операция завершится ошибкой. Перед миграцией оцени объём, блокировки, индексы и возможность отката.",
+        "example": "ALTER TABLE customers\nADD COLUMN phone TEXT;\n\nALTER TABLE customers\nRENAME COLUMN phone TO phone_number;",
+        "note": "Перед ALTER TABLE проверь существующие данные и возможные блокировки. Не считай DDL автоматически мгновенным.",
+        "simple": "ALTER TABLE меняет структуру, но не заменяет план миграции для большой рабочей таблицы.",
+        "practiceIds": [],
+        "outcomes": [
+          "Добавлять и переименовывать столбцы",
+          "объяснить риск изменения типа и ограничения на большой таблице."
+        ],
+        "quiz": [
+          {
+            "question": "Почему добавление NOT NULL к новому столбцу на большой таблице требует плана миграции?",
+            "options": [
+              "Потому что существующие строки должны удовлетворять ограничению, а операция может потребовать проверки и блокировок",
+              "Потому что ALTER TABLE всегда удаляет все строки",
+              "Потому что NOT NULL разрешён только для чисел",
+              "Потому что PostgreSQL не поддерживает добавление столбцов"
+            ],
+            "answer": 0,
+            "explanation": "Ограничение должно быть истинным для существующих строк. На большой таблице проверка и блокировки могут быть существенными."
+          }
+        ],
+        "id": "ddl.alter-table-i-evolyutsiya-skhemy"
+      },
+      {
+        "title": "Ограничения целостности",
+        "body": "Ограничения целостности не дают сохранить данные, нарушающие правила предметной области. NOT NULL запрещает отсутствие значения, UNIQUE запрещает дубли, CHECK проверяет логическое условие, PRIMARY KEY задаёт идентификатор, FOREIGN KEY защищает ссылку на другую таблицу.\n\nОграничения работают на уровне базы, поэтому защищают данные независимо от того, кто отправил запрос: приложение, BI-клиент или ручной SQL. Это надёжнее, чем надеяться, что каждый пользовательский интерфейс проверит все правила.\n\nОграничение CHECK должно учитывать NULL отдельно: выражение CHECK считается нарушенным, только если оно FALSE. Если результат UNKNOWN из-за NULL, строка может пройти проверку. Поэтому для обязательного значения сочетай CHECK с NOT NULL.",
+        "example": "CREATE TABLE example_payments (\n  payment_id BIGINT PRIMARY KEY,\n  amount NUMERIC(12, 2) NOT NULL CHECK (amount >= 0),\n  external_id TEXT UNIQUE\n);",
+        "note": "CHECK (amount > 0) сам по себе не запрещает NULL. Для обязательного значения нужен NOT NULL.",
+        "simple": "Ограничения защищают качество данных независимо от приложения, которое выполняет INSERT или UPDATE.",
+        "practiceIds": [
+          "e66"
+        ],
+        "outcomes": [
+          "Выбирать подходящие ограничения",
+          "объяснить, почему CHECK и NOT NULL решают разные задачи."
+        ],
+        "quiz": [
+          {
+            "question": "Почему CHECK (amount > 0) не заменяет NOT NULL?",
+            "options": [
+              "Потому что CHECK допускает результат UNKNOWN, когда amount равен NULL",
+              "Потому что CHECK работает только с текстом",
+              "Потому что NOT NULL автоматически разрешает отрицательные суммы",
+              "Потому что CHECK проверяется только при SELECT"
+            ],
+            "answer": 0,
+            "explanation": "В PostgreSQL CHECK отклоняет FALSE, но пропускает TRUE и UNKNOWN. NULL нужно запретить отдельным NOT NULL."
+          }
+        ],
+        "id": "ddl.ogranicheniya-tselostnosti"
+      },
+      {
+        "title": "DEFAULT, IDENTITY и последовательности",
+        "body": "DEFAULT задаёт значение, которое используется, если INSERT не передал столбец или явно указал DEFAULT. Это удобно для даты создания, статуса по умолчанию или числового счётчика.\n\nIDENTITY генерирует значения числового столбца на основе последовательности. GENERATED ALWAYS строже ограничивает ручную подстановку, а GENERATED BY DEFAULT позволяет передать значение явно. Последовательность выдаёт новые значения, но не гарантирует отсутствие пропусков: откат транзакции не возвращает уже полученное значение.\n\nDEFAULT не срабатывает, если явно передать NULL. NULL — это переданное значение, а не отсутствие столбца в INSERT. Если столбец NOT NULL, такая вставка завершится ошибкой.",
+        "example": "CREATE TABLE example_orders (\n  order_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,\n  status TEXT NOT NULL DEFAULT 'new',\n  created_at TIMESTAMPTZ NOT NULL DEFAULT now()\n);",
+        "note": "Последовательность может иметь пропуски. Не используй IDENTITY как счётчик без пропусков.",
+        "simple": "DEFAULT применяется, когда значение не передали. Явный NULL не заменяется значением по умолчанию.",
+        "practiceIds": [],
+        "outcomes": [
+          "Объяснить разницу DEFAULT, явного NULL и пропущенного столбца",
+          "использовать IDENTITY."
+        ],
+        "quiz": [
+          {
+            "question": "В столбце status задан DEFAULT 'new'. Что произойдёт, если INSERT явно передаст status = NULL?",
+            "options": [
+              "PostgreSQL подставит 'new' автоматически",
+              "Будет сохранён NULL, если это разрешено ограничениями",
+              "DEFAULT заменит NULL только для TEXT",
+              "Строка всегда удалится"
+            ],
+            "answer": 1,
+            "explanation": "DEFAULT применяется при отсутствии значения или ключевом слове DEFAULT. Явный NULL считается переданным значением."
+          }
+        ],
+        "id": "ddl.default-identity-i-posledovatelnosti"
+      },
+      {
+        "title": "Схемы, представления и объекты",
+        "body": "Схема PostgreSQL — пространство имён внутри базы данных. В одной базе могут существовать public.orders и archive.orders: это разные таблицы с одинаковым коротким именем.\n\nОбращение schema_name.table_name делает источник однозначным. search_path определяет, в каких схемах PostgreSQL ищет объект, если схема не указана. Это удобно, но может привести к неоднозначности и риску подмены объектов, если права и путь поиска настроены неосторожно.\n\nПредставления (VIEW) выглядят как таблицы для чтения, но хранят определение запроса. Индексы, последовательности, функции и типы также являются объектами схемы. Не путай схему с базой данных: это разные уровни организации.",
+        "example": "SELECT table_schema, table_name\nFROM information_schema.tables\nWHERE table_type = 'BASE TABLE'\nORDER BY table_schema, table_name;",
+        "note": "search_path влияет на разрешение коротких имён. Для важных запросов и миграций полезно явно указывать схему.",
+        "simple": "Схема группирует объекты внутри базы. Полное имя public.orders указывает и схему, и таблицу.",
+        "practiceIds": [],
+        "outcomes": [
+          "Объяснить различие базы и схемы",
+          "находить таблицы через information_schema."
+        ],
+        "quiz": [
+          {
+            "question": "Что обозначает имя archive.orders?",
+            "options": [
+              "Базу данных archive и пользователя orders",
+              "Таблицу orders в схеме archive",
+              "Схему orders внутри таблицы archive",
+              "Два алиаса одного объекта"
+            ],
+            "answer": 1,
+            "explanation": "В PostgreSQL schema.table — это имя объекта в конкретной схеме текущей базы."
+          }
+        ],
+        "id": "ddl.skhemy-predstavleniya-i-obekty"
+      },
+      {
+        "title": "CHECK: проверка бизнес-правил",
+        "body": "Ограничение CHECK заставляет базу отклонять строки, нарушающие выражение. Например, цена не должна быть отрицательной, количество должно быть положительным, а дата закрытия не должна предшествовать дате создания. Такое правило лучше хранить в базе, а не надеяться, что каждый клиент приложения проверит его одинаково.\n\nВажная особенность PostgreSQL: CHECK считается выполненным, если выражение вернуло TRUE или NULL (UNKNOWN). Поэтому CHECK (price > 0) сам по себе не запрещает NULL. Если значение обязательно, добавь NOT NULL отдельно. Это частая ловушка: разработчик думает, что проверил обязательность, а на деле проверил только неотрицательное или положительное значение, когда оно присутствует.\n\nCHECK предназначен для проверки текущей строки и не должен использоваться для проверки других строк или таблиц. Для межстрочных правил нужны UNIQUE, EXCLUDE, FOREIGN KEY, триггер или транзакционная логика в зависимости от задачи. Ограничения именуй осмысленно: так проще читать ошибки и менять схему.",
+        "example": "CREATE TABLE products_demo (\n  product_id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,\n  name text NOT NULL,\n  price numeric(10,2) NOT NULL,\n  stock integer NOT NULL,\n  CONSTRAINT products_price_positive CHECK (price > 0),\n  CONSTRAINT products_stock_nonnegative CHECK (stock >= 0)\n);\n\n-- CHECK допускает NULL, если выражение стало UNKNOWN\nCREATE TABLE example (\n  value integer CHECK (value > 0)\n);",
+        "note": "CHECK не заменяет NOT NULL. В PostgreSQL NULL в выражении CHECK не означает нарушение.",
+        "simple": "CHECK защищает правило для значения строки. Если значение обязательно, добавь NOT NULL.",
+        "outcomes": [
+          "Объяснять назначение CHECK",
+          "Различать CHECK и NOT NULL",
+          "Понимать трёхзначную логику в ограничениях"
+        ],
+        "practiceIds": [],
+        "quiz": [
+          {
+            "question": "Почему строка с NULL может пройти ограничение CHECK (price > 0)?",
+            "options": [
+              "Потому что CHECK автоматически заменяет NULL на ноль",
+              "Потому что CHECK считает TRUE и UNKNOWN допустимыми результатами",
+              "Потому что CHECK работает только с текстом",
+              "Потому что PostgreSQL игнорирует все ограничения"
+            ],
+            "answer": 1,
+            "explanation": "PostgreSQL отклоняет строку, когда CHECK возвращает FALSE. TRUE и NULL/UNKNOWN считаются допустимыми, поэтому обязательность нужно задавать NOT NULL."
+          }
+        ],
+        "id": "ddl.check-proverka-biznes-pravil"
+      },
+      {
+        "title": "Составные ограничения и составные внешние ключи",
+        "body": "Ограничение может относиться не к одному столбцу, а к комбинации столбцов. Например, в таблице позиций заказа одна пара (order_id, line_number) должна быть уникальной. Это составное ограничение UNIQUE. Оно гарантирует уникальность комбинации, но не уникальность каждого столбца отдельно.\n\nСоставной первичный ключ задаётся так же: PRIMARY KEY (order_id, line_number). На такую пару может ссылаться составной FOREIGN KEY. Количество и типы столбцов в ссылающейся и целевой паре должны соответствовать друг другу, а целевая комбинация должна быть уникальной или первичным ключом.\n\nНе выбирай составной ключ механически. Он должен отражать реальную идентичность записи. Если одна и та же комбинация может повторяться по правилам предметной области, добавь отдельный идентификатор строки или включи в ключ недостающую часть бизнес-идентичности.",
+        "example": "CREATE TABLE order_lines (\n  order_id bigint NOT NULL,\n  line_number integer NOT NULL,\n  product_id bigint NOT NULL,\n  quantity integer NOT NULL CHECK (quantity > 0),\n  CONSTRAINT order_lines_pk PRIMARY KEY (order_id, line_number),\n  CONSTRAINT order_lines_order_fk FOREIGN KEY (order_id)\n    REFERENCES orders(order_id)\n);",
+        "note": "Уникальность составного ключа проверяется по всей комбинации. Две строки могут иметь одинаковый order_id, если line_number различается.",
+        "simple": "Составной ключ — это один идентификатор, собранный из нескольких столбцов.",
+        "outcomes": [
+          "Создавать составные PRIMARY KEY и UNIQUE",
+          "Объяснять, как работает составной FOREIGN KEY",
+          "Выбирать ключ в соответствии с зерном таблицы"
+        ],
+        "practiceIds": [],
+        "quiz": [
+          {
+            "question": "Что гарантирует UNIQUE (order_id, line_number)?",
+            "options": [
+              "Что каждый order_id встречается только один раз",
+              "Что каждый line_number встречается только один раз",
+              "Что комбинация order_id и line_number не повторяется",
+              "Что оба столбца обязательно уникальны по отдельности"
+            ],
+            "answer": 2,
+            "explanation": "Ограничение гарантирует уникальность пары значений, а не каждого столбца отдельно."
+          }
+        ],
+        "id": "ddl.sostavnye-ogranicheniya-i-sostavnye-vneshnie-klyuchi"
+      },
+      {
+        "title": "Безопасное изменение схемы и миграции",
+        "body": "Изменение структуры существующей базы — это миграция схемы. В реальном проекте таблица уже содержит данные, а приложение может продолжать читать и записывать их во время изменения. Поэтому миграция должна учитывать не только желаемую конечную структуру, но и промежуточные состояния.\n\nДобавление столбца с простым DEFAULT в современных версиях PostgreSQL часто выполняется без переписывания каждой строки, но не любое изменение одинаково дешёво. Добавление ограничения может потребовать проверки существующих данных и блокировок. Для больших таблиц PostgreSQL поддерживает NOT VALID для некоторых ограничений, после чего их можно проверить отдельно через VALIDATE CONSTRAINT. Новые и изменяемые строки при этом уже проверяются.\n\nБезопасный шаблон: сначала добавить совместимое изменение, затем заполнить или преобразовать данные, проверить результат и только после этого переключить приложение на новую структуру. Не удаляй старый столбец в той же выкладке, в которой приложение ещё может его использовать. Сначала проверь зависимости и резервный план отката.\n\nDDL в PostgreSQL во многих случаях транзакционен, но не все команды разрешены внутри транзакционного блока. Например, CREATE INDEX CONCURRENTLY нельзя выполнять внутри обычного BEGIN/COMMIT. Всегда сверяй ограничения конкретной команды с документацией своей версии.",
+        "example": "BEGIN;\nALTER TABLE orders\n  ADD COLUMN source text;\n\nUPDATE orders\nSET source = 'unknown'\nWHERE source IS NULL;\n\nALTER TABLE orders\n  ADD CONSTRAINT orders_source_not_empty\n  CHECK (source <> '') NOT VALID;\n\nALTER TABLE orders\n  VALIDATE CONSTRAINT orders_source_not_empty;\nCOMMIT;",
+        "note": "NOT VALID не означает «ограничение не работает». Оно откладывает проверку старых строк, но новые изменения уже должны соответствовать правилу.",
+        "simple": "Миграция — это безопасный переход от старой структуры к новой, а не просто команда ALTER TABLE.",
+        "outcomes": [
+          "Объяснять назначение миграций схемы",
+          "Понимать разницу NOT VALID и VALIDATE CONSTRAINT",
+          "Учитывать блокировки и транзакционные ограничения DDL"
+        ],
+        "practiceIds": [],
+        "quiz": [
+          {
+            "question": "Для чего используют CHECK ... NOT VALID при миграции большой таблицы?",
+            "options": [
+              "Чтобы навсегда отключить проверку новых строк",
+              "Чтобы добавить ограничение без немедленной полной проверки старых строк, а проверить их отдельно",
+              "Чтобы разрешить любые значения в столбце",
+              "Чтобы автоматически удалить старые строки"
+            ],
+            "answer": 1,
+            "explanation": "NOT VALID позволяет добавить ограничение без немедленного сканирования всех существующих строк. Новые и изменяемые строки проверяются, а старые можно проверить позже через VALIDATE CONSTRAINT."
+          }
+        ],
+        "id": "ddl.bezopasnoe-izmenenie-skhemy-i-migratsii"
+      }
+    ],
+    "quiz": [
+      {
+        "question": "Какое ограничение запрещает записать отрицательную цену?",
+        "options": [
+          "ORDER BY",
+          "CHECK (price >= 0)",
+          "DISTINCT",
+          "LIMIT"
+        ],
+        "answer": 1,
+        "explanation": "CHECK проверяет условие для каждой новой или изменяемой строки. Если условие ложно, запись отклоняется."
+      },
+      {
+        "question": "Что делает ALTER TABLE?",
+        "options": [
+          "Меняет структуру существующей таблицы",
+          "Сортирует строки",
+          "Создаёт резервную копию",
+          "Удаляет только дубликаты"
+        ],
+        "answer": 0,
+        "explanation": "ALTER TABLE добавляет, меняет или удаляет столбцы и ограничения существующей таблицы."
+      },
+      {
+        "question": "Чем NOT NULL отличается от CHECK (price > 0)?",
+        "options": [
+          "Ничем",
+          "NOT NULL запрещает отсутствие значения, CHECK проверяет заданное условие",
+          "CHECK проверяет только NULL",
+          "NOT NULL сортирует данные"
+        ],
+        "answer": 1,
+        "explanation": "NOT NULL запрещает NULL. CHECK задаёт логическое условие, например price > 0; учитывай, что CHECK пропускает UNKNOWN."
+      },
+      {
+        "question": "Что делает GENERATED ... AS IDENTITY?",
+        "options": [
+          "Создаёт автоматически генерируемое значение для столбца",
+          "Создаёт внешний ключ",
+          "Запрещает UPDATE всей таблицы",
+          "Сортирует записи"
+        ],
+        "answer": 0,
+        "explanation": "IDENTITY удобно для генерации числового ключа. Это стандартный механизм PostgreSQL вместо ручного управления последовательностью."
+      }
+    ],
+    "sources": [
+      "https://www.postgresql.org/docs/current/ddl.html",
+      "https://www.postgresql.org/docs/current/sql-createtable.html"
+    ],
+    "track": "postgresql",
+    "trackOrder": 1
+  },
+  {
+    "id": "inserts",
+    "title": "Вставка данных: INSERT",
+    "stage": "01 · Изменение данных",
+    "desc": "Научиться добавлять строки, работать с DEFAULT, несколькими наборами значений и результатом INSERT.",
+    "lessons": [
+      {
+        "title": "INSERT: добавление строк",
+        "body": "INSERT добавляет новые строки в таблицу. В списке столбцов указывай, какие поля заполняешь, а в VALUES — соответствующие значения в том же порядке. Явный список столбцов делает запрос устойчивее к изменению структуры и не заставляет помнить физический порядок колонок.\n\nЕсли столбец пропущен, PostgreSQL использует DEFAULT, если он задан, иначе — NULL, если это разрешено. Если обязательное поле не заполнено и не имеет значения по умолчанию, вставка завершится ошибкой.\n\nINSERT может добавить одну строку или несколько. Типы значений должны быть совместимы с типами столбцов, а ограничения проверяются при вставке.",
+        "example": "INSERT INTO customers (customer_id, customer_name, city, registered_at)\nVALUES (999, 'Anna Petrova', 'Warsaw', DATE '2026-11-07');",
+        "note": "Всегда указывай список столбцов. INSERT INTO table VALUES (...) хрупок при изменении схемы.",
+        "simple": "INSERT добавляет строки. Список столбцов и VALUES должны соответствовать друг другу по порядку.",
+        "practiceIds": [
+          "e62"
+        ],
+        "outcomes": [
+          "Добавлять строки через INSERT",
+          "использовать явный список столбцов."
+        ],
+        "quiz": [
+          {
+            "question": "Почему лучше писать INSERT INTO customers (full_name, email) VALUES (...), а не полагаться на порядок всех столбцов?",
+            "options": [
+              "Явный список защищает запрос от изменения порядка столбцов и показывает, какие поля заполняются",
+              "Потому что VALUES без списка столбцов запрещён в PostgreSQL",
+              "Потому что список столбцов автоматически создаёт PRIMARY KEY",
+              "Потому что PostgreSQL иначе сортирует строки"
+            ],
+            "answer": 0,
+            "explanation": "Явный список связывает значения с именами полей и не зависит от физического порядка столбцов."
+          }
+        ],
+        "id": "inserts.insert-dobavlenie-strok"
+      },
+      {
+        "title": "Вставка нескольких строк и INSERT ... SELECT",
+        "body": "Один INSERT может добавить несколько строк, если перечислить несколько наборов VALUES. Также можно вставить результат SELECT: это полезно для переноса или преобразования данных внутри базы.\n\nINSERT ... SELECT не требует промежуточного CSV. Количество и типы столбцов SELECT должны соответствовать списку столбцов INSERT. Если целевая таблица имеет ограничения, они проверяются так же, как при обычной вставке.\n\nПри копировании данных подумай о повторном запуске. Если ключи могут уже существовать, используй подходящую стратегию: очистку тестовой таблицы, ON CONFLICT или предварительную проверку. Не запускай повторную загрузку без понимания, создаст ли она дубли.",
+        "example": "INSERT INTO archived_orders (order_id, customer_id, total_amount)\nSELECT order_id, customer_id, total_amount\nFROM orders\nWHERE created_at < DATE '2025-01-01';",
+        "note": "Число, порядок и типы выражений в SELECT должны соответствовать целевому списку столбцов.",
+        "simple": "INSERT ... SELECT переносит результат одного запроса в другую таблицу.",
+        "practiceIds": [
+          "e67"
+        ],
+        "outcomes": [
+          "Вставлять несколько строк и результат SELECT",
+          "проверять соответствие колонок источника и цели."
+        ],
+        "quiz": [
+          {
+            "question": "Что должно совпадать между списком столбцов INSERT и SELECT в INSERT ... SELECT?",
+            "options": [
+              "Количество и совместимые типы значений в соответствующих позициях",
+              "Только имена таблиц",
+              "Порядок сортировки строк",
+              "Количество индексов на обеих таблицах"
+            ],
+            "answer": 0,
+            "explanation": "Каждое выражение SELECT поставляет значение для соответствующего целевого столбца. Позиции и типы должны быть совместимы."
+          }
+        ],
+        "id": "inserts.vstavka-neskolkikh-strok-i-insert-select"
+      },
+      {
+        "title": "DEFAULT, RETURNING и безопасная проверка",
+        "body": "DEFAULT позволяет попросить PostgreSQL применить значение по умолчанию для конкретного столбца. RETURNING возвращает вставленные строки, в том числе сгенерированные ID и значения DEFAULT.\n\nЭто особенно полезно, если ключ генерируется IDENTITY: не нужно отдельным запросом искать последнюю вставленную запись. RETURNING возвращает точный ID той строки, которую создал текущий INSERT.\n\nПроверяй результат вставки до продолжения процесса. Если INSERT выполняется внутри транзакции, можно посмотреть RETURNING и при необходимости откатить операцию. Но RETURNING не заменяет проверки уникальности и бизнес-ограничений.",
+        "example": "INSERT INTO orders (customer_id, status)\nVALUES (42, DEFAULT)\nRETURNING order_id, status, created_at;",
+        "note": "Не ищи последний ID через MAX(id): при параллельной работе это может вернуть чужую запись.",
+        "simple": "DEFAULT использует настройку столбца, RETURNING показывает фактически вставленные значения.",
+        "practiceIds": [],
+        "outcomes": [
+          "Использовать DEFAULT и RETURNING",
+          "получать созданный идентификатор безопасным способом."
+        ],
+        "quiz": [
+          {
+            "question": "Почему RETURNING order_id надёжнее, чем SELECT MAX(order_id) после INSERT?",
+            "options": [
+              "RETURNING отдаёт ID именно вставленной текущей командой строки, а MAX может увидеть чужую параллельную вставку",
+              "MAX не работает с BIGINT",
+              "RETURNING удаляет другие строки",
+              "MAX возвращает только NULL"
+            ],
+            "answer": 0,
+            "explanation": "При параллельных вставках максимальный ID может принадлежать другой транзакции. RETURNING связан с конкретным INSERT."
+          }
+        ],
+        "id": "inserts.default-returning-i-bezopasnaya-proverka"
+      },
+      {
+        "title": "COPY и импорт CSV",
+        "body": "COPY предназначен для массовой загрузки и выгрузки данных. Он обычно эффективнее множества отдельных INSERT, особенно при больших объёмах. PostgreSQL поддерживает COPY FROM и COPY TO, а клиент psql имеет команды \\copy для работы с файлами на машине клиента.\n\nВажно различать COPY и \\copy. Серверный COPY читает или записывает файл с точки зрения сервера и требует соответствующих прав на файловую систему. \\copy выполняется клиентом psql и использует файл на компьютере пользователя.\n\nCSV требует аккуратной обработки разделителей, кавычек, NULL и кодировки. Перед массовым импортом проверь формат, заголовок и типы данных на небольшой тестовой выборке.",
+        "example": "\\copy staging_orders (order_id, customer_id, total_amount)\nFROM './orders.csv'\nWITH (FORMAT csv, HEADER true, ENCODING 'UTF8');",
+        "note": "Не путай права PostgreSQL на серверный файл с доступом psql к локальному файлу пользователя.",
+        "simple": "COPY оптимизирован для массового обмена данными. \\copy в psql читает файл на стороне клиента.",
+        "practiceIds": [],
+        "outcomes": [
+          "Объяснить COPY и \\copy",
+          "выбрать подходящий способ импорта CSV."
+        ],
+        "quiz": [
+          {
+            "question": "Где ищет файл команда \\copy в psql?",
+            "options": [
+              "На компьютере, где запущен клиент psql",
+              "Только в каталоге данных PostgreSQL на сервере",
+              "В папке установки SQL-стандарта",
+              "Внутри таблицы staging_orders"
+            ],
+            "answer": 0,
+            "explanation": "\\copy выполняет файловый ввод-вывод со стороны клиента psql. Обычный COPY FROM использует путь, доступный серверному процессу."
+          }
+        ],
+        "id": "inserts.copy-i-import-csv"
+      }
+    ],
+    "quiz": [
+      {
+        "question": "Что произойдёт, если столбец со значением DEFAULT не указать в INSERT?",
+        "options": [
+          "Всегда запишется NULL",
+          "СУБД применит значение DEFAULT, если оно задано",
+          "Запрос всегда завершится ошибкой",
+          "Столбец удалится"
+        ],
+        "answer": 1,
+        "explanation": "Если столбец пропущен в списке INSERT, PostgreSQL использует DEFAULT, а если его нет — NULL (при условии, что это разрешено)."
+      },
+      {
+        "question": "Для чего используют INSERT ... SELECT?",
+        "options": [
+          "Чтобы вставить результат другого запроса в таблицу",
+          "Чтобы удалить таблицу",
+          "Чтобы отсортировать результат",
+          "Чтобы создать индекс"
+        ],
+        "answer": 0,
+        "explanation": "SELECT выбирает исходные строки, а INSERT записывает их в целевую таблицу."
+      },
+      {
+        "question": "Что возвращает INSERT ... RETURNING?",
+        "options": [
+          "Список ошибок сервера",
+          "Столбцы добавленных строк",
+          "Все строки таблицы",
+          "План запроса"
+        ],
+        "answer": 1,
+        "explanation": "RETURNING позволяет сразу получить ID и другие значения вставленных строк, не выполняя отдельный SELECT."
+      },
+      {
+        "question": "Можно ли вставить несколько строк одним INSERT?",
+        "options": [
+          "Нет",
+          "Да, через несколько наборов VALUES",
+          "Только через цикл",
+          "Только если таблица пустая"
+        ],
+        "answer": 1,
+        "explanation": "Один INSERT может содержать несколько наборов значений через запятую."
+      }
+    ],
+    "sources": [
+      "https://www.postgresql.org/docs/current/sql-insert.html"
+    ],
+    "track": "postgresql",
+    "trackOrder": 2
+  },
+  {
+    "id": "dml",
+    "title": "DML: изменение и удаление данных",
+    "stage": "01 · Изменение данных",
+    "desc": "Освоить INSERT, UPDATE, DELETE, RETURNING, UPSERT и безопасный порядок действий.",
+    "lessons": [
+      {
+        "title": "UPDATE",
+        "body": "UPDATE изменяет значения существующих строк. SET задаёт новые значения столбцов, а WHERE определяет, какие строки будут затронуты. Если WHERE отсутствует, PostgreSQL обновит все строки таблицы.\n\nВ SET можно использовать старые значения строки: например, price = price * 1.05 увеличит цену на 5%. Можно обновлять несколько столбцов одновременно. Условие WHERE нужно проверить отдельно до запуска, особенно в рабочей базе.\n\nRETURNING позволяет получить изменённые строки прямо из UPDATE. Для безопасной проверки в транзакционной среде можно начать BEGIN, выполнить UPDATE с RETURNING, проверить результат и завершить COMMIT или ROLLBACK.",
+        "example": "UPDATE products\nSET price = price * 1.05\nWHERE category = 'coffee'\nRETURNING product_id, price;",
+        "note": "Перед UPDATE выполни SELECT с тем же WHERE и проверь число строк. Не запускай изменение наугад.",
+        "simple": "UPDATE меняет строки. Самая опасная часть — неверное или отсутствующее WHERE.",
+        "practiceIds": [
+          "e63"
+        ],
+        "outcomes": [
+          "Писать UPDATE с точным WHERE",
+          "использовать RETURNING для проверки изменённых строк."
+        ],
+        "quiz": [
+          {
+            "question": "Что сделает UPDATE products SET active = FALSE без WHERE?",
+            "options": [
+              "Обновит только одну случайную строку",
+              "Обновит active во всех строках таблицы",
+              "Удалит таблицу products",
+              "Вернёт ошибку, потому что WHERE обязателен"
+            ],
+            "answer": 1,
+            "explanation": "WHERE необязателен синтаксически. Без него UPDATE затронет каждую строку таблицы."
+          }
+        ],
+        "id": "dml.update"
+      },
+      {
+        "title": "DELETE и TRUNCATE",
+        "body": "DELETE удаляет строки, удовлетворяющие WHERE. Без WHERE будут удалены все строки таблицы, но сама таблица и её структура останутся. TRUNCATE быстро очищает таблицу целиком и имеет особенности блокировок, триггеров и последовательностей.\n\nDELETE можно ограничить условием и получить удалённые строки через RETURNING. TRUNCATE не принимает обычный WHERE. Внешние ключи могут запретить очистку или потребовать CASCADE, если явно разрешено удалить связанные данные.\n\nУдаление данных необратимо без транзакции, резервной копии или другого механизма восстановления. Перед DELETE сначала выполни SELECT с тем же условием и проверь выборку.",
+        "example": "DELETE FROM orders\nWHERE status = 'cancelled'\n  AND created_at < DATE '2025-01-01'\nRETURNING order_id;",
+        "note": "Не путай DELETE без WHERE и DROP TABLE: первое удаляет строки, второе удаляет сам объект таблицы.",
+        "simple": "DELETE удаляет выбранные строки, TRUNCATE очищает таблицу целиком.",
+        "practiceIds": [
+          "e64"
+        ],
+        "outcomes": [
+          "Различать DELETE, TRUNCATE и DROP",
+          "безопасно проверять условие удаления."
+        ],
+        "quiz": [
+          {
+            "question": "Какая разница между DELETE FROM orders и DROP TABLE orders?",
+            "options": [
+              "Обе команды удаляют только строки",
+              "DELETE удаляет строки, DROP TABLE удаляет саму таблицу и её структуру",
+              "DROP TABLE быстрее выполняет SELECT",
+              "DELETE удаляет структуру, DROP TABLE оставляет строки"
+            ],
+            "answer": 1,
+            "explanation": "DELETE работает с содержимым таблицы. DROP TABLE удаляет объект таблицы из схемы."
+          }
+        ],
+        "id": "dml.delete-i-truncate"
+      },
+      {
+        "title": "RETURNING",
+        "body": "RETURNING позволяет получить значения строк, которые были затронуты INSERT, UPDATE или DELETE. Это полезно, когда после изменения нужно узнать сгенерированный ID или проверить новое состояние.\n\nВ INSERT RETURNING часто используют для получения ID, созданных DEFAULT или IDENTITY. В UPDATE можно увидеть обновлённые значения, а в DELETE — данные удалённых строк. Возвращаемые значения не требуют отдельного SELECT после изменения.\n\nRETURNING не делает изменение безопасным само по себе. Он только показывает, какие строки затронуты. Для контроля используй точное условие и транзакцию там, где это уместно.",
+        "example": "INSERT INTO customers (customer_id, customer_name, city, registered_at)\nVALUES (999, 'Anna Petrova', 'Warsaw', DATE '2026-11-07')\nRETURNING customer_id, customer_name;",
+        "note": "Если UPDATE или DELETE вернул неожиданное число строк, не подтверждай транзакцию до выяснения причины.",
+        "simple": "RETURNING возвращает строки, затронутые изменяющей командой.",
+        "practiceIds": [],
+        "outcomes": [
+          "Получать изменённые строки через RETURNING",
+          "объяснить разницу с отдельным SELECT."
+        ],
+        "quiz": [
+          {
+            "question": "Что вернёт DELETE FROM orders WHERE order_id = 10 RETURNING order_id?",
+            "options": [
+              "Номер удалённой строки, если она была удалена",
+              "Все оставшиеся заказы",
+              "Только число строк без значений",
+              "Схему таблицы orders"
+            ],
+            "answer": 0,
+            "explanation": "RETURNING возвращает значения строк, удалённых данной командой. Если совпадений нет, результат будет пустым."
+          }
+        ],
+        "id": "dml.returning"
+      },
+      {
+        "title": "UPSERT: ON CONFLICT",
+        "body": "UPSERT в PostgreSQL реализуется через INSERT ... ON CONFLICT. Если вставка нарушает указанный уникальный или exclusion-конфликт, можно выполнить DO NOTHING или DO UPDATE.\n\nON CONFLICT требует подходящего ограничения или индекса, который определяет конфликт. Например, уникальный email может означать, что при повторном импорте клиента нужно обновить имя. EXCLUDED содержит значения, которые пытались вставить.\n\nUPSERT удобен для идемпотентной загрузки, но нужно аккуратно выбирать поля для обновления. Не перезаписывай свежие данные устаревшей выгрузкой. Также учитывай, что конкурирующие транзакции могут влиять на то, какая версия записи останется.",
+        "example": "INSERT INTO products (product_id, product_name, category, price)\nVALUES (1, 'Updated coffee', 'Drinks', 499.00)\nON CONFLICT (product_id)\nDO UPDATE SET product_name = EXCLUDED.product_name,\n              price = EXCLUDED.price;",
+        "note": "ON CONFLICT не сработает без подходящего уникального ограничения или индекса на указанном ключе.",
+        "simple": "ON CONFLICT обрабатывает нарушение уникальности в момент INSERT. EXCLUDED — строка, которую пытались вставить.",
+        "practiceIds": [
+          "e65"
+        ],
+        "outcomes": [
+          "Применять ON CONFLICT DO NOTHING и DO UPDATE",
+          "объяснить EXCLUDED и требование уникального ключа."
+        ],
+        "quiz": [
+          {
+            "question": "Что означает EXCLUDED.full_name в ON CONFLICT DO UPDATE?",
+            "options": [
+              "Текущее значение full_name из существующей строки",
+              "Значение full_name из строки, которую пытались вставить",
+              "Имя исключённого столбца",
+              "Значение NULL, которое PostgreSQL подставляет при конфликте"
+            ],
+            "answer": 1,
+            "explanation": "EXCLUDED обращается к предлагаемой строке INSERT, которая не была вставлена из-за конфликта."
+          }
+        ],
+        "id": "dml.upsert-on-conflict"
+      },
+      {
+        "title": "MERGE: синхронизация двух наборов",
+        "body": "MERGE сопоставляет целевой набор строк с источником по условию ON и позволяет выполнять разные действия в зависимости от результата сопоставления. Можно обновить совпавшие строки, вставить отсутствующие или удалить строки, которые больше не нужны.\n\nMERGE полезен для синхронизации таблиц и пакетной загрузки изменений. В отличие от простого UPSERT, он может обрабатывать несколько типов совпадений в одном операторе. Но правила WHEN MATCHED и WHEN NOT MATCHED нужно проектировать осторожно: неверное условие ON может массово обновить или вставить неправильные записи.\n\nПеред запуском MERGE проверь, что источник не содержит несколько строк, совпадающих с одной целевой записью, если логика этого не допускает. Поведение и доступные возможности зависят от версии PostgreSQL.",
+        "example": "MERGE INTO customers AS t\nUSING (VALUES\n  (1, 'Updated customer', 'Warsaw', DATE '2026-01-01'),\n  (999, 'New customer', 'Krakow', DATE '2026-11-07')\n) AS s(customer_id, customer_name, city, registered_at)\nON t.customer_id = s.customer_id\nWHEN MATCHED THEN\n  UPDATE SET customer_name = s.customer_name\nWHEN NOT MATCHED THEN\n  INSERT (customer_id, customer_name, city, registered_at)\n  VALUES (s.customer_id, s.customer_name, s.city, s.registered_at);",
+        "note": "До MERGE проверь уникальность ключа в источнике и точность условия ON.",
+        "simple": "MERGE сопоставляет источник и цель, а затем выбирает действие для совпавших и несовпавших строк.",
+        "practiceIds": [],
+        "outcomes": [
+          "Объяснить ветви MERGE",
+          "отличать MERGE от ON CONFLICT",
+          "проверить уникальность источника."
+        ],
+        "quiz": [
+          {
+            "question": "Чем MERGE отличается от простого INSERT ... ON CONFLICT?",
+            "options": [
+              "MERGE может обрабатывать несколько условий сопоставления и действий для совпавших и несовпавших строк",
+              "MERGE работает только с одной строкой",
+              "ON CONFLICT умеет удалять всю таблицу",
+              "MERGE не использует условие ON"
+            ],
+            "answer": 0,
+            "explanation": "MERGE задаёт действия для разных состояний совпадения источника и цели. UPSERT через ON CONFLICT специализируется на конфликте уникальности при INSERT."
+          }
+        ],
+        "id": "dml.merge-sinkhronizatsiya-dvukh-naborov"
+      }
+    ],
+    "quiz": [
+      {
+        "question": "Что произойдёт с UPDATE без WHERE?",
+        "options": [
+          "Ничего",
+          "Изменятся все строки таблицы",
+          "Удалится таблица",
+          "Изменится только первая строка"
+        ],
+        "answer": 1,
+        "explanation": "Без WHERE условие не ограничивает строки. Поэтому UPDATE применится ко всей таблице."
+      },
+      {
+        "question": "На чём основан ON CONFLICT DO UPDATE?",
+        "options": [
+          "На наличии UNIQUE или PRIMARY KEY конфликта",
+          "На сортировке",
+          "На CHECK без уникальности",
+          "На внешнем ключе любой таблицы"
+        ],
+        "answer": 0,
+        "explanation": "PostgreSQL должен понимать, по какому уникальному ключу обнаруживать конфликт."
+      },
+      {
+        "question": "Чем TRUNCATE отличается от DELETE?",
+        "options": [
+          "TRUNCATE обычно быстро очищает всю таблицу, DELETE удаляет выбранные строки и может иметь WHERE",
+          "TRUNCATE всегда удаляет только одну строку",
+          "DELETE нельзя откатить",
+          "Ничем"
+        ],
+        "answer": 0,
+        "explanation": "TRUNCATE предназначен для очистки таблицы целиком или набора связанных таблиц. DELETE позволяет фильтровать строки."
+      },
+      {
+        "question": "Для чего нужен RETURNING в UPDATE?",
+        "options": [
+          "Чтобы получить значения изменённых строк",
+          "Чтобы откатить UPDATE",
+          "Чтобы обновить только первый столбец",
+          "Чтобы включить индекс"
+        ],
+        "answer": 0,
+        "explanation": "UPDATE ... RETURNING показывает новые значения строк, которые действительно были изменены."
+      }
+    ],
+    "sources": [
+      "https://www.postgresql.org/docs/current/dml.html",
+      "https://www.postgresql.org/docs/current/sql-merge.html"
+    ],
+    "track": "postgresql",
+    "trackOrder": 3
+  },
+  {
+    "id": "constraints",
+    "title": "Транзакции и согласованность изменений",
+    "stage": "01 · Изменение данных",
+    "desc": "Понять ACID, COMMIT, ROLLBACK, уровни изоляции, блокировки и конкурентное выполнение.",
+    "lessons": [
+      {
+        "title": "Что такое транзакция",
+        "body": "Транзакция объединяет несколько операций в одну логическую единицу. BEGIN начинает транзакцию, COMMIT подтверждает изменения, ROLLBACK отменяет изменения текущей транзакции.\n\nЕсли одна операция из нескольких завершается ошибкой, транзакция в PostgreSQL переходит в состояние aborted. До ROLLBACK или отката к savepoint обычные команды в ней не выполняются. Это защищает от ситуации, когда половина связанного набора изменений уже сохранена.\n\nАвтокоммит в клиенте может автоматически фиксировать каждую отдельную команду. Для последовательности связанных изменений явно используй транзакцию и проверь итог перед COMMIT.",
+        "example": "BEGIN;\nCREATE TEMP TABLE accounts (\n  account_id integer PRIMARY KEY,\n  balance numeric(12,2) NOT NULL CHECK (balance >= 0)\n);\nINSERT INTO accounts VALUES (1, 1000), (2, 500);\n\nUPDATE accounts\nSET balance = balance - 100\nWHERE account_id = 1;\n\nUPDATE accounts\nSET balance = balance + 100\nWHERE account_id = 2;\nCOMMIT;\n\nSELECT * FROM accounts ORDER BY account_id;",
+        "note": "Не оставляй транзакции открытыми надолго: они могут удерживать блокировки и мешать очистке старых версий строк.",
+        "simple": "Транзакция позволяет подтвердить все связанные изменения вместе или отменить их вместе.",
+        "practiceIds": [
+          "e69",
+          "e70"
+        ],
+        "outcomes": [
+          "Начинать и завершать транзакции",
+          "объяснить, что происходит после ошибки."
+        ],
+        "quiz": [
+          {
+            "question": "Что произойдёт с транзакцией PostgreSQL после ошибки SQL-команды внутри BEGIN?",
+            "options": [
+              "Транзакция обычно перейдёт в aborted и потребует ROLLBACK или отката к savepoint",
+              "Все предыдущие изменения немедленно фиксируются",
+              "PostgreSQL автоматически продолжит следующую команду как ни в чём не бывало",
+              "Сервер удалит базу"
+            ],
+            "answer": 0,
+            "explanation": "После ошибки транзакция помечается как прерванная. Нужно выполнить ROLLBACK или ROLLBACK TO SAVEPOINT."
+          }
+        ],
+        "id": "constraints.chto-takoe-tranzaktsiya"
+      },
+      {
+        "title": "ACID",
+        "body": "ACID описывает свойства надёжной транзакционной обработки. Atomicity означает «всё или ничего». Consistency — переход из одного допустимого состояния базы в другое при соблюдении ограничений. Isolation — контроль взаимодействия параллельных транзакций. Durability — сохранность подтверждённых изменений при сбое в рамках гарантий СУБД.\n\nACID не означает, что любая бизнес-логика автоматически корректна. Если запрос неверно посчитал сумму и успешно закоммитился, база надёжно сохранит неправильный результат. Ограничения и проверки приложения должны обеспечивать смысловую корректность.\n\nИзоляция не всегда означает полную последовательность транзакций. Разные уровни изоляции допускают разные эффекты параллельного выполнения.",
+        "example": "BEGIN;\nUPDATE inventory\nSET quantity = quantity - 1\nWHERE product_id = 10 AND quantity > 0;\nCOMMIT;",
+        "note": "ACID не спасает от логически ошибочного SQL. Проверяй условия и инварианты отдельно.",
+        "simple": "ACID описывает надёжность выполнения транзакций, а не правильность бизнес-формулы в запросе.",
+        "practiceIds": [],
+        "outcomes": [
+          "Объяснить четыре свойства ACID",
+          "отличать техническую целостность от корректности бизнес-логики."
+        ],
+        "quiz": [
+          {
+            "question": "Какое свойство ACID означает, что подтверждённые изменения сохраняются после сбоя?",
+            "options": [
+              "Atomicity",
+              "Consistency",
+              "Isolation",
+              "Durability"
+            ],
+            "answer": 3,
+            "explanation": "Durability гарантирует устойчивость зафиксированных изменений в пределах гарантий PostgreSQL и настроек хранения."
+          }
+        ],
+        "walkthrough": {
+          "title": "Что защищает транзакция",
+          "scenario": "Переводим 500 рублей со счёта A на счёт B. Операция состоит из списания и зачисления.",
+          "steps": [
+            "Atomicity: обе операции должны выполниться вместе или не выполниться вовсе.",
+            "Consistency: после перевода должны сохраняться ограничения и бизнес-правила, например допустимый баланс.",
+            "Isolation: параллельные операции не должны увидеть некорректное промежуточное состояние.",
+            "Durability: после COMMIT подтверждённый результат должен пережить сбой в пределах гарантий PostgreSQL."
+          ],
+          "result": "Транзакция не позволяет сохранить только списание или только зачисление, если обе операции являются одной бизнес-операцией.",
+          "pitfall": "ACID не означает, что бизнес-логика автоматически правильная. База защищает транзакционные свойства, но корректные правила и ограничения нужно спроектировать."
+        },
+        "id": "constraints.acid"
+      },
+      {
+        "title": "Уровни изоляции",
+        "body": "Уровень изоляции определяет, какие эффекты параллельных транзакций могут быть видны друг другу. PostgreSQL поддерживает READ COMMITTED, REPEATABLE READ и SERIALIZABLE; READ UNCOMMITTED трактуется как READ COMMITTED.\n\nREAD COMMITTED по умолчанию даёт новый снимок данных для каждой команды. Поэтому два SELECT в одной транзакции могут увидеть разные подтверждённые изменения других транзакций. REPEATABLE READ использует стабильный снимок для транзакции, но может завершиться ошибкой сериализации при конфликтующих изменениях.\n\nSERIALIZABLE стремится обеспечить результат, эквивалентный последовательному выполнению транзакций. Приложение должно быть готово повторить транзакцию после serialization failure. Более строгая изоляция требует продуманной обработки ошибок и не является бесплатной.",
+        "example": "BEGIN ISOLATION LEVEL REPEATABLE READ;\nSELECT COUNT(*) FROM orders;\n-- другие транзакции могут менять данные,\n-- но снимок этой транзакции остаётся стабильным\nCOMMIT;",
+        "note": "Не путай REPEATABLE READ с блокировкой всех читаемых строк. В PostgreSQL стабильный снимок обеспечивается MVCC.",
+        "simple": "Изоляция определяет, что транзакция видит от параллельных изменений и какие конфликты может обнаружить.",
+        "practiceIds": [],
+        "outcomes": [
+          "Сравнить READ COMMITTED и REPEATABLE READ",
+          "объяснить назначение SERIALIZABLE."
+        ],
+        "quiz": [
+          {
+            "question": "Что характерно для READ COMMITTED в PostgreSQL?",
+            "options": [
+              "Каждая команда получает снимок на начало этой команды",
+              "Вся транзакция всегда видит один и тот же снимок",
+              "Все строки таблиц блокируются от чтения",
+              "Другие транзакции не могут выполнять INSERT"
+            ],
+            "answer": 0,
+            "explanation": "В READ COMMITTED каждый SQL-оператор видит данные, подтверждённые до начала этого оператора."
+          }
+        ],
+        "id": "constraints.urovni-izolyatsii"
+      },
+      {
+        "title": "Блокировки и взаимные блокировки",
+        "body": "Блокировка координирует конкурентный доступ к данным. UPDATE и DELETE блокируют изменяемые строки, а SELECT обычно читает согласованный снимок благодаря MVCC и не блокирует обычные изменения так, как многие ожидают.\n\nВзаимная блокировка (deadlock) возникает, когда транзакции ждут ресурсы друг друга по кругу. PostgreSQL обнаруживает deadlock и отменяет одну из транзакций. Это не означает, что база сломалась: приложение должно обработать ошибку и при необходимости повторить безопасную операцию.\n\nСнижать риск deadlock помогает единый порядок захвата строк, короткие транзакции и отсутствие ожидания пользователя внутри транзакции. Не удерживай блокировки дольше, чем требуется.",
+        "example": "BEGIN;\nSELECT *\nFROM orders\nWHERE order_id IN (101, 102)\nORDER BY order_id\nFOR UPDATE;\nCOMMIT;",
+        "note": "Если несколько транзакций блокируют одни и те же записи, захватывай их в одинаковом порядке.",
+        "simple": "Deadlock — цикл взаимного ожидания. PostgreSQL прерывает одну транзакцию, чтобы остальные могли продолжить.",
+        "practiceIds": [],
+        "outcomes": [
+          "Объяснить механизм deadlock",
+          "назвать способы уменьшить риск взаимных блокировок."
+        ],
+        "quiz": [
+          {
+            "question": "Что делает PostgreSQL при обнаружении deadlock?",
+            "options": [
+              "Ожидает бесконечно, пока пользователь вмешается",
+              "Отменяет одну из конфликтующих транзакций, чтобы разорвать цикл ожидания",
+              "Автоматически отключает все соединения",
+              "Удаляет заблокированные строки"
+            ],
+            "answer": 1,
+            "explanation": "PostgreSQL обнаруживает цикл ожидания и прерывает одну транзакцию с ошибкой deadlock detected."
+          }
+        ],
+        "id": "constraints.blokirovki-i-vzaimnye-blokirovki"
+      },
+      {
+        "title": "SAVEPOINT и частичный откат",
+        "body": "SAVEPOINT создаёт точку внутри транзакции, к которой можно откатиться, не отменяя всю транзакцию. ROLLBACK TO SAVEPOINT отменяет команды после точки, а RELEASE SAVEPOINT удаляет саму точку.\n\nЭто полезно, когда часть операции можно отменить, а остальные изменения сохранить. Например, пакетная обработка может попытаться вставить необязательную запись, обработать конфликт и продолжить работу.\n\nSAVEPOINT не заменяет общую транзакционную стратегию. Если ошибка нарушила бизнес-инвариант всей операции, лучше откатить транзакцию полностью. После ROLLBACK TO SAVEPOINT транзакция остаётся активной.",
+        "example": "BEGIN;\nUPDATE orders SET status = 'processing' WHERE order_id = 10;\nSAVEPOINT optional_step;\nINSERT INTO order_notes (order_id, note)\nVALUES (10, 'Автоматическая пометка');\nROLLBACK TO SAVEPOINT optional_step;\nCOMMIT;",
+        "note": "ROLLBACK TO SAVEPOINT не завершает всю транзакцию. После него можно продолжить работу и выполнить COMMIT.",
+        "simple": "SAVEPOINT — промежуточная точка отката внутри одной транзакции.",
+        "practiceIds": [
+          "e71"
+        ],
+        "outcomes": [
+          "Создавать SAVEPOINT",
+          "откатывать часть транзакции и продолжать оставшиеся действия."
+        ],
+        "quiz": [
+          {
+            "question": "Что произойдёт после ROLLBACK TO SAVEPOINT s1?",
+            "options": [
+              "Вся транзакция завершится и изменения до s1 тоже отменятся",
+              "Будут отменены изменения после s1, а транзакция останется активной",
+              "Точка s1 превратится в отдельную таблицу",
+              "Все изменения будут зафиксированы"
+            ],
+            "answer": 1,
+            "explanation": "Откат к savepoint отменяет только более позднюю часть работы. Транзакция продолжается с состояния на момент savepoint."
+          }
+        ],
+        "id": "constraints.savepoint-i-chastichnyy-otkat"
+      },
+      {
+        "title": "Действия внешних ключей и отложенные ограничения",
+        "body": "Внешние ключи могут управлять поведением при удалении или изменении родительской строки. RESTRICT и NO ACTION запрещают операцию, если остались ссылки. CASCADE автоматически удаляет или обновляет связанные строки. SET NULL записывает NULL во внешний ключ, SET DEFAULT использует его значение по умолчанию.\n\nВыбор действия зависит от смысла данных. Если удаление клиента не должно удалять историю заказов, CASCADE для orders может быть опасен. Если дочерняя запись не имеет смысла без родителя, каскадное удаление может быть оправдано.\n\nОграничения могут быть DEFERRABLE: проверка откладывается до конца транзакции или до SET CONSTRAINTS. Это помогает при некоторых циклических или пакетных изменениях, но требует внимательного управления моментом проверки.",
+        "example": "CREATE TABLE order_items (\n  order_id BIGINT REFERENCES orders(order_id)\n    ON DELETE CASCADE,\n  product_id BIGINT REFERENCES products(product_id)\n);",
+        "note": "CASCADE может удалить большой объём связанных данных. Перед его использованием проследи всю цепочку внешних ключей.",
+        "simple": "ON DELETE задаёт судьбу дочерних строк, когда удаляется родительская запись.",
+        "practiceIds": [],
+        "outcomes": [
+          "Выбирать действия ON DELETE по смыслу данных",
+          "объяснить DEFERRABLE и отложенную проверку."
+        ],
+        "quiz": [
+          {
+            "question": "Что делает ON DELETE SET NULL?",
+            "options": [
+              "Удаляет дочернюю строку целиком",
+              "Устанавливает NULL во внешнем ключе дочерней строки, если это допускает схема",
+              "Удаляет родительскую строку и все таблицы",
+              "Запрещает удаление родителя"
+            ],
+            "answer": 1,
+            "explanation": "SET NULL сохраняет дочернюю запись, но очищает ссылку на удалённую родительскую строку. Столбец должен допускать NULL."
+          }
+        ],
+        "id": "constraints.deystviya-vneshnikh-klyuchey-i-otlozhennye-ogranicheniya"
+      },
+      {
+        "title": "SERIALIZABLE и повтор транзакции",
+        "body": "SERIALIZABLE — самый строгий стандартный уровень изоляции PostgreSQL. Он допускает параллельное выполнение, но отслеживает зависимости так, чтобы успешный результат был эквивалентен некоторому последовательному порядку транзакций.\n\nЕсли обнаружен конфликт сериализации, PostgreSQL отменяет одну транзакцию с SQLSTATE 40001. Это ожидаемая часть работы уровня SERIALIZABLE, а не обязательно признак ошибки данных. Приложение должно повторить всю транзакцию целиком, а не только последнюю команду.\n\nПовтор безопасен только если операция не вызвала необратимые внешние эффекты до фиксации: например, не отправила письмо или не списала деньги через сторонний сервис. Такие действия требуют отдельной архитектуры, например transactional outbox.",
+        "simple": "SERIALIZABLE обеспечивает последовательную семантику, но приложение должно уметь повторять транзакции после конфликта.",
+        "example": "BEGIN ISOLATION LEVEL SERIALIZABLE;\nUPDATE inventory\nSET quantity = quantity - 1\nWHERE product_id = 10 AND quantity > 0;\nCOMMIT;",
+        "note": "При SQLSTATE 40001 повторяй всю транзакцию с самого начала и учитывай внешние побочные эффекты.",
+        "practiceIds": [],
+        "outcomes": [
+          "Объяснить serialization failure",
+          "спроектировать безопасный повтор транзакции."
+        ],
+        "quiz": [
+          {
+            "question": "Что следует повторить после SQLSTATE 40001 при SERIALIZABLE?",
+            "options": [
+              "Только последнюю команду COMMIT",
+              "Всю транзакцию от BEGIN с повторной проверкой условий",
+              "Только SELECT, который завершился успешно",
+              "Ничего: это означает, что данные уже зафиксированы"
+            ],
+            "answer": 1,
+            "explanation": "Ошибка сериализации означает, что транзакция не была успешно зафиксирована. Повторять нужно всю логическую транзакцию, чтобы заново проверить исходные условия."
+          }
+        ],
+        "id": "constraints.serializable-i-povtor-tranzaktsii"
+      }
+    ],
+    "quiz": [
+      {
+        "question": "Что означает атомарность транзакции?",
+        "options": [
+          "Каждая команда фиксируется отдельно",
+          "Все изменения транзакции фиксируются вместе или отменяются вместе",
+          "Транзакция всегда выполняется быстрее",
+          "Данные всегда сортируются"
+        ],
+        "answer": 1,
+        "explanation": "Транзакция — единый блок работы: либо COMMIT сохраняет всё, либо ROLLBACK отменяет изменения."
+      },
+      {
+        "question": "Для чего нужен SAVEPOINT?",
+        "options": [
+          "Чтобы создать таблицу",
+          "Чтобы откатить часть транзакции, не отменяя всю транзакцию",
+          "Чтобы ускорить SELECT",
+          "Чтобы выдать права"
+        ],
+        "answer": 1,
+        "explanation": "SAVEPOINT ставит внутреннюю точку возврата. Можно отменить команды после неё и продолжить транзакцию."
+      },
+      {
+        "question": "Какой уровень изоляции PostgreSQL используется по умолчанию?",
+        "options": [
+          "READ UNCOMMITTED",
+          "READ COMMITTED",
+          "REPEATABLE READ",
+          "SERIALIZABLE"
+        ],
+        "answer": 1,
+        "explanation": "По умолчанию PostgreSQL использует READ COMMITTED: каждый оператор видит снимок данных на момент начала этого оператора."
+      },
+      {
+        "question": "Что обычно происходит при deadlock?",
+        "options": [
+          "Обе транзакции бесконечно ждут",
+          "PostgreSQL обнаруживает взаимную блокировку и отменяет одну транзакцию",
+          "Все таблицы удаляются",
+          "База выключается"
+        ],
+        "answer": 1,
+        "explanation": "PostgreSQL обнаруживает цикл ожидания и прерывает одну транзакцию. Приложение должно уметь повторить операцию."
+      }
+    ],
+    "sources": [
+      "https://www.postgresql.org/docs/current/tutorial-transactions.html",
+      "https://www.postgresql.org/docs/current/transaction-iso.html",
+      "https://www.postgresql.org/docs/current/explicit-locking.html"
+    ],
+    "track": "postgresql",
+    "trackOrder": 4
+  },
+  {
+    "id": "views",
+    "title": "Представления, функции и триггеры",
+    "stage": "02 · Возможности PostgreSQL",
+    "desc": "Понять переиспользуемые запросы и серверную логику, а также их ограничения.",
+    "lessons": [
+      {
+        "title": "VIEW",
+        "body": "VIEW — сохранённое определение SELECT-запроса, которое можно использовать как источник строк. Представление обычно не хранит собственную копию результата: при обращении PostgreSQL выполняет запрос, лежащий в основе view.\n\nVIEW помогает скрыть сложность запроса, повторно использовать логику и ограничить набор доступных столбцов. Но представление само по себе не гарантирует производительность: оптимизатор может встроить его запрос в основной запрос.\n\nИзменение исходных таблиц может повлиять на представление. Перед изменением схемы проверь зависимости. Права на view и базовые таблицы тоже нужно проектировать осознанно.",
+        "example": "CREATE VIEW delivered_orders AS\nSELECT order_id, customer_id, total_amount\nFROM orders\nWHERE status = 'delivered';\n\nSELECT * FROM delivered_orders;",
+        "note": "Обычный VIEW не является снимком данных. Для сохранённого результата существует materialized view.",
+        "simple": "VIEW — именованный SELECT, который выглядит как таблица, но обычно не хранит результат.",
+        "practiceIds": [],
+        "outcomes": [
+          "Объяснить, что хранит VIEW",
+          "создавать и использовать представление."
+        ],
+        "quiz": [
+          {
+            "question": "Что хранит обычный VIEW в PostgreSQL?",
+            "options": [
+              "Определение запроса, а не отдельную копию всех строк результата",
+              "Полную копию таблицы, обновляемую автоматически",
+              "Только индекс исходной таблицы",
+              "Резервную копию базы"
+            ],
+            "answer": 0,
+            "explanation": "Обычное представление хранит определение запроса. При обращении к нему PostgreSQL получает актуальные данные через этот запрос."
+          }
+        ],
+        "id": "views.view"
+      },
+      {
+        "title": "Материализованное представление",
+        "body": "Materialized view сохраняет результат запроса физически. Чтение может быть быстрее, чем повторное вычисление сложной агрегации, но данные не обновляются автоматически при изменении исходных таблиц.\n\nREFRESH MATERIALIZED VIEW пересчитывает сохранённый результат. CONCURRENTLY позволяет обновлять представление без блокировки обычного чтения, но требует подходящего уникального индекса и имеет дополнительные условия.\n\nMaterialized view полезно для отчётных данных, которые можно обновлять по расписанию или после загрузки. Нужно определить допустимую задержку: насколько свежими должны быть показатели и как часто можно пересчитывать результат.",
+        "example": "CREATE MATERIALIZED VIEW monthly_revenue AS\nSELECT DATE_TRUNC('month', created_at) AS month,\n       SUM(total_amount) AS revenue\nFROM orders\nGROUP BY 1;\n\nREFRESH MATERIALIZED VIEW monthly_revenue;",
+        "note": "Материализованное представление может содержать устаревшие данные между обновлениями.",
+        "simple": "Materialized view хранит результат и требует обновления, когда источник меняется.",
+        "practiceIds": [],
+        "outcomes": [
+          "Объяснить отличие VIEW и MATERIALIZED VIEW",
+          "выбирать частоту обновления по требованиям свежести."
+        ],
+        "quiz": [
+          {
+            "question": "Что произойдёт с данными materialized view после изменения orders, если REFRESH не запускать?",
+            "options": [
+              "Результат автоматически обновится при следующем SELECT",
+              "Сохранённый результат останется прежним и может устареть",
+              "Представление автоматически удалится",
+              "PostgreSQL заблокирует UPDATE orders"
+            ],
+            "answer": 1,
+            "explanation": "Materialized view хранит физический результат. Изменения исходных таблиц не отражаются до обновления."
+          }
+        ],
+        "id": "views.materializovannoe-predstavlenie"
+      },
+      {
+        "title": "Функции PostgreSQL",
+        "body": "Функция PostgreSQL — именованный программный объект, который принимает аргументы и возвращает значение или набор строк. Функции могут быть написаны на SQL или PL/pgSQL и использоваться в выражениях SELECT, WHERE и FROM.\n\nФункции отличаются по типу возвращаемого значения, волатильности (IMMUTABLE, STABLE, VOLATILE), безопасности и поведению при NULL. Метки волатильности помогают оптимизатору понимать, можно ли повторно использовать результат или перемещать вычисления.\n\nНе объявляй функцию IMMUTABLE, если она зависит от текущего времени, таблиц, настроек сессии или внешнего состояния. Неверная метка может привести к некорректной оптимизации.",
+        "example": "CREATE FUNCTION add_tax(amount NUMERIC, rate NUMERIC)\nRETURNS NUMERIC\nLANGUAGE SQL\nIMMUTABLE\nAS $\n  SELECT amount * (1 + rate);\n$;",
+        "note": "IMMUTABLE означает одинаковый результат для одинаковых аргументов всегда. Не ставь эту метку просто ради скорости.",
+        "simple": "Функция — повторно используемая логика с аргументами и определённым результатом.",
+        "practiceIds": [],
+        "outcomes": [
+          "Создавать простую SQL-функцию",
+          "объяснить назначение RETURNS и volatility."
+        ],
+        "quiz": [
+          {
+            "question": "Какую метку волатильности обычно следует выбрать функции, которая возвращает CURRENT_TIMESTAMP?",
+            "options": [
+              "IMMUTABLE: результат зависит только от аргументов",
+              "STABLE: значение не меняется в пределах транзакции",
+              "VOLATILE: значение обязательно меняется при каждом вызове",
+              "STRICT: функция всегда возвращает NULL"
+            ],
+            "answer": 1,
+            "explanation": "В PostgreSQL CURRENT_TIMESTAMP фиксируется на начало текущей транзакции. Функция, возвращающая его, обычно соответствует STABLE, а не IMMUTABLE или VOLATILE."
+          }
+        ],
+        "id": "views.funktsii-postgresql"
+      },
+      {
+        "title": "Триггеры",
+        "body": "Триггер — механизм, который автоматически запускает функцию при INSERT, UPDATE, DELETE или TRUNCATE. Триггер может выполняться до изменения (BEFORE), после изменения (AFTER) или вместо операции над представлением (INSTEAD OF).\n\nТриггеры используют для аудита, вычисления производных значений, проверки сложных правил и поддержки истории. Но скрытая логика усложняет отладку: INSERT может изменить больше таблиц, чем видно из самого запроса.\n\nТриггерная функция в PostgreSQL обычно написана на PL/pgSQL и использует специальные значения NEW и OLD. NEW описывает новую строку, OLD — старую. Для BEFORE-триггера можно изменить NEW и повлиять на сохраняемую запись.",
+        "example": "CREATE TABLE customer_demo (\n  customer_id integer PRIMARY KEY,\n  customer_name text NOT NULL,\n  updated_at timestamptz NOT NULL DEFAULT now()\n);\n\nCREATE FUNCTION set_updated_at()\nRETURNS trigger\nLANGUAGE plpgsql\nAS $\nBEGIN\n  NEW.updated_at := now();\n  RETURN NEW;\nEND;\n$;\n\nCREATE TRIGGER trg_set_updated_at\nBEFORE UPDATE ON customer_demo\nFOR EACH ROW\nEXECUTE FUNCTION set_updated_at();",
+        "note": "Триггеры полезны, но не прячь в них бизнес-процесс, который должен быть явно виден и контролируем в приложении.",
+        "simple": "Триггер запускает функцию автоматически в ответ на событие изменения данных.",
+        "practiceIds": [],
+        "outcomes": [
+          "Объяснить BEFORE и AFTER",
+          "читать NEW и OLD",
+          "описать риск скрытых побочных изменений."
+        ],
+        "quiz": [
+          {
+            "question": "Что позволяет сделать BEFORE UPDATE row-level trigger с NEW?",
+            "options": [
+              "Изменить значения новой версии строки до её сохранения",
+              "Прочитать только удалённые строки",
+              "Запустить триггер на другой базе",
+              "Отменить все SELECT в таблице"
+            ],
+            "answer": 0,
+            "explanation": "В BEFORE-триггере можно изменить NEW и вернуть его. PostgreSQL сохранит изменённую версию строки."
+          }
+        ],
+        "id": "views.triggery"
+      },
+      {
+        "title": "Основы PL/pgSQL: переменные и ветвления",
+        "body": "PL/pgSQL добавляет к SQL процедурные конструкции: переменные, IF, циклы, обработку ошибок и вызов SQL-команд. Функция на PL/pgSQL подходит, когда логика состоит из нескольких шагов и её удобно выполнять внутри сервера.\n\nПеременная объявляется в блоке DECLARE, значение присваивается через := или SELECT ... INTO. IF ... THEN ... ELSE управляет ветвлением. Блоки BEGIN и END в PL/pgSQL ограничивают тело блока, но это не то же самое, что транзакционные BEGIN и COMMIT.\n\nНе переноси сложные циклы в базу автоматически. SQL-наборные операции обычно эффективнее построчного цикла. PL/pgSQL полезен там, где действительно нужна процедурная логика.",
+        "example": "CREATE FUNCTION order_label(amount NUMERIC)\nRETURNS TEXT\nLANGUAGE plpgsql\nAS $\nBEGIN\n  IF amount >= 10000 THEN\n    RETURN 'large';\n  ELSE\n    RETURN 'regular';\n  END IF;\nEND;\n$;",
+        "note": "Если задачу можно выразить одним SQL-запросом над набором строк, не заменяй его циклом по одной строке.",
+        "simple": "PL/pgSQL — язык процедурной логики внутри PostgreSQL, который дополняет SQL.",
+        "practiceIds": [],
+        "outcomes": [
+          "Объявлять переменные и ветвления IF",
+          "отличать PL/pgSQL BEGIN/END от транзакционных команд."
+        ],
+        "quiz": [
+          {
+            "question": "Что делает RETURN внутри функции PL/pgSQL?",
+            "options": [
+              "Завершает функцию и возвращает указанное значение вызывающему запросу",
+              "Фиксирует транзакцию",
+              "Создаёт новую таблицу",
+              "Переходит к следующей итерации цикла"
+            ],
+            "answer": 0,
+            "explanation": "RETURN завершает выполнение функции и возвращает значение, соответствующее типу RETURNS."
+          }
+        ],
+        "id": "views.osnovy-pl-pgsql-peremennye-i-vetvleniya"
+      },
+      {
+        "title": "Обработка ошибок и EXCEPTION",
+        "body": "Блок EXCEPTION перехватывает ошибки, возникшие в соответствующем блоке PL/pgSQL. Это позволяет обработать ожидаемую ситуацию, например уникальный конфликт, и вернуть понятный результат или выполнить альтернативное действие.\n\nОбработка исключения не должна скрывать любые ошибки без разбора. Если перехватить OTHERS и ничего не сделать, настоящие проблемы могут остаться незамеченными. Лучше перехватывать конкретные SQLSTATE или именованные условия и логировать контекст.\n\nВ PostgreSQL блок с EXCEPTION работает как подблок с собственным откатом изменений внутри него. Но внешние побочные эффекты и действия вне транзакции могут не отмениться.",
+        "example": "DO $\nBEGIN\n  INSERT INTO customers (customer_id, customer_name)\n  VALUES (1, 'Test');\nEXCEPTION\n  WHEN unique_violation THEN\n    RAISE NOTICE 'Customer already exists';\nEND;\n$;",
+        "note": "Не используй WHEN OTHERS без повторного выброса или осмысленной обработки неизвестной ошибки.",
+        "simple": "EXCEPTION позволяет обработать ожидаемую ошибку, но не должен превращаться в заглушку для всех проблем.",
+        "practiceIds": [],
+        "outcomes": [
+          "Перехватывать конкретные ошибки",
+          "объяснить, почему нельзя молча проглатывать все исключения."
+        ],
+        "quiz": [
+          {
+            "question": "Почему опасно перехватывать WHEN OTHERS и ничего не делать?",
+            "options": [
+              "Потому что можно скрыть неожиданные ошибки и продолжить работу с некорректным состоянием",
+              "Потому что WHEN OTHERS удаляет таблицы",
+              "Потому что EXCEPTION работает только с SELECT",
+              "Потому что PostgreSQL запрещает обработку ошибок"
+            ],
+            "answer": 0,
+            "explanation": "Неизвестная ошибка может означать серьёзную проблему. Если её молча проглотить, вызывающий код не узнает, что операция не удалась."
+          }
+        ],
+        "id": "views.obrabotka-oshibok-i-exception"
+      }
+    ],
+    "quiz": [
+      {
+        "question": "Чем обычное VIEW отличается от MATERIALIZED VIEW?",
+        "options": [
+          "VIEW хранит готовые строки",
+          "VIEW сохраняет запрос, MATERIALIZED VIEW хранит результат на момент обновления",
+          "VIEW нельзя использовать в SELECT",
+          "Ничем"
+        ],
+        "answer": 1,
+        "explanation": "Обычное представление выполняет свой запрос при обращении. Материализованное хранит снимок результата и его нужно обновлять."
+      },
+      {
+        "question": "Когда срабатывает триггер?",
+        "options": [
+          "Только по расписанию",
+          "При событии, для которого он настроен, например INSERT или UPDATE",
+          "При открытии редактора",
+          "При создании индекса"
+        ],
+        "answer": 1,
+        "explanation": "Триггер автоматически вызывает функцию в ответ на определённое событие с таблицей или представлением."
+      },
+      {
+        "question": "Нужно ли вручную обновлять обычное VIEW?",
+        "options": [
+          "Да, каждый час",
+          "Нет, оно выполняет сохранённый запрос при обращении",
+          "Только после INSERT",
+          "Только после VACUUM"
+        ],
+        "answer": 1,
+        "explanation": "Обычное представление не хранит готовые строки. Материализованное представление, наоборот, нужно обновлять."
+      },
+      {
+        "question": "Что делает триггер BEFORE UPDATE?",
+        "options": [
+          "Выполняется до изменения строки",
+          "Выполняется после SELECT",
+          "Создаёт индекс",
+          "Отключает ограничения"
+        ],
+        "answer": 0,
+        "explanation": "BEFORE-триггер запускается перед событием и может, например, проверить или изменить NEW."
+      }
+    ],
+    "sources": [
+      "https://www.postgresql.org/docs/current/sql-createview.html",
+      "https://www.postgresql.org/docs/current/plpgsql.html"
+    ],
+    "track": "postgresql",
+    "trackOrder": 5
+  },
+  {
+    "id": "performance",
+    "title": "Индексы и производительность",
+    "stage": "03 · Производительность и эксплуатация",
+    "desc": "Читать планы, понимать B-tree и составные индексы, оценивать стоимость запросов и избегать преждевременной оптимизации.",
+    "lessons": [
+      {
+        "title": "Как СУБД выполняет запрос",
+        "body": "PostgreSQL выполняет запрос не как простой построчный скрипт. Он разбирает SQL, проверяет имена и типы, переписывает запрос, выбирает план и выполняет его. План определяет, как читать таблицы, соединять строки, сортировать и агрегировать результат.\n\nОдин и тот же запрос может иметь разные планы в зависимости от размера таблиц, статистики, индексов и параметров. Seq Scan читает таблицу целиком, Index Scan использует индекс для поиска строк, Bitmap Scan сочетает индексный поиск с чтением страниц.\n\nСам факт использования индекса не означает, что план лучше. Если нужно прочитать большую часть таблицы, последовательное чтение может быть дешевле. Оптимизатор выбирает оценочно самый выгодный план на основе статистики и стоимости операций.",
+        "example": "EXPLAIN\nSELECT order_id, total_amount\nFROM orders\nWHERE customer_id = 42;",
+        "note": "Не оценивай план по наличию Index Scan. Смотри на объём данных, оценки строк, стоимость и фактическое время.",
+        "simple": "План выполнения — выбранный PostgreSQL способ получить результат запроса.",
+        "practiceIds": [],
+        "outcomes": [
+          "Объяснить роль планировщика",
+          "различать Seq Scan, Index Scan и Bitmap Scan."
+        ],
+        "quiz": [
+          {
+            "question": "Почему Seq Scan иногда быстрее Index Scan?",
+            "options": [
+              "Когда нужно прочитать большую долю таблицы, последовательное чтение может быть дешевле множества обращений по индексу",
+              "Потому что индексы всегда повреждены",
+              "Потому что Seq Scan использует только одну строку",
+              "Потому что PostgreSQL не умеет читать индексы"
+            ],
+            "answer": 0,
+            "explanation": "Если запросу нужны многие строки, последовательное чтение страниц может быть эффективнее обхода индекса и случайных обращений к таблице."
+          }
+        ],
+        "id": "performance.kak-subd-vypolnyaet-zapros"
+      },
+      {
+        "title": "EXPLAIN и EXPLAIN ANALYZE",
+        "body": "EXPLAIN показывает план, который PostgreSQL собирается использовать. Он выводит типы операций, оценочную стоимость, ожидаемое число строк и ширину строк. EXPLAIN ANALYZE действительно выполняет запрос и показывает фактические строки и время.\n\nСравни estimated rows и actual rows. Большая разница может указывать на устаревшую статистику, корреляцию столбцов или неравномерное распределение значений. EXPLAIN ANALYZE также показывает loops: узел может выполняться много раз, например внутри Nested Loop.\n\nОсторожно с изменяющими командами: EXPLAIN ANALYZE запускает их. Для UPDATE и DELETE используй тестовую базу или транзакцию с ROLLBACK, если все эффекты действительно транзакционные.",
+        "example": "EXPLAIN (ANALYZE, BUFFERS)\nSELECT customer_id, COUNT(*)\nFROM orders\nGROUP BY customer_id;",
+        "note": "EXPLAIN ANALYZE выполняет запрос. Не запускай его на опасном UPDATE или DELETE без защиты.",
+        "simple": "EXPLAIN оценивает план, EXPLAIN ANALYZE выполняет запрос и показывает фактическое поведение.",
+        "practiceIds": [
+          "e46"
+        ],
+        "outcomes": [
+          "Читать оценочные и фактические строки",
+          "объяснить риск EXPLAIN ANALYZE."
+        ],
+        "quiz": [
+          {
+            "question": "Что добавляет EXPLAIN ANALYZE по сравнению с обычным EXPLAIN?",
+            "options": [
+              "Фактическое выполнение запроса и измеренные показатели узлов плана",
+              "Автоматическое создание индексов",
+              "Гарантию, что запрос будет быстрее",
+              "Резервную копию таблиц"
+            ],
+            "answer": 0,
+            "explanation": "EXPLAIN ANALYZE запускает запрос и сообщает фактические строки, время и число циклов выполнения."
+          }
+        ],
+        "walkthrough": {
+          "title": "Оценка плана и фактическое выполнение",
+          "scenario": "Нужно понять, почему фильтр по customer_id выполняется медленно.",
+          "steps": [
+            "EXPLAIN показывает выбранные узлы плана и оценочную стоимость без запуска SELECT.",
+            "EXPLAIN ANALYZE выполняет запрос и добавляет фактическое время и число строк.",
+            "Сравни estimated rows с actual rows, чтобы увидеть ошибку оценки.",
+            "BUFFERS помогает понять, сколько страниц было найдено в кеше или прочитано."
+          ],
+          "result": "Ты видишь не просто «индекс есть или нет», а конкретные операции и фактическую работу запроса.",
+          "pitfall": "EXPLAIN ANALYZE действительно запускает запрос. Не применяй его бездумно к UPDATE, DELETE или другим командам с побочными эффектами."
+        },
+        "id": "performance.explain-i-explain-analyze"
+      },
+      {
+        "title": "B-tree и обычный индекс",
+        "body": "B-tree — индекс по умолчанию в PostgreSQL и универсальный выбор для равенства, диапазонов и сортировки. Он хранит ключи в упорядоченной структуре, поэтому подходит для условий =, <, BETWEEN и ORDER BY при подходящем порядке столбцов.\n\nИндекс ускоряет поиск ценой дополнительного места и затрат на INSERT, UPDATE и DELETE: при изменении данных нужно обновлять и индекс. Поэтому индекс на каждом столбце не является бесплатным ускорением.\n\nИндекс особенно полезен, когда запрос выбирает небольшую долю строк или использует сортировку, которую можно получить из индекса. Но для маленькой таблицы или широкого результата Seq Scan может быть дешевле.",
+        "example": "CREATE INDEX idx_orders_customer\nON orders (customer_id);\n\nEXPLAIN\nSELECT * FROM orders\nWHERE customer_id = 42;",
+        "note": "Индекс ускоряет некоторые чтения, но замедляет изменения и занимает место. Создавай его под реальные запросы.",
+        "simple": "B-tree полезен для равенства, диапазонов и многих вариантов сортировки.",
+        "practiceIds": [
+          "e68"
+        ],
+        "outcomes": [
+          "Объяснить назначение B-tree",
+          "оценивать компромисс между чтением и записью."
+        ],
+        "quiz": [
+          {
+            "question": "Какой тип условия обычно хорошо поддерживается B-tree индексом по created_at?",
+            "options": [
+              "created_at >= TIMESTAMP '2026-01-01' AND created_at < TIMESTAMP '2026-02-01'",
+              "WHERE lower(description) LIKE '%abc%' без функционального индекса",
+              "WHERE random() > 0.5",
+              "WHERE description IS JSON"
+            ],
+            "answer": 0,
+            "explanation": "B-tree поддерживает диапазонные условия по индексированному столбцу, если выражение и типы соответствуют индексу."
+          }
+        ],
+        "walkthrough": {
+          "title": "Когда B-tree помогает фильтру",
+          "scenario": "Нужно быстро находить заказы конкретного клиента.",
+          "steps": [
+            "B-tree хранит ключи в упорядоченной структуре и подходит для равенства и диапазонов.",
+            "Индекс по customer_id может помочь найти строки, где customer_id = 42.",
+            "После поиска PostgreSQL может обратиться к самой таблице, чтобы прочитать остальные столбцы.",
+            "Если запрос возвращает большую долю таблицы, последовательное чтение может оказаться дешевле."
+          ],
+          "result": "Индекс даёт планировщику дополнительный способ доступа, но не гарантирует Index Scan для каждого запроса.",
+          "pitfall": "Наличие индекса не означает, что он обязан использоваться. Проверяй план на реальном объёме и распределении данных."
+        },
+        "id": "performance.b-tree-i-obychnyy-indeks"
+      },
+      {
+        "title": "Составные, частичные и покрывающие индексы",
+        "body": "Составной индекс содержит несколько ключевых столбцов. Для B-tree важен порядок: индекс (customer_id, created_at) хорошо подходит для поиска по customer_id и затем по диапазону created_at. Он не так полезен для запроса только по created_at, потому что ведущий столбец customer_id не ограничен.\n\nЧастичный индекс содержит только строки, удовлетворяющие WHERE в определении индекса. Он может быть меньше и полезнее для запросов по активным или незавершённым записям. Покрывающий индекс с INCLUDE хранит дополнительные значения для возможности index-only scan, хотя видимость строк и другие условия всё равно влияют на результат.\n\nПроектируй составной индекс по реальным фильтрам и сортировке. Не добавляй столбцы «на всякий случай»: каждый ключ влияет на размер и стоимость обновления.",
+        "example": "CREATE INDEX idx_orders_customer_date\nON orders (customer_id, created_at DESC)\nINCLUDE (total_amount);",
+        "note": "Индекс (a,b) обычно не заменяет индекс только по b для всех запросов. Проверяй план.",
+        "simple": "В составном B-tree индексе порядок столбцов важен: сначала выбирай ведущие фильтры и группировки.",
+        "practiceIds": [],
+        "outcomes": [
+          "Объяснить ведущий столбец составного индекса",
+          "различать частичный индекс и INCLUDE."
+        ],
+        "quiz": [
+          {
+            "question": "Для какого условия индекс (customer_id, created_at) наиболее естественен?",
+            "options": [
+              "customer_id = 42 AND created_at >= DATE '2026-01-01'",
+              "Только created_at >= DATE '2026-01-01' при любом customer_id",
+              "Только status = 'paid'",
+              "Только total_amount > 100"
+            ],
+            "answer": 0,
+            "explanation": "Ведущий столбец customer_id ограничен равенством, затем используется диапазон по created_at."
+          }
+        ],
+        "id": "performance.sostavnye-chastichnye-i-pokryvayushchie-indeksy"
+      },
+      {
+        "title": "Статистика, ANALYZE и VACUUM",
+        "body": "PostgreSQL собирает статистику о распределении значений, чтобы оценивать количество строк после фильтров и выбирать план. ANALYZE обновляет статистику, а autovacuum обычно запускает ANALYZE и VACUUM автоматически по порогам.\n\nVACUUM освобождает место, занятое старыми версиями строк, для повторного использования и поддерживает visibility map. В модели MVCC UPDATE и DELETE не всегда удаляют старую версию сразу. Без очистки таблицы могут разрастаться.\n\nVACUUM FULL переписывает таблицу и требует более серьёзной блокировки. Не запускай его как обычную регулярную команду без оценки влияния. Обычно сначала проверяют autovacuum, статистику и признаки bloat.",
+        "example": "ANALYZE orders;\nVACUUM (ANALYZE) orders;",
+        "note": "Не путай VACUUM с удалением всех данных и не запускай VACUUM FULL без оценки блокировок.",
+        "simple": "ANALYZE обновляет статистику для планировщика. VACUUM обслуживает старые версии строк MVCC.",
+        "practiceIds": [],
+        "outcomes": [
+          "Объяснить роль статистики",
+          "различать ANALYZE, VACUUM и VACUUM FULL."
+        ],
+        "quiz": [
+          {
+            "question": "Для чего планировщику нужна статистика ANALYZE?",
+            "options": [
+              "Чтобы оценивать число строк после условий и выбирать план выполнения",
+              "Чтобы хранить резервную копию таблицы",
+              "Чтобы автоматически исправлять значения NULL",
+              "Чтобы гарантировать уникальность ключей"
+            ],
+            "answer": 0,
+            "explanation": "Оценки селективности и количества строк влияют на выбор способов чтения, JOIN и агрегации."
+          }
+        ],
+        "id": "performance.statistika-analyze-i-vacuum"
+      },
+      {
+        "title": "Поиск узких мест",
+        "body": "Если запрос медленный, сначала найди конкретный узел или этап, который создаёт основную задержку. Проверь EXPLAIN (ANALYZE, BUFFERS), фактические строки, loops, чтение блоков и сортировки на диск.\n\nПроблема может быть не в отсутствии индекса. Частые причины: неверная кардинальность JOIN, большой fan-out, функция над индексируемым столбцом, сортировка большого набора, устаревшая статистика или слишком широкий SELECT.\n\nОптимизируй измеряемую проблему. Сохрани исходный план, измени одну вещь, сравни фактические показатели и проверь, что результат запроса не изменился по смыслу.",
+        "example": "EXPLAIN (ANALYZE, BUFFERS)\nSELECT order_id, total_amount\nFROM orders\nWHERE customer_id = 42\nORDER BY created_at DESC\nLIMIT 20;",
+        "note": "Сравнивай планы на сопоставимых данных и условиях. Не оптимизируй только оценочную cost как будто это миллисекунды.",
+        "simple": "Оптимизация начинается с измерения узкого места, а не с добавления случайных индексов.",
+        "practiceIds": [],
+        "outcomes": [
+          "Находить узкий узел плана",
+          "проверять влияние одного изменения на время и корректность результата."
+        ],
+        "quiz": [
+          {
+            "question": "Что разумнее сделать первым при медленном запросе?",
+            "options": [
+              "Посмотреть EXPLAIN (ANALYZE, BUFFERS) и найти фактический узкий узел",
+              "Добавить индекс на каждый столбец",
+              "Удалить все JOIN",
+              "Увеличить LIMIT"
+            ],
+            "answer": 0,
+            "explanation": "Сначала нужно измерить, где запрос тратит время и какие оценки не совпадают с фактом. Иначе оптимизация будет гаданием."
+          }
+        ],
+        "id": "performance.poisk-uzkikh-mest"
+      },
+      {
+        "title": "Expression, partial, GIN, GiST и BRIN индексы",
+        "body": "Expression index индексирует результат выражения, например lower(email), а не исходное значение email напрямую. Такой индекс помогает, если запрос использует то же выражение.\n\nPartial index содержит только строки, удовлетворяющие условию WHERE, например незавершённые заказы. GIN подходит для поиска внутри составных значений, например JSONB и массивов. GiST — обобщённый тип индекса для диапазонов, геометрии и других операторных классов. BRIN хранит сводную информацию о диапазонах физических блоков и может быть очень компактным для больших таблиц, где значения коррелируют с физическим порядком.\n\nВыбирай тип индекса по операторам запроса и типу данных. Универсального «самого быстрого индекса» не существует.",
+        "example": "CREATE INDEX idx_customers_lower_name\nON customers (lower(customer_name));\n\nCREATE INDEX idx_orders_open\nON orders (created_at)\nWHERE status = 'open';",
+        "note": "Expression index полезен только при совпадающем выражении запроса и подходящем операторном классе.",
+        "simple": "B-tree не единственный вариант. GIN, GiST и BRIN решают другие классы задач.",
+        "practiceIds": [],
+        "outcomes": [
+          "Различать expression, partial, GIN, GiST и BRIN",
+          "выбирать индекс под оператор и данные."
+        ],
+        "quiz": [
+          {
+            "question": "Какой индекс чаще рассматривают для поиска по ключам и значениям внутри JSONB?",
+            "options": [
+              "GIN с подходящим операторным классом",
+              "Обычный B-tree по unrelated id",
+              "BRIN по случайному тексту",
+              "Уникальный индекс на каждой JSON-строке"
+            ],
+            "answer": 0,
+            "explanation": "GIN поддерживает эффективный поиск по структурам вроде JSONB и массивов для соответствующих операторов."
+          }
+        ],
+        "id": "performance.expression-partial-gin-gist-i-brin-indeksy"
+      },
+      {
+        "title": "Чтение плана: Scan, Join и Aggregate",
+        "body": "План выполнения состоит из узлов. Scan читает источник, Join объединяет наборы, Aggregate считает группы или агрегаты, Sort сортирует строки, Limit ограничивает результат.\n\nNested Loop для каждой строки внешнего набора ищет совпадения во внутреннем. Он может быть быстрым для малого внешнего набора и индексного поиска, но дорогим при большом числе внешних строк. Hash Join строит хеш-таблицу по одной стороне и ищет совпадения по другой; Merge Join использует упорядоченные входы.\n\nУзел сам по себе не плохой. Смотри на actual rows, loops и время. Nested Loop с десятью строками и быстрым индексным поиском может быть отличным планом, а Hash Join может быть невыгоден для маленького результата.",
+        "example": "EXPLAIN (ANALYZE, BUFFERS)\nSELECT o.order_id, c.customer_name\nFROM orders AS o\nJOIN customers AS c USING (customer_id);",
+        "note": "Nested Loop не означает ошибку. Важны размер внешнего набора, число loops и стоимость внутреннего поиска.",
+        "simple": "Название узла описывает способ выполнения, а не его качество. Оцени фактический объём и число циклов.",
+        "practiceIds": [
+          "e101"
+        ],
+        "outcomes": [
+          "Читать Scan, Join и Aggregate",
+          "сравнивать план по фактическим строкам и циклам."
+        ],
+        "quiz": [
+          {
+            "question": "Когда Nested Loop может быть хорошим выбором?",
+            "options": [
+              "Когда внешний набор мал и для внутреннего поиска есть эффективный индекс",
+              "Только когда обе таблицы содержат миллионы строк",
+              "Когда условие JOIN отсутствует",
+              "Когда результат всегда пустой"
+            ],
+            "answer": 0,
+            "explanation": "Для небольшого внешнего набора индексный поиск по каждой строке может быть дешевле построения хеша или сортировки больших наборов."
+          }
+        ],
+        "id": "performance.chtenie-plana-scan-join-i-aggregate"
+      },
+      {
+        "title": "Параметры запроса и prepared statements",
+        "body": "Prepared statement позволяет подготовить запрос один раз и выполнять его многократно с разными параметрами. Это уменьшает повторный разбор и может использовать план выполнения повторно.\n\nВ PostgreSQL план может быть custom или generic. Custom учитывает конкретные значения параметров, generic использует общий план. Если распределение данных сильно неравномерно, один общий план может оказаться плохим для некоторых параметров.\n\nПараметризованные запросы важны и для безопасности: значения передаются отдельно от текста SQL, что защищает от SQL injection. Но параметр нельзя использовать вместо имени таблицы или столбца обычным способом.",
+        "example": "PREPARE orders_by_customer(BIGINT) AS\nSELECT order_id, total_amount\nFROM orders\nWHERE customer_id = $1;\n\nEXECUTE orders_by_customer(42);",
+        "note": "Не склеивай SQL из пользовательских строк. Параметры защищают значения, но не динамические имена объектов.",
+        "simple": "Prepared statement отделяет структуру SQL от значений параметров и может повторно использовать подготовленный запрос.",
+        "practiceIds": [],
+        "outcomes": [
+          "Объяснить prepared statements",
+          "различать параметры значений и динамические идентификаторы."
+        ],
+        "quiz": [
+          {
+            "question": "Почему параметр $1 нельзя использовать вместо имени таблицы в SELECT * FROM $1?",
+            "options": [
+              "Параметры предназначены для значений, а имя таблицы является частью структуры SQL",
+              "Потому что $1 работает только с датами",
+              "Потому что PostgreSQL запрещает SELECT с параметрами",
+              "Потому что имена таблиц всегда являются числами"
+            ],
+            "answer": 0,
+            "explanation": "Параметры связываются после разбора структуры запроса. Для динамических имён нужны белый список и безопасное форматирование идентификаторов."
+          }
+        ],
+        "id": "performance.parametry-zaprosa-i-prepared-statements"
+      },
+      {
+        "title": "Составной индекс и порядок столбцов",
+        "body": "Порядок столбцов составного B-tree индекса определяет, какие запросы смогут эффективно использовать его ведущую часть. Индекс (status, created_at) подходит для status = 'open' и диапазона по created_at внутри этого статуса.\n\nЕсли фильтр использует только created_at, такой индекс обычно менее полезен, потому что сначала идут записи, сгруппированные по status. Поэтому порядок выбирают исходя из реальных WHERE, JOIN и ORDER BY, а не просто из списка столбцов.\n\nСелективность важна, но не является единственным фактором. Индекс может использоваться и для столбца с небольшим числом уникальных значений, если он ведущий в составном индексе и запрос ограничивает комбинацию полей.",
+        "simple": "В составном индексе ведущие столбцы задают доступный путь поиска. Порядок проектируется под запросы.",
+        "example": "CREATE INDEX idx_orders_status_date\nON orders (status, created_at DESC);",
+        "note": "Не существует универсального правила «самый селективный столбец всегда первый». Учитывай паттерны запросов и сортировку.",
+        "practiceIds": [],
+        "outcomes": [
+          "Подбирать порядок столбцов индекса по шаблонам фильтрации и сортировки.",
+          "Объяснить, почему индекс с другим ведущим столбцом может не подойти запросу."
+        ],
+        "quiz": [
+          {
+            "question": "Для запроса WHERE status = 'open' AND created_at >= ... какой индекс наиболее естественен?",
+            "options": [
+              "(status, created_at)",
+              "(total_amount, order_id)",
+              "(created_at, unrelated_text) без условия по ведущему столбцу",
+              "Индекс только на full_name"
+            ],
+            "answer": 0,
+            "explanation": "Равенство по ведущему status и диапазон по следующему created_at соответствуют левому префиксу B-tree индекса."
+          }
+        ],
+        "id": "performance.sostavnoy-indeks-i-poryadok-stolbtsov"
+      },
+      {
+        "title": "Как читать BUFFERS, loops и actual rows",
+        "body": "В EXPLAIN ANALYZE BUFFERS показывает работу с блоками: shared hit — страницы найдены в буферном кеше PostgreSQL, shared read — страницы пришлось прочитать в буфер. Это не всегда означает физическое чтение с диска: ОС тоже может кэшировать данные.\n\nloops показывает, сколько раз выполнялся узел. actual rows обычно указывается в среднем за цикл, поэтому для оценки общего числа обработанных строк учитывай loops. Большое значение loops вместе с большим actual time может объяснить медленный Nested Loop.\n\nСравнивай actual rows с estimated rows: сильное расхождение может привести к неудачному плану. BUFFERS помогает понять объём чтения, но сам по себе не заменяет анализ времени и структуры узлов.",
+        "simple": "BUFFERS показывает попадания и чтения страниц, loops — число запусков узла.",
+        "example": "EXPLAIN (ANALYZE, BUFFERS, VERBOSE)\nSELECT *\nFROM orders\nWHERE customer_id = 42;",
+        "note": "actual rows часто приводится на один loop. Для общего объёма учитывай оба показателя.",
+        "practiceIds": [],
+        "outcomes": [
+          "Читать shared hit/read и loops",
+          "находить расхождение estimated и actual rows."
+        ],
+        "quiz": [
+          {
+            "question": "У узла указано actual rows=5 и loops=100. Какой приблизительный суммарный объём строк он обработал?",
+            "options": [
+              "Около 500 строк",
+              "Около 5 строк",
+              "Около 100 строк",
+              "Около 105 строк"
+            ],
+            "answer": 0,
+            "explanation": "actual rows указывается в среднем на один цикл. При 100 циклах и 5 строках за цикл суммарно получается примерно 500 строк."
+          }
+        ],
+        "id": "performance.kak-chitat-buffers-loops-i-actual-rows"
+      },
+      {
+        "title": "Nested Loop, Hash Join и Merge Join",
+        "body": "PostgreSQL соединяет таблицы не одним универсальным способом. Планировщик выбирает алгоритм JOIN по оценкам количества строк, доступным индексам, сортировке и стоимости чтения. В плане название узла показывает именно физический алгоритм, а не тип SQL-синтаксиса INNER или LEFT JOIN.\n\nNested Loop берёт строки внешнего источника и для каждой ищет совпадения во внутреннем. Он особенно хорош, когда внешний набор небольшой, а для внутреннего есть подходящий индекс. Если внешних строк тысячи, а внутренний источник каждый раз читается целиком, стоимость может резко вырасти. Смотри на loops у внутреннего узла.\n\nHash Join строит хеш-таблицу по одной стороне соединения, а затем проверяет строки второй стороны. Он часто удобен для больших несортированных наборов при равенстве ключей. Если хеш не помещается в доступную память, возможны batches и дополнительные обращения к временным файлам.\n\nMerge Join проходит два отсортированных набора по ключам. Он полезен, когда входы уже упорядочены или сортировка всё равно нужна. Само наличие Merge Join не гарантирует скорость: учитывай стоимость Sort и объём входных строк.",
+        "example": "EXPLAIN (ANALYZE, BUFFERS)\nSELECT o.order_id, s.store_name\nFROM orders o\nJOIN stores s ON s.store_id = o.store_id\nWHERE o.customer_id = 1;",
+        "note": "Не пытайся вручную заставить PostgreSQL всегда использовать один алгоритм. Сначала проверь оценки строк, loops, сортировки и фактические буферы.",
+        "simple": "Nested Loop повторяет поиск для каждой внешней строки, Hash Join сопоставляет через хеш-таблицу, Merge Join соединяет два упорядоченных потока.",
+        "practiceIds": [
+          "e102"
+        ],
+        "outcomes": [
+          "Различать Nested Loop, Hash Join и Merge Join",
+          "объяснять, почему размер внешнего набора и loops влияют на Nested Loop."
+        ],
+        "quiz": [
+          {
+            "question": "В каком сценарии Nested Loop часто оказывается хорошим выбором?",
+            "options": [
+              "Внешний набор мал, а внутренний источник быстро ищется по индексу",
+              "Обе таблицы всегда содержат миллионы строк и индексов нет",
+              "Нужно обязательно отсортировать оба набора",
+              "Планировщик не знает структуру таблиц"
+            ],
+            "answer": 0,
+            "explanation": "Небольшое число внешних строк и индексный поиск по внутренней таблице позволяют выполнить мало точечных обращений."
+          }
+        ],
+        "id": "performance.nested-loop-hash-join-i-merge-join"
+      },
+      {
+        "title": "Bitmap Scan и Index Only Scan",
+        "body": "Index Scan и Bitmap Scan используют индекс по-разному. При обычном Index Scan PostgreSQL находит TID строк в индексе и обращается к соответствующим страницам таблицы. Если подходящих строк много и они разбросаны по таблице, множество отдельных обращений может оказаться дорогим.\n\nBitmap Index Scan собирает адреса подходящих строк в bitmap, а Bitmap Heap Scan читает страницы таблицы более сгруппированно. Несколько индексов могут объединяться узлами BitmapAnd или BitmapOr. При потере точности bitmap возможны lossy pages и дополнительный Recheck Cond.\n\nIndex Only Scan потенциально получает все нужные значения из индекса и не читает таблицу для каждой строки. Но PostgreSQL должен убедиться, что версия строки видима текущей транзакции. Для этого помогает visibility map. Поэтому в плане смотри на Heap Fetches: ноль или малое число означает, что чтение таблицы удалось избежать для большинства строк.",
+        "example": "CREATE INDEX idx_orders_customer_amount\nON orders (customer_id) INCLUDE (total_amount);\n\nEXPLAIN (ANALYZE, BUFFERS)\nSELECT customer_id, total_amount\nFROM orders\nWHERE customer_id = 1;",
+        "note": "Покрывающий индекс создаёт возможность Index Only Scan, но не гарантирует его: важны visibility map, селективность и стоимость плана.",
+        "simple": "Bitmap Scan группирует найденные адреса страниц, а Index Only Scan старается получить результат прямо из индекса.",
+        "practiceIds": [],
+        "outcomes": [
+          "Объяснить пару Bitmap Index Scan и Bitmap Heap Scan",
+          "понимать значение Heap Fetches в Index Only Scan."
+        ],
+        "quiz": [
+          {
+            "question": "Что помогает понять показатель Heap Fetches у Index Only Scan?",
+            "options": [
+              "Сколько строк всё равно пришлось проверять через таблицу",
+              "Сколько индексов создано на базе",
+              "Сколько раз запускался VACUUM FULL",
+              "Сколько столбцов было в SELECT"
+            ],
+            "answer": 0,
+            "explanation": "Index Only Scan зависит от visibility map. Heap Fetches показывает обращения к heap, которые всё же потребовались для проверки видимости."
+          }
+        ],
+        "id": "performance.bitmap-scan-i-index-only-scan"
+      },
+      {
+        "title": "Sargable-условия: не мешай индексу",
+        "body": "Условие называют sargable, если планировщик может эффективно использовать его для поиска по индексу. Важна не магическая формулировка, а соответствие выражения структуре индекса и операторному классу.\n\nНапример, обычный B-tree индекс по created_at подходит для диапазона created_at >= начало AND created_at < конец. Если написать created_at::date = DATE '2026-01-15', PostgreSQL должен применить преобразование к значению столбца. Обычный индекс по исходному timestamp может не подойти так же естественно. Полуоткрытый диапазон сохраняет точность времени и обычно лучше соответствует B-tree.\n\nАналогично lower(email) = 'a@example.com' не эквивалентен простому поиску по исходному email для обычного индекса. Можно создать expression index по lower(email), а затем использовать то же выражение в запросе. Шаблон LIKE '%слово%' с ведущим wildcard тоже не является обычным B-tree-префиксным поиском; для такого поиска изучают trigram или полнотекстовый поиск.\n\nНе переписывай запрос только ради индекса. Сначала проверь EXPLAIN (ANALYZE, BUFFERS), убедись, что условие действительно узкое, и сравни варианты на сопоставимых данных.",
+        "example": "-- Менее удачный для обычного индекса по created_at вариант\nSELECT order_id\nFROM orders\nWHERE created_at::date = DATE '2026-01-15';\n\n-- Диапазон по исходному столбцу\nSELECT order_id\nFROM orders\nWHERE created_at >= TIMESTAMP '2026-01-15 00:00:00'\n  AND created_at <  TIMESTAMP '2026-01-16 00:00:00';",
+        "note": "Не объявляй функцию или CAST проблемой автоматически: expression index, типы операторов и оценки планировщика могут изменить результат. Проверяй план.",
+        "simple": "Чем ближе условие к диапазону или сравнению самого индексированного значения, тем проще B-tree применить его напрямую.",
+        "practiceIds": [],
+        "outcomes": [
+          "Переписывать фильтр по дате в полуоткрытый диапазон",
+          "понимать, когда нужен expression index и почему ведущий wildcard мешает обычному B-tree."
+        ],
+        "quiz": [
+          {
+            "question": "Какой фильтр естественнее соответствует обычному B-tree индексу по created_at?",
+            "options": [
+              "created_at >= TIMESTAMP '2026-01-15' AND created_at < TIMESTAMP '2026-01-16'",
+              "created_at::date = DATE '2026-01-15' при отсутствии expression index",
+              "lower(created_at::text) LIKE '%2026%'",
+              "random() > 0.5"
+            ],
+            "answer": 0,
+            "explanation": "Полуоткрытый диапазон сравнивает исходный столбец с границами и хорошо соответствует диапазонному поиску B-tree."
+          }
+        ],
+        "walkthrough": {
+          "title": "Сравниваем столбец напрямую",
+          "scenario": "Нужно выбрать заказы за конкретный день из timestamp-столбца.",
+          "steps": [
+            "Обычный B-tree по created_at хорошо подходит для диапазона >= начало и < следующий день.",
+            "Выражение created_at::date применяет преобразование к столбцу и может не использовать обычный индекс так же эффективно.",
+            "Если фильтр по выражению нужен постоянно, можно рассмотреть expression index по тому же выражению.",
+            "Сравни варианты через EXPLAIN ANALYZE на сопоставимых данных."
+          ],
+          "result": "Полуоткрытый диапазон часто позволяет использовать обычный индекс по исходному timestamp без потери точности.",
+          "pitfall": "Не объявляй CAST ошибкой автоматически. Expression index, тип данных и селективность могут изменить выбранный план."
+        },
+        "id": "performance.sargable-usloviya-ne-meshay-indeksu"
+      },
+      {
+        "title": "Расширенная статистика и ошибки оценок",
+        "body": "Обычная статистика ANALYZE в основном описывает распределение значений отдельных столбцов. Но реальные данные часто зависимы: например, определённые статусы встречаются преимущественно в одном регионе, а некоторые сочетания категории и бренда почти не встречаются.\n\nЕсли планировщик считает условия независимыми, он может перемножить селективности и сильно ошибиться в оценке числа строк. Это влияет на выбор Scan, порядка JOIN и алгоритма соединения. Сравни estimated rows с actual rows в EXPLAIN ANALYZE, прежде чем менять индексы.\n\nPostgreSQL поддерживает расширенную статистику для нескольких столбцов одной таблицы: dependencies описывает функциональные зависимости, ndistinct помогает оценивать число различных комбинаций, а mcv хранит наиболее частые сочетания значений. Создание объекта статистики само по себе не собирает данные: после CREATE STATISTICS нужно выполнить ANALYZE соответствующей таблицы.\n\nРасширенная статистика не является универсальным лечением плохого плана и не описывает все межтабличные зависимости. Создавай её под конкретный повторяющийся перекос оценок, а затем сравнивай estimated и actual rows.",
+        "example": "CREATE STATISTICS orders_status_customer_stats\n  (dependencies, ndistinct, mcv)\nON status, customer_id\nFROM orders;\n\nANALYZE orders;\n\nEXPLAIN (ANALYZE, BUFFERS)\nSELECT *\nFROM orders\nWHERE status = 'delivered'\n  AND customer_id = 1;",
+        "note": "CREATE STATISTICS описывает совместное распределение столбцов одной таблицы. Не путай её с индексом: она помогает оценкам, но сама не ускоряет поиск строк.",
+        "simple": "Если PostgreSQL ошибается в числе ожидаемых строк из-за связи между столбцами, расширенная статистика может улучшить оценку.",
+        "practiceIds": [],
+        "outcomes": [
+          "Объяснить, почему независимые оценки фильтров могут ошибаться",
+          "различать CREATE STATISTICS и CREATE INDEX."
+        ],
+        "quiz": [
+          {
+            "question": "Что делает CREATE STATISTICS?",
+            "options": [
+              "Создаёт статистику распределения значений, но не индекс для поиска строк",
+              "Создаёт уникальный индекс",
+              "Автоматически переписывает SELECT",
+              "Физически сортирует таблицу"
+            ],
+            "answer": 0,
+            "explanation": "Расширенная статистика помогает планировщику оценивать сочетания столбцов. Для её обновления после создания объекта выполняют ANALYZE."
+          }
+        ],
+        "id": "performance.rasshirennaya-statistika-i-oshibki-otsenok"
+      },
+      {
+        "title": "pg_stat_statements и поиск дорогих запросов",
+        "body": "EXPLAIN подробно разбирает отдельный запрос, но в рабочей системе сначала нужно понять, какие запросы вообще создают нагрузку. Для этого PostgreSQL часто используют расширение pg_stat_statements. Оно агрегирует статистику по нормализованным формам запросов, заменяя конкретные литералы параметрами.\n\nВ статистике можно смотреть число вызовов, суммарное и среднее время, строки, shared blocks hit/read и другие показатели. Один запрос может быть медленным из-за большого времени одного выполнения, а другой — из-за огромного количества частых запусков. Поэтому total_exec_time и mean_exec_time отвечают на разные вопросы.\n\nПрактический порядок такой: найди запросы с большой суммарной нагрузкой, проверь частоту и среднее время, выбери конкретный запрос и исследуй его план через EXPLAIN (ANALYZE, BUFFERS) на безопасных репрезентативных данных. После изменения сравни показатели и убедись, что результат не изменился.\n\npg_stat_statements нужно предварительно подключить и настроить на сервере. Это не встроенная команда песочницы, а расширение PostgreSQL, поэтому локальная учебная база PGlite может его не поддерживать. В рабочей среде следуй правилам администратора и не публикуй SQL с чувствительными значениями.",
+        "example": "SELECT queryid,\n       calls,\n       total_exec_time,\n       mean_exec_time,\n       rows,\n       shared_blks_hit,\n       shared_blks_read\nFROM pg_stat_statements\nORDER BY total_exec_time DESC\nLIMIT 20;",
+        "note": "pg_stat_statements — расширение сервера. Если оно не установлено или не включено администратором, представление будет недоступно.",
+        "simple": "Сначала найди самые дорогие запросы по реальной нагрузке, затем исследуй конкретный план.",
+        "practiceIds": [],
+        "outcomes": [
+          "Различать суммарное и среднее время запроса",
+          "понимать назначение pg_stat_statements и его отличие от EXPLAIN."
+        ],
+        "quiz": [
+          {
+            "question": "Почему запрос с небольшим mean_exec_time всё равно может быть важным для оптимизации?",
+            "options": [
+              "Он может запускаться очень часто и давать большую суммарную нагрузку",
+              "Среднее время всегда равно нулю",
+              "pg_stat_statements автоматически добавляет индексы",
+              "Любой частый запрос обязательно содержит ошибку"
+            ],
+            "answer": 0,
+            "explanation": "Большое число вызовов может превратить короткий запрос в заметную долю общей нагрузки. Смотри на calls и total_exec_time вместе."
+          }
+        ],
+        "id": "performance.pg-stat-statements-i-poisk-dorogikh-zaprosov"
+      }
+    ],
+    "quiz": [
+      {
+        "question": "Что даёт индекс?",
+        "options": [
+          "Гарантирует ускорение любого запроса",
+          "Может ускорить поиск и сортировку, но занимает место и замедляет изменения",
+          "Автоматически исправляет SQL",
+          "Сжимает все таблицы"
+        ],
+        "answer": 1,
+        "explanation": "Индекс помогает находить строки, но его нужно поддерживать при INSERT, UPDATE и DELETE. Планировщик сам решает, использовать ли его."
+      },
+      {
+        "question": "Что делает EXPLAIN ANALYZE?",
+        "options": [
+          "Только показывает предполагаемый план",
+          "Реально выполняет запрос и показывает фактические показатели",
+          "Создаёт индекс",
+          "Исправляет статистику"
+        ],
+        "answer": 1,
+        "explanation": "EXPLAIN ANALYZE выполняет запрос. Будь осторожен с UPDATE/DELETE и другими командами с побочными эффектами."
+      },
+      {
+        "question": "Почему индекс может замедлить INSERT?",
+        "options": [
+          "Потому что индекс тоже нужно обновить",
+          "Потому что индекс удаляет строку",
+          "Потому что индекс отключает транзакции",
+          "Потому что INSERT не работает с индексами"
+        ],
+        "answer": 0,
+        "explanation": "Каждую вставку нужно отразить не только в таблице, но и во всех подходящих индексах."
+      },
+      {
+        "question": "Для чего нужен ANALYZE?",
+        "options": [
+          "Для обновления статистики планировщика",
+          "Для удаления таблиц",
+          "Для запуска всех запросов",
+          "Для шифрования данных"
+        ],
+        "answer": 0,
+        "explanation": "Планировщик использует статистику, чтобы оценивать число строк и выбирать план выполнения."
+      }
+    ],
+    "sources": [
+      "https://www.postgresql.org/docs/current/indexes.html",
+      "https://www.postgresql.org/docs/current/using-explain.html",
+      "https://www.postgresql.org/docs/current/performance-tips.html"
+    ],
+    "track": "postgresql",
+    "trackOrder": 6
+  },
+  {
+    "id": "advanced",
+    "title": "Продвинутые возможности PostgreSQL",
+    "stage": "02 · Возможности PostgreSQL",
+    "desc": "Освоить JSONB, массивы, полнотекстовый поиск, партиционирование и специальные типы.",
+    "lessons": [
+      {
+        "title": "JSON и JSONB",
+        "body": "JSON — формат хранения структурированных данных в виде объектов, массивов, строк, чисел, boolean и null. В PostgreSQL есть JSON и JSONB. JSON сохраняет исходный текст документа, а JSONB хранит разобранное бинарное представление и обычно удобнее для поиска и операторов.\n\nJSONB полезен, когда структура документа меняется или часть полей заранее неизвестна. Но если поле стабильно и участвует в связях, фильтрах и отчётах, обычные типизированные столбцы часто лучше. Не превращай всю базу в один JSONB только ради гибкости.\n\nДля чтения JSONB используют операторы извлечения: -> возвращает JSON, ->> возвращает текст. При извлечении отсутствующего ключа результатом будет NULL. Для числовых расчётов значение нужно привести к подходящему типу.",
+        "example": "SELECT attributes -> 'segment' AS segment_json,\n       attributes ->> 'segment' AS segment_text,\n       attributes ->> 'source' AS source\nFROM customer_profiles;",
+        "note": "Если значение участвует в регулярной аналитике и ограничениях, подумай, не лучше ли вынести его в отдельный столбец.",
+        "simple": "JSONB хранит структурированный документ и позволяет обращаться к его ключам и значениям.",
+        "practiceIds": [
+          "e44"
+        ],
+        "outcomes": [
+          "Различать JSON и JSONB",
+          "извлекать вложенные ключи через -> и ->>."
+        ],
+        "quiz": [
+          {
+            "question": "Чем отличается результат payload -> 'name' от payload ->> 'name'?",
+            "options": [
+              "-> возвращает JSON-значение, а ->> возвращает текст",
+              "->> возвращает JSONB, а -> число",
+              "Оба оператора удаляют ключ из документа",
+              "-> работает только с массивами"
+            ],
+            "answer": 0,
+            "explanation": "Оператор -> сохраняет JSON-тип значения, а ->> извлекает его как текст. Для арифметики текст часто нужно привести к числу."
+          }
+        ],
+        "id": "advanced.json-i-jsonb"
+      },
+      {
+        "title": "Массивы",
+        "body": "Массив в PostgreSQL хранит несколько значений одного типа в одном столбце. Он может быть удобен для небольших упорядоченных наборов, например тегов или кодов, если элементы не требуют самостоятельных атрибутов и связей.\n\nОператор ANY позволяет проверить, встречается ли значение среди элементов массива. Оператор @> проверяет содержимое массива. Для эффективного поиска по массивам может применяться GIN индекс.\n\nМассив не всегда заменяет таблицу-связку. Если элементу нужны собственный ID, описание, внешние ключи или частые JOIN, отдельная таблица обычно лучше. Также учитывай, что массив может быть NULL или содержать NULL-элементы.",
+        "example": "-- Проверяем, содержит ли массив тег coffee\nSELECT customer_id\nFROM customer_profiles\nWHERE 'coffee' = ANY(tags);\n\n-- Проверяем, содержит ли массив оба указанных тега\nSELECT customer_id\nFROM customer_profiles\nWHERE tags @> ARRAY['coffee', 'regular'];",
+        "note": "Если элемент массива должен иметь свойства и связи, вынеси его в отдельную таблицу.",
+        "simple": "Массив подходит для компактного набора однотипных значений, но не для полноценной связанной сущности.",
+        "practiceIds": [
+          "e45",
+          "e54"
+        ],
+        "outcomes": [
+          "Использовать ANY и @> для массивов",
+          "выбирать между массивом и таблицей-связкой."
+        ],
+        "quiz": [
+          {
+            "question": "Когда отдельная таблица-связка обычно лучше массива ID?",
+            "options": [
+              "Когда элементам нужны собственные атрибуты, внешние ключи или отдельные связи",
+              "Когда список содержит всего два коротких значения",
+              "Когда массив нужно вывести через SELECT",
+              "Когда все элементы имеют один тип"
+            ],
+            "answer": 0,
+            "explanation": "Таблица-связка позволяет обеспечить ссылочную целостность и хранить свойства каждой связи. Массив этого не даёт автоматически."
+          }
+        ],
+        "id": "advanced.massivy"
+      },
+      {
+        "title": "Полнотекстовый поиск",
+        "body": "Полнотекстовый поиск предназначен для поиска слов и лексем в больших текстах с учётом языковых правил. В PostgreSQL текст преобразуется в tsvector, а поисковая фраза — в tsquery. @@ проверяет совпадение документа и запроса.\n\nВ отличие от LIKE '%слово%', полнотекстовый поиск может учитывать нормализацию слов и индексироваться через GIN. Это полезно для описаний, статей и комментариев, где нужно искать по смыслу словоформ, а не по точной подстроке.\n\nДля ранжирования результатов применяют ts_rank или ts_rank_cd. Конфигурация языка влияет на разбор слов и стемминг, поэтому выбирай её осознанно.",
+        "example": "SELECT product_id, product_name,\n       ts_rank(to_tsvector('simple', product_name), plainto_tsquery('simple', 'coffee')) AS rank\nFROM products\nWHERE to_tsvector('simple', product_name) @@ plainto_tsquery('simple', 'coffee')\nORDER BY rank DESC;",
+        "note": "Для частых запросов создай GIN индекс по tsvector и проверь план.",
+        "simple": "Полнотекстовый поиск сравнивает нормализованные лексемы, а не просто подстроки.",
+        "practiceIds": [],
+        "outcomes": [
+          "Объяснить tsvector и tsquery",
+          "применять @@ и ранжирование результатов."
+        ],
+        "quiz": [
+          {
+            "question": "Чем полнотекстовый поиск отличается от LIKE '%доставка%'?",
+            "options": [
+              "Он работает с лексемами и языковой обработкой, а не только с буквальной подстрокой",
+              "Он ищет только числовые значения",
+              "LIKE всегда быстрее на больших текстах",
+              "Полнотекстовый поиск удаляет исходный текст"
+            ],
+            "answer": 0,
+            "explanation": "Полнотекстовый поиск анализирует слова и может учитывать морфологию языка. LIKE ищет буквальное совпадение шаблона."
+          }
+        ],
+        "id": "advanced.polnotekstovyy-poisk"
+      },
+      {
+        "title": "Партиционирование",
+        "body": "Партиционирование делит одну логическую таблицу на физические части по ключу, например дате или региону. PostgreSQL поддерживает range, list и hash partitioning. Запрос может читать только нужные разделы, если условие позволяет partition pruning.\n\nПартиционирование помогает управлять очень большими таблицами: старые периоды можно архивировать или удалять целыми разделами. Но оно усложняет уникальные ограничения, индексы и обслуживание схемы. Для маленькой таблицы оно обычно не нужно.\n\nКлюч партиционирования выбирают под реальные запросы и жизненный цикл данных. Если отчёты почти всегда фильтруют created_at по месяцу, range partitioning по дате может быть разумным. Но само наличие партиций не гарантирует ускорения всех запросов.",
+        "example": "CREATE TABLE events (\n  event_id BIGINT NOT NULL,\n  occurred_at DATE NOT NULL,\n  payload JSONB\n) PARTITION BY RANGE (occurred_at);",
+        "note": "Не партиционируй маленькие таблицы без причины. Учитывай ограничения уникальности и эксплуатационную сложность.",
+        "simple": "Партиционирование делит большую таблицу на разделы, которые PostgreSQL может исключать из чтения.",
+        "practiceIds": [],
+        "outcomes": [
+          "Объяснить partition pruning",
+          "выбирать ключ партиционирования по фильтрам и жизненному циклу."
+        ],
+        "quiz": [
+          {
+            "question": "Когда partition pruning может исключить часть разделов?",
+            "options": [
+              "Когда WHERE ограничивает ключ партиционирования подходящим диапазоном или значениями",
+              "Когда запрос использует SELECT *",
+              "Когда таблица не имеет индексов",
+              "Когда ORDER BY отсутствует"
+            ],
+            "answer": 0,
+            "explanation": "Планировщик может не читать разделы, диапазон или список значений которых не пересекается с условием по ключу партиционирования."
+          }
+        ],
+        "id": "advanced.partitsionirovanie"
+      },
+      {
+        "title": "Ограничения переносимости",
+        "body": "SQL стандартизирован, но разные СУБД реализуют дополнительные функции и синтаксис по-разному. PostgreSQL поддерживает FILTER, DISTINCT ON, JSONB, массивы, LATERAL и ряд других возможностей. ClickHouse ориентирован на аналитические колоночные нагрузки и имеет собственные функции и движки таблиц.\n\nПереносимость важна, если запросы должны работать в нескольких системах или переезжать между платформами. Старайся использовать стандартные конструкции, когда это не ухудшает ясность. PostgreSQL-специфичные решения применяй осознанно и помечай в документации.\n\nНе делай вывод, что два запроса эквивалентны только потому, что выглядят похоже. Различия в NULL, датах, типах и оптимизаторе могут влиять на результат и производительность.",
+        "example": "-- Стандартная условная агрегация через CASE\nSELECT SUM(CASE WHEN status = 'paid' THEN 1 ELSE 0 END) AS paid_count\nFROM orders;",
+        "note": "Проверяй диалект и версию, прежде чем переносить сложный запрос между PostgreSQL и другой СУБД.",
+        "simple": "Переносимость — это не только синтаксис. Поведение типов, NULL и функций тоже может отличаться.",
+        "practiceIds": [],
+        "outcomes": [
+          "Отличать стандартный SQL от PostgreSQL-расширений",
+          "оценивать риски переноса."
+        ],
+        "quiz": [
+          {
+            "question": "Почему при переносе запроса между СУБД нужно проверять не только синтаксис?",
+            "options": [
+              "Потому что могут отличаться типы, NULL-семантика, функции и поведение оптимизатора",
+              "Потому что все базы хранят строки в разном порядке",
+              "Потому что SQL-стандарт запрещает JOIN",
+              "Потому что названия таблиц автоматически меняются"
+            ],
+            "answer": 0,
+            "explanation": "Запрос может синтаксически выполниться, но дать другое поведение из-за различий диалектов, типов и семантики."
+          }
+        ],
+        "id": "advanced.ogranicheniya-perenosimosti"
+      },
+      {
+        "title": "Системные каталоги и information_schema",
+        "body": "information_schema — стандартный набор представлений для изучения объектов базы: таблиц, столбцов, ограничений и прав. Он удобен для переносимых запросов и доступен в PostgreSQL.\n\nСистемный каталог PostgreSQL (pg_catalog) содержит более подробные сведения о внутренних объектах: индексы, типы, статистику, настройки и зависимости. Часто для диагностики нужны pg_class, pg_attribute, pg_index и pg_constraint.\n\nНачинай с information_schema, если нужно найти таблицу или столбец. Переходи к pg_catalog, когда стандартных сведений недостаточно. Учитывай права: часть объектов может быть скрыта или недоступна для чтения конкретной роли.",
+        "example": "SELECT table_name, column_name, data_type\nFROM information_schema.columns\nWHERE table_schema = 'public'\nORDER BY table_name, ordinal_position;",
+        "note": "Не угадывай схему по названию. Проверяй реальные столбцы и ограничения.",
+        "simple": "information_schema — переносимый обзор схемы, pg_catalog — подробные внутренние каталоги PostgreSQL.",
+        "practiceIds": [],
+        "outcomes": [
+          "Находить таблицы и столбцы через information_schema",
+          "понимать, когда нужен pg_catalog."
+        ],
+        "quiz": [
+          {
+            "question": "С чего разумно начать поиск неизвестного столбца в PostgreSQL?",
+            "options": [
+              "С information_schema.columns с фильтром по схеме и имени таблицы",
+              "С таблицы pg_stat_activity, потому что она хранит все столбцы",
+              "С EXPLAIN ANALYZE без запроса",
+              "С SELECT * из всех баз сразу"
+            ],
+            "answer": 0,
+            "explanation": "information_schema.columns показывает имена, типы и порядок столбцов доступных таблиц."
+          }
+        ],
+        "id": "advanced.sistemnye-katalogi-i-information-schema"
+      },
+      {
+        "title": "Операторы JSONB: проверка и индексация",
+        "body": "Для JSONB доступны операторы проверки содержимого и извлечения значений. @> проверяет, содержит ли документ заданный JSON-фрагмент. ? проверяет наличие ключа верхнего уровня, а -> и ->> извлекают значение.\n\nGIN индекс может ускорить containment-запросы по JSONB. Но важно выбрать операторный класс: jsonb_ops поддерживает более широкий набор операций, jsonb_path_ops оптимизирован для определённых containment-поисков.\n\nНе индексируй JSONB автоматически целиком, если запросы используют только одно поле. Для часто фильтруемого ключа иногда лучше expression index по конкретному выражению или вынесение значения в обычный столбец.",
+        "example": "SELECT customer_id, attributes\nFROM customer_profiles\nWHERE attributes @> '{\"segment\":\"vip\"}'::jsonb;",
+        "note": "Операторный класс определяет поддерживаемые операции. Проверь, совпадает ли он с реальными условиями WHERE.",
+        "simple": "@> проверяет включение JSON-структуры, ? — наличие ключа, GIN ускоряет подходящие поиски.",
+        "practiceIds": [
+          "e55"
+        ],
+        "outcomes": [
+          "Применять JSONB @> и ?",
+          "выбирать GIN operator class под запросы."
+        ],
+        "quiz": [
+          {
+            "question": "Какой оператор проверяет, что JSONB-объект содержит ключ верхнего уровня 'source'?",
+            "options": [
+              "payload ? 'source'",
+              "payload -> 'source' = TRUE",
+              "payload || 'source'",
+              "payload #> 'source'"
+            ],
+            "answer": 0,
+            "explanation": "Оператор ? проверяет наличие ключа верхнего уровня в JSONB-объекте или элемента в JSONB-массиве."
+          }
+        ],
+        "id": "advanced.operatory-jsonb-proverka-i-indeksatsiya"
+      },
+      {
+        "title": "Временные и UNLOGGED-таблицы",
+        "body": "TEMPORARY TABLE существует в пределах сессии или транзакции в зависимости от ON COMMIT. Она полезна для промежуточных результатов, которые нужно использовать в нескольких командах.\n\nUNLOGGED TABLE не записывает обычные изменения в WAL так же, как logged-таблица, поэтому может быть быстрее для временных или восстанавливаемых данных. Но после аварийного завершения сервера содержимое unlogged-таблицы очищается, а репликация не переносит её содержимое как обычные logged-таблицы.\n\nВыбирай временную таблицу, если данные нужны только текущей сессии. UNLOGGED подходит для данных, которые можно восстановить и которые не должны быть гарантированно сохранены после сбоя.",
+        "simple": "TEMP TABLE ограничивает время жизни объекта. UNLOGGED TABLE снижает требования к журналированию, но теряет содержимое после аварии.",
+        "example": "CREATE TEMP TABLE selected_orders AS\nSELECT * FROM orders WHERE status = 'open';\n\nCREATE UNLOGGED TABLE staging_events (\n  event_id BIGINT,\n  payload JSONB\n);",
+        "note": "Не храни единственную копию важных данных в UNLOGGED TABLE.",
+        "practiceIds": [],
+        "outcomes": [
+          "Различать TEMP и UNLOGGED",
+          "объяснить ограничения сохранности и репликации."
+        ],
+        "quiz": [
+          {
+            "question": "Что произойдёт с содержимым UNLOGGED TABLE после аварийного завершения PostgreSQL?",
+            "options": [
+              "Содержимое может быть очищено при восстановлении сервера",
+              "Таблица автоматически станет обычной logged-таблицей",
+              "Все строки перенесутся в резервную копию",
+              "Сервер восстановит каждую строку из WAL"
+            ],
+            "answer": 0,
+            "explanation": "UNLOGGED-таблицы не обеспечивают обычную WAL-гарантию сохранности данных. После аварийного восстановления их содержимое очищается."
+          }
+        ],
+        "id": "advanced.vremennye-i-unlogged-tablitsy"
+      }
+    ],
+    "quiz": [
+      {
+        "question": "Какой индекс часто используют для поиска по JSONB?",
+        "options": [
+          "GIN",
+          "Только HASH",
+          "Нет индексов для JSONB",
+          "BRIN всегда обязателен"
+        ],
+        "answer": 0,
+        "explanation": "GIN поддерживает многие операции поиска по JSONB. Конкретный операторный класс влияет на доступные операции."
+      },
+      {
+        "question": "Что нужно, чтобы партиционирование помогло запросу?",
+        "options": [
+          "Любая таблица автоматически станет быстрее",
+          "Фильтр запроса должен позволять исключить неподходящие партиции",
+          "Нужно удалить индексы",
+          "Нужно сортировать все строки"
+        ],
+        "answer": 1,
+        "explanation": "Partition pruning экономит чтение, когда планировщик может определить, какие разделы не нужны."
+      },
+      {
+        "question": "Чем JSONB обычно удобнее JSON в PostgreSQL?",
+        "options": [
+          "JSONB хранит разобранное представление и поддерживает индексацию",
+          "JSONB всегда сохраняет пробелы исходного текста",
+          "JSONB не допускает вложенные объекты",
+          "JSONB — это обычный TEXT"
+        ],
+        "answer": 0,
+        "explanation": "JSONB удобен для запросов и индексов, но не сохраняет исходное форматирование JSON-текста."
+      },
+      {
+        "question": "Для чего нужен to_tsvector?",
+        "options": [
+          "Чтобы подготовить документ к полнотекстовому поиску",
+          "Чтобы преобразовать число в дату",
+          "Чтобы создать таблицу",
+          "Чтобы сжать строку"
+        ],
+        "answer": 0,
+        "explanation": "to_tsvector разбирает текст на нормализованные лексемы, которые затем можно сравнивать с tsquery."
+      }
+    ],
+    "sources": [
+      "https://www.postgresql.org/docs/current/functions-json.html",
+      "https://www.postgresql.org/docs/current/arrays.html",
+      "https://www.postgresql.org/docs/current/ddl-partitioning.html"
+    ],
+    "track": "postgresql",
+    "trackOrder": 7
+  },
+  {
+    "id": "security",
+    "title": "Безопасность SQL и эксплуатация",
+    "stage": "03 · Производительность и эксплуатация",
+    "desc": "Понимать роли, права, SQL-инъекции, параметризацию и безопасное выполнение запросов.",
+    "lessons": [
+      {
+        "title": "Роли и права",
+        "body": "Роль PostgreSQL определяет, какие действия разрешены пользователю или группе пользователей. Роли могут иметь LOGIN для подключения и членство в других ролях для наследования прав.\n\nGRANT выдаёт привилегии, REVOKE отзывает. Права на базу, схему, таблицу, последовательность и функцию задаются отдельно. Например, разрешение CONNECT на базу не означает, что пользователь может читать таблицу.\n\nСледуй принципу минимальных привилегий: выдавай только необходимые права и разделяй роли чтения, записи и администрирования. Не используй суперпользователя для обычных аналитических запросов.",
+        "example": "CREATE ROLE analyst LOGIN;\nGRANT CONNECT ON DATABASE shop TO analyst;\nGRANT USAGE ON SCHEMA public TO analyst;\nGRANT SELECT ON ALL TABLES IN SCHEMA public TO analyst;",
+        "note": "GRANT SELECT на таблицу не даёт автоматически права на все будущие таблицы. Для будущих объектов нужны default privileges.",
+        "simple": "Роль — набор прав и принадлежностей. Доступ к базе, схеме и таблице проверяется отдельно.",
+        "practiceIds": [],
+        "outcomes": [
+          "Объяснить роли и привилегии",
+          "выдавать минимально необходимые права на объекты."
+        ],
+        "quiz": [
+          {
+            "question": "Что нужно дополнительно выдать роли, чтобы она могла читать public.orders?",
+            "options": [
+              "USAGE на схему public и SELECT на таблицу orders, а также доступ к базе",
+              "Только CREATE на базу",
+              "Только LOGIN без прав на объекты",
+              "SUPERUSER для каждого аналитика"
+            ],
+            "answer": 0,
+            "explanation": "Для подключения нужен CONNECT, для обращения к объекту схемы — USAGE, для чтения таблицы — SELECT."
+          }
+        ],
+        "id": "security.roli-i-prava"
+      },
+      {
+        "title": "SQL-инъекции",
+        "body": "SQL injection возникает, когда пользовательский ввод склеивается с текстом SQL и начинает интерпретироваться как часть команды. Злоумышленник может изменить условие WHERE, добавить оператор или попытаться выполнить нежелательное действие.\n\nПараметризованный запрос передаёт SQL-код и значения отдельно. Драйвер связывает параметры как данные, поэтому строка пользователя не превращается в исполняемый фрагмент. Экранирование вручную менее надёжно и зависит от контекста.\n\nПараметры подходят для значений, но не для имён таблиц и столбцов. Для динамических идентификаторов используй белый список допустимых значений и безопасные средства форматирования конкретного драйвера.",
+        "example": "-- Пример параметризованного запроса в приложении:\nSELECT order_id\nFROM orders\nWHERE customer_id = $1;",
+        "note": "Не защищай запрос простой заменой кавычек. Используй параметризацию на уровне драйвера.",
+        "simple": "Пользовательский ввод должен передаваться как значение, а не склеиваться в SQL-код.",
+        "practiceIds": [],
+        "outcomes": [
+          "Объяснить механизм SQL injection",
+          "отличать параметры значений от динамических SQL-фрагментов."
+        ],
+        "quiz": [
+          {
+            "question": "Почему параметризация защищает от SQL injection?",
+            "options": [
+              "Потому что пользовательское значение передаётся отдельно и не разбирается как часть SQL-синтаксиса",
+              "Потому что параметр автоматически шифрует всю базу",
+              "Потому что параметр запрещает пользователю вводить кавычки",
+              "Потому что SQL injection возможна только в SELECT"
+            ],
+            "answer": 0,
+            "explanation": "Драйвер передаёт значение отдельно от текста команды. Оно остаётся данными, даже если содержит кавычки или SQL-подобный текст."
+          }
+        ],
+        "id": "security.sql-inektsii"
+      },
+      {
+        "title": "Чтение, запись и доступ к продакшену",
+        "body": "Доступ на чтение и запись должен соответствовать задаче. Аналитической роли часто достаточно SELECT на нужные схемы и таблицы. Для загрузки данных могут понадобиться INSERT и UPDATE, но DELETE и DDL-права обычно не нужны.\n\nProduction — рабочая среда с реальными данными. Ошибочный UPDATE или DELETE может повлиять на клиентов и процессы. Используй read-only подключения для анализа, тестовую базу для экспериментов и транзакции для проверяемых изменений.\n\nДаже read-only доступ не делает любые данные безопасными для выгрузки. Учитывай персональные данные, коммерческую тайну, правила хранения и минимизацию набора полей.",
+        "example": "BEGIN READ ONLY;\nSELECT COUNT(*) FROM orders;\nCOMMIT;",
+        "note": "Read-only роль снижает риск изменения данных, но не отменяет правила доступа к чувствительным данным.",
+        "simple": "Для аналитики достаточно прав чтения. Не используй production как песочницу для обучения.",
+        "practiceIds": [],
+        "outcomes": [
+          "Выбирать минимальные права под задачу",
+          "объяснить безопасную работу с production."
+        ],
+        "quiz": [
+          {
+            "question": "Какой доступ предпочтительнее для аналитика, которому нужно только строить отчёты?",
+            "options": [
+              "Read-only роль с SELECT на нужные таблицы",
+              "SUPERUSER на production",
+              "Полный доступ DELETE и DROP",
+              "Общий аккаунт администратора команды"
+            ],
+            "answer": 0,
+            "explanation": "Минимальные привилегии ограничивают последствия ошибки и соответствуют реальной задаче аналитика."
+          }
+        ],
+        "id": "security.chtenie-zapis-i-dostup-k-prodakshenu"
+      },
+      {
+        "title": "Резервные копии и миграции",
+        "body": "Резервная копия должна позволять восстановить базу до пригодного состояния. pg_dump создаёт логическую копию, pg_restore восстанавливает custom или directory формат, а физические backup и архив WAL применяются для восстановления на момент времени.\n\nМиграции схемы — версионированные изменения, которые применяются в определённом порядке. Они должны быть воспроизводимыми, проверяться на тестовой среде и иметь план отката или исправления. Для больших таблиц изменения иногда выполняют несколькими этапами.\n\nФакт успешного создания backup не доказывает, что его можно восстановить. Регулярно проверяй восстановление и контрольные данные. Для production важны RPO и RTO: сколько данных можно потерять и сколько времени допустимо восстанавливать сервис.",
+        "example": "pg_dump -Fc -d shop -f shop.dump\n\npg_restore -d shop_restore shop.dump",
+        "note": "Не считай backup надёжным, пока не проверил реальное восстановление.",
+        "simple": "Backup — это возможность восстановиться, миграция — контролируемое изменение схемы. Оба процесса нужно проверять.",
+        "practiceIds": [],
+        "outcomes": [
+          "Объяснить pg_dump и pg_restore",
+          "планировать тест восстановления и безопасные миграции."
+        ],
+        "quiz": [
+          {
+            "question": "Что подтверждает, что резервная копия пригодна для восстановления?",
+            "options": [
+              "Успешное тестовое восстановление и проверка целостности данных",
+              "Наличие файла с расширением .dump",
+              "То, что команда backup завершилась без сообщения об ошибке",
+              "То, что файл занимает больше 1 ГБ"
+            ],
+            "answer": 0,
+            "explanation": "Только восстановление подтверждает, что копия читается и позволяет вернуть базу в рабочее состояние."
+          }
+        ],
+        "id": "security.rezervnye-kopii-i-migratsii"
+      },
+      {
+        "title": "Row-Level Security и безопасные функции",
+        "body": "Row-Level Security ограничивает строки, доступные роли. После включения RLS политика USING определяет, какие существующие строки видны или могут изменяться, а WITH CHECK проверяет новые значения при INSERT и UPDATE.\n\nRLS полезен, когда разные пользователи должны видеть только свою организацию, магазин или набор клиентов. Но политики нужно тестировать под реальными ролями. Владелец таблицы и роли с BYPASSRLS могут обходить обычные политики, если не включён FORCE ROW LEVEL SECURITY для владельца.\n\nRLS не заменяет GRANT. Пользователь сначала должен иметь право обращаться к таблице, а затем политика ограничивает строки. Ошибка в выражении политики может раскрыть данные или неожиданно закрыть доступ.",
+        "example": "ALTER TABLE orders ENABLE ROW LEVEL SECURITY;\nCREATE POLICY store_scope ON orders\nUSING (store_id = current_setting('app.store_id')::BIGINT)\nWITH CHECK (store_id = current_setting('app.store_id')::BIGINT);",
+        "note": "Проверяй RLS не только владельцем таблицы, но и обычной ролью приложения.",
+        "simple": "GRANT разрешает действие над таблицей, RLS ограничивает, какие строки доступны.",
+        "practiceIds": [],
+        "outcomes": [
+          "Объяснить USING и WITH CHECK",
+          "различать права таблицы и ограничения строк."
+        ],
+        "quiz": [
+          {
+            "question": "Что проверяет WITH CHECK в политике RLS для INSERT?",
+            "options": [
+              "Что новая строка удовлетворяет условию политики",
+              "Что пользователь имеет право создавать схемы",
+              "Что все старые строки соответствуют условию",
+              "Что таблица отсортирована по ключу"
+            ],
+            "answer": 0,
+            "explanation": "WITH CHECK проверяет значения новой или обновлённой строки перед тем, как разрешить изменение."
+          }
+        ],
+        "id": "security.row-level-security-i-bezopasnye-funktsii"
+      },
+      {
+        "title": "SQL injection и параметризованные запросы",
+        "body": "Параметризованный запрос передаёт значения отдельно от SQL-текста. В PostgreSQL драйверы используют плейсхолдеры, например $1, $2, или собственный синтаксис. Это защищает строковые значения, даты и числа от превращения в SQL-код.\n\nПараметр нельзя использовать как имя таблицы, столбца или направление сортировки. Такие части формируют структуру SQL до связывания значений. Если пользователь выбирает сортировку, сопоставь его выбор с заранее разрешённым списком имён.\n\nПараметризация должна выполняться средствами драйвера. Не подставляй значение через конкатенацию и не пытайся самостоятельно обрамлять ввод кавычками.",
+        "simple": "Значения передавай параметрами. Имена объектов выбирай из белого списка.",
+        "example": "-- Значение customer_id передаётся драйвером отдельно\nSELECT order_id\nFROM orders\nWHERE customer_id = $1;",
+        "note": "Для динамического ORDER BY используй разрешённый список имён, а не прямую подстановку пользовательского текста.",
+        "practiceIds": [],
+        "outcomes": [
+          "Применять параметры для значений",
+          "безопасно выбирать динамические идентификаторы из белого списка."
+        ],
+        "quiz": [
+          {
+            "question": "Как безопасно дать пользователю выбрать сортировку по created_at или total_amount?",
+            "options": [
+              "Сопоставить выбор с белым списком заранее заданных SQL-идентификаторов",
+              "Вставить введённый текст напрямую после ORDER BY",
+              "Передать имя столбца как $1 и ожидать, что PostgreSQL подставит идентификатор",
+              "Отключить проверку синтаксиса"
+            ],
+            "answer": 0,
+            "explanation": "Параметры связывают значения, но не имена объектов. Динамические идентификаторы нужно выбирать из разрешённого набора."
+          }
+        ],
+        "walkthrough": {
+          "title": "Значение не должно становиться SQL-кодом",
+          "scenario": "Пользователь вводит имя клиента, по которому приложение выполняет поиск.",
+          "steps": [
+            "Опасный вариант собирает SQL строковой конкатенацией и вставляет пользовательский ввод в текст запроса.",
+            "Если ввод содержит кавычки и SQL-фрагмент, он может изменить структуру команды.",
+            "Параметризованный запрос передаёт значение отдельно от SQL-шаблона.",
+            "Драйвер связывает параметр как значение, а не исполняемый фрагмент SQL."
+          ],
+          "result": "Ввод пользователя остаётся обычным текстовым значением и не может самостоятельно добавить условие или вторую команду.",
+          "pitfall": "Параметры обычно нельзя использовать вместо имени таблицы или направления ORDER BY. Структурные части выбирай через белый список."
+        },
+        "id": "security.sql-injection-i-parametrizovannye-zaprosy"
+      },
+      {
+        "title": "Безопасный динамический SQL",
+        "body": "Для динамического SQL в PL/pgSQL используют EXECUTE. Если нужно подставить имя таблицы или столбца, применяй format с %I, который корректно экранирует идентификатор. Для значений используй USING, а не конкатенацию.\n\n%L форматирует литерал, но для обычных параметров предпочтительнее USING: значения остаются параметрами запроса. %s вставляет текст без экранирования и опасен для пользовательского ввода.\n\nДаже корректное экранирование идентификатора не означает, что пользователю можно разрешить любую таблицу. Проверяй имена по белому списку и ограничивай права роли.",
+        "simple": "%I — идентификатор, USING — значения. Не склеивай пользовательский ввод в SQL.",
+        "example": "EXECUTE format(\n  'SELECT COUNT(*) FROM %I WHERE status = $1',\n  table_name\n)\nINTO row_count\nUSING wanted_status;",
+        "note": "%I защищает синтаксис имени, но белый список всё равно нужен для ограничения допустимых объектов.",
+        "practiceIds": [],
+        "outcomes": [
+          "Использовать format('%I') для идентификаторов и USING для значений",
+          "объяснить разницу с конкатенацией."
+        ],
+        "quiz": [
+          {
+            "question": "Как правильно передать динамическое имя таблицы и значение status в EXECUTE?",
+            "options": [
+              "format('%I', table_name) для имени и USING status для значения",
+              "Конкатенировать оба значения в строку без экранирования",
+              "Передать оба значения через один $1",
+              "Использовать %s для пользовательского ввода и отказаться от USING"
+            ],
+            "answer": 0,
+            "explanation": "%I безопасно форматирует идентификатор, а USING передаёт значение как параметр. Дополнительно проверяй имя по белому списку."
+          }
+        ],
+        "id": "security.bezopasnyy-dinamicheskiy-sql"
+      }
+    ],
+    "quiz": [
+      {
+        "question": "Как безопаснее передавать пользовательское значение в запрос?",
+        "options": [
+          "Склеить строку SQL вручную",
+          "Использовать параметры подготовленного запроса",
+          "Вставить значение в имя таблицы",
+          "Отключить проверки"
+        ],
+        "answer": 1,
+        "explanation": "Параметры отделяют данные от кода SQL и защищают значения от превращения в часть команды."
+      },
+      {
+        "question": "Что означает принцип наименьших привилегий?",
+        "options": [
+          "Выдать всем суперпользователя",
+          "Дать роли только те права, которые ей действительно нужны",
+          "Запретить все SELECT",
+          "Использовать один пароль для всех"
+        ],
+        "answer": 1,
+        "explanation": "Чем меньше ненужных прав, тем меньше ущерб от ошибки или компрометации учётной записи."
+      },
+      {
+        "question": "Для чего нужны GRANT и REVOKE?",
+        "options": [
+          "Выдавать и отзывать права",
+          "Сортировать строки",
+          "Обновлять статистику",
+          "Создавать резервные копии"
+        ],
+        "answer": 0,
+        "explanation": "GRANT выдаёт привилегии, REVOKE отзывает. Используй роли и минимально необходимые права."
+      },
+      {
+        "question": "Почему резервную копию нужно проверять восстановлением?",
+        "options": [
+          "Потому что файл копии сам по себе не доказывает, что восстановление сработает",
+          "Потому что PostgreSQL не умеет читать backup",
+          "Потому что копии нельзя хранить",
+          "Потому что восстановление удаляет таблицы"
+        ],
+        "answer": 0,
+        "explanation": "Надёжность резервной копии подтверждается тестовым восстановлением и проверкой целостности."
+      }
+    ],
+    "sources": [
+      "https://www.postgresql.org/docs/current/user-manag.html",
+      "https://www.postgresql.org/docs/current/ddl-rowsecurity.html",
+      "https://www.postgresql.org/docs/current/sql-prepare.html"
+    ],
+    "track": "postgresql",
+    "trackOrder": 8
+  }
+];
+
+export const learningTracks = [
+  {
+    "id": "core",
+    "title": "Основной маршрут",
+    "subtitle": "Junior Data Analyst",
+    "description": "От реляционной модели до самостоятельной аналитики: запросы, соединения, временные данные, оконные функции и бизнес-показатели.",
+    "moduleIds": [
+      "foundations",
+      "relational",
+      "types",
+      "anatomy",
+      "select",
+      "where",
+      "sorting",
+      "expressions",
+      "aggregates",
+      "joins",
+      "subqueries",
+      "cte",
+      "setops",
+      "datetime",
+      "windows",
+      "analytics",
+      "workflow"
+    ],
+    "required": true
+  },
+  {
+    "id": "postgresql",
+    "title": "Дополнительный маршрут",
+    "subtitle": "PostgreSQL глубже",
+    "description": "Изменение данных, транзакции, представления, индексы, планы выполнения, безопасность и эксплуатация PostgreSQL.",
+    "moduleIds": [
+      "ddl",
+      "inserts",
+      "dml",
+      "constraints",
+      "views",
+      "performance",
+      "advanced",
+      "security"
+    ],
+    "required": false
   }
 ];
 
