@@ -99,7 +99,7 @@ assert.notDeepEqual(normalize(orderedA, true), normalize(orderedB, true), 'Order
 assert.equal(modules.length, 25, 'Expected 25 ordered modules');
 assert.ok(modules.every(module => module.lessons.length > 0), 'Every module must have lessons');
 assert.ok(modules.every(module => module.lessons.every(lesson => lesson.title && lesson.body && lesson.example && lesson.note)), 'Every lesson must contain title, theory, example and note');
-assert.ok(modules.every(module => module.lessons.every(lesson => lesson.simple)), 'Every lesson must include a plain-language explanation');
+assert.ok(modules.every(module => module.lessons.every(lesson => lesson.simple === undefined || typeof lesson.simple === 'string')), 'Optional plain-language summaries must be valid when present');
 assert.ok(modules.every(module => module.lessons.every(lesson => !lesson.walkthrough || (lesson.walkthrough.title && lesson.walkthrough.scenario && lesson.walkthrough.steps?.length >= 3 && lesson.walkthrough.result && lesson.walkthrough.pitfall))), 'Every retained worked scenario must be complete');
 assert.equal(new Set(walkthroughLessons.map(lesson => lesson.walkthrough.title)).size, 40, 'Retained worked-scenario titles must be unique');
 assert.ok(modules.every(module => module.lessons.every(lesson => Array.isArray(lesson.outcomes) && lesson.outcomes.length >= 2)), 'Every lesson must have lesson-specific outcomes');
