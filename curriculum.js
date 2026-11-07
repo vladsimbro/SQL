@@ -5173,9 +5173,9 @@ export const modules = [
       },
       {
         "title": "NTILE, PERCENT_RANK и CUME_DIST",
-        "body": "Не все аналитические задачи требуют ранга конкретной строки. Иногда нужно разделить наблюдения на примерно равные по численности группы или оценить относительное положение значения в распределении.\n\nNTILE(n) распределяет упорядоченные строки по n корзинам. Если строк не делится нацело, первые корзины получают на одну строку больше. PERCENT_RANK показывает относительный ранг от 0 до 1 и вычисляется как (rank - 1) / (число строк - 1). Для раздела из одной строки результат PERCENT_RANK равен 0.\n\nCUME_DIST показывает долю строк раздела, которые находятся не выше текущей строки с учётом peers. Поэтому одинаковые значения сортировки получают одинаковый CUME_DIST. Эти функции полезны для сегментации клиентов, товаров и заказов, но границы групп зависят от выбранного ORDER BY.",
+        "body": "Не все аналитические задачи требуют ранга конкретной строки. Иногда нужно разделить наблюдения на примерно равные по численности группы или оценить относительное положение значения в распределении.\n\nNTILE(n) распределяет упорядоченные строки по n корзинам. Если строк не делится нацело, первые корзины получают на одну строку больше. PERCENT_RANK показывает относительный ранг от 0 до 1 и вычисляется как (rank - 1) / (число строк - 1). Для раздела из одной строки результат PERCENT_RANK равен 0.\n\nCUME_DIST показывает долю строк раздела, которые находятся не выше текущей строки с учётом peers. Поэтому одинаковые значения сортировки получают одинаковый CUME_DIST. Эти функции полезны для сегментации клиентов, товаров и заказов, но границы групп зависят от выбранного ORDER BY.\n\nУ этих функций разная реакция на равные значения. NTILE распределяет строки по количеству, поэтому две строки с одинаковой суммой могут попасть в разные корзины. Если такое распределение должно быть воспроизводимым, добавь уникальный tie-breaker в ORDER BY NTILE. PERCENT_RANK и CUME_DIST, наоборот, часто должны считать одинаковые суммы peers: не добавляй в их ORDER BY уникальный ID, иначе одинаковые значения перестанут быть равными для окна.",
         "simple": "NTILE делит строки на корзины, PERCENT_RANK показывает относительную позицию, а CUME_DIST учитывает накопленную долю строк вместе с равными значениями.",
-        "example": "SELECT customer_id, total_amount,\n       NTILE(4) OVER (ORDER BY total_amount) AS quartile,\n       PERCENT_RANK() OVER (ORDER BY total_amount) AS percent_rank,\n       CUME_DIST() OVER (ORDER BY total_amount) AS cumulative_distribution\nFROM orders;",
+        "example": "WITH sample_orders (order_id, total_amount) AS (\n  VALUES\n    (101, 100),\n    (102, 100),\n    (103, 80),\n    (104, 60),\n    (105, 40)\n)\nSELECT order_id, total_amount,\n       NTILE(4) OVER (ORDER BY total_amount, order_id) AS quartile,\n       PERCENT_RANK() OVER (ORDER BY total_amount) AS percent_rank,\n       CUME_DIST() OVER (ORDER BY total_amount) AS cumulative_distribution\nFROM sample_orders\nORDER BY total_amount, order_id;",
         "note": "Корзина NTILE — это группа по количеству строк, а не диапазон равной ширины по значению суммы.",
         "outcomes": [
           "Различать ранжирование и распределение по корзинам",
@@ -5197,7 +5197,53 @@ export const modules = [
         "practiceIds": [
           "e94"
         ],
-        "id": "windows.ntile-percent-rank-i-cume-dist"
+        "id": "windows.ntile-percent-rank-i-cume-dist",
+        "exampleResult": {
+          "columns": [
+            "order_id",
+            "total_amount",
+            "quartile",
+            "percent_rank",
+            "cumulative_distribution"
+          ],
+          "rows": [
+            [
+              105,
+              40,
+              1,
+              0,
+              0.2
+            ],
+            [
+              104,
+              60,
+              1,
+              0.25,
+              0.4
+            ],
+            [
+              103,
+              80,
+              2,
+              0.5,
+              0.6
+            ],
+            [
+              101,
+              100,
+              3,
+              0.75,
+              1
+            ],
+            [
+              102,
+              100,
+              4,
+              0.75,
+              1
+            ]
+          ]
+        }
       },
       {
         "title": "Именованные окна и несколько вычислений",
@@ -5229,9 +5275,9 @@ export const modules = [
       },
       {
         "title": "Фильтрация оконного результата и top-N на группу",
-        "body": "Оконные функции вычисляются после WHERE того же уровня SELECT. Поэтому нельзя напрямую написать WHERE row_number() ...: к моменту фильтрации строки ещё не имеют рассчитанного оконного номера.\n\nРешение — разделить запрос на два уровня. Во внутреннем SELECT или CTE вычисли ROW_NUMBER, RANK либо DENSE_RANK. Во внешнем запросе отфильтруй полученную колонку. Такой шаблон решает задачу top-N на каждую группу: например, два лучших товара в каждой категории или последний заказ каждого клиента.\n\nВыбор функции зависит от смысла ничьих. ROW_NUMBER оставляет ровно N строк на группу при корректной фильтрации, RANK может вернуть больше N строк из-за равных значений и пропускает номера, DENSE_RANK сохраняет последовательные ранги без пропусков.",
+        "body": "Оконные функции вычисляются после WHERE того же уровня SELECT. Поэтому нельзя напрямую написать WHERE row_number() ...: к моменту фильтрации строки ещё не имеют рассчитанного оконного номера.\n\nРешение — разделить запрос на два уровня. Во внутреннем SELECT или CTE вычисли ROW_NUMBER, RANK либо DENSE_RANK. Во внешнем запросе отфильтруй полученную колонку. Такой шаблон решает задачу top-N на каждую группу: например, два лучших товара в каждой категории или последний заказ каждого клиента.\n\nВыбор функции зависит от смысла ничьих. ROW_NUMBER оставляет ровно N строк на группу при корректной фильтрации, RANK может вернуть больше N строк из-за равных значений и пропускает номера, DENSE_RANK сохраняет последовательные ранги без пропусков.\n\nВ примере product_id добавлен в ORDER BY внутри ROW_NUMBER как tie-breaker: при одинаковой выручке запрос всё равно выберет воспроизводимые две строки. Если бизнес-правило требует включить всех товаров, разделивших второе место, используй RANK() с сортировкой только по выручке. Тогда результат может содержать больше двух товаров. Для окончательного порядка добавь category и product_id во внешний ORDER BY.",
         "simple": "Сначала вычисли номер или ранг в CTE, затем фильтруй его во внешнем SELECT. Так строится top-N per group.",
-        "example": "WITH ranked AS (\n  SELECT p.category, p.product_id, p.product_name,\n         SUM(oi.quantity * oi.unit_price) AS revenue,\n         ROW_NUMBER() OVER (\n           PARTITION BY p.category\n           ORDER BY SUM(oi.quantity * oi.unit_price) DESC, p.product_id\n         ) AS rn\n  FROM products p\n  JOIN order_items oi ON oi.product_id = p.product_id\n  GROUP BY p.category, p.product_id, p.product_name\n)\nSELECT *\nFROM ranked\nWHERE rn <= 2;",
+        "example": "WITH ranked AS (\n  SELECT p.category, p.product_id, p.product_name,\n         SUM(oi.quantity * oi.unit_price) AS revenue,\n         ROW_NUMBER() OVER (\n           PARTITION BY p.category\n           ORDER BY SUM(oi.quantity * oi.unit_price) DESC, p.product_id\n         ) AS rn\n  FROM products p\n  JOIN order_items oi ON oi.product_id = p.product_id\n  GROUP BY p.category, p.product_id, p.product_name\n)\nSELECT *\nFROM ranked\nWHERE rn <= 2\nORDER BY category, rn;",
         "note": "В PostgreSQL нет стандартного QUALIFY для фильтрации оконного результата. Используй CTE или подзапрос.",
         "outcomes": [
           "Объяснять, почему оконный результат нельзя фильтровать в WHERE того же уровня",
