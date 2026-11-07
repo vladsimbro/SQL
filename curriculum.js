@@ -5432,8 +5432,8 @@ export const modules = [
       },
       {
         "title": "Когортный анализ",
-        "body": "Когортный анализ объединяет пользователей в группы по общему признаку начала: дата первой покупки, неделя регистрации или месяц первого визита. Затем для каждой когорты измеряют поведение в последующие периоды.\n\nКлючевой шаг — корректно определить дату попадания пользователя в когорту. Обычно это MIN(event_time) для события, которое задаёт начало жизненного цикла. Затем события пользователя сопоставляются с периодами относительно cohort_month.\n\nКогортная таблица показывает не просто календарные продажи, а динамику групп с одинаковым возрастом. Сравнивай когорты по одинаковым периодам жизни, иначе новая когорта будет выглядеть слабее только потому, что у неё меньше времени наблюдения.",
-        "example": "WITH first_purchase AS (\n  SELECT customer_id,\n         DATE_TRUNC('month', MIN(created_at)) AS cohort_month\n  FROM orders\n  GROUP BY customer_id\n)\nSELECT cohort_month, COUNT(*) AS customers\nFROM first_purchase\nGROUP BY cohort_month\nORDER BY cohort_month;",
+        "body": "Когортный анализ объединяет пользователей в группы по общему признаку начала: дата первой покупки, неделя регистрации или месяц первого визита. Затем для каждой когорты измеряют поведение в последующие периоды.\n\nКлючевой шаг — корректно определить дату попадания пользователя в когорту. Обычно это MIN(event_time) для события, которое задаёт начало жизненного цикла. Затем события пользователя сопоставляются с периодами относительно cohort_month.\n\nКогортная таблица показывает не просто календарные продажи, а динамику групп с одинаковым возрастом. Сравнивай когорты по одинаковым периодам жизни, иначе новая когорта будет выглядеть слабее только потому, что у неё меньше времени наблюдения.\n\nВ этом уроке мы формируем когорты и считаем их исходный размер. Сам по себе этот запрос ещё не показывает удержание: он отвечает только на вопрос, сколько пользователей впервые попало в каждую когорту. Возвраты по месяцам и долю активных пользователей разбираем в следующем уроке. В примере используется небольшая демонстрационная таблица событий с несколькими месяцами, чтобы когорты не сливались в один период.",
+        "example": "WITH sample_orders (customer_id, created_at) AS (\n  VALUES\n    (1, DATE '2026-01-05'),\n    (1, DATE '2026-02-05'),\n    (1, DATE '2026-03-07'),\n    (2, DATE '2026-01-12'),\n    (2, DATE '2026-02-20'),\n    (3, DATE '2026-01-20'),\n    (3, DATE '2026-03-02'),\n    (4, DATE '2026-02-03'),\n    (4, DATE '2026-03-09'),\n    (5, DATE '2026-02-15')\n), first_purchase AS (\n  SELECT customer_id,\n         DATE_TRUNC('month', MIN(created_at))::date AS cohort_month\n  FROM sample_orders\n  GROUP BY customer_id\n)\nSELECT cohort_month::text AS cohort_month,\n       COUNT(*)::int AS cohort_size\nFROM first_purchase\nGROUP BY cohort_month\nORDER BY cohort_month;",
         "note": "Не смешивай календарный месяц события с возрастом когорты. Это разные оси анализа.",
         "simple": "Когорта — группа пользователей с общим моментом начала. Период 0 — период вступления, период 1 — следующий.",
         "practiceIds": [
@@ -5456,7 +5456,23 @@ export const modules = [
             "explanation": "Старые когорты имеют больше завершённых периодов наблюдения. Сравнивай одинаковый возраст когорты."
           }
         ],
-        "id": "analytics.kogortnyy-analiz"
+        "id": "analytics.kogortnyy-analiz",
+        "exampleResult": {
+          "columns": [
+            "cohort_month",
+            "cohort_size"
+          ],
+          "rows": [
+            [
+              "2026-01-01",
+              3
+            ],
+            [
+              "2026-02-01",
+              2
+            ]
+          ]
+        }
       },
       {
         "title": "Дедупликация и выбор последней записи",
@@ -5584,9 +5600,9 @@ export const modules = [
       },
       {
         "title": "Retention: когортное удержание",
-        "body": "Retention показывает, какая доля пользователей возвращается или совершает целевое действие после периода вступления. Сначала формируют когорты по дате первого события, затем считают активность в периодах 0, 1, 2 и далее.\n\nВ знаменателе обычно размер исходной когорты. В числителе — число уникальных пользователей этой когорты, активных в конкретном периоде. Важно выбрать определение активности: вход в приложение, покупка, любое событие или другое действие.\n\nRetention можно считать по календарным месяцам или по полным интервалам от даты регистрации. Эти определения дают разные результаты. В отчёте явно указывай, какой вариант используешь.",
+        "body": "Retention показывает, какая доля пользователей возвращается или совершает целевое действие после периода вступления. Сначала формируют когорты по дате первого события, затем считают активность в периодах 0, 1, 2 и далее.\n\nВ знаменателе обычно размер исходной когорты. В числителе — число уникальных пользователей этой когорты, активных в конкретном периоде. Важно выбрать определение активности: вход в приложение, покупка, любое событие или другое действие.\n\nRetention можно считать по календарным месяцам или по полным интервалам от даты регистрации. Эти определения дают разные результаты. В отчёте явно указывай, какой вариант используешь.\n\nДля каждой когорты месяц 0 — месяц первого события. В следующих месяцах числитель показывает число уникальных пользователей исходной когорты, у которых было хотя бы одно событие в этом месяце; знаменатель остаётся равным размеру исходной когорты. Поэтому retention может снижаться, но не должен превышать 100%, если каждый пользователь считается один раз. В примере ниже используются те же демонстрационные события, что и в уроке о формировании когорт.",
         "simple": "Retention — доля исходной когорты, которая активна в последующем периоде.",
-        "example": "WITH cohort AS (\n  SELECT customer_id, DATE_TRUNC('month', MIN(created_at)) AS cohort_month\n  FROM orders\n  GROUP BY customer_id\n), activity AS (\n  SELECT DISTINCT o.customer_id,\n         c.cohort_month,\n         DATE_TRUNC('month', o.created_at) AS activity_month\n  FROM orders o\n  JOIN cohort c USING (customer_id)\n)\nSELECT cohort_month,\n       (EXTRACT(YEAR FROM age(activity_month, cohort_month)) * 12\n        + EXTRACT(MONTH FROM age(activity_month, cohort_month)))::integer AS month_number,\n       COUNT(DISTINCT customer_id) AS active_customers\nFROM activity\nGROUP BY cohort_month, month_number\nORDER BY cohort_month, month_number;",
+        "example": "WITH sample_orders (customer_id, created_at) AS (\n  VALUES\n    (1, DATE '2026-01-05'),\n    (1, DATE '2026-02-05'),\n    (1, DATE '2026-03-07'),\n    (2, DATE '2026-01-12'),\n    (2, DATE '2026-02-20'),\n    (3, DATE '2026-01-20'),\n    (3, DATE '2026-03-02'),\n    (4, DATE '2026-02-03'),\n    (4, DATE '2026-03-09'),\n    (5, DATE '2026-02-15')\n), cohort AS (\n  SELECT customer_id,\n         DATE_TRUNC('month', MIN(created_at))::date AS cohort_month\n  FROM sample_orders\n  GROUP BY customer_id\n), activity AS (\n  SELECT DISTINCT s.customer_id,\n         c.cohort_month,\n         DATE_TRUNC('month', s.created_at)::date AS activity_month\n  FROM sample_orders AS s\n  JOIN cohort AS c USING (customer_id)\n), cohort_sizes AS (\n  SELECT cohort_month, COUNT(*)::int AS cohort_size\n  FROM cohort\n  GROUP BY cohort_month\n)\nSELECT a.cohort_month::text AS cohort_month,\n       ((EXTRACT(YEAR FROM age(a.activity_month, a.cohort_month)) * 12\n        + EXTRACT(MONTH FROM age(a.activity_month, a.cohort_month)))::int) AS month_number,\n       cs.cohort_size,\n       COUNT(DISTINCT a.customer_id)::int AS active_customers,\n       ROUND(100.0 * COUNT(DISTINCT a.customer_id) / cs.cohort_size, 2)::numeric(5,2)::text AS retention_pct\nFROM activity AS a\nJOIN cohort_sizes AS cs USING (cohort_month)\nGROUP BY a.cohort_month, a.activity_month, cs.cohort_size\nORDER BY a.cohort_month, month_number;",
         "note": "Не меняй определение активности между когортами. Знаменатель и календарь должны быть одинаковыми.",
         "practiceIds": [
           "e86"
@@ -5608,7 +5624,53 @@ export const modules = [
             "explanation": "Retention показывает долю вернувшихся от исходной группы. Поэтому знаменатель — размер когорты, определённой в период 0."
           }
         ],
-        "id": "analytics.retention-kogortnoe-uderzhanie"
+        "id": "analytics.retention-kogortnoe-uderzhanie",
+        "exampleResult": {
+          "columns": [
+            "cohort_month",
+            "month_number",
+            "cohort_size",
+            "active_customers",
+            "retention_pct"
+          ],
+          "rows": [
+            [
+              "2026-01-01",
+              0,
+              3,
+              3,
+              "100.00"
+            ],
+            [
+              "2026-01-01",
+              1,
+              3,
+              2,
+              "66.67"
+            ],
+            [
+              "2026-01-01",
+              2,
+              3,
+              2,
+              "66.67"
+            ],
+            [
+              "2026-02-01",
+              0,
+              2,
+              2,
+              "100.00"
+            ],
+            [
+              "2026-02-01",
+              1,
+              2,
+              1,
+              "50.00"
+            ]
+          ]
+        }
       },
       {
         "title": "Медиана и перцентили",

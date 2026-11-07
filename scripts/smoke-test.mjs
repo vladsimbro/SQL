@@ -141,6 +141,9 @@ assert.ok(analyticsModule.lessons.find(lesson => lesson.title === 'Медиан�
 assert.deepEqual(analyticsModule.lessons.find(lesson => lesson.title === 'Медиана и перцентили').exampleResult.rows, [[300,444]], 'Delivery percentiles must be computed once per order');
 
 assert.equal(analyticsModule.lessons.length, 13, 'Analytics module must include period comparisons, conversion and combined-query workflow');
+assert.deepEqual(analyticsModule.lessons.find(lesson => lesson.title === 'Когортный анализ').exampleResult.rows, [['2026-01-01',3],['2026-02-01',2]], 'Cohort example must show separate cohort sizes across months');
+assert.deepEqual(analyticsModule.lessons.find(lesson => lesson.title === 'Retention: когортное удержание').exampleResult.rows, [['2026-01-01',0,3,3,'100.00'],['2026-01-01',1,3,2,'66.67'],['2026-01-01',2,3,2,'66.67'],['2026-02-01',0,2,2,'100.00'],['2026-02-01',1,2,1,'50.00']], 'Retention example must compare active users against the fixed original cohort size');
+
 assert.deepEqual(analyticsModule.lessons.flatMap(lesson => lesson.practiceIds || []).sort(), ['e42','e43','e40','e41','e56','e83','e84','e85','e86','e87','e88','e89','e90','e92','e96','e97','e98','e99'].sort(), 'Analytics lessons must link all eighteen dedicated practice tasks exactly once');
 assert.ok([...windowModule.lessons,...analyticsModule.lessons].filter(lesson => lesson.practiceIds?.length).every(lesson => lesson.practiceIds.every(id => exercises.some(exercise => exercise.id === id && exercise.m === (windowModule.lessons.includes(lesson) ? 'windows' : 'analytics')))), 'Window and analytics practice links must belong to their lesson module');
 
