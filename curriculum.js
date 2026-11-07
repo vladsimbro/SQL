@@ -2230,19 +2230,7 @@ export const modules = [
             "explanation": "DATE_TRUNC обрезает временную метку до указанной точности и возвращает начало соответствующего периода."
           }
         ],
-        "id": "expressions.funktsii-daty-i-vremeni",
-        "exampleResult": {
-          "columns": [
-            "month_start",
-            "orders_count"
-          ],
-          "rows": [
-            [
-              "2026-01-01",
-              12
-            ]
-          ]
-        }
+        "id": "expressions.funktsii-daty-i-vremeni"
       },
       {
         "title": "CASE: условная логика",
