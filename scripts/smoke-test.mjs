@@ -14,6 +14,8 @@ assert.equal(exercises.filter(exercise => exercise.mode === 'select').length, 59
 assert.equal(exercises.filter(exercise => exercise.mode === 'explain').length, 1, 'Expected one EXPLAIN exercise');
 assert.equal(exercises.filter(exercise => exercise.mode === 'mutation').length, 8, 'Expected eight mutation exercises');
 assert.equal(exercises.filter(exercise => exercise.mode === 'transaction').length, 3, 'Expected three transaction exercises');
+assert.equal(exercises.filter(exercise => exercise.mode === 'mutation').length, 8, 'Expected eight mutation exercises');
+assert.equal(exercises.filter(exercise => exercise.mode === 'transaction').length, 3, 'Expected three transaction exercises');
 assert.ok(exercises.every(exercise => modules.some(module => module.id === exercise.m)), 'Every exercise must belong to a real module');
 assert.ok(appSource.includes("from './sql-utils.js'"), 'Application must use the shared SQL parser module');
 const sqlLexer = new Function(sqlUtilsSource.replaceAll('export function ', 'function ') + '; return { firstSqlKeyword, sqlAfterKeyword, explainStatementKeyword, readOnlyQueryKeyword, splitStatements };')();
@@ -25,6 +27,9 @@ assert.equal(sqlLexer.explainStatementKeyword('EXPLAIN (ANALYZE, BUFFERS) SELECT
 assert.equal(sqlLexer.explainStatementKeyword('EXPLAIN (FORMAT JSON) WITH q AS (SELECT 1) SELECT * FROM q'), 'SELECT', 'EXPLAIN FORMAT JSON with CTE must be accepted');
 assert.equal(sqlLexer.readOnlyQueryKeyword('WITH q AS (SELECT 1) SELECT * FROM q'), 'SELECT', 'Read-only CTE must be accepted');
 assert.equal(sqlLexer.readOnlyQueryKeyword('WITH q AS (DELETE FROM orders RETURNING *) SELECT * FROM q'), '', 'Data-modifying CTE must be rejected in read-only exercises');
+assert.equal(sqlLexer.readOnlyQueryKeyword('WITH RECURSIVE n(x) AS (VALUES (1) UNION ALL SELECT x+1 FROM n WHERE x<3) SELECT * FROM n'), 'SELECT', 'Recursive CTE with VALUES anchor must be accepted');
+assert.equal(sqlLexer.readOnlyQueryKeyword('WITH q AS MATERIALIZED (SELECT 1) SELECT * FROM q'), 'SELECT', 'MATERIALIZED CTE must be accepted');
+assert.equal(sqlLexer.readOnlyQueryKeyword('WITH q AS NOT MATERIALIZED (SELECT 1) SELECT * FROM q'), 'SELECT', 'NOT MATERIALIZED CTE must be accepted');
 assert.equal(sqlLexer.readOnlyQueryKeyword('WITH RECURSIVE n(x) AS (VALUES (1) UNION ALL SELECT x+1 FROM n WHERE x<3) SELECT * FROM n'), 'SELECT', 'Recursive CTE with VALUES anchor must be accepted');
 assert.equal(sqlLexer.readOnlyQueryKeyword(String.raw`WITH q AS (SELECT E'it\'s;ok') SELECT * FROM q`), 'SELECT', 'Escaped strings inside CTE bodies must be parsed safely');
 assert.equal(sqlLexer.splitStatements("SELECT ';'; SELECT 2;").length, 2, 'Semicolons inside string literals must not split statements');
