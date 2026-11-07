@@ -5975,9 +5975,9 @@ export const modules = [
       },
       {
         "title": "Доля от общего итога и доля внутри группы",
-        "body": "Доля от общего итога показывает вклад группы в общий результат. Доля внутри группы сравнивает значение с итогом своей категории или сегмента. Оба показателя удобно считать оконной суммой.\n\nНапример, выручка магазина за месяц делится на общую выручку всех магазинов за этот месяц через SUM(revenue) OVER (PARTITION BY month). Если убрать PARTITION BY, знаменателем станет общий итог по всем месяцам и магазинам.\n\nСледи за зерном исходного набора. Сначала агрегируй данные до нужного уровня, затем используй оконную сумму. Иначе соединения могут повторить строки и исказить знаменатель.",
+        "body": "Доля от общего итога показывает вклад группы в общий результат. Доля внутри группы сравнивает значение с итогом своей категории или сегмента. Оба показателя удобно считать оконной суммой.\n\nНапример, выручка магазина за месяц делится на общую выручку всех магазинов за этот месяц через SUM(revenue) OVER (PARTITION BY month). Если убрать PARTITION BY, знаменателем станет общий итог по всем месяцам и магазинам.\n\nСледи за зерном исходного набора. Сначала агрегируй данные до нужного уровня, затем используй оконную сумму. Иначе соединения могут повторить строки и исказить знаменатель.\n\nВ примере отменённые заказы исключены из выручки. Сначала считается выручка каждого магазина за месяц, затем оконная сумма по месяцу становится знаменателем. Это доля магазина в общей выручке месяца, а не доля клиента внутри магазина. Магазины без заказов не появятся: чтобы показать их с нулевой выручкой, потребуется календарь/список магазинов и LEFT JOIN.",
         "simple": "PARTITION BY определяет, внутри какой группы рассчитывается знаменатель доли.",
-        "example": "WITH store_revenue AS (\n  SELECT DATE_TRUNC('month', created_at) AS month,\n         store_id,\n         SUM(total_amount) AS revenue\n  FROM orders\n  GROUP BY 1, 2\n)\nSELECT month, store_id, revenue,\n       revenue / SUM(revenue) OVER (PARTITION BY month) AS share_in_month\nFROM store_revenue;",
+        "example": "WITH store_revenue AS (\n  SELECT DATE_TRUNC('month', created_at)::date AS month,\n         store_id,\n         SUM(total_amount)::int AS revenue\n  FROM orders\n  WHERE status <> 'cancelled'\n  GROUP BY 1, 2\n)\nSELECT month::text AS month,\n       store_id,\n       revenue,\n       ROUND(\n         100.0 * revenue / NULLIF(SUM(revenue) OVER (PARTITION BY month), 0),\n         2\n       )::text AS share_in_month_pct\nFROM store_revenue\nORDER BY month, store_id;",
         "note": "Если нужен процент, умножь долю на 100 и выбери тип с достаточной точностью. Убедись, что знаменатель соответствует нужной группе.",
         "practiceIds": [
           "e89"
@@ -5999,7 +5999,41 @@ export const modules = [
             "explanation": "Без PARTITION BY окно охватывает все строки результата, поэтому доля будет от общего итога за все месяцы."
           }
         ],
-        "id": "analytics.dolya-ot-obshchego-itoga-i-dolya-vnutri-gruppy"
+        "id": "analytics.dolya-ot-obshchego-itoga-i-dolya-vnutri-gruppy",
+        "exampleResult": {
+          "columns": [
+            "month",
+            "store_id",
+            "revenue",
+            "share_in_month_pct"
+          ],
+          "rows": [
+            [
+              "2026-01-01",
+              1,
+              6340,
+              "34.85"
+            ],
+            [
+              "2026-01-01",
+              2,
+              3950,
+              "21.72"
+            ],
+            [
+              "2026-01-01",
+              3,
+              2900,
+              "15.94"
+            ],
+            [
+              "2026-01-01",
+              4,
+              5000,
+              "27.49"
+            ]
+          ]
+        }
       },
       {
         "title": "Сравнение периодов: MoM, WoW и YoY",
