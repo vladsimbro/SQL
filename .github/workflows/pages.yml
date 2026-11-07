@@ -1,6 +1,8 @@
 name: Validate and deploy SQL Academy
 on:
   push:
+    branches: [main, feature/postgres-optimization-stage-3]
+  pull_request:
     branches: [main]
   workflow_dispatch:
 permissions:
@@ -8,7 +10,7 @@ permissions:
   pages: write
   id-token: write
 concurrency:
-  group: sql-academy-deploy
+  group: sql-academy-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 jobs:
   validate:
@@ -25,6 +27,7 @@ jobs:
       - name: Validate curriculum and run all exercise solutions
         run: npm run test:curriculum
   deploy:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     needs: validate
     environment:
       name: github-pages

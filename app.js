@@ -1,6 +1,6 @@
-import { modules, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261107-27';
-import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261107-27';
-import { firstSqlKeyword, explainStatementKeyword, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261107-27';
+import { modules, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261107-32';
+import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261107-32';
+import { firstSqlKeyword, explainStatementKeyword, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261107-32';
 
 const $ = (s, root=document) => root.querySelector(s);
 const $$ = (s, root=document) => [...root.querySelectorAll(s)];
@@ -108,11 +108,122 @@ function renderRoadmap() {
   `<div class="callout" style="margin-bottom:20px"><strong>Как проходить курс:</strong> читай уроки по порядку, запускай примеры, выполняй мини-задачу в конце урока и закрепляй тему в разделе «Практика». Не перескакивай к оконным функциям, пока не понимаешь, на каком уровне находятся строки и группы.</div>`+
   [...groups.entries()].map(([stage,items])=>`<section class="roadmap-stage"><div class="roadmap-stage-head"><span>${esc(stage)}</span><h2>${esc(items[0].m.title.split(':')[0])}</h2><small>${items.reduce((n,x)=>n+x.m.lessons.length,0)} уроков</small></div><div class="module-list">${items.map(x=>moduleRow(x.m,x.i)).join('')}</div></section>`).join('');
 }
+const sqlTokenTips = {
+  SELECT:'Определяет столбцы и выражения, которые попадут в результат запроса.', FROM:'Указывает таблицу или другой источник строк.', WHERE:'Фильтрует отдельные строки до группировки.',
+  JOIN:'Соединяет строки двух источников по условию или правилу соединения.', LEFT:'Сохраняет все строки левого источника, даже если совпадения справа нет.', RIGHT:'Сохраняет все строки правого источника.', INNER:'Оставляет только совпавшие пары строк.', FULL:'Сохраняет несовпавшие строки обеих сторон.', CROSS:'Создаёт декартово произведение.', ON:'Задаёт условие сопоставления строк таблиц.',
+  AS:'Задаёт псевдоним столбцу, выражению или источнику данных.', DISTINCT:'Удаляет повторяющиеся строки результата.', GROUP:'Начинает группировку строк.', BY:'Часть GROUP BY или ORDER BY.', HAVING:'Фильтрует уже сформированные группы.', ORDER:'Начинает сортировку результата.', ASC:'Сортировка по возрастанию.', DESC:'Сортировка по убыванию.', LIMIT:'Ограничивает число возвращаемых строк.', OFFSET:'Пропускает строки перед выдачей результата.',
+  WITH:'Объявляет CTE — именованный промежуточный результат запроса.', RECURSIVE:'Разрешает CTE ссылаться на себя.', UNION:'Объединяет результаты запросов и по умолчанию удаляет дубликаты.', ALL:'Сохраняет дубликаты в UNION ALL.',
+  INSERT:'Добавляет новые строки.', INTO:'Указывает целевую таблицу.', VALUES:'Задаёт значения вставляемых строк.', UPDATE:'Изменяет существующие строки.', SET:'Указывает новые значения столбцов.', DELETE:'Удаляет выбранные строки.', RETURNING:'Возвращает строки, изменённые командой.', CREATE:'Создаёт объект базы данных.', INDEX:'Структура для ускорения подходящих поисков и сортировок.', INCLUDE:'Добавляет значения в индекс без включения их в ключ сортировки.', USING:'Указывает метод доступа или способ использования объекта.',
+  EXPLAIN:'Показывает план, который PostgreSQL выбрал для запроса.', ANALYZE:'В EXPLAIN ANALYZE запускает запрос и измеряет фактическое выполнение; отдельно ANALYZE обновляет статистику.', BUFFERS:'Показывает чтение и попадания в буферный кеш PostgreSQL.', VERBOSE:'Показывает расширенные сведения об узлах плана.', COSTS:'Управляет выводом оценочной стоимости узлов.', VACUUM:'Обслуживает таблицу и помогает повторно использовать место старых версий строк.', MATERIALIZED:'Просит материализовать CTE в соответствующем контексте.',
+  FILTER:'Ограничивает строки, учитываемые конкретной агрегатной функцией.', OVER:'Превращает функцию в оконную и задаёт её окно.', PARTITION:'Часть PARTITION BY: делит окно на независимые группы.', ROWS:'Задаёт рамку оконной функции в физических строках.', RANGE:'Задаёт рамку окна по значениям сортировки.',
+  CASE:'Начинает условное выражение.', WHEN:'Задаёт условие ветки CASE.', THEN:'Задаёт результат при истинном WHEN.', ELSE:'Задаёт запасной результат CASE.', END:'Завершает выражение CASE.', AND:'Логическое И: оба условия должны быть истинными.', OR:'Логическое ИЛИ: достаточно одного истинного условия.', NOT:'Логическое отрицание; учитывай поведение NULL.', NULL:'Отсутствующее или неизвестное значение; используй IS NULL.', IS:'Используется для проверки NULL и булевых состояний.', IN:'Проверяет вхождение в список или результат подзапроса.', EXISTS:'Проверяет, вернул ли подзапрос хотя бы одну строку.', BETWEEN:'Проверяет включительный диапазон.', LIKE:'Сравнивает текст с шаблоном.', ILIKE:'PostgreSQL-вариант LIKE без учёта регистра.',
+  COUNT:'Считает строки или не-NULL значения аргумента.', SUM:'Считает сумму значений.', AVG:'Вычисляет среднее арифметическое.', MIN:'Возвращает минимум.', MAX:'Возвращает максимум.', COALESCE:'Возвращает первый аргумент, который не равен NULL.', NULLIF:'Возвращает NULL, если аргументы равны.', LAG:'Берёт значение из предыдущей строки окна.', LEAD:'Берёт значение из следующей строки окна.', ROW_NUMBER:'Нумерует строки внутри окна без пропусков.', RANK:'Ранжирует значения с пропусками после совпадений.', DENSE_RANK:'Ранжирует значения без пропусков.', NTILE:'Распределяет строки окна по приблизительно равным группам.', DATE_TRUNC:'Округляет дату или время до календарной единицы.', CURRENT_DATE:'Возвращает текущую дату.', CURRENT_TIMESTAMP:'Возвращает текущие дату и время с часовым поясом сессии.', INTERVAL:'Задаёт промежуток времени.'
+};
+function renderAnnotatedSql(sql) {
+  const source=String(sql||'');
+  const pattern=/(--[^\n]*|\/\*[\s\S]*?\*\/|'(?:''|[^'])*'|\b[A-Za-z_][A-Za-z0-9_$]*\b|\b\d+(?:\.\d+)?\b|<>|!=|<=|>=|::|[=<>])/g;
+  let output='',last=0;
+  for(const match of source.matchAll(pattern)){
+    output+=esc(source.slice(last,match.index)); const token=match[0]; let tip='';
+    if(token.startsWith('--')||token.startsWith('/*'))tip='Комментарий для читателя. PostgreSQL не выполняет его как команду.';
+    else if(token.startsWith("'"))tip='Строковый литерал: текстовое значение, записанное непосредственно в запросе.';
+    else if(/^\d/.test(token))tip='Числовой литерал: конкретное число в выражении.';
+    else if(sqlTokenTips[token.toUpperCase()])tip=sqlTokenTips[token.toUpperCase()];
+    else if(['=','<>','!=','<','>','<=','>=','::'].includes(token))tip=({'=':'Оператор равенства.','<>':'Оператор «не равно».','!=':'Альтернативная запись «не равно».','<':'Оператор «меньше».','>':'Оператор «больше».','<=':'Оператор «меньше или равно».','>=':'Оператор «больше или равно».','::':'Приведение значения к указанному типу в PostgreSQL.'})[token];
+    output+=tip?'<span class="sql-tip" tabindex="0" data-tip="'+esc(tip)+'">'+esc(token)+'</span>':esc(token); last=match.index+token.length;
+  }
+  return output+esc(source.slice(last));
+}
+function explainSqlLine(line, index, lines) {
+  const s=line.trim(); if(!s)return '';
+  const upper=s.toUpperCase();
+  if(/^--|^\/\*/.test(s))return 'Комментарий для читателя. Он поясняет замысел, но PostgreSQL не исполняет его как команду.';
+  if(/^EXPLAIN\b/i.test(s))return 'Попросили PostgreSQL показать план выполнения. EXPLAIN без ANALYZE не запускает сам запрос, а показывает выбранный план и оценочную стоимость.';
+  if(/^SELECT\b/i.test(s)){
+    const expr=s.replace(/^SELECT\s+/i,'').replace(/,$/,'').trim();
+    if(/\bCOUNT\s*\(/i.test(expr))return 'Начинаем формировать результат и считаем количество строк или непустых значений. COUNT(*) считает строки, COUNT(столбец) игнорирует NULL.';
+    if(/\b(SUM|AVG|MIN|MAX)\s*\(/i.test(expr))return 'Начинаем список результата. Здесь есть агрегатная функция: она сворачивает значения группы в один показатель. Проверь, на каком уровне сформирована группа.';
+    if(/\b(ROW_NUMBER|RANK|DENSE_RANK|LAG|LEAD)\s*\(/i.test(expr))return 'Начинаем список результата с оконным вычислением. В отличие от GROUP BY, оконная функция обычно сохраняет строки и добавляет к ним рассчитанное значение.';
+    if(/\bCASE\b/i.test(expr))return 'Начинаем список результата с условным выражением CASE. Для каждой входной строки будет выбрана ветка WHEN, а при отсутствии совпадения сработает ELSE, если он задан.';
+    if(expr==='*')return 'Выбираем все столбцы источника. Удобно для разведки, но в итоговом аналитическом запросе лучше перечислять нужные поля.';
+    return 'Начинаем список результата. Каждое выражение через запятую станет отдельным столбцом; вычисления выполняются для строк, дошедших до этапа SELECT.';
+  }
+  if(/^FROM\b/i.test(s)){
+    if(/pg_stat_statements/i.test(s))return 'Источник здесь — представление расширения pg_stat_statements со статистикой нормализованных запросов. Оно доступно не на каждом сервере.';
+    return 'Указываем источник строк. До фильтрации и группировки здесь определяется базовый набор записей; проверь зерно таблицы, чтобы понимать, что означает одна строка.';
+  }
+  if(/^(LEFT|RIGHT|FULL|INNER|CROSS)?\s*JOIN\b/i.test(s)){
+    const type=(s.match(/^(LEFT|RIGHT|FULL|INNER|CROSS)/i)||[])[1]||'INNER';
+    const meaning={LEFT:'Сохраняем все строки левого источника, даже если справа нет пары.',RIGHT:'Сохраняем все строки правого источника, даже если слева нет пары.',FULL:'Сохраняем совпавшие и несовпавшие строки с обеих сторон.',CROSS:'Сочетаем каждую строку слева с каждой строкой справа.',INNER:'Оставляем только строки, для которых найдена пара.'}[type.toUpperCase()];
+    return 'Добавляем второй источник. Тип соединения '+type+' JOIN: '+meaning+' Сам алгоритм выполнения PostgreSQL выберет отдельно.';
+  }
+  if(/^ON\b/i.test(s)){
+    if(/=/.test(s))return 'Условие сопоставления строк. Обычно здесь связывают внешний ключ одной таблицы с ключом другой; проверь уникальность правой стороны, иначе JOIN может размножить строки.';
+    return 'Условие, по которому PostgreSQL решает, какие строки двух источников соединить.';
+  }
+  if(/^USING\s*\(/i.test(s))return 'Сокращённая запись условия JOIN для одноимённых столбцов. В результате общий ключ показывается одним столбцом, а не двумя.';
+  if(/^WHERE\b/i.test(s)){
+    if(/IS\s+NULL|IS\s+NOT\s+NULL/i.test(s))return 'Фильтруем строки по наличию или отсутствию значения. Для NULL нельзя использовать обычное = или <>.';
+    if(/\bIN\s*\(/i.test(s))return 'Оставляем строки, значение которых входит в перечисленный набор. Помни, что NULL внутри NOT IN может привести к UNKNOWN.';
+    if(/\bBETWEEN\b/i.test(s))return 'Фильтруем по диапазону. BETWEEN включает обе границы; для timestamp часто удобнее полуоткрытый интервал >= начало и < следующий период.';
+    if(/::|DATE_TRUNC|LOWER\s*\(/i.test(s))return 'Фильтруем по выражению над столбцом. Подумай, совпадает ли оно с индексом: функция или CAST могут потребовать expression index.';
+    return 'Оставляем только отдельные строки, удовлетворяющие условию. WHERE применяется до GROUP BY и не может фильтровать результат агрегата.';
+  }
+  if(/^(AND|OR)\b/i.test(s))return 'Добавляем ещё одно условие фильтра. AND требует истинности обеих частей, OR допускает любую из них. Скобки помогают явно показать бизнес-логику.';
+  if(/^GROUP\s+BY\b/i.test(s))return 'Формируем группы по указанным измерениям. После этого агрегат считается отдельно для каждой комбинации значений; зерно результата меняется на одну строку на группу.';
+  if(/^HAVING\b/i.test(s))return 'Отбираем уже сформированные группы. В отличие от WHERE, здесь можно проверять COUNT, SUM и другие агрегаты.';
+  if(/^ORDER\s+BY\b/i.test(s)){let overLine=-1;for(let i=0;i<index;i++)if(/\bOVER\s*\(/i.test(lines[i]))overLine=i;const windowText=overLine>=0?lines.slice(overLine,index).join('\n'):'';const windowOpen=overLine>=0&&(windowText.match(/\(/g)||[]).length>(windowText.match(/\)/g)||[]).length;return windowOpen?'Задаём порядок строк внутри окна. Для LAG/LEAD он определяет соседние записи, а для накопительных функций — последовательность расчёта.':'Задаём порядок строк результата. Укажи дополнительный уникальный критерий, если нужна стабильная сортировка при совпадении основного значения.';}
+  if(/^LIMIT\b/i.test(s))return 'Ограничиваем число возвращаемых строк. Без детерминированного ORDER BY состав выбранной выборки может меняться.';
+  if(/^OFFSET\b/i.test(s))return 'Пропускаем строки перед возвратом результата. Большие OFFSET могут быть дорогими, поэтому для глубокой пагинации часто применяют keyset pagination.';
+  if(/^WITH\b/i.test(s))return 'Объявляем CTE: именованный промежуточный результат, который можно использовать в основном запросе. Думай о нём как об отдельном логическом этапе преобразования данных.';
+  if(/^RECURSIVE\b/i.test(s))return 'Разрешаем CTE ссылаться на самого себя. Рекурсивный запрос состоит из начального набора и повторяющейся части, которая добавляет новые строки.';
+  if(/^[A-Za-z_][\w]*\s+AS\s*\(/i.test(s))return 'Начинаем определение CTE с именем '+(s.match(/^([A-Za-z_][\w]*)/)||[])[1]+'. В скобках находится запрос, результат которого будет доступен ниже под этим именем.';
+  if(/^PARTITION\s+BY\b/i.test(s))return 'Разбиваем окно на независимые разделы. Оконная функция начинает расчёт заново для каждой комбинации этих значений.';
+  if(/^OVER\s*\(/i.test(s))return 'Задаём окно для оконной функции: порядок строк, разделы и при необходимости рамку. Именно здесь определяется, с какими соседями сравнивается текущая строка.';
+  if(/^ORDER\s+BY\b/i.test(s)&&lines.slice(0,index).some(x=>/OVER\s*\(/i.test(x)))return 'Задаём порядок строк внутри окна. Для LAG/LEAD он определяет предыдущую и следующую запись, а для накопительных функций влияет на последовательность расчёта.';
+  if(/^(ROWS|RANGE)\s+BETWEEN\b/i.test(s))return s.toUpperCase().startsWith('ROWS')?'Задаём рамку по физическому количеству строк. Например, 6 PRECEDING и CURRENT ROW охватывают до семи строк, а не обязательно семь календарных дней.':'Задаём рамку по значениям ключа сортировки. Для временной оси RANGE может описывать интервал времени, а не число записей.';
+  if(/^FILTER\s*\(/i.test(s))return 'Ограничиваем строки, которые учитывает конкретный агрегат. Это позволяет считать несколько показателей с разными условиями в одном SELECT.';
+  if(/^CASE\b/i.test(s))return 'Начинаем условное выражение. PostgreSQL проверяет WHEN по порядку и возвращает результат первой подходящей ветки.';
+  if(/^WHEN\b/i.test(s))return 'Задаём условие ветки CASE. Если оно истинно, будет возвращено значение после THEN.';
+  if(/^THEN\b/i.test(s))return 'Задаём значение, которое вернёт CASE, когда соответствующее условие WHEN истинно.';
+  if(/^ELSE\b/i.test(s))return 'Задаём запасной результат, если ни один WHEN не подошёл. Без ELSE результатом будет NULL.';
+  if(/^END\b/i.test(s))return 'Завершаем выражение CASE.';
+  if(/^CREATE\s+(UNIQUE\s+)?INDEX\b/i.test(s))return 'Создаём индекс. Он может ускорить подходящие чтения, но занимает место и добавляет стоимость INSERT, UPDATE и DELETE.';
+  if(/^ON\s+\w+\s*\(/i.test(s))return 'Указываем таблицу и ключевые выражения индекса. Порядок столбцов в составном B-tree индексе имеет значение.';
+  if(/^INCLUDE\b/i.test(s))return 'Добавляем неключевые значения в индекс. Они могут покрыть SELECT и помочь Index Only Scan, но не участвуют в поиске и сортировке как ключи.';
+  if(/^UPDATE\b/i.test(s))return 'Выбираем таблицу, в которой будут изменяться существующие строки. Перед запуском проверь WHERE и число затрагиваемых записей.';
+  if(/^SET\b/i.test(s))return 'Указываем новые значения столбцов для UPDATE. Каждое присваивание вычисляется для каждой выбранной строки.';
+  if(/^INSERT\b/i.test(s))return 'Начинаем добавление новых строк в таблицу.';
+  if(/^INTO\b/i.test(s))return 'Указываем целевую таблицу, в которую добавляются строки.';
+  if(/^VALUES\b/i.test(s))return 'Задаём конкретные значения новой строки или набора строк. Порядок значений должен соответствовать списку столбцов INSERT.';
+  if(/^DELETE\b/i.test(s))return 'Начинаем удаление строк. Без WHERE команда удалит все строки таблицы.';
+  if(/^RETURNING\b/i.test(s))return 'Просим вернуть значения строк, которые команда изменила. Это удобный способ проверить фактический результат INSERT, UPDATE или DELETE.';
+  if(/^ANALYZE\b/i.test(s))return 'Обновляем статистику таблицы. Планировщик использует её, чтобы оценивать число строк и выбирать план выполнения.';
+  if(/^VACUUM\b/i.test(s))return 'Обслуживаем таблицу и помогаем повторно использовать место старых версий строк MVCC. VACUUM не равен VACUUM FULL и обычно не переписывает таблицу целиком.';
+  if(/^BEGIN\b/i.test(s))return 'Открываем транзакцию: следующие изменения можно подтвердить через COMMIT или отменить через ROLLBACK.';
+  if(/^COMMIT\b/i.test(s))return 'Подтверждаем транзакцию. После COMMIT изменения становятся видимыми другим транзакциям согласно правилам изоляции.';
+  if(/^ROLLBACK\b/i.test(s))return 'Отменяем изменения текущей транзакции, которые ещё не были зафиксированы.';
+  if(/^SAVEPOINT\b/i.test(s))return 'Создаём точку возврата внутри транзакции. Можно отменить часть действий, не откатывая всю транзакцию.';
+  if(/^FROM\s+pg_stat_statements/i.test(s))return 'Читаем агрегированную статистику запросов из расширения pg_stat_statements.';
+  if(/^[A-Za-z_][\w.]*\s*(,|$)/.test(s))return 'Продолжение списка столбцов или выражений. Запятая отделяет элементы списка; наведи курсор на отдельные токены, чтобы увидеть значение команды или оператора.';
+  return 'Эта строка уточняет выражение или параметры команды. Прочитай её вместе с предыдущей строкой и наведи курсор на подчёркнутые SQL-слова для пояснений.';
+}
+function renderExampleBreakdown(sql) {
+  const lines=String(sql||'').split('\n');
+  const items=lines.map((line,index)=>({line,index,explanation:explainSqlLine(line,index,lines)})).filter(item=>item.line.trim());
+  if(!items.length)return '';
+  const rows=items.map(item=>'<li><code>'+renderAnnotatedSql(item.line)+'</code><p>'+esc(item.explanation)+'</p></li>').join('');
+  return '<section class="example-breakdown"><div class="breakdown-heading"><div><span class="eyebrow">ПОСТРОЧНЫЙ РАЗБОР</span><h3>Что делает каждая строка</h3></div><small>Наведи курсор или коснись подчёркнутого слова для пояснения</small></div><ol class="breakdown-list">'+rows+'</ol></section>';
+}
+function renderWorkedExample(w) {
+  if(!w?.scenario||!Array.isArray(w.steps)||!w.steps.length)return '';
+  return '<section class="worked-example"><div class="eyebrow">РАЗОБРАННЫЙ СЦЕНАРИЙ</div><h3>'+esc(w.title||'Пройдём пример по шагам')+'</h3><p class="worked-scenario">'+esc(w.scenario)+'</p><ol class="worked-steps">'+w.steps.map(step=>'<li>'+esc(step)+'</li>').join('')+'</ol><div class="worked-result"><strong>Что должно получиться</strong><p>'+esc(w.result||'')+'</p></div>'+(w.pitfall?'<div class="worked-pitfall"><strong>Типичная ошибка</strong><p>'+esc(w.pitfall)+'</p></div>':'')+'</section>';
+}
 function lessonBody(l,m) {
   const simple=l.simple?`<div class="plain-language"><strong>Коротко</strong><p>${esc(l.simple)}</p></div>`:'';
   const explanation=(l.body||'').split(/\n\s*\n/).filter(Boolean).map(paragraph=>`<p>${esc(paragraph)}</p>`).join('');
   const sources=(m.sources||[]).map((url,i)=>`<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">Документация PostgreSQL ${i+1} ↗</a>`).join(' · ');
-  return `<div class="lesson-explanation">${explanation}</div>${simple}<h2>Разберём на примере</h2><div class="code-block"><div class="code-head"><span>POSTGRESQL</span><button class="btn small" data-copy-code>Копировать</button></div><pre>${esc(l.example)}</pre></div><div class="note-box"><strong>Важно:</strong> ${esc(l.note)}</div><div class="lesson-sources"><strong>Первоисточники:</strong> ${sources}</div>`;
+  return `<div class="lesson-explanation">${explanation}</div>${simple}${renderWorkedExample(l.walkthrough)}<h2>Разберём на примере</h2><div class="code-block"><div class="code-head"><span>POSTGRESQL</span><button class="btn small" data-copy-code>Копировать</button></div><pre>${renderAnnotatedSql(l.example)}</pre></div>${renderExampleBreakdown(l.example)}<div class="note-box"><strong>Важно:</strong> ${esc(l.note)}</div><div class="lesson-sources"><strong>Первоисточники:</strong> ${sources}</div>`;
 }
 function renderLessonQuiz(l) {
  const bank=l.quiz||[];if(!bank.length)return '';
@@ -273,7 +384,8 @@ async function checkExercise() {
     const started=performance.now();
     if(ex.mode==='explain') {
       if(firstSqlKeyword(parts[0])!=='EXPLAIN' || !['SELECT','WITH'].includes(explainStatementKeyword(parts[0]))) throw new Error('Для этой задачи используй EXPLAIN перед SELECT или WITH ... SELECT.');
-      if(ex.id==='e46' && (!/\\bFROM\\s+orders\\b/i.test(parts[0]) || !/\\bWHERE\\s+customer_id\\s*=\\s*1\\b/i.test(parts[0]))) throw new Error('Построй план именно для выборки из orders с фильтром customer_id = 1.');
+      const explainQuery=parts[0].replace(/^EXPLAIN(?:\\s*\\([^)]*\\))?\\s*/i,'');
+      if((ex.requiredPatterns||[]).some(pattern=>!new RegExp(pattern,'i').test(explainQuery))) throw new Error(ex.requirementsMessage||'Запрос не соответствует условию задания. Проверь таблицы, выбранные поля и фильтры.');
       const plan=await state.db.query(parts[0]);
       const elapsed=Math.round(performance.now()-started);
       state.completedExercises.add(ex.id);saveProgress();
@@ -416,6 +528,25 @@ document.addEventListener('click',event=>{
  if(el.dataset.sample){localStorage.setItem(EDITOR_KEY,el.dataset.sample);go('playground');return;}
  if(el.dataset.action){handleAction(el.dataset.action);return;}
 });
+function ensureSqlTooltip() {
+  if(document.querySelector('.sql-tooltip'))return;
+  const tooltip=document.createElement('div'); tooltip.className='sql-tooltip'; tooltip.setAttribute('role','tooltip'); document.body.append(tooltip);
+  const hide=()=>tooltip.classList.remove('visible');
+  const show=target=>{
+    const text=target?.dataset?.tip; if(!text)return; tooltip.textContent=text; tooltip.classList.add('visible');
+    const rect=target.getBoundingClientRect(),width=Math.min(320,window.innerWidth-24);
+    const left=Math.max(12,Math.min(window.innerWidth-width-12,rect.left+rect.width/2-width/2));
+    const above=rect.top>100; tooltip.style.width=width+'px'; tooltip.style.left=left+'px'; tooltip.style.top=(above?rect.top-10:rect.bottom+10)+'px'; tooltip.style.transform=above?'translateY(-100%)':'none';
+  };
+  document.addEventListener('pointerover',event=>{const target=event.target.closest?.('.sql-tip');if(target)show(target);});
+  document.addEventListener('pointerout',event=>{const target=event.target.closest?.('.sql-tip');if(target&&!target.contains(event.relatedTarget))hide();});
+  document.addEventListener('focusin',event=>{const target=event.target.closest?.('.sql-tip');if(target)show(target);});
+  document.addEventListener('focusout',event=>{if(event.target.closest?.('.sql-tip'))hide();});
+  document.addEventListener('click',event=>{const target=event.target.closest?.('.sql-tip');if(target)show(target);else hide();});
+  document.addEventListener('keydown',event=>{if(event.key==='Escape')hide();});
+  window.addEventListener('scroll',hide,true);
+}
+ensureSqlTooltip();
 loadProgress();
 document.documentElement.classList.toggle('light',state.theme==='light');
 $('#theme-toggle').addEventListener('click',()=>{state.theme=state.theme==='dark'?'light':'dark';document.documentElement.classList.toggle('light',state.theme==='light');localStorage.setItem('sql-academy-theme',state.theme);const meta=$('meta[name="theme-color"]');if(meta)meta.content=state.theme==='light'?'#f3f5fa':'#0a0d14';});
