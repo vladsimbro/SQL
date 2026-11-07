@@ -173,6 +173,10 @@ assert.ok(datetimeQualityModule.lessons.find(lesson => lesson.title === 'Час�
 assert.equal(datetimeQualityModule.lessons.find(lesson => lesson.title === 'Генерация календаря и пропущенные периоды').exampleResult.rows.at(-1)[1], 0, 'Calendar example must show a day without events');
 const windowQualityModule = modules.find(module => module.id === 'windows');
 assert.ok(windowQualityModule.lessons.find(lesson => lesson.title === 'LAG и LEAD').example.includes('ORDER BY created_at, order_id'), 'LAG example must use a deterministic tie-breaker');
+assert.deepEqual(windowQualityModule.lessons.find(lesson => lesson.title === 'LAG и LEAD').exampleResult.rows.map(row => row.slice(3)), [[null,1800],[1250,990],[1800,null]], 'LAG and LEAD must expose previous and next values with NULL at partition boundaries');
+assert.deepEqual(windowQualityModule.lessons.find(lesson => lesson.title === 'Накопительные итоги и рамки окна').exampleResult.rows.map(row => row[4]), [1250,3050,4040], 'Running total must accumulate within the customer partition in deterministic order');
+assert.deepEqual(windowQualityModule.lessons.find(lesson => lesson.title === 'FIRST_VALUE, LAST_VALUE и NTH_VALUE').exampleResult.rows.map(row => row.slice(3)), [[1250,990,1800],[1250,990,1800],[1250,990,1800]], 'Full-partition window frame must make FIRST, LAST and NTH values consistent across rows');
+
 assert.ok(windowQualityModule.lessons.find(lesson => lesson.title === 'ROWS и RANGE: две разные оконные рамки').exampleResult.rows[0][3] !== windowQualityModule.lessons.find(lesson => lesson.title === 'ROWS и RANGE: две разные оконные рамки').exampleResult.rows[0][4], 'ROWS and RANGE example must expose peer-row behavior');
 const analyticsQualityModule = modules.find(module => module.id === 'analytics');
 assert.equal(analyticsQualityModule.lessons.find(lesson => lesson.title === 'Сравнение периодов: MoM, WoW и YoY').exampleResult.rows.length, 3, 'Period comparison example must include the missing month and zero-denominator case');
