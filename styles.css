@@ -234,3 +234,31 @@
 .assessment-hint{font-size:12px;color:var(--muted)}
 .assessment-actions button:disabled{opacity:.45;cursor:not-allowed}
 @media(max-width:700px){.assessment-grid{grid-template-columns:1fr}.assessment-module{padding:15px}.assessment-test{padding:15px}.assessment-question{padding:17px 0}.assessment-actions{align-items:stretch}.assessment-actions button{width:100%}}
+
+
+/* Module assessments */
+.assessment-track-tabs{display:flex;gap:10px;margin:18px 0;flex-wrap:wrap}
+.assessment-track-tabs .track-tab{flex:1;min-width:220px}
+.assessment-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.assessment-module{display:flex;flex-direction:column;align-items:flex-start;gap:10px;padding:18px;border:1px solid var(--border);border-radius:var(--radius);background:var(--card);color:var(--text);text-align:left;cursor:pointer;transition:border-color .18s,transform .18s}
+.assessment-module:hover{border-color:var(--accent);transform:translateY(-1px)}
+.assessment-module>strong{font-size:15px;line-height:1.4}
+.assessment-module-meta{font-size:12px;color:var(--muted)}
+.assessment-module-action{font-size:12px;color:var(--accent);font-weight:650;margin-top:auto}
+.assessment-test{max-width:860px;margin:18px auto}
+.assessment-progress{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px;font-size:13px;color:var(--muted)}
+.assessment-question{padding:22px 0;border-bottom:1px solid var(--border)}
+.assessment-question h3{font-size:16px;line-height:1.5;margin:8px 0 14px}
+.assessment-question .quiz-options{display:grid;gap:8px}
+.assessment-question .quiz-option{width:100%;text-align:left}
+.assessment-question .quiz-option.selected{border-color:var(--accent);background:var(--surface-2)}
+.assessment-result{margin-top:20px;padding:18px;border:1px solid var(--border);border-radius:12px}
+.assessment-result strong,.assessment-result span{display:block}
+.assessment-result span{font-size:20px;font-weight:700;margin-top:7px}
+.assessment-result p{margin:8px 0 0;color:var(--muted);font-size:13px;line-height:1.55}
+.assessment-result.passed{border-color:var(--success)}
+.assessment-result.not-passed{border-color:var(--warning)}
+.assessment-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:20px;flex-wrap:wrap}
+.assessment-hint{font-size:12px;color:var(--muted)}
+.assessment-actions button:disabled{opacity:.45;cursor:not-allowed}
+@media(max-width:700px){.assessment-grid{grid-template-columns:1fr}.assessment-module{padding:15px}.assessment-test{padding:15px}.assessment-question{padding:17px 0}.assessment-actions{align-items:stretch}.assessment-actions button{width:100%}}

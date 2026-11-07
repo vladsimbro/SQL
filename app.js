@@ -17,7 +17,7 @@ const lessonKey = (mid,idx)=>moduleById(mid)?.lessons[idx]?.id || mid+':'+idx;
 const quizKey = (mid,idx,questionIndex)=>lessonKey(mid,idx)+':'+questionIndex;
 const moduleLessons = trackId => modules.filter(module=>module.track===trackId);
 const esc = value => String(value ?? 'NULL').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#39;");
-const label = {dashboard:'Главная',roadmap:'Дорожная карта',study:'Учебник',practice:'Практика',playground:'SQL-песочница',schema:'Учебная база',reference:'Шпаргалка',glossary:'Глоссарий',assessment:'Контрольные работы'};
+const label = {dashboard:'Главная',roadmap:'Дорожная карта',study:'Учебник',practice:'Практика',playground:'SQL-песочница',schema:'Учебная база',reference:'Шпаргалка',glossary:'Глоссарий',assessment:'Контрольные работы',assessment:'Контрольные работы'};
 const loadProgress = () => {
   try {
     const saved=JSON.parse(localStorage.getItem(STORE_KEY)||'{}');
@@ -37,6 +37,7 @@ const loadProgress = () => {
     }
     state.quizAnswers=quizAnswers;
     state.exerciseQuizAnswers=saved.exerciseQuizAnswers||{};
+    state.assessmentResults=saved.assessmentResults&&typeof saved.assessmentResults==='object'?saved.assessmentResults:{};
     state.assessmentResults=saved.assessmentResults&&typeof saved.assessmentResults==='object'?saved.assessmentResults:{};
     if(JSON.stringify(saved.lessons||[])!==JSON.stringify(lessons)||JSON.stringify(saved.quizAnswers||{})!==JSON.stringify(quizAnswers)){
       localStorage.setItem(STORE_KEY,JSON.stringify({lessons,exercises:[...state.completedExercises],quizAnswers,exerciseQuizAnswers:state.exerciseQuizAnswers}));
