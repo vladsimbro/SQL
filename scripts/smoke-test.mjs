@@ -286,6 +286,9 @@ assert.ok(appSource.includes('data-track=')&&appSource.includes('state.roadmapTr
 assert.ok(modules.findIndex(module => module.id === 'select') < modules.findIndex(module => module.id === 'ddl'), 'Read-query fundamentals must be taught before schema modification');
 assert.ok(modules.findIndex(module=>module.id==='workflow')<modules.findIndex(module=>module.id==='ddl'),'The optional PostgreSQL route must follow the complete analyst route');
 assert.ok(modules.findIndex(module => module.id === 'analytics') === modules.findIndex(module => module.id === 'windows') + 1, 'Professional analytics must follow window functions directly');
+const rankingLesson = modules.find(module => module.id === 'windows').lessons.find(lesson => lesson.id === 'windows.row-number-rank-i-dense-rank');
+assert.ok(rankingLesson.example.includes('(1, 101, 100)') && rankingLesson.example.includes('(1, 102, 100)') && rankingLesson.example.includes('(1, 103, 80)'), 'Ranking example must include a tie and a lower value in the same partition');
+assert.deepEqual(rankingLesson.exampleResult.rows.map(row => row.slice(3)), [[1,1,1],[2,1,1],[3,3,2],[1,1,1],[2,2,2]], 'ROW_NUMBER, RANK and DENSE_RANK must demonstrate distinct tie behavior');
 
 for (const id of ['e46','e101','e102']) {
   const exercise = exercises.find(item => item.id === id);
