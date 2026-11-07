@@ -95,6 +95,9 @@ const checkForUpdate = async () => {
 };
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkForUpdate(); });
 window.addEventListener('focus', checkForUpdate);
+window.addEventListener('pageshow', checkForUpdate);
+window.addEventListener('online', checkForUpdate);
+window.setInterval(checkForUpdate, 5 * 60 * 1000);
 </script>
 </body>
 </html>

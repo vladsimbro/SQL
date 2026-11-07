@@ -51,7 +51,7 @@ assert.ok(htmlSource.includes('data-nav="reference"') && htmlSource.includes('da
 assert.ok(cssSource.includes(':root.light .CodeMirror') && cssSource.includes(':root.light .reference-card') && cssSource.includes(':root.light .glossary-item'), 'Light theme must style the editor, reference and glossary');
 
 const ids = new Set(modules.map(module => module.id));
-assert.equal(modules.reduce((sum, module) => sum + module.lessons.length, 0), 151, 'Expected 151 lessons');
+assert.equal(modules.reduce((sum, module) => sum + module.lessons.length, 0), 161, 'Expected 161 lessons');
 assert.equal(glossary.length, 72, 'Expected 72 glossary terms');
 assert.equal(reference.length, 13, 'Expected 13 reference groups');
 const normalizeStart = appSource.indexOf('function normalizeResult');
@@ -61,7 +61,7 @@ const orderedA = { rows: [{id:1},{id:2}], fields: [{name:'id'}] };
 const orderedB = { rows: [{id:2},{id:1}], fields: [{name:'id'}] };
 assert.deepEqual(normalize(orderedA), normalize(orderedB), 'Unordered tasks must ignore row order');
 assert.notDeepEqual(normalize(orderedA, true), normalize(orderedB, true), 'Ordering-sensitive tasks must compare row order');
-assert.equal(modules.length, 24, 'Expected 24 ordered modules');
+assert.equal(modules.length, 25, 'Expected 25 ordered modules');
 assert.ok(modules.every(module => module.lessons.length > 0), 'Every module must have lessons');
 assert.ok(modules.every(module => module.lessons.every(lesson => lesson.title && lesson.body && lesson.example && lesson.note)), 'Every lesson must contain title, theory, example and note');
 assert.ok(modules.every(module => module.lessons.every(lesson => lesson.simple)), 'Every lesson must include a plain-language explanation');
@@ -69,6 +69,17 @@ assert.ok(modules.every(module => module.lessons.every(lesson => Array.isArray(l
 assert.ok(modules.filter(module => ['foundations','relational','types','anatomy','ddl','inserts','select','where','sorting','expressions','aggregates','joins','subqueries','cte','setops','dml','constraints','windows','views','analytics','performance','advanced','security','workflow'].includes(module.id)).every(module => module.lessons.every(lesson => lesson.body.split(/\n\s*\n/).filter(Boolean).length >= 2)), 'Rewritten lesson explanations must be divided into readable paragraphs');
 assert.ok(modules.filter(module => ['foundations','relational','types','anatomy','ddl','inserts','select','where','sorting','expressions','aggregates','joins','subqueries','cte','setops','dml','constraints','windows','views'].includes(module.id)).every(module => module.lessons.every(lesson => lesson.quiz.every(q => q.options.length === 4 && new Set(q.options).size === 4))), 'Rewritten lesson quiz options must be distinct and substantive');
 assert.ok(modules.every(module => module.lessons.every(lesson => lesson.quiz.every(q => q.explanation && q.question && Number.isInteger(q.answer) && q.answer >= 0 && q.answer < q.options.length))), 'Every lesson quiz must have a valid answer and explanation');
+
+const ddlModule = modules.find(module => module.id === 'ddl');
+assert.ok(ddlModule.lessons.some(lesson => lesson.title === 'CHECK: проверка бизнес-правил' && lesson.body.includes('TRUE или NULL')), 'DDL must explain CHECK and UNKNOWN semantics');
+assert.ok(ddlModule.lessons.some(lesson => lesson.title === 'Составные ограничения и составные внешние ключи'), 'DDL must explain composite constraints');
+assert.ok(ddlModule.lessons.some(lesson => lesson.title === 'Безопасное изменение схемы и миграции' && lesson.body.includes('NOT VALID')), 'DDL must explain safe schema migrations');
+const dateTimeModule = modules.find(module => module.id === 'datetime');
+assert.equal(dateTimeModule.lessons.length, 7, 'Date/time stage must contain seven focused lessons');
+assert.ok(dateTimeModule.lessons.some(lesson => lesson.title === 'Фильтрация по датам: полуоткрытые интервалы' && lesson.body.includes('BETWEEN')), 'Date/time stage must explain half-open timestamp ranges');
+assert.ok(dateTimeModule.lessons.some(lesson => lesson.title === 'Часовые пояса и AT TIME ZONE'), 'Date/time stage must explain both AT TIME ZONE directions');
+assert.ok(dateTimeModule.lessons.some(lesson => lesson.title === 'Временные метрики: длительность и SLA'), 'Date/time stage must include practical duration and SLA analysis');
+
 const relationalModule = modules.find(module => module.id === 'relational');
 assert.ok(relationalModule.lessons.some(lesson => lesson.title === 'Реляционная модель и особенности SQL-таблиц' && lesson.body.includes('мультимножествами') && lesson.body.includes('ORDER BY')), 'Relational foundations must distinguish SQL bag semantics from relation sets');
 assert.ok(relationalModule.lessons.some(lesson => lesson.title === 'База данных, схема и таблица: уровни организации' && lesson.body.includes('search_path') && lesson.body.includes('public.orders')), 'Relational foundations must explain PostgreSQL schemas and qualified names');
@@ -95,7 +106,7 @@ assert.ok(appSource.includes("if(state.view!=='practice')go('practice')"), 'Less
 assert.ok(modules.every(module => module.sources?.length), 'Every module must link to official documentation');
 assert.ok(modules.every(module => module.quiz?.length >= 4), 'Every module must include a question bank');
 const quizQuestions = modules.flatMap(module => module.quiz);
-assert.equal(quizQuestions.length, 96, 'Expected 96 knowledge-check questions');
+assert.equal(quizQuestions.length, 100, 'Expected 100 knowledge-check questions');
 assert.ok(quizQuestions.every(question => question.question && question.options?.length === 4 && Number.isInteger(question.answer) && question.answer >= 0 && question.answer < 4 && question.explanation), 'Every quiz question must have four options, a valid answer and an explanation');
 assert.ok(appSource.includes("editor('','exercise-editor'"), 'Practice editor must start empty');
 assert.ok(appSource.includes('navigationScrollReset') && appSource.includes('sidebarScroll'), 'Lesson navigation must preserve scroll position');
