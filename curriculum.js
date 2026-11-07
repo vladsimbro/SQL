@@ -1383,7 +1383,7 @@ export const modules = [
       {
         "title": "Фильтрация дат и времени",
         "body": "Фильтрация дат требует понимания типа столбца. DATE хранит календарный день, а TIMESTAMP или TIMESTAMPTZ — момент/дату и время. Сравнение timestamp с одной датой обычно трактует её как полночь, поэтому фильтр <= DATE '2026-01-31' не захватит весь день в timestamp-столбце.\n\nДля месяца используй границы: created_at >= начало месяца AND created_at < начало следующего месяца. Это покрывает все значения внутри месяца, не требует вычислять последнюю секунду дня и хорошо подходит для индексов по created_at.\n\nЕсли данные хранятся в TIMESTAMPTZ, границы должны соответствовать часовому поясу отчёта. Один календарный день в Варшаве и UTC может начинаться в разные моменты времени.",
-        "example": "SELECT order_id, created_at\nFROM orders\nWHERE created_at >= DATE '2026-01-10'\n  AND created_at <  DATE '2026-01-13'\nORDER BY created_at, order_id;",
+        "example": "SELECT order_id, created_at::text AS created_at\nFROM orders\nWHERE created_at >= DATE '2026-01-10'\n  AND created_at <  DATE '2026-01-13'\nORDER BY created_at, order_id;",
         "note": "Не применяй DATE(created_at) в WHERE без необходимости: функция над столбцом может помешать обычному индексу.",
         "simple": "Фильтруй timestamp полуоткрытым интервалом: включённое начало и исключённое начало следующего периода.",
         "practiceIds": [],
