@@ -318,6 +318,11 @@ const progressiveHintHtml = renderHints({ hint: 'direction', hint2: 'reasoning',
 assert.ok(progressiveHintHtml.includes('direction') && progressiveHintHtml.includes('reasoning') && progressiveHintHtml.includes('structure'), 'All supplied hint levels must be rendered');
 assert.equal((progressiveHintHtml.match(/<details/g) || []).length, 3, 'Each hint level must remain independently collapsed until requested');
 assert.ok(appSource.includes('state.expected.size !== exercises.length') && appSource.includes('failures.length'), 'The SQL engine must not become ready when any expected exercise result is missing');
+assert.ok(appSource.includes('function renderAssessment') && appSource.includes('data-assessment-module') && appSource.includes('data-assessment-answer'), 'Module question banks must be accessible through a dedicated assessment flow');
+assert.ok(appSource.includes('assessment-submit') && appSource.includes('assessment-retry') && appSource.includes('assessmentResults'), 'Module assessments must support submission, retakes and persistent best results');
+assert.ok(appSource.includes('Math.ceil(bank.length*0.75)'), 'Module assessment pass threshold must be explicit and consistent');
+assert.ok(htmlSource.includes('data-nav="assessment"'), 'Module assessments must be reachable from main navigation');
+assert.ok(modules.every(module => module.quiz.length === 4), 'Every module assessment must contain four bank questions');
 assert.equal(sandboxTaskTopics.length, 14, 'Expected fourteen selectable random-task topics');
 assert.equal(sandboxTaskCount, 350, 'Expected 350 random sandbox tasks');
 assert.ok(sandboxTaskTopics.every(topic => topic.tasks.length === 25 && new Set(topic.tasks.map(item => item.prompt)).size === 25 && new Set(topic.tasks.map(item => item.hint)).size === 25), 'Every random-task topic must contain 25 unique prompts and hints');

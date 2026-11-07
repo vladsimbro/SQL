@@ -1,6 +1,6 @@
-import { modules, learningTracks, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261107-68';
-import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261107-68';
-import { firstSqlKeyword, explainStatementKeyword, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261107-68';
+import { modules, learningTracks, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261107-69';
+import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261107-69';
+import { firstSqlKeyword, explainStatementKeyword, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261107-69';
 
 const $ = (s, root=document) => root.querySelector(s);
 const $$ = (s, root=document) => [...root.querySelectorAll(s)];
@@ -9,7 +9,7 @@ const EDITOR_KEY = 'sql-academy-editor-v1';
 const state = {
   view:'dashboard', moduleId:modules[0].id, lessonIndex:0, exerciseId:exercises[0].id, roadmapTrack:'core',
   completedLessons:new Set(), completedExercises:new Set(), db:null, expected:new Map(), randomTask:null, randomTopics:new Set(sandboxTaskTopics.map(topic=>topic.id)),
-  engineReady:false, currentRows:[], quizAnswers:{}, exerciseQuizAnswers:{}, editors:new Map(), navigationScrollReset:false, theme:localStorage.getItem('sql-academy-theme') || 'dark'
+  engineReady:false, currentRows:[], quizAnswers:{}, exerciseQuizAnswers:{}, assessmentTrack:'core', assessmentModuleId:null, assessmentAnswers:{}, assessmentSubmitted:false, assessmentResults:{}, editors:new Map(), navigationScrollReset:false, theme:localStorage.getItem('sql-academy-theme') || 'dark'
 };
 const moduleById = id => modules.find(m=>m.id===id);
 const lessonTotal = modules.reduce((n,m)=>n+m.lessons.length,0);
@@ -17,7 +17,7 @@ const lessonKey = (mid,idx)=>moduleById(mid)?.lessons[idx]?.id || mid+':'+idx;
 const quizKey = (mid,idx,questionIndex)=>lessonKey(mid,idx)+':'+questionIndex;
 const moduleLessons = trackId => modules.filter(module=>module.track===trackId);
 const esc = value => String(value ?? 'NULL').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#39;");
-const label = {dashboard:'Главная',roadmap:'Дорожная карта',study:'Учебник',practice:'Практика',playground:'SQL-песочница',schema:'Учебная база',reference:'Шпаргалка',glossary:'Глоссарий'};
+const label = {dashboard:'Главная',roadmap:'Дорожная карта',study:'Учебник',practice:'Практика',playground:'SQL-песочница',schema:'Учебная база',reference:'Шпаргалка',glossary:'Глоссарий',assessment:'Контрольные работы'};
 const loadProgress = () => {
   try {
     const saved=JSON.parse(localStorage.getItem(STORE_KEY)||'{}');
@@ -37,13 +37,14 @@ const loadProgress = () => {
     }
     state.quizAnswers=quizAnswers;
     state.exerciseQuizAnswers=saved.exerciseQuizAnswers||{};
+    state.assessmentResults=saved.assessmentResults&&typeof saved.assessmentResults==='object'?saved.assessmentResults:{};
     if(JSON.stringify(saved.lessons||[])!==JSON.stringify(lessons)||JSON.stringify(saved.quizAnswers||{})!==JSON.stringify(quizAnswers)){
       localStorage.setItem(STORE_KEY,JSON.stringify({lessons,exercises:[...state.completedExercises],quizAnswers,exerciseQuizAnswers:state.exerciseQuizAnswers}));
     }
   } catch {}
 };
 const saveProgress = () => {
-  localStorage.setItem(STORE_KEY,JSON.stringify({lessons:[...state.completedLessons],exercises:[...state.completedExercises],quizAnswers:state.quizAnswers,exerciseQuizAnswers:state.exerciseQuizAnswers}));
+  localStorage.setItem(STORE_KEY,JSON.stringify({lessons:[...state.completedLessons],exercises:[...state.completedExercises],quizAnswers:state.quizAnswers,exerciseQuizAnswers:state.exerciseQuizAnswers,assessmentResults:state.assessmentResults}));
   updateProgress();
 };
 const updateProgress = () => {
@@ -74,7 +75,7 @@ function render() {
   $$('.nav-item').forEach(b=>b.classList.toggle('active',b.dataset.nav===state.view));
   $('#breadcrumb-current').textContent=label[state.view]||'Учебник';
   updateProgress();
-  const pages={dashboard:renderDashboard,roadmap:renderRoadmap,study:renderStudy,practice:renderPractice,playground:renderPlayground,schema:renderSchema,reference:renderReference,glossary:renderGlossary};
+  const pages={dashboard:renderDashboard,roadmap:renderRoadmap,study:renderStudy,practice:renderPractice,assessment:renderAssessment,playground:renderPlayground,schema:renderSchema,reference:renderReference,glossary:renderGlossary};
   host.innerHTML=(pages[state.view]||renderDashboard)();
   bindPage();
   requestAnimationFrame(()=>{
