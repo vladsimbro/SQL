@@ -2,13 +2,15 @@ name: Validate and deploy SQL Academy
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 permissions:
   contents: read
   pages: write
   id-token: write
 concurrency:
-  group: sql-academy-deploy
+  group: sql-academy-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 jobs:
   validate:
@@ -25,6 +27,7 @@ jobs:
       - name: Validate curriculum and run all exercise solutions
         run: npm run test:curriculum
   deploy:
+    if: github.event_name != 'pull_request'
     needs: validate
     environment:
       name: github-pages
