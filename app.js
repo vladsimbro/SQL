@@ -1,6 +1,6 @@
-import { modules, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261107-30';
-import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261107-30';
-import { firstSqlKeyword, explainStatementKeyword, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261107-30';
+import { modules, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261107-31';
+import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261107-31';
+import { firstSqlKeyword, explainStatementKeyword, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261107-31';
 
 const $ = (s, root=document) => root.querySelector(s);
 const $$ = (s, root=document) => [...root.querySelectorAll(s)];
@@ -172,7 +172,7 @@ function explainSqlLine(line, index, lines) {
   if(/^(AND|OR)\b/i.test(s))return 'Добавляем ещё одно условие фильтра. AND требует истинности обеих частей, OR допускает любую из них. Скобки помогают явно показать бизнес-логику.';
   if(/^GROUP\s+BY\b/i.test(s))return 'Формируем группы по указанным измерениям. После этого агрегат считается отдельно для каждой комбинации значений; зерно результата меняется на одну строку на группу.';
   if(/^HAVING\b/i.test(s))return 'Отбираем уже сформированные группы. В отличие от WHERE, здесь можно проверять COUNT, SUM и другие агрегаты.';
-  if(/^ORDER\s+BY\b/i.test(s))return lines.slice(0,index).some(x=>/OVER\s*\(/i.test(x))?'Задаём порядок строк внутри окна. Для LAG/LEAD он определяет соседние записи, а для накопительных функций — последовательность расчёта.':'Задаём порядок строк результата. Укажи дополнительный уникальный критерий, если нужна стабильная сортировка при совпадении основного значения.';
+  if(/^ORDER\s+BY\b/i.test(s)){let overLine=-1;for(let i=0;i<index;i++)if(/\bOVER\s*\(/i.test(lines[i]))overLine=i;const windowText=overLine>=0?lines.slice(overLine,index).join('\n'):'';const windowOpen=overLine>=0&&(windowText.match(/\(/g)||[]).length>(windowText.match(/\)/g)||[]).length;return windowOpen?'Задаём порядок строк внутри окна. Для LAG/LEAD он определяет соседние записи, а для накопительных функций — последовательность расчёта.':'Задаём порядок строк результата. Укажи дополнительный уникальный критерий, если нужна стабильная сортировка при совпадении основного значения.';}
   if(/^LIMIT\b/i.test(s))return 'Ограничиваем число возвращаемых строк. Без детерминированного ORDER BY состав выбранной выборки может меняться.';
   if(/^OFFSET\b/i.test(s))return 'Пропускаем строки перед возвратом результата. Большие OFFSET могут быть дорогими, поэтому для глубокой пагинации часто применяют keyset pagination.';
   if(/^WITH\b/i.test(s))return 'Объявляем CTE: именованный промежуточный результат, который можно использовать в основном запросе. Думай о нём как об отдельном логическом этапе преобразования данных.';
@@ -541,6 +541,8 @@ function ensureSqlTooltip() {
   document.addEventListener('pointerout',event=>{const target=event.target.closest?.('.sql-tip');if(target&&!target.contains(event.relatedTarget))hide();});
   document.addEventListener('focusin',event=>{const target=event.target.closest?.('.sql-tip');if(target)show(target);});
   document.addEventListener('focusout',event=>{if(event.target.closest?.('.sql-tip'))hide();});
+  document.addEventListener('click',event=>{const target=event.target.closest?.('.sql-tip');if(target)show(target);else hide();});
+  document.addEventListener('keydown',event=>{if(event.key==='Escape')hide();});
   window.addEventListener('scroll',hide,true);
 }
 ensureSqlTooltip();
