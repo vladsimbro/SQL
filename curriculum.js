@@ -6095,9 +6095,9 @@ export const modules = [
       },
       {
         "title": "Составной аналитический запрос: от фактов до отчёта",
-        "body": "Реальная аналитическая задача почти никогда не сводится к одной функции. Обычно запрос проходит несколько смысловых этапов: отбирает исходные факты, соединяет справочники, приводит строки к нужному зерну, агрегирует метрики, вычисляет сравнения или доли и только затем формирует финальную выдачу.\n\nCTE помогает явно разделить эти этапы. Например, первый CTE может отобрать нужные заказы, второй соединить их с клиентами и магазинами, третий посчитать выручку на уровне клиента и города, а последний добавить ранг и долю клиента в городской выручке. Каждый этап должен иметь понятное зерно и не размножать строки неожиданным JOIN.\n\nПроверяй запрос промежуточными результатами. Сначала посмотри число строк и ключи после фильтрации, затем после JOIN, затем после GROUP BY. Сверь сумму метрик до и после соединения. Если итог изменился, выясни, почему, а не добавляй DISTINCT в надежде, что он починит математику.",
+        "body": "Реальная аналитическая задача почти никогда не сводится к одной функции. Обычно запрос проходит несколько смысловых этапов: отбирает исходные факты, соединяет справочники, приводит строки к нужному зерну, агрегирует метрики, вычисляет сравнения или доли и только затем формирует финальную выдачу.\n\nCTE помогает явно разделить эти этапы. Например, первый CTE может отобрать нужные заказы, второй соединить их с клиентами и магазинами, третий посчитать выручку на уровне клиента и города, а последний добавить ранг и долю клиента в городской выручке. Каждый этап должен иметь понятное зерно и не размножать строки неожиданным JOIN.\n\nПроверяй запрос промежуточными результатами. Сначала посмотри число строк и ключи после фильтрации, затем после JOIN, затем после GROUP BY. Сверь сумму метрик до и после соединения. Если итог изменился, выясни, почему, а не добавляй DISTINCT в надежде, что он починит математику.\n\nВ этом отчёте город — это город магазина (stores.city), а не город проживания клиента (customers.city). Отменённые заказы исключаются. ROW_NUMBER с дополнительной сортировкой по customer_id даёт ровно двух клиентов на город и делает выбор воспроизводимым; если нужно включить всех клиентов, разделивших второе место, используй RANK по выручке без уникального tie-breaker.",
         "simple": "Строй аналитический запрос как конвейер: фильтр → JOIN → агрегация до нужного зерна → оконные метрики → финальный фильтр и сортировка.",
-        "example": "WITH filtered_orders AS (\n  SELECT order_id, customer_id, store_id, total_amount\n  FROM orders\n  WHERE status <> 'cancelled'\n), customer_city_revenue AS (\n  SELECT s.city, c.customer_id, c.customer_name,\n         COUNT(*) AS orders_count, SUM(f.total_amount) AS revenue\n  FROM filtered_orders f\n  JOIN customers c ON c.customer_id = f.customer_id\n  JOIN stores s ON s.store_id = f.store_id\n  GROUP BY s.city, c.customer_id, c.customer_name\n), ranked AS (\n  SELECT *, SUM(revenue) OVER (PARTITION BY city) AS city_revenue,\n         ROW_NUMBER() OVER (PARTITION BY city ORDER BY revenue DESC, customer_id) AS rn\n  FROM customer_city_revenue\n)\nSELECT city, customer_name, orders_count, revenue,\n       ROUND(100.0 * revenue / NULLIF(city_revenue, 0), 2) AS city_share_pct\nFROM ranked\nWHERE rn <= 2\nORDER BY city, rn;",
+        "example": "WITH filtered_orders AS (\n  SELECT order_id, customer_id, store_id, total_amount\n  FROM orders\n  WHERE status <> 'cancelled'\n), customer_city_revenue AS (\n  SELECT s.city, c.customer_id, c.customer_name,\n         COUNT(*)::int AS orders_count, SUM(f.total_amount)::int AS revenue\n  FROM filtered_orders f\n  JOIN customers c ON c.customer_id = f.customer_id\n  JOIN stores s ON s.store_id = f.store_id\n  GROUP BY s.city, c.customer_id, c.customer_name\n), ranked AS (\n  SELECT *, SUM(revenue) OVER (PARTITION BY city) AS city_revenue,\n         ROW_NUMBER() OVER (PARTITION BY city ORDER BY revenue DESC, customer_id) AS rn\n  FROM customer_city_revenue\n)\nSELECT city, customer_name, orders_count, revenue,\n       ROUND(100.0 * revenue / NULLIF(city_revenue, 0), 2)::text AS city_share_pct\nFROM ranked\nWHERE rn <= 2\nORDER BY city, rn;",
         "note": "Не начинай с длинного запроса на 40 строк. Сначала назови зерно каждого CTE и проверь, что JOIN не меняет его случайно.",
         "outcomes": [
           "Разбивать бизнес-задачу на этапы преобразования данных",
@@ -6120,7 +6120,74 @@ export const modules = [
         "practiceIds": [
           "e99"
         ],
-        "id": "analytics.sostavnoy-analiticheskiy-zapros-ot-faktov-do-otchyota"
+        "id": "analytics.sostavnoy-analiticheskiy-zapros-ot-faktov-do-otchyota",
+        "exampleResult": {
+          "columns": [
+            "city",
+            "customer_name",
+            "orders_count",
+            "revenue",
+            "city_share_pct"
+          ],
+          "rows": [
+            [
+              "Москва",
+              "Дмитрий",
+              1,
+              4200,
+              "66.25"
+            ],
+            [
+              "Москва",
+              "Алексей",
+              1,
+              1250,
+              "19.72"
+            ],
+            [
+              "Санкт-Петербург",
+              "Ирина",
+              1,
+              2400,
+              "60.76"
+            ],
+            [
+              "Санкт-Петербург",
+              "Алексей",
+              1,
+              990,
+              "25.06"
+            ],
+            [
+              "Казань",
+              "Алексей",
+              1,
+              1800,
+              "62.07"
+            ],
+            [
+              "Казань",
+              "Мария",
+              1,
+              1100,
+              "37.93"
+            ],
+            [
+              "Пермь",
+              "Ирина",
+              2,
+              4250,
+              "85.00"
+            ],
+            [
+              "Пермь",
+              "Мария",
+              1,
+              750,
+              "15.00"
+            ]
+          ]
+        }
       }
     ],
     "quiz": [
