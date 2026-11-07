@@ -114,7 +114,7 @@ assert.ok(modules.every(module => module.lessons.every(lesson => lesson.quiz.eve
 const ddlModule = modules.find(module => module.id === 'ddl');
 assert.ok(ddlModule.lessons.some(lesson => lesson.title === 'CHECK: проверка бизнес-правил' && lesson.body.includes('TRUE или NULL')), 'DDL must explain CHECK and UNKNOWN semantics');
 assert.ok(ddlModule.lessons.some(lesson => lesson.title === 'Составные ограничения и составные внешние ключи'), 'DDL must explain composite constraints');
-assert.ok(ddlModule.lessons.some(lesson => lesson.title === 'Безопасное изменение схемы и миграции' && lesson.body.includes('NOT VALID')), 'DDL must explain safe schema migrations');
+assert.ok(ddlModule.lessons.some(lesson => lesson.title === 'PostgreSQL: ограничения и блокировки при миграциях' && lesson.body.includes('NOT VALID') && lesson.body.includes('VALIDATE CONSTRAINT')), 'DDL must explain PostgreSQL-specific constraint validation and migration locks');
 const dateTimeModule = modules.find(module => module.id === 'datetime');
 assert.equal(dateTimeModule.lessons.length, 7, 'Date/time stage must contain seven focused lessons');
 assert.ok(dateTimeModule.lessons.some(lesson => lesson.title === 'Фильтрация по датам: полуоткрытые интервалы' && lesson.body.includes('BETWEEN')), 'Date/time stage must explain half-open timestamp ranges');
