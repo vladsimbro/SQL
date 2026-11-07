@@ -3676,8 +3676,8 @@ export const modules = [
       },
       {
         "title": "Часовые пояса и AT TIME ZONE",
-        "body": "Часовой пояс — это не просто постоянное смещение вроде UTC+1. Правила зоны содержат историю переходов и изменения смещений, включая летнее время. Поэтому для гражданского времени используй имена IANA, например Europe/Warsaw или Europe/Moscow, а не зашитое вручную смещение, если важны исторические и будущие даты.\n\nAT TIME ZONE имеет два направления. Для timestamp without time zone оно трактует локальные часы как время указанной зоны и возвращает timestamptz, то есть определяет момент. Для timestamptz оно показывает момент в указанной зоне и возвращает timestamp without time zone. Один оператор, но тип результата зависит от типа входа.\n\nПограничные часы при переходах на летнее время могут быть неоднозначными или отсутствовать. Если бизнес-процесс принимает локальное время пользователя, заранее определите правило обработки таких значений и храните достаточно контекста, чтобы событие можно было интерпретировать однозначно.",
-        "example": "SET TIME ZONE 'UTC';\n\n-- Локальное время Варшавы -> конкретный момент\nSELECT TIMESTAMP '2026-11-07 09:00' AT TIME ZONE 'Europe/Warsaw';\n\n-- Конкретный момент -> локальные часы Варшавы\nSELECT TIMESTAMPTZ '2026-11-07 08:00+00' AT TIME ZONE 'Europe/Warsaw';",
+        "body": "Часовой пояс — это не просто постоянное смещение вроде UTC+1. Правила зоны содержат историю переходов и изменения смещений, включая летнее время. Поэтому для гражданского времени используй имена IANA, например Europe/Warsaw или Europe/Moscow, а не зашитое вручную смещение, если важны исторические и будущие даты.\n\nAT TIME ZONE имеет два направления. Для timestamp without time zone оно трактует локальные часы как время указанной зоны и возвращает timestamptz, то есть определяет момент. Для timestamptz оно показывает момент в указанной зоне и возвращает timestamp without time zone. Один оператор, но тип результата зависит от типа входа.\n\nПограничные часы при переходах на летнее время могут быть неоднозначными или отсутствовать. Если бизнес-процесс принимает локальное время пользователя, заранее определите правило обработки таких значений и храните достаточно контекста, чтобы событие можно было интерпретировать однозначно.\n\nЗапомни направление преобразования по типу слева от AT TIME ZONE. timestamp without time zone трактуется как локальные часы в указанной зоне и превращается в timestamptz. timestamptz, наоборот, отображается как локальные часы зоны и превращается в timestamp without time zone. Это не одно и то же преобразование в обратном порядке по строковому представлению.",
+        "example": "SELECT TIMESTAMP '2026-11-07 09:00' AT TIME ZONE 'Europe/Warsaw' AS local_time_to_instant,\n       TIMESTAMPTZ '2026-11-07 08:00:00+00' AT TIME ZONE 'Europe/Warsaw' AS instant_to_local_time;",
         "note": "Проверь тип входного выражения: от него зависит направление преобразования и тип результата AT TIME ZONE.",
         "simple": "AT TIME ZONE либо превращает локальные часы в момент, либо показывает момент как локальные часы.",
         "outcomes": [
@@ -3705,7 +3705,7 @@ export const modules = [
       },
       {
         "title": "Фильтрация по датам: полуоткрытые интервалы",
-        "body": "Для отбора событий за день или месяц лучше использовать полуоткрытый интервал: начало включено, конец исключён. Например, для ноября это created_at >= начало ноября и created_at < начало декабря. Такой фильтр не зависит от точности хранения долей секунды и одинаково работает для timestamp с любой поддерживаемой точностью.\n\nФильтр BETWEEN включает обе границы. Поэтому BETWEEN '2026-11-01' AND '2026-11-30' для timestamp обычно не охватывает весь последний день: правая граница означает полночь в начале 30 ноября. Попытка указать 23:59:59.999999 хрупкая, потому что точность столбца или литерала может отличаться.\n\nНе оборачивай индексируемый столбец в DATE() или DATE_TRUNC() в WHERE без причины. Условие по диапазону часто позволяет использовать обычный индекс по timestamp. Сначала вычисли границы периода, затем сравнивай исходный столбец с ними.",
+        "body": "Для отбора событий за день или месяц лучше использовать полуоткрытый интервал: начало включено, конец исключён. Например, для ноября это created_at >= начало ноября и created_at < начало декабря. Такой фильтр не зависит от точности хранения долей секунды и одинаково работает для timestamp с любой поддерживаемой точностью.\n\nФильтр BETWEEN включает обе границы. Поэтому BETWEEN '2026-11-01' AND '2026-11-30' для timestamp обычно не охватывает весь последний день: правая граница означает полночь в начале 30 ноября. Попытка указать 23:59:59.999999 хрупкая, потому что точность столбца или литерала может отличаться.\n\nНе оборачивай индексируемый столбец в DATE() или DATE_TRUNC() в WHERE без причины. Условие по диапазону часто позволяет использовать обычный индекс по timestamp. Сначала вычисли границы периода, затем сравнивай исходный столбец с ними.\n\nЕсли отчёт строится в локальном часовом поясе, сначала преобразуй начало и конец календарного периода в конкретные моменты, а затем фильтруй TIMESTAMPTZ. Не прибавляй к началу суток ровно 24 часа для локального календарного дня: при переходе на летнее время такой день может иметь 23 или 25 часов.",
         "example": "SELECT order_id, created_at\nFROM orders\nWHERE created_at >= TIMESTAMPTZ '2026-11-01 00:00:00+00'\n  AND created_at <  TIMESTAMPTZ '2026-12-01 00:00:00+00';",
         "note": "Для календарного дня в конкретной зоне сначала определи локальные границы дня и преобразуй обе границы в моменты. Не добавляй фиксированные 24 часа там, где возможен переход летнего времени.",
         "simple": "Бери начало периода включительно, начало следующего периода исключительно.",
@@ -3747,7 +3747,7 @@ export const modules = [
       {
         "title": "DATE_TRUNC, EXTRACT и календарные периоды",
         "body": "DATE_TRUNC округляет временную метку вниз до заданной календарной единицы: минуты, часа, дня, недели, месяца и т.д. Это удобно для группировки событий по периодам. EXTRACT достаёт отдельную часть даты или времени, например год, месяц, день недели или час.\n\nДля группировки по месяцу DATE_TRUNC('month', created_at) сохраняет тип временной метки и год с месяцем, в отличие от одного EXTRACT(MONTH), который смешает январь разных лет. Для отчёта по календарным месяцам учитывай часовой пояс, в котором определяется граница месяца: одна и та же точка времени может попасть в разные локальные даты.\n\nНеделя в PostgreSQL начинается с понедельника для ISO-представления, а номер недели связан с ISO-годом. Вблизи Нового года календарный год и ISO-год могут различаться. Для недельных отчётов используй согласованную пару ISOYEAR и WEEK либо группируй по DATE_TRUNC('week', ...).",
-        "example": "SELECT DATE_TRUNC('month', created_at) AS month_start,\n       COUNT(*) AS orders_count\nFROM orders\nGROUP BY DATE_TRUNC('month', created_at)\nORDER BY month_start;\n\nSELECT EXTRACT(ISODOW FROM created_at) AS iso_day,\n       COUNT(*)\nFROM orders\nGROUP BY 1;",
+        "example": "SELECT DATE_TRUNC('month', created_at)::date::text AS month_start,\n       COUNT(*)::int AS orders_count,\n       SUM(total_amount)::int AS revenue\nFROM orders\nGROUP BY 1\nORDER BY 1;",
         "note": "EXTRACT(MONTH) без года объединяет январь разных лет. Для уникального периода используй DATE_TRUNC или пару год+месяц.",
         "simple": "DATE_TRUNC помогает получить начало периода, EXTRACT — отдельную числовую часть.",
         "outcomes": [
@@ -3772,12 +3772,26 @@ export const modules = [
             "explanation": "Число месяца одинаково для разных лет. Для отдельного периода нужно учитывать и год, например через DATE_TRUNC('month', ...)."
           }
         ],
-        "id": "datetime.date-trunc-extract-i-kalendarnye-periody"
+        "id": "datetime.date-trunc-extract-i-kalendarnye-periody",
+        "exampleResult": {
+          "columns": [
+            "month_start",
+            "orders_count",
+            "revenue"
+          ],
+          "rows": [
+            [
+              "2026-01-01",
+              12,
+              21390
+            ]
+          ]
+        }
       },
       {
         "title": "Генерация календаря и пропущенные периоды",
         "body": "Фактические события не гарантируют, что в данных есть каждая дата. Если в понедельник заказов не было, GROUP BY по orders не создаст строку с нулём. Для отчёта с непрерывной осью времени сначала создают календарную сетку, затем присоединяют агрегированные события.\n\nВ PostgreSQL для диапазона дат удобно использовать generate_series. Календарь можно LEFT JOIN соединить с агрегатами по дню, а отсутствующие значения заменить COALESCE(..., 0). Важно не переносить фильтр правой таблицы в WHERE после LEFT JOIN, иначе строки без событий могут исчезнуть.\n\nДля временных рядов заранее выбери гранулярность и часовой пояс. «День» может означать UTC-день или локальный календарный день конкретного бизнеса. Если это не определить, отчёт может быть технически корректным, но отвечать не на тот бизнес-вопрос.",
-        "example": "WITH calendar AS (\n  SELECT d::date AS day\n  FROM generate_series(\n    DATE '2026-11-01',\n    DATE '2026-11-07',\n    INTERVAL '1 day'\n  ) AS g(d)\n), daily_orders AS (\n  SELECT created_at::date AS day, COUNT(*) AS orders_count\n  FROM orders\n  GROUP BY created_at::date\n)\nSELECT c.day, COALESCE(d.orders_count, 0) AS orders_count\nFROM calendar AS c\nLEFT JOIN daily_orders AS d USING (day)\nORDER BY c.day;",
+        "example": "WITH calendar AS (\n  SELECT d::date AS day\n  FROM generate_series(\n    DATE '2026-01-10',\n    DATE '2026-01-16',\n    INTERVAL '1 day'\n  ) AS g(d)\n), daily_orders AS (\n  SELECT created_at::date AS day, COUNT(*) AS orders_count\n  FROM orders\n  GROUP BY created_at::date\n)\nSELECT c.day::text AS day, COALESCE(d.orders_count, 0) AS orders_count\nFROM calendar AS c\nLEFT JOIN daily_orders AS d USING (day)\nORDER BY c.day;",
         "note": "Временная сетка задаёт ожидаемые периоды, а LEFT JOIN добавляет к ним фактические события. Отсутствие события превращается в ноль только если это соответствует смыслу метрики.",
         "simple": "Если даты нет в исходных событиях, создай календарь и присоедини факты к нему.",
         "outcomes": [
@@ -3801,7 +3815,43 @@ export const modules = [
             "explanation": "GROUP BY создаёт группы только из существующих строк. Для пустых периодов нужна отдельная календарная сетка."
           }
         ],
-        "id": "datetime.generatsiya-kalendarya-i-propushchennye-periody"
+        "id": "datetime.generatsiya-kalendarya-i-propushchennye-periody",
+        "exampleResult": {
+          "columns": [
+            "day",
+            "orders_count"
+          ],
+          "rows": [
+            [
+              "2026-01-10",
+              2
+            ],
+            [
+              "2026-01-11",
+              2
+            ],
+            [
+              "2026-01-12",
+              2
+            ],
+            [
+              "2026-01-13",
+              2
+            ],
+            [
+              "2026-01-14",
+              2
+            ],
+            [
+              "2026-01-15",
+              2
+            ],
+            [
+              "2026-01-16",
+              0
+            ]
+          ]
+        }
       },
       {
         "title": "Временные метрики: длительность и SLA",
@@ -3979,7 +4029,7 @@ export const modules = [
       {
         "title": "LAG и LEAD",
         "body": "LAG и LEAD позволяют получить значение из соседней строки внутри окна. LAG смотрит назад, LEAD — вперёд. Они полезны, когда нужно сравнить текущую запись с предыдущей или следующей без самостоятельного JOIN таблицы с самой собой.\n\nОбе функции используют ORDER BY внутри OVER. Для истории статусов заказа это может быть event_at, а при одинаковом времени нужен дополнительный уникальный event_id. Иначе PostgreSQL не обязан выбирать один и тот же порядок соседних событий.\n\nПервый аргумент — выражение, которое нужно получить. Второй, необязательный, задаёт смещение: по умолчанию одна строка. Третий задаёт значение, если соседней строки нет. Например, LAG(total_amount, 1, 0) вернёт 0 для первой строки раздела.\n\nЧастый сценарий — изменение показателя: текущая сумма минус предыдущая. Другой сценарий — время между событиями. Но LAG берёт предыдущую существующую строку, а не обязательно предыдущий календарный день или месяц. Если период пропущен, сначала построй календарную сетку.\n\nКак и другие оконные функции, LAG и LEAD не уменьшают число строк. Они добавляют соседнее значение к текущей записи.",
-        "example": "SELECT customer_id, created_at, total_amount,\n       LAG(total_amount) OVER (\n         PARTITION BY customer_id\n         ORDER BY created_at, order_id\n       ) AS previous_order_amount\nFROM orders;",
+        "example": "SELECT order_id, created_at::date::text AS created_at, total_amount::int AS total_amount,\n       (LAG(total_amount) OVER (\n         PARTITION BY customer_id\n         ORDER BY created_at, order_id\n       ))::int AS previous_order_amount\nFROM orders\nWHERE customer_id = 1\nORDER BY created_at, order_id;",
         "note": "Без ORDER BY понятие предыдущей строки не определено. Добавляй tie-breaker при совпадающих датах.",
         "simple": "LAG берёт значение из предыдущей строки окна, LEAD — из следующей. Порядок должен быть определён явно.",
         "practiceIds": [
@@ -4014,7 +4064,35 @@ export const modules = [
           "result": "В результате остаётся по одной строке на заказ, рядом появляется сумма предыдущего заказа. Разницу можно вычислить как total_amount - previous_amount.",
           "pitfall": "LAG не ищет запись ровно за предыдущий день. Он берёт предыдущую строку, которая существует в отсортированном наборе."
         },
-        "id": "windows.lag-i-lead"
+        "id": "windows.lag-i-lead",
+        "exampleResult": {
+          "columns": [
+            "order_id",
+            "created_at",
+            "total_amount",
+            "previous_order_amount"
+          ],
+          "rows": [
+            [
+              101,
+              "2026-01-10",
+              1250,
+              null
+            ],
+            [
+              105,
+              "2026-01-12",
+              1800,
+              1250
+            ],
+            [
+              110,
+              "2026-01-14",
+              990,
+              1800
+            ]
+          ]
+        }
       },
       {
         "title": "Накопительные итоги и рамки окна",
@@ -4086,9 +4164,9 @@ export const modules = [
       },
       {
         "title": "ROWS и RANGE: две разные оконные рамки",
-        "body": "ROWS и RANGE задают разные способы определения рамки окна. ROWS считает физические строки относительно текущей позиции. RANGE ориентируется на значения выражения сортировки и может включать все строки с равным значением ключа.\n\nЕсли две транзакции имеют одинаковый created_at, RANGE CURRENT ROW может включить обе строки как peers. ROWS CURRENT ROW ограничивается текущей физической строкой в порядке окна. Это различие особенно заметно в накопительных итогах и скользящих окнах.\n\nДля временных интервалов RANGE может выражать окно по значению даты, но синтаксис и ограничения зависят от типа сортировки. Не заменяй ROWS на RANGE без понимания того, как обрабатываются равные значения.",
+        "body": "ROWS и RANGE задают разные способы определения рамки окна. ROWS считает физические строки относительно текущей позиции. RANGE ориентируется на значения выражения сортировки и может включать все строки с равным значением ключа.\n\nЕсли две транзакции имеют одинаковый created_at, RANGE CURRENT ROW может включить обе строки как peers. ROWS CURRENT ROW ограничивается текущей физической строкой в порядке окна. Это различие особенно заметно в накопительных итогах и скользящих окнах.\n\nДля временных интервалов RANGE может выражать окно по значению даты, но синтаксис и ограничения зависят от типа сортировки. Не заменяй ROWS на RANGE без понимания того, как обрабатываются равные значения.\n\nВ примере сравниваются два окна на одном наборе заказов магазина. ROWS идёт по физическому порядку строк и при одинаковой дате учитывает tie-breaker order_id. RANGE смотрит на значение даты: строки с одинаковой датой являются peers и получают одинаковую сумму за календарные семь дней.\n\nЧтобы увидеть разницу, в примере ниже используются две строки с одинаковой датой. ROWS считает физические строки по порядку (order_id), поэтому первая строка не видит вторую. RANGE учитывает все строки-peer с той же датой, поэтому обе строки получают общую сумму за этот день.",
         "simple": "ROWS считает позиции строк, RANGE — диапазон значений ключа сортировки и связанные с ним peers.",
-        "example": "SELECT customer_id, created_at, order_id, total_amount,\n       SUM(total_amount) OVER (\n         PARTITION BY customer_id\n         ORDER BY created_at::timestamp\n         RANGE BETWEEN INTERVAL '6 days' PRECEDING AND CURRENT ROW\n       ) AS rolling_7_days\nFROM orders;",
+        "example": "WITH sample_orders (order_id, created_at, total_amount) AS (\n  VALUES\n    (1, TIMESTAMP '2026-01-10 10:00', 100),\n    (2, TIMESTAMP '2026-01-10 15:00', 200),\n    (3, TIMESTAMP '2026-01-12 12:00', 300)\n)\nSELECT order_id, created_at::date::text AS order_day, total_amount,\n       SUM(total_amount) OVER (\n         ORDER BY created_at, order_id\n         ROWS BETWEEN 6 PRECEDING AND CURRENT ROW\n       ) AS rolling_rows,\n       SUM(total_amount) OVER (\n         ORDER BY created_at::date\n         RANGE BETWEEN INTERVAL '6 days' PRECEDING AND CURRENT ROW\n       ) AS rolling_7_days\nFROM sample_orders\nORDER BY created_at, order_id;",
         "note": "Если важна последовательность отдельных событий с одинаковым временем, добавь tie-breaker и используй подходящую ROWS-рамку.",
         "practiceIds": [
           "e82"
@@ -4122,7 +4200,39 @@ export const modules = [
           "result": "Правильная рамка зависит от смысла: последние семь записей или последние семь календарных дней.",
           "pitfall": "Название rolling_7_days не делает ROWS BETWEEN 6 PRECEDING семидневным окном. Это всего лишь семь строк."
         },
-        "id": "windows.rows-i-range-dve-raznye-okonnye-ramki"
+        "id": "windows.rows-i-range-dve-raznye-okonnye-ramki",
+        "exampleResult": {
+          "columns": [
+            "order_id",
+            "order_day",
+            "total_amount",
+            "rolling_rows",
+            "rolling_7_days"
+          ],
+          "rows": [
+            [
+              1,
+              "2026-01-10",
+              100,
+              100,
+              300
+            ],
+            [
+              2,
+              "2026-01-10",
+              200,
+              300,
+              300
+            ],
+            [
+              3,
+              "2026-01-12",
+              300,
+              600,
+              600
+            ]
+          ]
+        }
       },
       {
         "title": "FIRST_VALUE, LAST_VALUE и NTH_VALUE",
@@ -4621,7 +4731,7 @@ export const modules = [
         "title": "Сравнение периодов: MoM, WoW и YoY",
         "body": "Сравнение периодов показывает, как метрика изменилась относительно предыдущего месяца (MoM), недели (WoW) или года (YoY). Сначала нужно привести события к одному уровню периода: одна строка на месяц, неделю или год. Затем LAG получает значение предыдущего периода.\n\nПроцентное изменение рассчитывается относительно предыдущего значения: (текущий показатель - предыдущий) / предыдущий * 100. Знаменатель нужно защищать через NULLIF, потому что предыдущая выручка может быть нулевой. Для первого периода предыдущего значения нет, поэтому NULL здесь честнее нуля.\n\nВажная ловушка: LAG сравнивает с предыдущей существующей строкой, а не с предыдущим календарным периодом. Если февраль отсутствует, март сравнит с январём. Для строгого MoM/WoW/YoY сначала создай непрерывный календарь периодов и присоедини агрегаты, подставив ноль только если отсутствие факта действительно означает нулевую метрику.",
         "simple": "Сначала агрегируй до месяца/недели/года, затем LAG сравнит текущую строку с предыдущей. Для календарно точного сравнения заполни пропущенные периоды.",
-        "example": "WITH months AS (\n  SELECT generate_series(DATE '2026-01-01', DATE '2026-03-01', INTERVAL '1 month')::date AS month_start\n), monthly AS (\n  SELECT DATE_TRUNC('month', created_at)::date AS month_start,\n         SUM(total_amount) AS revenue\n  FROM orders\n  GROUP BY 1\n), filled AS (\n  SELECT m.month_start, COALESCE(r.revenue, 0) AS revenue\n  FROM months m LEFT JOIN monthly r USING (month_start)\n), compared AS (\n  SELECT *, LAG(revenue) OVER (ORDER BY month_start) AS previous_revenue\n  FROM filled\n)\nSELECT month_start, revenue, previous_revenue,\n       ROUND(100.0 * (revenue - previous_revenue) / NULLIF(previous_revenue, 0), 2) AS mom_pct\nFROM compared\nORDER BY month_start;",
+        "example": "WITH months AS (\n  SELECT generate_series(DATE '2026-01-01', DATE '2026-03-01', INTERVAL '1 month')::date AS month_start\n), monthly AS (\n  SELECT DATE_TRUNC('month', created_at)::date AS month_start,\n         SUM(total_amount)::int AS revenue\n  FROM orders\n  GROUP BY 1\n), filled AS (\n  SELECT m.month_start, COALESCE(r.revenue, 0)::int AS revenue\n  FROM months m LEFT JOIN monthly r USING (month_start)\n), compared AS (\n  SELECT *, (LAG(revenue) OVER (ORDER BY month_start))::int AS previous_revenue\n  FROM filled\n)\nSELECT month_start::text AS month_start, revenue, previous_revenue,\n       ROUND(100.0 * (revenue - previous_revenue) / NULLIF(previous_revenue, 0), 2)::float8 AS mom_pct\nFROM compared\nORDER BY month_start;",
         "note": "LAG сравнивает соседние строки, а не гарантированно соседние календарные периоды. Не называй показатель MoM, пока не проверил пропуски месяцев.",
         "outcomes": [
           "Рассчитывать абсолютное и процентное изменение периода",
@@ -4655,13 +4765,41 @@ export const modules = [
           "result": "Март сравнивается с февралем, даже если в феврале не было заказов и его выручка представлена нулём.",
           "pitfall": "Если февральской строки нет, LAG для марта сравнит январь с мартом. Это не MoM, а предыдущая доступная запись."
         },
-        "id": "analytics.sravnenie-periodov-mom-wow-i-yoy"
+        "id": "analytics.sravnenie-periodov-mom-wow-i-yoy",
+        "exampleResult": {
+          "columns": [
+            "month_start",
+            "revenue",
+            "previous_revenue",
+            "mom_pct"
+          ],
+          "rows": [
+            [
+              "2026-01-01",
+              21390,
+              null,
+              null
+            ],
+            [
+              "2026-02-01",
+              0,
+              21390,
+              -100
+            ],
+            [
+              "2026-03-01",
+              0,
+              0,
+              null
+            ]
+          ]
+        }
       },
       {
         "title": "Конверсия и правильный знаменатель",
         "body": "Конверсия — отношение числа объектов, достигших целевого этапа, к числу объектов, которые имели возможность этот этап пройти. Главная сложность обычно не в делении, а в выборе единицы анализа и знаменателя.\n\nСначала определи объект: пользователь, сессия, заказ, магазин или попытка доставки. Если в таблице событий одна строка на событие, COUNT(*) считает события, а не уникальных пользователей. Для пользовательской конверсии часто нужен COUNT(DISTINCT user_id).\n\nЗатем зафиксируй этапы. Например, доля доставленных заказов среди всех созданных заказов: числитель — количество заказов со статусом delivered, знаменатель — все заказы выбранной когорты. Это не то же самое, что доля доставленных среди отправленных.\n\nВ PostgreSQL условную агрегацию удобно записывать через FILTER или CASE. Для процентов используй 100.0, чтобы избежать целочисленного деления, а знаменатель защищай через NULLIF(..., 0). Если знаменатель равен нулю, результат будет NULL, а не ошибка деления.\n\nДля настоящей воронки порядок событий тоже важен. Нельзя считать пользователя прошедшим этап B только потому, что у него когда-либо было событие B: оно могло произойти до этапа A. Для строгой воронки проверяй временной порядок и при необходимости окно времени.",
         "simple": "До формулы назови числитель, знаменатель и единицу анализа. Иначе процент может быть математически правильным, но отвечать не на тот вопрос.",
-        "example": "SELECT store_id,\n       COUNT(*) AS all_orders,\n       COUNT(*) FILTER (WHERE status = 'delivered') AS delivered_orders,\n       ROUND(100.0 * COUNT(*) FILTER (WHERE status = 'delivered')\n             / NULLIF(COUNT(*), 0), 2) AS delivered_conversion_pct\nFROM orders\nGROUP BY store_id;",
+        "example": "SELECT store_id,\n       COUNT(*)::int AS all_orders,\n       COUNT(*) FILTER (WHERE status = 'delivered')::int AS delivered_orders,\n       ROUND(100.0 * COUNT(*) FILTER (WHERE status = 'delivered')\n             / NULLIF(COUNT(*), 0), 2) AS delivered_conversion_pct\nFROM orders\nGROUP BY store_id\nORDER BY store_id;",
         "note": "Не дели количество доставленных событий на количество строк событий, если метрика должна считаться по уникальным заказам. Зерно должно совпадать в числителе и знаменателе.",
         "outcomes": [
           "Определять единицу анализа и знаменатель конверсии",
@@ -4695,7 +4833,41 @@ export const modules = [
           "result": "Если у магазина 20 заказов, из которых 15 доставлены, конверсия равна 75%. Это доля доставленных среди всех заказов, а не среди отправленных.",
           "pitfall": "Не меняй знаменатель незаметно. «Доставленные / все созданные» и «доставленные / отправленные» — разные метрики, даже если обе называются конверсией доставки."
         },
-        "id": "analytics.konversiya-i-pravilnyy-znamenatel"
+        "id": "analytics.konversiya-i-pravilnyy-znamenatel",
+        "exampleResult": {
+          "columns": [
+            "store_id",
+            "all_orders",
+            "delivered_orders",
+            "delivered_conversion_pct"
+          ],
+          "rows": [
+            [
+              1,
+              3,
+              3,
+              "100.00"
+            ],
+            [
+              2,
+              3,
+              0,
+              "0.00"
+            ],
+            [
+              3,
+              3,
+              2,
+              "66.67"
+            ],
+            [
+              4,
+              3,
+              1,
+              "33.33"
+            ]
+          ]
+        }
       },
       {
         "title": "Составной аналитический запрос: от фактов до отчёта",
