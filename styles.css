@@ -202,3 +202,7 @@
 .worked-result p,.worked-pitfall p{margin:4px 0 0;color:var(--soft);font-size:12px}
 .worked-pitfall{border-left:2px solid var(--warn)}
 @media(max-width:640px){.worked-example{padding:14px;margin:15px 0}.worked-steps{gap:11px}.worked-steps li{font-size:12px}}
+
+
+/* Learning routes */
+.track-switch{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:18px 0 14px}.track-tab{display:flex;flex-direction:column;align-items:flex-start;gap:5px;text-align:left;padding:16px 18px;border:1px solid var(--border);border-radius:14px;background:var(--surface);color:var(--text);cursor:pointer}.track-tab strong{font-size:14px}.track-tab span{font-size:12px;color:var(--muted)}.track-tab small{font-size:11px;color:var(--muted);margin-top:4px}.track-tab.active{border-color:var(--accent);background:var(--accent-soft)}.track-intro{padding:16px 18px;margin-bottom:18px;border:1px solid var(--border);border-radius:14px;background:var(--surface)}.track-intro h2{margin:4px 0 6px;font-size:19px}.track-intro p{margin:0;color:var(--muted);font-size:13px;line-height:1.55}.lesson-track-group{margin-bottom:22px}.lesson-track-group>h3{font-size:13px;margin:0 0 3px;color:var(--text)}.lesson-track-group>p{font-size:11px;color:var(--muted);margin:0 0 12px}.lesson-track-group h4{color:var(--muted);font-size:10px;margin:12px 0 5px}@media(max-width:760px){.track-switch{grid-template-columns:1fr}.track-tab{padding:13px 14px}.track-intro{padding:14px}}
