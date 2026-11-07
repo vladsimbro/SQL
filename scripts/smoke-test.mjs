@@ -176,6 +176,11 @@ assert.ok(cteModule.lessons.find(lesson => lesson.title === 'Материали�
 const setOperationsModule = modules.find(module => module.id === 'setops');
 assert.equal(setOperationsModule.lessons.find(lesson => lesson.title === 'UNION и UNION ALL').exampleResult.rows.length, 8, 'UNION ALL example must retain duplicate customer IDs');
 assert.equal(setOperationsModule.lessons.find(lesson => lesson.title === 'INTERSECT').exampleResult.rows.length, 1, 'INTERSECT example must show only the common customer set');
+const subqueryModule = modules.find(module => module.id === 'subqueries');
+assert.ok(subqueryModule.lessons.find(lesson => lesson.title === 'ANY и ALL: сравнение с набором значений').body.includes('ARRAY'), 'ANY/ALL lesson must distinguish subquery and array forms');
+const cteModule = modules.find(module => module.id === 'cte');
+assert.deepEqual(cteModule.lessons.find(lesson => lesson.title === 'Рекурсивный WITH').exampleResult.rows, [[1],[2],[3],[4],[5]], 'Recursive CTE must show its complete stopping sequence');
+assert.ok(cteModule.lessons.find(lesson => lesson.title === 'Несколько CTE и цепочка преобразований').body.includes('обычно лучше посчитать в одном GROUP BY'), 'Multiple CTE lesson must explain when separate scans are unnecessary');
 const aggregateModule = modules.find(module => module.id === 'aggregates');
 assert.ok(aggregateModule.lessons.find(lesson => lesson.title === 'Агрегатные функции').body.includes('COUNT(DISTINCT employee_id)'), 'Aggregate lesson must distinguish row, non-null and distinct-value counts');
 assert.ok(aggregateModule.lessons.find(lesson => lesson.title === 'GROUP BY и зерно результата').body.includes('COUNT(o.order_id)'), 'GROUP BY lesson must explain COUNT(*) versus COUNT(right_key) after LEFT JOIN');
