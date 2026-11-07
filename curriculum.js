@@ -553,7 +553,7 @@ export const modules = [
       {
         "title": "Строки и текст",
         "body": "В PostgreSQL для текста чаще всего используют TEXT или VARCHAR(n). TEXT не задаёт верхнюю границу длины. VARCHAR(n) ограничивает число символов значением n. Тип CHAR(n) дополняет короткие значения пробелами до фиксированной длины и в обычных прикладных схемах нужен реже.\n\nВыбор TEXT против VARCHAR обычно не является выбором скорости: в PostgreSQL у них близкое поведение. Ограничение длины полезно, если это реальное правило предметной области, но его можно выразить и CHECK. Не ставь произвольный VARCHAR(255) просто по привычке.\n\nСтроки сравниваются с учётом правил сортировки (collation), а поиск по шаблону выполняют LIKE или ILIKE. Сам тип TEXT не гарантирует уникальность и не запрещает пустую строку. Для обязательного значения нужен NOT NULL, а для неповторяющегося — UNIQUE.",
-        "example": "CREATE TABLE customers (\n  customer_id BIGINT PRIMARY KEY,\n  full_name TEXT NOT NULL,\n  phone VARCHAR(30) UNIQUE\n);",
+        "example": "CREATE TABLE example_customers (\n  customer_id BIGINT PRIMARY KEY,\n  full_name TEXT NOT NULL,\n  phone VARCHAR(30) UNIQUE\n);",
         "note": "Пустая строка '' и NULL — разные значения. NOT NULL запрещает только NULL, но не пустой текст.",
         "simple": "TEXT не означает «неограниченно и без правил». Ограничения обязательности и уникальности задаются отдельно.",
         "practiceIds": [],
@@ -3324,7 +3324,7 @@ export const modules = [
       {
         "title": "CHECK: проверка бизнес-правил",
         "body": "Ограничение CHECK заставляет базу отклонять строки, нарушающие выражение. Например, цена не должна быть отрицательной, количество должно быть положительным, а дата закрытия не должна предшествовать дате создания. Такое правило лучше хранить в базе, а не надеяться, что каждый клиент приложения проверит его одинаково.\n\nВажная особенность PostgreSQL: CHECK считается выполненным, если выражение вернуло TRUE или NULL (UNKNOWN). Поэтому CHECK (price > 0) сам по себе не запрещает NULL. Если значение обязательно, добавь NOT NULL отдельно. Это частая ловушка: разработчик думает, что проверил обязательность, а на деле проверил только неотрицательное или положительное значение, когда оно присутствует.\n\nCHECK предназначен для проверки текущей строки и не должен использоваться для проверки других строк или таблиц. Для межстрочных правил нужны UNIQUE, EXCLUDE, FOREIGN KEY, триггер или транзакционная логика в зависимости от задачи. Ограничения именуй осмысленно: так проще читать ошибки и менять схему.",
-        "example": "CREATE TABLE products (\n  product_id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,\n  name text NOT NULL,\n  price numeric(10,2) NOT NULL,\n  stock integer NOT NULL,\n  CONSTRAINT products_price_positive CHECK (price > 0),\n  CONSTRAINT products_stock_nonnegative CHECK (stock >= 0)\n);\n\n-- CHECK допускает NULL, если выражение стало UNKNOWN\nCREATE TABLE example (\n  value integer CHECK (value > 0)\n);",
+        "example": "CREATE TABLE products_demo (\n  product_id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,\n  name text NOT NULL,\n  price numeric(10,2) NOT NULL,\n  stock integer NOT NULL,\n  CONSTRAINT products_price_positive CHECK (price > 0),\n  CONSTRAINT products_stock_nonnegative CHECK (stock >= 0)\n);\n\n-- CHECK допускает NULL, если выражение стало UNKNOWN\nCREATE TABLE example (\n  value integer CHECK (value > 0)\n);",
         "note": "CHECK не заменяет NOT NULL. В PostgreSQL NULL в выражении CHECK не означает нарушение.",
         "simple": "CHECK защищает правило для значения строки. Если значение обязательно, добавь NOT NULL.",
         "outcomes": [
@@ -3811,7 +3811,7 @@ export const modules = [
       {
         "title": "Что такое транзакция",
         "body": "Транзакция объединяет несколько операций в одну логическую единицу. BEGIN начинает транзакцию, COMMIT подтверждает изменения, ROLLBACK отменяет изменения текущей транзакции.\n\nЕсли одна операция из нескольких завершается ошибкой, транзакция в PostgreSQL переходит в состояние aborted. До ROLLBACK или отката к savepoint обычные команды в ней не выполняются. Это защищает от ситуации, когда половина связанного набора изменений уже сохранена.\n\nАвтокоммит в клиенте может автоматически фиксировать каждую отдельную команду. Для последовательности связанных изменений явно используй транзакцию и проверь итог перед COMMIT.",
-        "example": "BEGIN;\nUPDATE accounts SET balance = balance - 100 WHERE account_id = 1;\nUPDATE accounts SET balance = balance + 100 WHERE account_id = 2;\nCOMMIT;",
+        "example": "BEGIN;\nCREATE TEMP TABLE accounts (\n  account_id integer PRIMARY KEY,\n  balance numeric(12,2) NOT NULL CHECK (balance >= 0)\n);\nINSERT INTO accounts VALUES (1, 1000), (2, 500);\n\nUPDATE accounts\nSET balance = balance - 100\nWHERE account_id = 1;\n\nUPDATE accounts\nSET balance = balance + 100\nWHERE account_id = 2;\nCOMMIT;\n\nSELECT * FROM accounts ORDER BY account_id;",
         "note": "Не оставляй транзакции открытыми надолго: они могут удерживать блокировки и мешать очистке старых версий строк.",
         "simple": "Транзакция позволяет подтвердить все связанные изменения вместе или отменить их вместе.",
         "practiceIds": [
@@ -5002,7 +5002,7 @@ export const modules = [
       {
         "title": "Триггеры",
         "body": "Триггер — механизм, который автоматически запускает функцию при INSERT, UPDATE, DELETE или TRUNCATE. Триггер может выполняться до изменения (BEFORE), после изменения (AFTER) или вместо операции над представлением (INSTEAD OF).\n\nТриггеры используют для аудита, вычисления производных значений, проверки сложных правил и поддержки истории. Но скрытая логика усложняет отладку: INSERT может изменить больше таблиц, чем видно из самого запроса.\n\nТриггерная функция в PostgreSQL обычно написана на PL/pgSQL и использует специальные значения NEW и OLD. NEW описывает новую строку, OLD — старую. Для BEFORE-триггера можно изменить NEW и повлиять на сохраняемую запись.",
-        "example": "CREATE FUNCTION set_updated_at()\nRETURNS trigger\nLANGUAGE plpgsql\nAS $$\nBEGIN\n  NEW.updated_at := now();\n  RETURN NEW;\nEND;\n$$;\n\nCREATE TRIGGER trg_set_updated_at\nBEFORE UPDATE ON customers\nFOR EACH ROW\nEXECUTE FUNCTION set_updated_at();",
+        "example": "CREATE TABLE customer_demo (\n  customer_id integer PRIMARY KEY,\n  customer_name text NOT NULL,\n  updated_at timestamptz NOT NULL DEFAULT now()\n);\n\nCREATE FUNCTION set_updated_at()\nRETURNS trigger\nLANGUAGE plpgsql\nAS $$\nBEGIN\n  NEW.updated_at := now();\n  RETURN NEW;\nEND;\n$$;\n\nCREATE TRIGGER trg_set_updated_at\nBEFORE UPDATE ON customer_demo\nFOR EACH ROW\nEXECUTE FUNCTION set_updated_at();",
         "note": "Триггеры полезны, но не прячь в них бизнес-процесс, который должен быть явно виден и контролируем в приложении.",
         "simple": "Триггер запускает функцию автоматически в ответ на событие изменения данных.",
         "practiceIds": [],
@@ -5314,7 +5314,7 @@ export const modules = [
       {
         "title": "Expression, partial, GIN, GiST и BRIN индексы",
         "body": "Expression index индексирует результат выражения, например lower(email), а не исходное значение email напрямую. Такой индекс помогает, если запрос использует то же выражение.\n\nPartial index содержит только строки, удовлетворяющие условию WHERE, например незавершённые заказы. GIN подходит для поиска внутри составных значений, например JSONB и массивов. GiST — обобщённый тип индекса для диапазонов, геометрии и других операторных классов. BRIN хранит сводную информацию о диапазонах физических блоков и может быть очень компактным для больших таблиц, где значения коррелируют с физическим порядком.\n\nВыбирай тип индекса по операторам запроса и типу данных. Универсального «самого быстрого индекса» не существует.",
-        "example": "CREATE INDEX idx_customers_lower_email\nON customers (lower(email));\n\nCREATE INDEX idx_orders_open\nON orders (created_at)\nWHERE status = 'open';",
+        "example": "CREATE INDEX idx_customers_lower_name\nON customers (lower(customer_name));\n\nCREATE INDEX idx_orders_open\nON orders (created_at)\nWHERE status = 'open';",
         "note": "Expression index полезен только при совпадающем выражении запроса и подходящем операторном классе.",
         "simple": "B-tree не единственный вариант. GIN, GiST и BRIN решают другие классы задач.",
         "practiceIds": [],
