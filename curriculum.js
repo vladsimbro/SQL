@@ -5493,10 +5493,10 @@ export const modules = [
       },
       {
         "title": "Воронка и условные этапы",
-        "body": "Воронка описывает последовательные этапы пути пользователя или заказа: визит, регистрация, добавление в корзину, покупка. Для каждого этапа нужно определить событие, период и правила перехода.\n\nУсловная агрегация позволяет посчитать количество пользователей, достигших каждого этапа. Но этапы должны считаться на одном уровне, обычно на уровне уникального пользователя или сессии. Если считать строки событий, один активный пользователь может попасть в метрику много раз.\n\nКонверсия этапа — отношение числа участников следующего этапа к числу участников предыдущего. Уточни, должна ли воронка быть строгой по времени: событие B должно произойти после A, а не просто когда-либо.\n\nПример ниже показывает срез по текущим статусам заказов клиента, а не строгую временную воронку. Один клиент может попасть сразу в несколько столбцов, если у него разные заказы в разных статусах. Для настоящей последовательности этапов нужно связывать события по времени и одному объекту анализа.",
-        "example": "SELECT\n  COUNT(DISTINCT customer_id) AS customers_with_orders,\n  COUNT(DISTINCT customer_id) FILTER (WHERE status IN ('shipped', 'delivered')) AS customers_with_shipped_orders,\n  COUNT(DISTINCT customer_id) FILTER (WHERE status = 'delivered') AS customers_with_delivered_orders\nFROM orders;",
+        "body": "Воронка описывает последовательные этапы пути пользователя или заказа: визит, регистрация, добавление в корзину, покупка. Для каждого этапа нужно определить событие, период и правила перехода.\n\nУсловная агрегация позволяет посчитать количество пользователей, достигших каждого этапа. Но этапы должны считаться на одном уровне, обычно на уровне уникального пользователя или сессии. Если считать строки событий, один активный пользователь может попасть в метрику много раз.\n\nКонверсия этапа — отношение числа участников следующего этапа к числу участников предыдущего. Уточни, должна ли воронка быть строгой по времени: событие B должно произойти после A, а не просто когда-либо.\n\nПример ниже показывает срез по текущим статусам заказов клиента, а не строгую временную воронку. Один клиент может попасть сразу в несколько столбцов, если у него разные заказы в разных статусах. Для настоящей последовательности этапов нужно связывать события по времени и одному объекту анализа.\n\nДля строгой воронки заказов недостаточно проверить, встречались ли все три события когда-либо. Отгрузка должна произойти после создания, а доставка — после отгрузки. В примере каждый следующий этап ищется относительно времени предыдущего и ограничивается семью днями от создания заказа. События с одинаковым временем не считаются упорядоченными: если источник хранит точный порядок внутри одной секунды, добавь к сравнению уникальный идентификатор события.",
+        "example": "WITH sample_events (event_id, order_id, event_type, event_at) AS (\n  VALUES\n    (1, 101, 'created',   TIMESTAMP '2026-01-01 09:00'),\n    (2, 101, 'shipped',   TIMESTAMP '2026-01-01 10:00'),\n    (3, 101, 'delivered', TIMESTAMP '2026-01-01 12:00'),\n    (4, 102, 'created',   TIMESTAMP '2026-01-01 09:00'),\n    (5, 102, 'delivered', TIMESTAMP '2026-01-01 11:00'),\n    (6, 102, 'shipped',   TIMESTAMP '2026-01-01 12:00'),\n    (7, 103, 'created',   TIMESTAMP '2026-01-01 10:00'),\n    (8, 103, 'shipped',   TIMESTAMP '2026-01-01 12:00'),\n    (9, 104, 'shipped',   TIMESTAMP '2026-01-01 08:00'),\n    (10,104, 'created',   TIMESTAMP '2026-01-01 09:00'),\n    (11,104, 'delivered', TIMESTAMP '2026-01-01 11:00'),\n    (12,105, 'created',   TIMESTAMP '2026-01-01 09:00'),\n    (13,105, 'shipped',   TIMESTAMP '2026-01-09 10:00')\n), created AS (\n  SELECT order_id, MIN(event_at) AS created_at\n  FROM sample_events\n  WHERE event_type = 'created'\n  GROUP BY order_id\n), shipped AS (\n  SELECT c.order_id, c.created_at, MIN(e.event_at) AS shipped_at\n  FROM created AS c\n  LEFT JOIN sample_events AS e\n    ON e.order_id = c.order_id\n   AND e.event_type = 'shipped'\n   AND e.event_at > c.created_at\n   AND e.event_at <= c.created_at + INTERVAL '7 days'\n  GROUP BY c.order_id, c.created_at\n), delivered AS (\n  SELECT s.order_id, s.created_at, s.shipped_at,\n         MIN(e.event_at) AS delivered_at\n  FROM shipped AS s\n  LEFT JOIN sample_events AS e\n    ON e.order_id = s.order_id\n   AND e.event_type = 'delivered'\n   AND e.event_at > s.shipped_at\n   AND e.event_at <= s.created_at + INTERVAL '7 days'\n  GROUP BY s.order_id, s.created_at, s.shipped_at\n)\nSELECT COUNT(*)::int AS created_orders,\n       COUNT(*) FILTER (WHERE shipped_at IS NOT NULL)::int AS shipped_orders,\n       COUNT(*) FILTER (WHERE delivered_at IS NOT NULL)::int AS delivered_orders,\n       ROUND(100.0 * COUNT(*) FILTER (WHERE shipped_at IS NOT NULL)\n             / NULLIF(COUNT(*), 0), 2)::text AS created_to_shipped_pct,\n       ROUND(100.0 * COUNT(*) FILTER (WHERE delivered_at IS NOT NULL)\n             / NULLIF(COUNT(*) FILTER (WHERE shipped_at IS NOT NULL), 0), 2)::text AS shipped_to_delivered_pct\nFROM delivered;",
         "note": "Этот запрос считает достигших этапов, но не проверяет их временной порядок. Для строгой воронки нужно анализировать последовательность событий.",
-        "simple": "Воронка считает уникальные сущности на каждом этапе, а конверсия сравнивает соседние этапы.",
+        "simple": "В строгой воронке каждый следующий этап должен произойти после предыдущего, а не просто присутствовать в истории.",
         "practiceIds": [
           "e40",
           "e92",
@@ -5519,7 +5519,25 @@ export const modules = [
             "explanation": "Если пользователь создал несколько событий visit, COUNT(*) считает каждую строку. Для числа пользователей нужно считать DISTINCT user_id."
           }
         ],
-        "id": "analytics.voronka-i-uslovnye-etapy"
+        "id": "analytics.voronka-i-uslovnye-etapy",
+        "exampleResult": {
+          "columns": [
+            "created_orders",
+            "shipped_orders",
+            "delivered_orders",
+            "created_to_shipped_pct",
+            "shipped_to_delivered_pct"
+          ],
+          "rows": [
+            [
+              5,
+              3,
+              1,
+              "60.00",
+              "33.33"
+            ]
+          ]
+        }
       },
       {
         "title": "Когортный анализ",
