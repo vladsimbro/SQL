@@ -4771,8 +4771,8 @@ export const modules = [
       },
       {
         "title": "ROW_NUMBER, RANK и DENSE_RANK",
-        "body": "ROW_NUMBER, RANK и DENSE_RANK присваивают строкам порядковые позиции внутри окна. Все три функции используют ORDER BY внутри OVER, но по-разному обрабатывают одинаковые значения.\n\nROW_NUMBER всегда выдаёт уникальный последовательный номер: 1, 2, 3, 4. Если две строки имеют одинаковую сумму, одна всё равно получит меньший номер. Чтобы выбор был воспроизводимым, добавь уникальный дополнительный критерий, например order_id.\n\nRANK присваивает одинаковым значениям одинаковое место, а следующее место пропускает. Для сумм 100, 100, 80 ранги будут 1, 1, 3. DENSE_RANK тоже присваивает одинаковым значениям один ранг, но не делает пропуск: 1, 1, 2.\n\nPARTITION BY позволяет начинать нумерацию заново для каждой группы. Например, можно ранжировать заказы отдельно внутри каждого магазина. Без PARTITION BY рейтинг будет общим для всех магазинов.\n\nДля задачи «самый дорогой заказ каждого магазина» часто используют ROW_NUMBER и внешний фильтр rn = 1. Если нужно показать все заказы, разделившие первое место, используй RANK или DENSE_RANK. Выбор функции зависит от смысла задачи, а не от того, какая короче пишется.",
-        "example": "SELECT order_id, store_id, total_amount,\n       ROW_NUMBER() OVER (PARTITION BY store_id ORDER BY total_amount DESC, order_id) AS row_num,\n       RANK() OVER (PARTITION BY store_id ORDER BY total_amount DESC) AS rank_num,\n       DENSE_RANK() OVER (PARTITION BY store_id ORDER BY total_amount DESC) AS dense_rank_num\nFROM orders;",
+        "body": "ROW_NUMBER, RANK и DENSE_RANK присваивают строкам порядковые позиции внутри окна. Все три функции используют ORDER BY внутри OVER, но по-разному обрабатывают одинаковые значения.\n\nROW_NUMBER всегда выдаёт уникальный последовательный номер: 1, 2, 3, 4. Если две строки имеют одинаковую сумму, одна всё равно получит меньший номер. Чтобы выбор был воспроизводимым, добавь уникальный дополнительный критерий, например order_id.\n\nRANK присваивает одинаковым значениям одинаковое место, а следующее место пропускает. Для сумм 100, 100, 80 ранги будут 1, 1, 3. DENSE_RANK тоже присваивает одинаковым значениям один ранг, но не делает пропуск: 1, 1, 2.\n\nPARTITION BY позволяет начинать нумерацию заново для каждой группы. Например, можно ранжировать заказы отдельно внутри каждого магазина. Без PARTITION BY рейтинг будет общим для всех магазинов.\n\nДля задачи «самый дорогой заказ каждого магазина» часто используют ROW_NUMBER и внешний фильтр rn = 1. Если нужно показать все заказы, разделившие первое место, используй RANK или DENSE_RANK. Выбор функции зависит от смысла задачи, а не от того, какая короче пишется.\n\nПример использует два одинаковых значения 100 в первой группе: поэтому различие между RANK и DENSE_RANK видно в результате, а не только в описании.",
+        "example": "WITH sample_orders (store_id, order_id, total_amount) AS (\n  VALUES\n    (1, 101, 100),\n    (1, 102, 100),\n    (1, 103, 80),\n    (2, 201, 120),\n    (2, 202, 90)\n)\nSELECT store_id, order_id, total_amount,\n       ROW_NUMBER() OVER (\n         PARTITION BY store_id\n         ORDER BY total_amount DESC, order_id\n       ) AS row_num,\n       RANK() OVER (\n         PARTITION BY store_id\n         ORDER BY total_amount DESC\n       ) AS rank_num,\n       DENSE_RANK() OVER (\n         PARTITION BY store_id\n         ORDER BY total_amount DESC\n       ) AS dense_rank_num\nFROM sample_orders\nORDER BY store_id, total_amount DESC, order_id;",
         "note": "Для выбора одной последней строки на группу часто используют ROW_NUMBER() и внешний фильтр WHERE rn = 1.",
         "simple": "ROW_NUMBER не допускает одинаковых номеров. RANK допускает равные места и пропускает следующий номер. DENSE_RANK допускает равные места без пропусков.",
         "practiceIds": [
@@ -4809,7 +4809,59 @@ export const modules = [
           "result": "Для top-1 без пропуска дублей используй ROW_NUMBER. Чтобы вернуть все строки, разделившие первое место, используй RANK или DENSE_RANK с фильтром rank = 1.",
           "pitfall": "ORDER BY только по сумме не определяет стабильный порядок строк с одинаковой суммой. Для ROW_NUMBER добавляй уникальный tie-breaker."
         },
-        "id": "windows.row-number-rank-i-dense-rank"
+        "id": "windows.row-number-rank-i-dense-rank",
+        "exampleResult": {
+          "columns": [
+            "store_id",
+            "order_id",
+            "total_amount",
+            "row_num",
+            "rank_num",
+            "dense_rank_num"
+          ],
+          "rows": [
+            [
+              1,
+              101,
+              100,
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              102,
+              100,
+              2,
+              1,
+              1
+            ],
+            [
+              1,
+              103,
+              80,
+              3,
+              3,
+              2
+            ],
+            [
+              2,
+              201,
+              120,
+              1,
+              1,
+              1
+            ],
+            [
+              2,
+              202,
+              90,
+              2,
+              2,
+              2
+            ]
+          ]
+        }
       },
       {
         "title": "LAG и LEAD",
@@ -8328,7 +8380,7 @@ export const modules = [
     "track": "postgresql",
     "trackOrder": 8
   }
-]
+];
 
 export const learningTracks = [
   {
