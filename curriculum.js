@@ -9931,7 +9931,9 @@ export const exercises = [
       "answer": 0,
       "explanation": "PARTITION BY city задаёт отдельный общий итог для каждого города."
     },
-    "hint": "Сначала получи одну строку на магазин, затем оконная сумма по city даст знаменатель доли."
+    "hint": "Сначала получи одну строку на магазин, затем оконная сумма по city даст знаменатель доли.",
+    "hint2": "Проверь зерно до расчёта доли: сначала в наборе должна остаться одна строка на магазин. Только после этого складывай выручку магазинов внутри города.",
+    "hint3": "Собери CTE с выручкой магазина, присоединив заказы к магазинам и сгруппировав по магазину. Во внешнем запросе оконная сумма по городу станет знаменателем."
   },
   {
     "id": "e82",
@@ -9951,7 +9953,9 @@ export const exercises = [
       "answer": 0,
       "explanation": "RANGE ориентируется на значения ключа сортировки. Строки с одинаковой датой являются peers и могут попасть в одну рамку."
     },
-    "hint": "ROWS считает физические строки, RANGE учитывает равные значения ключа сортировки как peers."
+    "hint": "ROWS считает физические строки, RANGE учитывает равные значения ключа сортировки как peers.",
+    "hint2": "Создай три строки через VALUES, причём две строки должны иметь одинаковую дату. Для одного SUM используй рамку по физическим строкам, для второго оставь рамку RANGE.",
+    "hint3": "Сравни ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW с RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW при одинаковом ORDER BY event_day."
   },
   {
     "id": "e83",
@@ -9971,7 +9975,9 @@ export const exercises = [
       "answer": 0,
       "explanation": "Клиент относится к когорте по периоду первого целевого события, а не по каждому последующему заказу."
     },
-    "hint": "Когорта определяется самым ранним месяцем целевого события для каждого клиента. Используй MIN после группировки."
+    "hint": "Когорта определяется самым ранним месяцем целевого события для каждого клиента. Используй MIN после группировки.",
+    "hint2": "Сначала сведи заказы к одной строке на клиента, выбрав самый ранний месяц. Затем посчитай клиентов уже по месяцу когорты.",
+    "hint3": "Используй два уровня агрегации: MIN(DATE_TRUNC('month', created_at)) по customer_id, затем COUNT(*) по cohort_month."
   },
   {
     "id": "e84",
@@ -9991,7 +9997,9 @@ export const exercises = [
       "answer": 0,
       "explanation": "Уникальный дополнительный критерий разрешает ничьи и делает выбор последней строки предсказуемым."
     },
-    "hint": "Упорядочи события внутри заказа по времени убыванию и добавь event_id для разрешения одинаковых времён."
+    "hint": "Упорядочи события внутри заказа по времени убыванию и добавь event_id для разрешения одинаковых времён.",
+    "hint2": "Пронумеруй события внутри каждого заказа от самого позднего к раннему. Для равного времени добавь event_id как второй ключ сортировки.",
+    "hint3": "В CTE вычисли ROW_NUMBER() OVER (PARTITION BY order_id ORDER BY event_at DESC, event_id DESC), затем оставь rn = 1."
   },
   {
     "id": "e85",
@@ -10011,7 +10019,9 @@ export const exercises = [
       "answer": 0,
       "explanation": "NULLIF защищает знаменатель от нуля. В данном наборе группы непустые, но при переиспользовании логики это безопасная практика."
     },
-    "hint": "COUNT(*) FILTER считает строки, удовлетворяющие условию. Для доли раздели это число на общее число строк группы."
+    "hint": "COUNT(*) FILTER считает строки, удовлетворяющие условию. Для доли раздели это число на общее число строк группы.",
+    "hint2": "Сгруппируй заказы по статусу. Число неназначенных сотрудников считай условно, а долю дели на общее количество строк группы.",
+    "hint3": "Используй COUNT(*) FILTER (WHERE employee_id IS NULL) и NULLIF(COUNT(*), 0) в знаменателе, затем округли процент."
   },
   {
     "id": "e86",
@@ -10031,7 +10041,9 @@ export const exercises = [
       "answer": 0,
       "explanation": "Retention показывает долю активных пользователей от исходного размера когорты."
     },
-    "hint": "Сначала вычисли месяц первого события пользователя, затем номер месяца активности относительно этой даты и размер исходной когорты."
+    "hint": "Сначала вычисли месяц первого события пользователя, затем номер месяца активности относительно этой даты и размер исходной когорты.",
+    "hint2": "Нужно получить два уровня: месяц первой активности пользователя и каждый месяц его активности с номером периода относительно когорты. Размер когорты нельзя пересчитывать от периода к периоду.",
+    "hint3": "Сделай CTE first_activity, затем activity с номером месяца, после чего считай COUNT(DISTINCT user_id) по cohort_month и period_month и дели на фиксированный размер когорты."
   },
   {
     "id": "e87",
@@ -10051,7 +10063,9 @@ export const exercises = [
       "answer": 0,
       "explanation": "Непрерывный перцентиль может вернуть интерполированное значение между наблюдениями."
     },
-    "hint": "percentile_cont(0.5) даёт медиану, а percentile_cont(0.9) — P90. Обе функции сортируют значения внутри WITHIN GROUP."
+    "hint": "percentile_cont(0.5) даёт медиану, а percentile_cont(0.9) — P90. Обе функции сортируют значения внутри WITHIN GROUP.",
+    "hint2": "Сначала раздели заказы по статусу. Для каждого статуса рассчитай два непрерывных перцентиля по total_amount.",
+    "hint3": "В агрегатах используй percentile_cont(0.5) WITHIN GROUP (ORDER BY total_amount) и аналогичное выражение с 0.9."
   },
   {
     "id": "e88",
@@ -10071,7 +10085,9 @@ export const exercises = [
       "answer": 0,
       "explanation": "Без календаря пропущенные дни исчезнут, и три строки могут охватывать больше трёх календарных дней."
     },
-    "hint": "Скользящее среднее за три календарных дня требует непрерывной сетки дат, иначе три строки могут охватывать больше трёх дней."
+    "hint": "Скользящее среднее за три календарных дня требует непрерывной сетки дат, иначе три строки могут охватывать больше трёх дней.",
+    "hint2": "Обычная оконная рамка по строкам не гарантирует три календарных дня, если в данных есть пропуски. Сначала создай календарь и заполни отсутствующие дни нулями.",
+    "hint3": "Раздели запрос на calendar, daily и filled CTE. В финале рассчитай AVG(order_count) OVER (ORDER BY day ROWS BETWEEN 2 PRECEDING AND CURRENT ROW)."
   },
   {
     "id": "e89",
@@ -10091,7 +10107,9 @@ export const exercises = [
       "answer": 0,
       "explanation": "Пустое OVER () считает общий итог по всем строкам результата без разделения на группы."
     },
-    "hint": "Вычисли выручку каждого магазина до оконных сумм. Для городской доли используй PARTITION BY city, для общей доли — пустое OVER ()."
+    "hint": "Вычисли выручку каждого магазина до оконных сумм. Для городской доли используй PARTITION BY city, для общей доли — пустое OVER ().",
+    "hint2": "Вычисли выручку каждого магазина отдельно. После этого нужны два разных знаменателя: сумма внутри city и сумма по всему набору.",
+    "hint3": "В оконных выражениях используй SUM(revenue) OVER (PARTITION BY city) и SUM(revenue) OVER (), не соединяя сырые позиции с заказами."
   },
   {
     "id": "e90",
@@ -10111,7 +10129,9 @@ export const exercises = [
       "answer": 0,
       "explanation": "У первой строки нет предыдущего значения. NULL честно показывает, что база сравнения отсутствует."
     },
-    "hint": "LAG должен применяться к месячной выручке, уже агрегированной до одной строки на месяц."
+    "hint": "LAG должен применяться к месячной выручке, уже агрегированной до одной строки на месяц.",
+    "hint2": "Сначала получи одну строку на месяц. LAG должен смотреть на предыдущую месячную строку, а не на предыдущий заказ.",
+    "hint3": "В CTE monthly сгруппируй по месяцу, затем рассчитай LAG(revenue) OVER (ORDER BY month_start) и процент через NULLIF(previous_revenue, 0)."
   },
   {
     "id": "e91",
@@ -10131,7 +10151,9 @@ export const exercises = [
       "answer": 0,
       "explanation": "PARTITION BY создаёт независимую нумерацию внутри каждой категории."
     },
-    "hint": "Сначала агрегируй продажи до товара внутри категории, затем нумеруй товары в каждой категории и оставь первые два."
+    "hint": "Сначала агрегируй продажи до товара внутри категории, затем нумеруй товары в каждой категории и оставь первые два.",
+    "hint2": "Не ранжируй сырые позиции заказа: сначала сложи продажи до одной строки на товар внутри категории. Потом нумеруй товары внутри каждой категории.",
+    "hint3": "Сделай CTE product_revenue и следующий CTE ranked с ROW_NUMBER() OVER (PARTITION BY category ORDER BY revenue DESC, product_id). Оставь rn <= 2."
   },
   {
     "id": "e92",
@@ -10151,7 +10173,9 @@ export const exercises = [
       "answer": 0,
       "explanation": "Воронка с последовательностью проверяет не просто наличие событий, а порядок переходов между ними."
     },
-    "hint": "Проверяй временные условия между этапами для одного пользователя. Простое наличие всех трёх событий не доказывает порядок."
+    "hint": "Проверяй временные условия между этапами для одного пользователя. Простое наличие всех трёх событий не доказывает порядок.",
+    "hint2": "Для каждого пользователя найди время просмотра, время добавления в корзину и время покупки. Одного наличия трёх типов событий недостаточно: времена должны строго возрастать.",
+    "hint3": "Сгруппируй события по user_id, получи три времени через MIN(event_at) FILTER (WHERE event_name = ...), затем проверь view_at < cart_at AND cart_at < purchase_at."
   },
   {
     "id": "e93",
@@ -10161,6 +10185,8 @@ export const exercises = [
     "task": "Для каждого заказа покажи сумму первого заказа клиента, сумму второго заказа клиента и сумму последнего заказа клиента. Сохрани отдельную строку на каждый заказ.",
     "solution": "SELECT customer_id, order_id, created_at, total_amount, FIRST_VALUE(total_amount) OVER w AS first_amount, NTH_VALUE(total_amount, 2) OVER w AS second_amount, LAST_VALUE(total_amount) OVER w AS last_amount FROM orders WINDOW w AS (PARTITION BY customer_id ORDER BY created_at, order_id ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) ORDER BY customer_id, created_at, order_id;",
     "hint": "Внутри каждого customer_id отсортируй заказы по дате и уникальному номеру. Для LAST_VALUE и NTH_VALUE задай рамку до конца раздела, иначе значение может относиться только к текущей части окна.",
+    "hint2": "Одна строка должна оставаться на каждый заказ, поэтому оконные функции подходят лучше GROUP BY. Для последнего значения нужна рамка до конца раздела.",
+    "hint3": "Определи общее окно по customer_id и порядку created_at, order_id. Используй FIRST_VALUE, NTH_VALUE и LAST_VALUE с рамкой ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING.",
     "quiz": {
       "question": "Почему NTH_VALUE(total_amount, 2) может вернуть NULL?",
       "options": [
@@ -10181,6 +10207,8 @@ export const exercises = [
     "task": "Для каждого заказа рассчитай квартиль по сумме внутри магазина, относительный ранг по сумме внутри магазина и накопленную долю заказов. При равных суммах одинаковые значения распределения должны совпадать.",
     "solution": "SELECT order_id, store_id, total_amount, NTILE(4) OVER (PARTITION BY store_id ORDER BY total_amount, order_id) AS amount_quartile, PERCENT_RANK() OVER (PARTITION BY store_id ORDER BY total_amount) AS relative_rank, CUME_DIST() OVER (PARTITION BY store_id ORDER BY total_amount) AS cumulative_share FROM orders ORDER BY store_id, total_amount, order_id;",
     "hint": "Раздели вычисления на три окна: NTILE распределяет строки, PERCENT_RANK и CUME_DIST оценивают позицию в распределении. Для последних двух не добавляй order_id в ORDER BY, если равные суммы должны оставаться peers.",
+    "hint2": "Для квартиля нужна детерминированная нумерация строк. Для процентильных функций равные суммы должны оставаться peers, поэтому порядок у этих выражений отличается.",
+    "hint3": "NTILE используй с ORDER BY total_amount, order_id. Для PERCENT_RANK и CUME_DIST сортируй только по total_amount, сохранив одинаковые значения в одной peer-группе.",
     "quiz": {
       "question": "Какая функция учитывает все строки с тем же значением сортировки как peers при расчёте накопленной доли?",
       "options": [
@@ -10201,6 +10229,8 @@ export const exercises = [
     "task": "Для каждого заказа покажи его порядковый номер у клиента, сумму предыдущего заказа и накопительную сумму заказов клиента. Опиши общие правила окна один раз через WINDOW.",
     "solution": "SELECT customer_id, order_id, created_at, total_amount, ROW_NUMBER() OVER customer_orders AS order_number, LAG(total_amount) OVER customer_orders AS previous_amount, SUM(total_amount) OVER customer_orders AS running_total FROM orders WINDOW customer_orders AS (PARTITION BY customer_id ORDER BY created_at, order_id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) ORDER BY customer_id, created_at, order_id;",
     "hint": "Три метрики используют один раздел и один порядок. Вынеси PARTITION BY, ORDER BY и рамку в именованную спецификацию после основного запроса.",
+    "hint2": "Все три метрики используют один раздел и порядок строк. Именованное окно позволяет описать эти правила один раз и сослаться на них в функциях.",
+    "hint3": "Добавь секцию WINDOW customer_orders AS (PARTITION BY customer_id ORDER BY created_at, order_id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW).",
     "quiz": {
       "question": "Что можно повторно использовать через именованное окно?",
       "options": [
@@ -10221,6 +10251,8 @@ export const exercises = [
     "task": "Рассчитай выручку по календарным месяцам с января по март 2026 года. Добавь месяцы без заказов с нулевой выручкой и покажи выручку предыдущего месяца и процентное изменение.",
     "solution": "WITH months AS (SELECT generate_series(DATE '2026-01-01', DATE '2026-03-01', INTERVAL '1 month')::date AS month_start), monthly AS (SELECT DATE_TRUNC('month', created_at)::date AS month_start, SUM(total_amount) AS revenue FROM orders GROUP BY 1), filled AS (SELECT m.month_start, COALESCE(r.revenue, 0) AS revenue FROM months m LEFT JOIN monthly r USING (month_start)), compared AS (SELECT month_start, revenue, LAG(revenue) OVER (ORDER BY month_start) AS previous_revenue FROM filled) SELECT month_start, revenue, previous_revenue, ROUND(100.0 * (revenue - previous_revenue) / NULLIF(previous_revenue, 0), 2) AS mom_pct FROM compared ORDER BY month_start;",
     "hint": "Создай календарь через generate_series, агрегируй заказы до месяца и присоедини агрегат к календарю. Только после заполнения пропусков используй LAG.",
+    "hint2": "Сначала построй календарь из трёх месяцев и отдельно агрегируй фактическую выручку. После LEFT JOIN замени отсутствие суммы на ноль и только потом считай LAG.",
+    "hint3": "Используй CTE months, monthly, filled. В filled получи COALESCE(revenue, 0), а в следующем уровне применяй LAG по month_start.",
     "quiz": {
       "question": "Почему перед LAG в MoM-отчёте нужен календарь?",
       "options": [
@@ -10241,6 +10273,8 @@ export const exercises = [
     "task": "Посчитай количество заказов, для которых события произошли в строгом порядке: created → shipped → delivered. Для каждого этапа покажи число заказов, дошедших до него.",
     "solution": "WITH created AS (SELECT order_id, MIN(event_at) AS created_at FROM order_events WHERE event_type='created' GROUP BY order_id), shipped AS (SELECT c.order_id, c.created_at, MIN(e.event_at) AS shipped_at FROM created c LEFT JOIN order_events e ON e.order_id=c.order_id AND e.event_type='shipped' AND e.event_at>c.created_at GROUP BY c.order_id,c.created_at), delivered AS (SELECT s.order_id,s.created_at,s.shipped_at,MIN(e.event_at) AS delivered_at FROM shipped s LEFT JOIN order_events e ON e.order_id=s.order_id AND e.event_type='delivered' AND e.event_at>s.shipped_at GROUP BY s.order_id,s.created_at,s.shipped_at), funnel AS (SELECT COUNT(*) AS created_orders,COUNT(shipped_at) AS shipped_after_created,COUNT(delivered_at) AS delivered_after_shipped FROM delivered) SELECT 'created' AS stage,created_orders AS orders_count FROM funnel UNION ALL SELECT 'shipped_after_created',shipped_after_created FROM funnel UNION ALL SELECT 'delivered_after_shipped',delivered_after_shipped FROM funnel;",
     "hint": "Сначала найди первое время created на заказ. Следующее событие ищи только с условием event_at больше предыдущего этапа; нельзя просто считать наличие каждого типа события независимо.",
+    "hint2": "Найди первое событие каждого типа для каждого заказа. Следующий этап должен искать событие только позже времени предыдущего, иначе нарушенный порядок попадёт в воронку.",
+    "hint3": "Построй CTE created, shipped и delivered. В соединениях последовательно проверяй shipped.event_at > created.created_at и delivered.event_at > shipped.shipped_at.",
     "quiz": {
       "question": "Что отличает строгую воронку от подсчёта наличия событий?",
       "options": [
@@ -10261,6 +10295,8 @@ export const exercises = [
     "task": "Для каждого магазина покажи общее количество заказов, количество доставленных заказов и процент доставленных от всех заказов. Магазины без заказов также должны присутствовать.",
     "solution": "SELECT s.store_id,s.store_name,COUNT(o.order_id) AS all_orders,COUNT(o.order_id) FILTER (WHERE o.status='delivered') AS delivered_orders,ROUND(100.0*COUNT(o.order_id) FILTER (WHERE o.status='delivered')/NULLIF(COUNT(o.order_id),0),2) AS delivered_pct FROM stores s LEFT JOIN orders o ON o.store_id=s.store_id GROUP BY s.store_id,s.store_name ORDER BY delivered_pct DESC NULLS LAST,s.store_id;",
     "hint": "Начни со stores, чтобы не потерять магазин без заказов. Используй FILTER для числителя, COUNT(order_id) для знаменателя и NULLIF для безопасного деления.",
+    "hint2": "Начинай с таблицы магазинов, иначе магазин без заказов исчезнет. Для нулевого магазина количество должно стать 0, а процент при нулевом знаменателе не должен вызвать ошибку.",
+    "hint3": "Используй LEFT JOIN, COUNT(o.order_id), FILTER для delivered и NULLIF(COUNT(o.order_id), 0) в делителе.",
     "quiz": {
       "question": "Почему в знаменателе используется COUNT(o.order_id), а не COUNT(*)?",
       "options": [
@@ -10281,6 +10317,8 @@ export const exercises = [
     "task": "Исключи отменённые заказы. Для каждого клиента в каждом городе рассчитай число заказов и выручку, затем покажи двух крупнейших клиентов города и их долю в городской выручке.",
     "solution": "WITH filtered_orders AS (SELECT order_id,customer_id,store_id,total_amount FROM orders WHERE status<>'cancelled'), customer_city AS (SELECT s.city,c.customer_id,c.customer_name,COUNT(*) AS orders_count,SUM(f.total_amount) AS revenue FROM filtered_orders f JOIN customers c ON c.customer_id=f.customer_id JOIN stores s ON s.store_id=f.store_id GROUP BY s.city,c.customer_id,c.customer_name), ranked AS (SELECT *,SUM(revenue) OVER (PARTITION BY city) AS city_revenue,ROW_NUMBER() OVER (PARTITION BY city ORDER BY revenue DESC,customer_id) AS rn FROM customer_city) SELECT city,customer_name,orders_count,revenue,ROUND(100.0*revenue/NULLIF(city_revenue,0),2) AS city_share_pct FROM ranked WHERE rn<=2 ORDER BY city,rn;",
     "hint": "Раздели запрос на этапы: отфильтруй факты, присоедини клиента и магазин, агрегируй до клиента внутри города, затем добавь оконные сумму и номер строки.",
+    "hint2": "Сначала исключи отменённые заказы, затем сведи данные к клиенту внутри города. Рейтинг и долю города рассчитывай уже по этому агрегату.",
+    "hint3": "Сделай CTE filtered_orders и customer_city. В ranked добавь SUM(revenue) OVER (PARTITION BY city) и ROW_NUMBER() OVER (PARTITION BY city ORDER BY revenue DESC, customer_id), затем rn <= 2.",
     "quiz": {
       "question": "На каком уровне нужно агрегировать выручку до расчёта доли клиента в городе?",
       "options": [
@@ -10301,6 +10339,8 @@ export const exercises = [
     "task": "Рассчитай общие расходы каждого клиента и выбери двух клиентов с наибольшими расходами отдельно в каждом городе. Клиенты без заказов должны участвовать с нулевой суммой.",
     "solution": "WITH customer_spend AS (SELECT c.customer_id,c.customer_name,c.city,COALESCE(SUM(o.total_amount),0) AS spend FROM customers c LEFT JOIN orders o ON o.customer_id=c.customer_id GROUP BY c.customer_id,c.customer_name,c.city), ranked AS (SELECT *,ROW_NUMBER() OVER (PARTITION BY city ORDER BY spend DESC,customer_id) AS rn FROM customer_spend) SELECT city,customer_id,customer_name,spend,rn FROM ranked WHERE rn<=2 ORDER BY city,rn;",
     "hint": "Сначала получи одну строку на клиента через LEFT JOIN и GROUP BY. Затем пронумеруй клиентов внутри города и оставь rn не больше двух.",
+    "hint2": "Нужно сохранить клиентов без заказов, поэтому сначала агрегируй от customers через LEFT JOIN и подставь ноль вместо NULL. Ранжирование выполняй после агрегации.",
+    "hint3": "В customer_spend получи одну строку на клиента, затем в ranked рассчитай ROW_NUMBER() OVER (PARTITION BY city ORDER BY spend DESC, customer_id) и оставь первые две строки города.",
     "quiz": {
       "question": "Почему перед ROW_NUMBER сначала нужно агрегировать расходы до клиента?",
       "options": [

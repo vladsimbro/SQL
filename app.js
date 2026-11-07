@@ -1,6 +1,6 @@
-import { modules, learningTracks, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261107-63';
-import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261107-63';
-import { firstSqlKeyword, explainStatementKeyword, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261107-63';
+import { modules, learningTracks, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261107-64';
+import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261107-64';
+import { firstSqlKeyword, explainStatementKeyword, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261107-64';
 
 const $ = (s, root=document) => root.querySelector(s);
 const $$ = (s, root=document) => [...root.querySelectorAll(s)];
@@ -311,6 +311,14 @@ function renderExerciseQuiz(ex) {
  const q=ex.quiz;if(!q)return '';const selected=state.exerciseQuizAnswers[ex.id],answered=selected!==undefined,correct=selected===q.answer;
  return `<section class="exercise-quiz"><div class="eyebrow">ПРОВЕРЬ ПОНЯТИЕ ПЕРЕД ПРАКТИКОЙ</div><strong class="exercise-quiz-question">${esc(q.question)}</strong><div class="quiz-options">${q.options.map((option,oi)=>`<button class="quiz-option ${answered&&oi===selected?(correct?'correct':'incorrect'):''}" data-exercise-quiz-answer="${oi}" ${answered&&correct?'disabled':''}><span class="quiz-radio">${String.fromCharCode(65+oi)}</span><span>${esc(option)}</span></button>`).join('')}</div>${answered?`<div class="quiz-feedback ${correct?'correct':'incorrect'}"><strong>${correct?'Верно!':'Не совсем.'}</strong> ${esc(q.explanation)}</div>`:''}</section>`;
 }
+function renderExerciseHints(exercise) {
+  const levels = [
+    ['Подсказка 1 · направление', exercise.hint],
+    ['Подсказка 2 · логика', exercise.hint2],
+    ['Подсказка 3 · структура', exercise.hint3]
+  ].filter(([, value]) => value);
+  return levels.map(([label, value]) => `<details class="hint"><summary>${label}</summary><p>${esc(value)}</p></details>`).join('');
+}
 function renderPractice() {
   const active=exercises.find(e=>e.id===state.exerciseId)||exercises[0];
   const m=getModuleForExercise(active);
@@ -318,7 +326,7 @@ function renderPractice() {
   return `
   ${pageHead(`ПРАКТИКА · ${exercises.length} ЗАДАНИЙ`,'Закрепляй SQL руками','Каждое задание проверяется сравнением результата твоего запроса с эталонным результатом, рассчитанным на той же учебной базе. Порядок строк не учитывается, если он не меняет состав результата.')}
   <div class="exercise-layout"><aside><input class="exercise-filter" id="exercise-search" placeholder="Найти задачу по названию…"><div class="exercise-list" id="exercise-list">${list}</div></aside>
-  <section><div class="task-card"><div class="task-meta">ЗАДАНИЕ ${exercises.indexOf(active)+1} ИЗ ${exercises.length} · ${esc(m.title)}</div><h2>${esc(active.title)} ${state.completedExercises.has(active.id)?'✓':''}</h2><p>${esc(active.task)}</p><details class="hint"><summary>Показать подсказку</summary><p>Сначала определи зерно результата: что означает одна строка? Затем выбери нужные таблицы, условия, группировку и сортировку. Не копируй решение целиком, пока не попробовал сам.</p></details></div>
+  <section><div class="task-card"><div class="task-meta">ЗАДАНИЕ ${exercises.indexOf(active)+1} ИЗ ${exercises.length} · ${esc(m.title)}</div><h2>${esc(active.title)} ${state.completedExercises.has(active.id)?'✓':''}</h2><p>${esc(active.task)}</p>${renderExerciseHints(active)}</div>
   ${renderExerciseQuiz(active)}
   ${editor('','exercise-editor','Напиши SQL-запрос. Эталонное решение скрыто до нажатия «Показать решение».')}
   <div class="editor-actions" style="margin-top:10px"><button class="btn primary" data-action="check-exercise">Проверить решение</button>${(active.mode==='mutation'||active.mode==='transaction')?'':'<button class="btn" data-action="run-exercise">Выполнить запрос</button>'}<button class="btn" data-action="show-solution">Показать решение</button><button class="btn" data-action="reset-db">Сбросить базу</button></div>
