@@ -3701,19 +3701,7 @@ export const modules = [
             "explanation": "Локальное время интерпретируется в указанной зоне и превращается в конкретный момент TIMESTAMPTZ."
           }
         ],
-        "id": "datetime.chasovye-poyasa-i-at-time-zone",
-        "exampleResult": {
-          "columns": [
-            "local_time_to_instant",
-            "instant_to_local_time"
-          ],
-          "rows": [
-            [
-              "2026-11-07 08:00:00+00",
-              "2026-11-07 09:00:00"
-            ]
-          ]
-        }
+        "id": "datetime.chasovye-poyasa-i-at-time-zone"
       },
       {
         "title": "Фильтрация по датам: полуоткрытые интервалы",
@@ -3840,15 +3828,15 @@ export const modules = [
             ],
             [
               "2026-01-11",
-              1
+              2
             ],
             [
               "2026-01-12",
-              1
+              2
             ],
             [
               "2026-01-13",
-              1
+              2
             ],
             [
               "2026-01-14",
@@ -3856,7 +3844,7 @@ export const modules = [
             ],
             [
               "2026-01-15",
-              1
+              2
             ],
             [
               "2026-01-16",
@@ -4041,7 +4029,7 @@ export const modules = [
       {
         "title": "LAG и LEAD",
         "body": "LAG и LEAD позволяют получить значение из соседней строки внутри окна. LAG смотрит назад, LEAD — вперёд. Они полезны, когда нужно сравнить текущую запись с предыдущей или следующей без самостоятельного JOIN таблицы с самой собой.\n\nОбе функции используют ORDER BY внутри OVER. Для истории статусов заказа это может быть event_at, а при одинаковом времени нужен дополнительный уникальный event_id. Иначе PostgreSQL не обязан выбирать один и тот же порядок соседних событий.\n\nПервый аргумент — выражение, которое нужно получить. Второй, необязательный, задаёт смещение: по умолчанию одна строка. Третий задаёт значение, если соседней строки нет. Например, LAG(total_amount, 1, 0) вернёт 0 для первой строки раздела.\n\nЧастый сценарий — изменение показателя: текущая сумма минус предыдущая. Другой сценарий — время между событиями. Но LAG берёт предыдущую существующую строку, а не обязательно предыдущий календарный день или месяц. Если период пропущен, сначала построй календарную сетку.\n\nКак и другие оконные функции, LAG и LEAD не уменьшают число строк. Они добавляют соседнее значение к текущей записи.",
-        "example": "SELECT order_id, created_at, total_amount,\n       LAG(total_amount) OVER (\n         PARTITION BY customer_id\n         ORDER BY created_at, order_id\n       ) AS previous_order_amount\nFROM orders\nWHERE customer_id = 1\nORDER BY created_at, order_id;",
+        "example": "SELECT order_id, created_at, total_amount::int AS total_amount,\n       LAG(total_amount)::int OVER (\n         PARTITION BY customer_id\n         ORDER BY created_at, order_id\n       ) AS previous_order_amount\nFROM orders\nWHERE customer_id = 1\nORDER BY created_at, order_id;",
         "note": "Без ORDER BY понятие предыдущей строки не определено. Добавляй tie-breaker при совпадающих датах.",
         "simple": "LAG берёт значение из предыдущей строки окна, LEAD — из следующей. Порядок должен быть определён явно.",
         "practiceIds": [
@@ -4184,7 +4172,7 @@ export const modules = [
         "title": "ROWS и RANGE: две разные оконные рамки",
         "body": "ROWS и RANGE задают разные способы определения рамки окна. ROWS считает физические строки относительно текущей позиции. RANGE ориентируется на значения выражения сортировки и может включать все строки с равным значением ключа.\n\nЕсли две транзакции имеют одинаковый created_at, RANGE CURRENT ROW может включить обе строки как peers. ROWS CURRENT ROW ограничивается текущей физической строкой в порядке окна. Это различие особенно заметно в накопительных итогах и скользящих окнах.\n\nДля временных интервалов RANGE может выражать окно по значению даты, но синтаксис и ограничения зависят от типа сортировки. Не заменяй ROWS на RANGE без понимания того, как обрабатываются равные значения.\n\nВ примере сравниваются два окна на одном наборе заказов клиента. ROWS идёт по физическому порядку строк и при одинаковой дате учитывает tie-breaker order_id. RANGE смотрит на значение даты: строки с одинаковой датой являются peers и получают одинаковую сумму за календарные семь дней.",
         "simple": "ROWS считает позиции строк, RANGE — диапазон значений ключа сортировки и связанные с ним peers.",
-        "example": "SELECT order_id, created_at, total_amount,\n       SUM(total_amount) OVER (\n         PARTITION BY customer_id\n         ORDER BY created_at, order_id\n         ROWS BETWEEN 6 PRECEDING AND CURRENT ROW\n       ) AS rolling_rows,\n       SUM(total_amount) OVER (\n         PARTITION BY customer_id\n         ORDER BY created_at::timestamp\n         RANGE BETWEEN INTERVAL '6 days' PRECEDING AND CURRENT ROW\n       ) AS rolling_7_days\nFROM orders\nWHERE customer_id = 1\nORDER BY created_at, order_id;",
+        "example": "SELECT order_id, created_at, total_amount::int AS total_amount,\n       (SUM(total_amount) OVER (\n         PARTITION BY customer_id\n         ORDER BY created_at, order_id\n         ROWS BETWEEN 6 PRECEDING AND CURRENT ROW\n       ))::int AS rolling_rows,\n       SUM(total_amount) OVER (\n         PARTITION BY customer_id\n         ORDER BY created_at::timestamp\n         RANGE BETWEEN INTERVAL '6 days' PRECEDING AND CURRENT ROW\n       ))::int AS rolling_7_days\nFROM orders\nWHERE customer_id = 1\nORDER BY created_at, order_id;",
         "note": "Если важна последовательность отдельных событий с одинаковым временем, добавь tie-breaker и используй подходящую ROWS-рамку.",
         "practiceIds": [
           "e82"
@@ -4756,7 +4744,7 @@ export const modules = [
         "title": "Сравнение периодов: MoM, WoW и YoY",
         "body": "Сравнение периодов показывает, как метрика изменилась относительно предыдущего месяца (MoM), недели (WoW) или года (YoY). Сначала нужно привести события к одному уровню периода: одна строка на месяц, неделю или год. Затем LAG получает значение предыдущего периода.\n\nПроцентное изменение рассчитывается относительно предыдущего значения: (текущий показатель - предыдущий) / предыдущий * 100. Знаменатель нужно защищать через NULLIF, потому что предыдущая выручка может быть нулевой. Для первого периода предыдущего значения нет, поэтому NULL здесь честнее нуля.\n\nВажная ловушка: LAG сравнивает с предыдущей существующей строкой, а не с предыдущим календарным периодом. Если февраль отсутствует, март сравнит с январём. Для строгого MoM/WoW/YoY сначала создай непрерывный календарь периодов и присоедини агрегаты, подставив ноль только если отсутствие факта действительно означает нулевую метрику.",
         "simple": "Сначала агрегируй до месяца/недели/года, затем LAG сравнит текущую строку с предыдущей. Для календарно точного сравнения заполни пропущенные периоды.",
-        "example": "WITH months AS (\n  SELECT generate_series(DATE '2026-01-01', DATE '2026-03-01', INTERVAL '1 month')::date AS month_start\n), monthly AS (\n  SELECT DATE_TRUNC('month', created_at)::date AS month_start,\n         SUM(total_amount) AS revenue\n  FROM orders\n  GROUP BY 1\n), filled AS (\n  SELECT m.month_start, COALESCE(r.revenue, 0) AS revenue\n  FROM months m LEFT JOIN monthly r USING (month_start)\n), compared AS (\n  SELECT *, LAG(revenue) OVER (ORDER BY month_start) AS previous_revenue\n  FROM filled\n)\nSELECT month_start, revenue, previous_revenue,\n       ROUND(100.0 * (revenue - previous_revenue) / NULLIF(previous_revenue, 0), 2) AS mom_pct\nFROM compared\nORDER BY month_start;",
+        "example": "WITH months AS (\n  SELECT generate_series(DATE '2026-01-01', DATE '2026-03-01', INTERVAL '1 month')::date AS month_start\n), monthly AS (\n  SELECT DATE_TRUNC('month', created_at)::date AS month_start,\n         SUM(total_amount)::int AS revenue\n  FROM orders\n  GROUP BY 1\n), filled AS (\n  SELECT m.month_start, COALESCE(r.revenue, 0)::int AS revenue\n  FROM months m LEFT JOIN monthly r USING (month_start)\n), compared AS (\n  SELECT *, LAG(revenue)::int OVER (ORDER BY month_start) AS previous_revenue\n  FROM filled\n)\nSELECT month_start, revenue, previous_revenue,\n       ROUND(100.0 * (revenue - previous_revenue) / NULLIF(previous_revenue, 0), 2) ::float8 AS mom_pct\nFROM compared\nORDER BY month_start;",
         "note": "LAG сравнивает соседние строки, а не гарантированно соседние календарные периоды. Не называй показатель MoM, пока не проверил пропуски месяцев.",
         "outcomes": [
           "Рассчитывать абсолютное и процентное изменение периода",
@@ -4824,7 +4812,7 @@ export const modules = [
         "title": "Конверсия и правильный знаменатель",
         "body": "Конверсия — отношение числа объектов, достигших целевого этапа, к числу объектов, которые имели возможность этот этап пройти. Главная сложность обычно не в делении, а в выборе единицы анализа и знаменателя.\n\nСначала определи объект: пользователь, сессия, заказ, магазин или попытка доставки. Если в таблице событий одна строка на событие, COUNT(*) считает события, а не уникальных пользователей. Для пользовательской конверсии часто нужен COUNT(DISTINCT user_id).\n\nЗатем зафиксируй этапы. Например, доля доставленных заказов среди всех созданных заказов: числитель — количество заказов со статусом delivered, знаменатель — все заказы выбранной когорты. Это не то же самое, что доля доставленных среди отправленных.\n\nВ PostgreSQL условную агрегацию удобно записывать через FILTER или CASE. Для процентов используй 100.0, чтобы избежать целочисленного деления, а знаменатель защищай через NULLIF(..., 0). Если знаменатель равен нулю, результат будет NULL, а не ошибка деления.\n\nДля настоящей воронки порядок событий тоже важен. Нельзя считать пользователя прошедшим этап B только потому, что у него когда-либо было событие B: оно могло произойти до этапа A. Для строгой воронки проверяй временной порядок и при необходимости окно времени.",
         "simple": "До формулы назови числитель, знаменатель и единицу анализа. Иначе процент может быть математически правильным, но отвечать не на тот вопрос.",
-        "example": "SELECT store_id,\n       COUNT(*) AS all_orders,\n       COUNT(*) FILTER (WHERE status = 'delivered') AS delivered_orders,\n       ROUND(100.0 * COUNT(*) FILTER (WHERE status = 'delivered')\n             / NULLIF(COUNT(*), 0), 2) AS delivered_conversion_pct\nFROM orders\nGROUP BY store_id;",
+        "example": "SELECT store_id,\n       COUNT(*)::int AS all_orders,\n       COUNT(*) FILTER (WHERE status = 'delivered')::int AS delivered_orders,\n       ROUND(100.0 * COUNT(*) FILTER (WHERE status = 'delivered')\n             / NULLIF(COUNT(*), 0), 2) AS delivered_conversion_pct\nFROM orders\nGROUP BY store_id;",
         "note": "Не дели количество доставленных событий на количество строк событий, если метрика должна считаться по уникальным заказам. Зерно должно совпадать в числителе и знаменателе.",
         "outcomes": [
           "Определять единицу анализа и знаменатель конверсии",
