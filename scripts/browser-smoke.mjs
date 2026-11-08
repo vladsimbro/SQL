@@ -508,6 +508,34 @@ try {
   await assertNoHorizontalOverflow(320);
   await captureUxScreen('43-ecommerce-project-mobile-light-320');
   await page.setViewportSize({ width: 390, height: 844 });
+  await menuButton.click();
+  await page.locator('#sidebar .nav-item[data-nav="courses"]').click();
+  await page.locator('[data-open-course="postgresql"]').click();
+  await page.locator('[data-module="ddl"]').click();
+  await page.locator('.lesson-track-group').waitFor({ state: 'visible' });
+  await page.setViewportSize({ width: 320, height: 740 });
+  await assertNoHorizontalOverflow(320);
+  await captureUxScreen('44-postgresql-lesson-mobile-light-320');
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await menuButton.click();
+  await page.locator('#sidebar .nav-item[data-nav="projects"]').click();
+  await page.locator('[data-open-project="delivery"]').click();
+  await page.locator('.project-task-content h2').waitFor({ state: 'visible' });
+  await page.setViewportSize({ width: 320, height: 740 });
+  await assertNoHorizontalOverflow(320);
+  await captureUxScreen('45-delivery-project-mobile-light-320');
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await menuButton.click();
+  await page.locator('#sidebar .nav-item[data-nav="projects"]').click();
+  await page.locator('[data-open-project="product"]').click();
+  await page.locator('.project-task-content h2').waitFor({ state: 'visible' });
+  await page.setViewportSize({ width: 320, height: 740 });
+  await assertNoHorizontalOverflow(320);
+  await captureUxScreen('46-product-project-mobile-light-320');
+
+  await page.setViewportSize({ width: 390, height: 844 });
   await page.locator('#theme-toggle').click();
   assert.equal(await page.locator('html').evaluate(element => element.classList.contains('light')), false, 'The browser smoke must restore the dark theme after light-theme checks');
 
