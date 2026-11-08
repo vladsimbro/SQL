@@ -509,7 +509,7 @@ function renderPractice() {
 }
 function editor(value,id,placeholder='') {
  const reset=id==='playground-editor'?'<button class="btn small" data-action="reset-editor">Восстановить пример</button>':'';
- return `<div class="editor-card"><div class="editor-top"><span>SQL EDITOR · POSTGRESQL</span><div class="editor-actions"><button class="btn small" data-action="clear-editor">Очистить</button>${reset}</div></div><textarea class="sql-editor" id="${id}" spellcheck="false" autocapitalize="off" autocomplete="off" placeholder="${esc(placeholder)}">${esc(value)}</textarea><div class="editor-bottom"><span>Ctrl + Enter · выполнить · Tab · отступ</span><span>PostgreSQL · номера строк · подсветка SQL</span></div></div>`;
+ return `<div class="editor-card"><div class="editor-top"><span>SQL EDITOR · POSTGRESQL</span><div class="editor-actions"><button class="btn small" data-action="clear-editor">Очистить</button>${reset}</div></div><textarea class="sql-editor" id="${id}" spellcheck="false" autocapitalize="off" autocomplete="off" placeholder="${esc(placeholder)}">${esc(value)}</textarea><div class="editor-bottom"><span>Ctrl + Enter · ${id==='project-editor'?'проверить':'выполнить'} · Tab · отступ</span><span>PostgreSQL · номера строк · подсветка SQL</span></div></div>`;
 }
 function getEditorValue(id){return state.editors.get(id)?.getValue()??$('#'+id)?.value??'';}
 function setEditorValue(id,value){const cm=state.editors.get(id);if(cm){cm.setValue(value);cm.focus();}else{const el=$('#'+id);if(el)el.value=value;}}
@@ -642,7 +642,7 @@ function handleAction(action) {
   if(action==='reset-db')resetDatabase();
   if(action==='insert-sample'){const sample='SELECT o.order_id, s.store_name, c.employee_name, o.total_amount\\nFROM orders o\\nJOIN stores s ON s.store_id = o.store_id\\nLEFT JOIN employees c ON c.employee_id = o.employee_id\\nORDER BY o.order_id;';setEditorValue('playground-editor',sample);localStorage.setItem(EDITOR_KEY,sample);}
 }
-async function checkProjectTask(){
+async async function checkProjectTask(){
   const project=projects.find(item=>item.id===state.projectId);
   const task=project?.tasks.find(item=>item.id===state.projectTaskId);
   const feedback=$('#project-feedback');
