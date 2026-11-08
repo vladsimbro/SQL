@@ -78,7 +78,7 @@ try {
   await page.goto(baseURL, { waitUntil: 'domcontentloaded', timeout: 90_000 });
   try {
     await page.locator('#app-content .hero').waitFor({ state: 'visible', timeout: 45_000 });
-    await captureUxScreen('01-dashboard-desktop-dark');
+    await captureUxScreen('01-dashboard-desktop-pglite-error');
   } catch (error) {
     const diagnostic = await page.evaluate(async () => {
       const response = await fetch('./version.json?browser-diagnostic=' + Date.now(), { cache: 'no-store' }).catch(fetchError => null);
@@ -129,7 +129,7 @@ try {
   const courseCards = page.locator('#app-content .course-card');
   assert.equal(await courseCards.count(), 2, 'The catalog must show only the two implemented courses');
   assert.deepEqual(await courseCards.locator('h2').allTextContents(), ['SQL для аналитика данных','PostgreSQL']);
-  await captureUxScreen('02-course-catalog-desktop');
+  await captureUxScreen('02-course-catalog-desktop-pglite-error');
   await page.locator('[data-open-course="core"]').click();
   await page.locator('[data-module="foundations"]').click();
   assert.equal(await page.locator('.lesson-track-group h3').textContent(), 'SQL для аналитика данных');
@@ -172,6 +172,23 @@ try {
   assert.equal(await readEditor(editor), draft, 'Resetting the database must preserve the SQL draft');
   await page.locator('[data-action="run-playground"]').click();
   await page.locator('#playground-results .result-table').waitFor({ state: 'visible', timeout: 30_000 });
+
+  await page.locator('#sidebar .nav-item[data-nav="dashboard"]').click();
+  await captureUxScreen('14-dashboard-desktop-ready-dark');
+  await page.locator('#theme-toggle').click();
+  await captureUxScreen('15-dashboard-desktop-light');
+  await page.locator('#theme-toggle').click();
+  await page.locator('#sidebar .nav-item[data-nav="courses"]').click();
+  await captureUxScreen('16-course-catalog-desktop-ready');
+  await page.locator('#sidebar .nav-item[data-nav="assessment"]').click();
+  await captureUxScreen('17-assessment-desktop');
+  await page.locator('#sidebar .nav-item[data-nav="schema"]').click();
+  await captureUxScreen('18-schema-desktop');
+  await page.locator('#sidebar .nav-item[data-nav="reference"]').click();
+  await captureUxScreen('19-reference-desktop');
+  await page.locator('#sidebar .nav-item[data-nav="glossary"]').click();
+  await captureUxScreen('20-glossary-desktop');
+  await page.locator('#sidebar .nav-item[data-nav="playground"]').click();
 
   await page.locator('#sidebar [data-nav="practice"]').click();
   assert.equal(await page.locator('[data-practice-track="core"]').getAttribute('aria-pressed'), 'true');
@@ -294,9 +311,21 @@ try {
   await captureUxScreen('10-practice-mobile-390');
 
   await menuButton.click();
-  await page.locator('#sidebar [data-nav="dashboard"]').click();
+  await page.locator('#sidebar .nav-item[data-nav="dashboard"]').click();
   await page.locator('#app-content .hero').waitFor({ state: 'visible' });
   await captureUxScreen('11-dashboard-mobile-390');
+
+  await menuButton.click();
+  await page.locator('#sidebar .nav-item[data-nav="courses"]').click();
+  await page.locator('#app-content .course-card').first().waitFor({ state: 'visible' });
+  await captureUxScreen('21-course-catalog-mobile-390');
+  await page.locator('[data-open-course="core"]').click();
+  await page.locator('[data-module="foundations"]').click();
+  await page.locator('.lesson-track-group').waitFor({ state: 'visible' });
+  await captureUxScreen('22-sql-lesson-mobile-390');
+  await menuButton.click();
+  await page.locator('#sidebar .nav-item[data-nav="practice"]').click();
+  await page.locator('#app-content .exercise-layout').waitFor({ state: 'visible' });
 
   await page.setViewportSize({ width: 320, height: 740 });
   await assertNoHorizontalOverflow(320);
