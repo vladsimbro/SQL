@@ -9,7 +9,23 @@ if (!/^https:\/\//i.test(baseURL)) {
 const browser = await chromium.launch({ headless: true });
 const page = await browser.newPage({ viewport: { width: 1440, height: 960 } });
 const pageErrors = [];
+const consoleErrors = [];
+const failedRequests = [];
+const badResponses = [];
 page.on('pageerror', error => pageErrors.push(error.message));
+page.on('console', message => {
+  if (message.type() === 'error') consoleErrors.push(message.text());
+});
+page.on('requestfailed', request => failedRequests.push({
+  url: request.url(),
+  error: request.failure()?.errorText || 'unknown'
+}));
+page.on('response', response => {
+  if (response.status() >= 400) badResponses.push({
+    url: response.url(),
+    status: response.status()
+  });
+});
 
 let blockFirstPGliteRequest = true;
 await page.route(
@@ -55,7 +71,23 @@ let screenshotTaken = false;
 try {
   const navigationStartedAt = Date.now();
   await page.goto(baseURL, { waitUntil: 'domcontentloaded', timeout: 90_000 });
-  await page.locator('#app-content .hero').waitFor({ state: 'visible', timeout: 45_000 });
+  try {
+    await page.locator('#app-content .hero').waitFor({ state: 'visible', timeout: 45_000 });
+  } catch (error) {
+    const diagnostic = await page.evaluate(async () => {
+      const response = await fetch('./version.json?browser-diagnostic=' + Date.now(), { cache: 'no-store' }).catch(fetchError => null);
+      return {
+        url: location.href,
+        appContent: document.querySelector('#app-content')?.innerText,
+        buildResponseStatus: response?.status ?? null,
+        buildResponseText: response?.ok ? await response.text() : null
+      };
+    }).catch(e => ({ evaluationError: e.message }));
+    console.error('Initial application render diagnostics:', JSON.stringify({
+      diagnostic, pageErrors, consoleErrors, failedRequests, badResponses
+    }));
+    throw error;
+  }
   const shellReadyMs = Date.now() - navigationStartedAt;
   assert.ok(shellReadyMs < 30_000, `The initial learning interface took too long to render: ${shellReadyMs}ms`);
 
@@ -147,7 +179,9 @@ try {
   }));
 } catch (error) {
   await page.screenshot({ path: 'browser-smoke-failure.png', fullPage: true }).catch(() => {});
-  screenshotTaken = true;
+  console.error('Browser failure diagnostics:', JSON.stringify({
+    pageErrors, consoleErrors, failedRequests, badResponses
+  }));
   throw error;
 } finally {
   await browser.close();
