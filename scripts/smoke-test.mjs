@@ -929,7 +929,7 @@ for (const key of BACKUP_STORAGE_KEYS) {
 }
 failingTarget.failOnce = true;
 const beforeRollback = Object.fromEntries(BACKUP_STORAGE_KEYS.map(key => [key, failingTarget.getItem(key)]));
-assert.throws(() => restoreBackup(failingTarget, learningBackup), /прежние данные сохранены/);
+assert.throws(() => restoreBackup(failingTarget, learningBackup), /прежние данные сохранены/i);
 assert.deepEqual(
   Object.fromEntries(BACKUP_STORAGE_KEYS.map(key => [key, failingTarget.getItem(key)])),
   beforeRollback,
