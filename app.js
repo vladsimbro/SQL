@@ -1,7 +1,7 @@
-import { modules, learningTracks, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261108-97';
-import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261108-97';
-import { firstSqlKeyword, explainStatementKeyword, explainStatementBody, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261108-97';
-import { migrateProgress, getTrackProgress, findNextLesson } from './progress-utils.js?v=20261108-97';
+import { modules, learningTracks, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261108-98';
+import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261108-98';
+import { firstSqlKeyword, explainStatementKeyword, explainStatementBody, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261108-98';
+import { migrateProgress, getTrackProgress, findNextLesson } from './progress-utils.js?v=20261108-98';
 
 const $ = (s, root=document) => root.querySelector(s);
 const $$ = (s, root=document) => [...root.querySelectorAll(s)];
@@ -89,7 +89,7 @@ function render() {
   for(const cm of state.editors.values()){try{cm.toTextArea();}catch{}}
   state.editors.clear();
   const activeView=['roadmap','study'].includes(state.view)?'courses':state.view;
-  $('.nav-item').forEach(b=>b.classList.toggle('active',b.dataset.nav===activeView));
+  $$('.nav-item').forEach(b=>b.classList.toggle('active',b.dataset.nav===activeView));
   $('#breadcrumb-current').textContent=label[state.view]||'Учебник';
   updateProgress();
   const pages={dashboard:renderDashboard,courses:renderCourses,roadmap:renderRoadmap,study:renderStudy,practice:renderPractice,assessment:renderAssessment,playground:renderPlayground,schema:renderSchema,reference:renderReference,glossary:renderGlossary};
