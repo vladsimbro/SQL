@@ -81,6 +81,7 @@ try {
   await page.goto(baseURL, { waitUntil: 'domcontentloaded', timeout: 90_000 });
   try {
     await page.locator('#app-content .hero').waitFor({ state: 'visible', timeout: 45_000 });
+    assert.deepEqual(await page.locator('.stat-course-counts span').allTextContents(), ['SQL · 112', 'PostgreSQL · 61'], 'The dashboard must show lesson totals separately for the two independent courses');
     await captureUxScreen('01-dashboard-desktop-pglite-error');
     await page.keyboard.press('Tab');
     const keyboardFocus = await page.evaluate(() => ({ visible: document.activeElement?.matches(':focus-visible'), outline: getComputedStyle(document.activeElement).outlineStyle }));
