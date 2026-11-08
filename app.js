@@ -1,7 +1,7 @@
-import { modules, learningTracks, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261108-91';
-import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261108-91';
-import { firstSqlKeyword, explainStatementKeyword, explainStatementBody, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261108-91';
-import { migrateProgress, getTrackProgress, findNextLesson } from './progress-utils.js?v=20261108-91';
+import { modules, learningTracks, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261108-92';
+import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261108-92';
+import { firstSqlKeyword, explainStatementKeyword, explainStatementBody, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261108-92';
+import { migrateProgress, getTrackProgress, findNextLesson } from './progress-utils.js?v=20261108-92';
 
 const $ = (s, root=document) => root.querySelector(s);
 const $$ = (s, root=document) => [...root.querySelectorAll(s)];
@@ -48,10 +48,20 @@ const updateProgress = () => {
 const toast = message => {
   const el=document.createElement('div'); el.className='toast'; el.textContent=message; document.body.append(el); setTimeout(()=>el.remove(),2200);
 };
+const setMobileMenuOpen = (open, { restoreFocus = false } = {}) => {
+  const sidebar=$('#sidebar'),button=$('#mobile-menu');
+  if(!sidebar||!button)return;
+  const expanded=Boolean(open)&&window.innerWidth<760;
+  sidebar.classList.toggle('open',expanded);
+  button.setAttribute('aria-expanded',String(expanded));
+  button.setAttribute('aria-label',expanded?'Закрыть меню':'Открыть меню');
+  if(expanded)sidebar.querySelector('[data-nav]')?.focus({preventScroll:true});
+  else if(restoreFocus)button.focus({preventScroll:true});
+};
 const go = view => {
   state.navigationScrollReset=true;
   state.view=view; render();
-  if(innerWidth<760) $('#sidebar').classList.remove('open');
+  if(innerWidth<760)setMobileMenuOpen(false,{restoreFocus:true});
   window.scrollTo({top:0,behavior:'smooth'});
 };
 const progressForModule = m => m.lessons.filter((_,i)=>state.completedLessons.has(lessonKey(m.id,i))).length;
@@ -741,8 +751,22 @@ loadProgress();
 document.documentElement.classList.toggle('light',state.theme==='light');
 $('#theme-toggle').addEventListener('click',()=>{state.theme=state.theme==='dark'?'light':'dark';document.documentElement.classList.toggle('light',state.theme==='light');localStorage.setItem('sql-academy-theme',state.theme);const meta=$('meta[name="theme-color"]');if(meta)meta.content=state.theme==='light'?'#f3f5fa':'#0a0d14';});
 const themeMeta=$('meta[name="theme-color"]');if(themeMeta)themeMeta.content=state.theme==='light'?'#f3f5fa':'#0a0d14';
-$('#mobile-menu').addEventListener('click',()=>$('#sidebar').classList.toggle('open'));
-document.addEventListener('click',e=>{if(innerWidth<760&&$('#sidebar').classList.contains('open')&&!e.target.closest('#sidebar')&&!e.target.closest('#mobile-menu'))$('#sidebar').classList.remove('open');});
-document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){const active=document.activeElement;if(active?.classList.contains('sql-editor'))return;}});
+$('#mobile-menu').addEventListener('click',()=>setMobileMenuOpen(!$('#sidebar').classList.contains('open')));
+document.addEventListener('click',e=>{
+  if(window.innerWidth<760&&$('#sidebar').classList.contains('open')&&!e.target.closest('#sidebar')&&!e.target.closest('#mobile-menu')){
+    setMobileMenuOpen(false);
+  }
+});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&$('#sidebar').classList.contains('open')){
+    setMobileMenuOpen(false,{restoreFocus:true});
+    return;
+  }
+  if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){
+    const active=document.activeElement;
+    if(active?.classList.contains('sql-editor'))return;
+  }
+});
+window.addEventListener('resize',()=>{if(window.innerWidth>=760)setMobileMenuOpen(false);});
 render();
 initDatabase();

@@ -58,6 +58,11 @@ assert.ok(appSource.includes("render();\ninitDatabase();"), 'The application she
 assert.ok(appSource.includes("state.engineLoading=true") && appSource.includes("state.engineError="), 'Database startup must expose loading and recoverable error states');
 assert.ok(appSource.includes('data-action="retry-engine"'), 'A database startup error must offer an in-app retry action');
 assert.ok(appSource.includes("!state.engineReady||!state.db"), 'Database-dependent actions must be guarded until initialization finishes');
+assert.ok(appSource.includes("function setMobileMenuOpen"), 'Mobile navigation must use one function to synchronize its open state');
+assert.ok(appSource.includes("event.key==='Escape'") && appSource.includes("restoreFocus:true"), 'Escape must close the mobile menu and restore focus to its trigger');
+assert.ok(appSource.includes("window.addEventListener('resize'"), 'Switching to desktop width must close and reset the mobile menu');
+assert.ok(appSource.includes("button.setAttribute('aria-expanded',String(expanded))"), 'The mobile menu must keep aria-expanded synchronized with its visual state');
+assert.ok(htmlSource.includes('aria-controls="sidebar"') && htmlSource.includes('aria-expanded="false"'), 'The mobile menu button must declare its controlled navigation and initial collapsed state');
 const sqlLexer = new Function(sqlUtilsSource.replaceAll('export function ', 'function ') + '; return { firstSqlKeyword, sqlAfterKeyword, explainStatementKeyword, explainStatementBody, readOnlyQueryKeyword, splitStatements };')();
 assert.equal(sqlLexer.firstSqlKeyword("-- leading comment\nSELECT 1"), 'SELECT', 'Leading line comments must be ignored');
 assert.equal(sqlLexer.firstSqlKeyword('/* outer /* nested */ comment */ WITH q AS (SELECT 1) SELECT * FROM q'), 'WITH', 'Nested block comments must be ignored');
