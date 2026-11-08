@@ -922,10 +922,12 @@ class BackupFailingStorage extends BackupTestStorage {
   }
 }
 const failingTarget = new BackupFailingStorage();
+failingTarget.failOnce = false;
 for (const key of BACKUP_STORAGE_KEYS) {
   const value = backupSource.getItem(key);
   if (value !== null) failingTarget.setItem(key, 'old:' + value);
 }
+failingTarget.failOnce = true;
 const beforeRollback = Object.fromEntries(BACKUP_STORAGE_KEYS.map(key => [key, failingTarget.getItem(key)]));
 assert.throws(() => restoreBackup(failingTarget, learningBackup), /прежние данные сохранены/);
 assert.deepEqual(
