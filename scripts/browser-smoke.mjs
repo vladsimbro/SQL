@@ -92,6 +92,21 @@ try {
     throw error;
   }
   const shellReadyMs = Date.now() - navigationStartedAt;
+  // Direct URL routing and browser history must restore the same learning view.
+  await page.goto(baseURL + '#view=courses', { waitUntil: 'domcontentloaded' });
+  await page.locator('#app-content .course-card').first().waitFor({ state: 'visible' });
+  await page.goto(baseURL + '#view=study&module=foundations', { waitUntil: 'domcontentloaded' });
+  await page.locator('#app-content .lesson-track-group').waitFor({ state: 'visible' });
+  assert.match(await page.locator('.lesson-track-group h3').textContent(), /SQL для аналитика данных/);
+  await page.goBack();
+  await page.locator('#app-content .course-card').first().waitFor({ state: 'visible' });
+  await page.goForward();
+  await page.locator('#app-content .lesson-track-group').waitFor({ state: 'visible' });
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.locator('#app-content .lesson-track-group').waitFor({ state: 'visible' });
+  assert.match(await page.locator('.lesson-track-group h3').textContent(), /SQL для аналитика данных/);
+  await page.goto(baseURL, { waitUntil: 'domcontentloaded' });
+  await page.locator('#app-content .hero').waitFor({ state: 'visible' });
   assert.ok(shellReadyMs < 30_000, `The initial learning interface took too long to render: ${shellReadyMs}ms`);
 
   const build = await page.evaluate(async () => {
