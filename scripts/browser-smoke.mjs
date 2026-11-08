@@ -104,6 +104,20 @@ try {
   assert.equal(await page.locator('#app-content .hero').isVisible(), true, 'Database failure must not replace the learning page');
   assert.equal(await page.locator('#app-content [data-action="retry-engine"]').isVisible(), true, 'Database failure must expose a retry action');
 
+  await page.locator('#sidebar [data-nav="courses"]').click();
+  const courseCards = page.locator('#app-content .course-card');
+  assert.equal(await courseCards.count(), 2, 'The catalog must show only the two implemented courses');
+  assert.deepEqual(await courseCards.locator('h2').allTextContents(), ['SQL для аналитика данных','PostgreSQL']);
+  await page.locator('[data-open-course="core"]').click();
+  await page.locator('[data-module="foundations"]').click();
+  assert.equal(await page.locator('.lesson-track-group h3').textContent(), 'SQL для аналитика данных');
+  assert.equal(await page.locator('.lesson-track-group').count(), 1, 'A lesson must show only its own course in the sidebar');
+  await page.locator('#sidebar [data-nav="courses"]').click();
+  await page.locator('[data-open-course="postgresql"]').click();
+  await page.locator('[data-module="ddl"]').click();
+  assert.equal(await page.locator('.lesson-track-group h3').textContent(), 'PostgreSQL');
+  assert.equal(await page.locator('.lesson-track-group').count(), 1, 'The PostgreSQL lesson must not show the SQL course in its sidebar');
+
   await page.locator('#sidebar [data-nav="playground"]').click();
   const editor = page.locator('#playground-editor');
   await editor.waitFor({ state: 'attached' });
