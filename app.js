@@ -341,7 +341,7 @@ function renderStudy() {
  const outcomes=(l.outcomes||[]).length?`<div class="lesson-card"><div class="eyebrow">РЕЗУЛЬТАТ УРОКА</div><h2>Что ты должен уметь</h2><ul>${l.outcomes.map(item=>`<li>${esc(item)}</li>`).join('')}</ul></div>`:'';
  return `${pageHead(esc(activeTrack.courseTitle).toUpperCase()+' · МОДУЛЬ '+String(m.trackOrder).padStart(2,'0'),m.title,m.desc,'<button class="btn" data-nav="roadmap">← К программе курса</button>')}<div class="split-layout"><aside class="card lesson-sidebar"><h3>Содержание курса</h3>${sidebar}</aside><article class="lesson-content">
  <div class="lesson-card"><div class="eyebrow">${esc(m.stage)} · УРОК ${state.lessonIndex+1} ИЗ ${m.lessons.length}</div><h1>${esc(l.title)}</h1>${lessonBody(l,m)}${renderLessonQuiz(l)}${practice?`<div class="lesson-footer lesson-practice-links">${practice}</div>`:''}<div class="lesson-footer"><button class="btn primary" data-action="complete-lesson">${done?'✓ Урок завершён':'Отметить урок завершённым'}</button></div></div>${outcomes}
- <div class="lesson-card"><div class="lesson-footer"><button class="btn" data-action="prev-lesson" ${state.lessonIndex===0?'disabled':''}>← Предыдущий урок</button><button class="btn primary" data-action="next-lesson" ${trackEnd?'disabled':''}>${trackEnd?(m.track==='core'?'Основной маршрут завершён':'Дополнительный маршрут завершён'):state.lessonIndex===m.lessons.length-1?'Следующий модуль →':'Следующий урок →'}</button></div></div></article></div>`;
+ <div class="lesson-card"><div class="lesson-footer"><button class="btn" data-action="prev-lesson" ${state.lessonIndex===0?'disabled':''}>← Предыдущий урок</button><button class="btn primary" data-action="next-lesson" ${trackEnd?'disabled':''}>${trackEnd?(m.track==='core'?'Курс SQL для аналитика завершён':'Курс PostgreSQL завершён'):state.lessonIndex===m.lessons.length-1?'Следующий модуль →':'Следующий урок →'}</button></div></div></article></div>`;
 }
 function renderAssessment() {
   const available=moduleLessons(state.assessmentTrack);
@@ -349,8 +349,8 @@ function renderAssessment() {
   if(!selected){
     return pageHead('ПРОВЕРКА ЗНАНИЙ','Контрольные работы','Проверь понимание целого модуля. Каждый тест содержит вопросы из отдельного банка; лучший результат сохраняется в браузере.') +
       '<div class="assessment-track-tabs">' +
-      '<button class="track-tab '+(state.assessmentTrack==='core'?'active':'')+'" data-assessment-track="core"><strong>Основной маршрут</strong><span>Аналитика и SQL</span></button>' +
-      '<button class="track-tab '+(state.assessmentTrack==='postgresql'?'active':'')+'" data-assessment-track="postgresql"><strong>PostgreSQL</strong><span>Дополнительный маршрут</span></button></div>' +
+      '<button class="track-tab '+(state.assessmentTrack==='core'?'active':'')+'" data-assessment-track="core"><strong>SQL для аналитика данных</strong><span>Самостоятельный курс</span></button>' +
+      '<button class="track-tab '+(state.assessmentTrack==='postgresql'?'active':'')+'" data-assessment-track="postgresql"><strong>PostgreSQL</strong><span>Самостоятельный курс</span></button></div>' +
       '<div class="assessment-grid">' + available.map(module=>{
         const result=state.assessmentResults[module.id];
         return '<button class="assessment-module" data-assessment-module="'+module.id+'"><span class="eyebrow">'+module.lessons.length+' УРОКОВ · '+module.quiz.length+' ВОПРОСА</span><strong>'+esc(module.title)+'</strong><span class="assessment-module-meta">'+(result?'Попыток: '+result.attempts+' · лучший результат: '+result.bestScore+'/'+module.quiz.length:'Ещё не проходили')+'</span><span class="assessment-module-action">'+(result&&result.passed?'Зачёт получен · Повторить':'Начать проверку')+' →</span></button>';
