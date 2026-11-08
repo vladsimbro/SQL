@@ -9054,9 +9054,8 @@ export const modules = [
 export const learningTracks = [
   {
     "id": "core",
-    "title": "Основной маршрут",
+    "title": "SQL для аналитика данных",
     "subtitle": "Junior Data Analyst",
-    "courseTitle": "SQL для аналитика данных",
     "courseLevel": "Начальный уровень",
     "courseAudience": "Для тех, кто начинает изучать аналитику данных и хочет самостоятельно получать и проверять данные.",
     "coursePrerequisites": "Предварительный опыт SQL не требуется.",
@@ -9085,9 +9084,8 @@ export const learningTracks = [
   },
   {
     "id": "postgresql",
-    "title": "Дополнительный маршрут",
+    "title": "PostgreSQL",
     "subtitle": "PostgreSQL глубже",
-    "courseTitle": "PostgreSQL",
     "courseLevel": "Углублённый уровень",
     "courseAudience": "Для тех, кто хочет глубже понимать PostgreSQL и уверенно работать с возможностями конкретной СУБД.",
     "coursePrerequisites": "Рекомендуется базовое понимание SELECT, фильтрации, JOIN и агрегирования.",
