@@ -6,6 +6,7 @@ import { migrateProgress, getTrackProgress, findNextLesson } from '../progress-u
 import { sandboxTaskTopics, sandboxTaskCount } from '../sandbox-tasks.js';
 import { projects, projectTaskCount } from '../projects.js';
 import { BACKUP_FORMAT, BACKUP_VERSION, BACKUP_STORAGE_KEYS, createBackup, parseBackup, restoreBackup } from '../backup-utils.js';
+import { buildQuizOptionOrders, quizOptionKey } from '../quiz-options.js';
 
 const curriculumSource = await readFile(new URL('../curriculum.js', import.meta.url), 'utf8');
 const appSource = await readFile(new URL('../app.js', import.meta.url), 'utf8');
@@ -14,8 +15,26 @@ const htmlSource = await readFile(new URL('../index.html', import.meta.url), 'ut
 const cssSource = await readFile(new URL('../styles.css', import.meta.url), 'utf8');
 const projectsSource = await readFile(new URL('../projects.js', import.meta.url), 'utf8');
 const buildVersion = JSON.parse(await readFile(new URL('../version.json', import.meta.url), 'utf8')).build;
+const quizOptionOrders = buildQuizOptionOrders(modules);
+for (const track of learningTracks) {
+  const questions = modules.filter(module => module.track === track.id).flatMap(module => [
+    ...module.lessons.flatMap(lesson => lesson.quiz || []),
+    ...(module.quiz || [])
+  ]);
+  const uniqueQuestions = [...new Map(questions.map(question => [quizOptionKey(question, track.id), question])).values()];
+  const positionCounts = [0, 0, 0, 0];
+  for (const question of uniqueQuestions) {
+    const order = quizOptionOrders.get(quizOptionKey(question, track.id));
+    assert.ok(order && order.length === question.options.length && new Set(order).size === question.options.length, `Quiz option order must be a permutation for "${question.question}"`);
+    assert.equal(order[question.answer === undefined ? -1 : order.indexOf(question.answer)], question.answer, `Correct answer index must remain stable for "${question.question}"`);
+    positionCounts[order.indexOf(question.answer)] += 1;
+  }
+  assert.ok(Math.max(...positionCounts) - Math.min(...positionCounts) <= 1, `Correct answer positions must be evenly distributed in ${track.id}: ${positionCounts.join(', ')}`);
+}
+assert.ok(appSource.includes('buildQuizOptionOrders(modules)') && appSource.includes('quizOptionKey(question,selected.track)'), 'Lesson and module assessments must use deterministic shuffled options while retaining original answer indexes');
+
 const importedAssetVersions = [...appSource.matchAll(/from\s+['"]\.\/[^'"]+\.js\?v=([^'"]+)['"]/g)].map(match => match[1]);
-assert.equal(importedAssetVersions.length, 6, 'Application must import the curriculum, sandbox, SQL, progress, projects, and backup modules');
+assert.equal(importedAssetVersions.length, 7, 'Application must import the curriculum, sandbox, SQL, progress, projects, backup, and quiz option modules');
 assert.ok(importedAssetVersions.every(version => version === buildVersion), 'Local JavaScript imports must use the current release build to avoid stale cached curriculum and SQL utilities');
 assert.ok(appSource.includes("from './backup-utils.js?v=" + buildVersion + "'"), 'The backup utility must be loaded from the current app build');
 assert.ok(appSource.includes('data-action="export-backup"') && appSource.includes('data-action="import-backup"'), 'The dashboard must expose both backup actions');
