@@ -12,7 +12,7 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: sql-academy-v2-${{ github.event.pull_request.number || github.ref }}
+  group: sql-academy-v3-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 jobs:
   validate:
