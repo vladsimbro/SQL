@@ -277,7 +277,7 @@ try {
   await assertNoHorizontalOverflow(320);
   assert.equal(await readEditor(page.locator('#playground-editor')), draft, 'Navigation must not discard the saved SQL draft');
 
-  await page.locator('#sidebar [data-nav="dashboard"]').click();
+  await page.locator('#sidebar .nav-item[data-nav="dashboard"]').click();
   assert.equal(await page.locator('[data-action="export-backup"]').isVisible(), true, 'The dashboard must expose a progress backup action');
   assert.equal(await page.locator('[data-action="import-backup"]').isVisible(), true, 'The dashboard must expose a restore action');
   const [backupDownload] = await Promise.all([
