@@ -150,8 +150,9 @@ assert.deepEqual(normalize(orderedA), normalize(orderedB), 'Unordered tasks must
 assert.notDeepEqual(normalize(orderedA, true), normalize(orderedB, true), 'Ordering-sensitive normalization must preserve row order');
 assert.equal(resultMatches(normalize(orderedA),normalize(orderedB)),true,'Equivalent unordered results must match despite a different row order');
 assert.equal(resultMatches(normalize(orderedA,true),normalize(orderedB,true),true),false,'Ordering-sensitive results must reject a different row order');
-const reorderedColumns = { rows: [{status:'delivered',id:1},{status:'new',id:2}], fields: [{name:'status'},{name:'id'}] };
-assert.equal(resultMatches(normalize(orderedA),normalize(reorderedColumns)),true,'Equivalent results must match when selected columns are returned in a different order');
+const orderedTwoColumns = normalize({ rows: [{id:1,status:'delivered'},{id:2,status:'new'}], fields: [{name:'id'},{name:'status'}] });
+const reorderedColumns = normalize({ rows: [{status:'delivered',id:1},{status:'new',id:2}], fields: [{name:'status'},{name:'id'}] });
+assert.equal(resultMatches(orderedTwoColumns,reorderedColumns),true,'Equivalent results must match when selected columns are returned in a different order');
 const duplicateRows = normalize({rows:[{id:1},{id:1},{id:2}],fields:[{name:'id'}]});
 const missingDuplicate = normalize({rows:[{id:1},{id:2}],fields:[{name:'id'}]});
 assert.equal(resultMatches(duplicateRows,missingDuplicate),false,'Result comparison must preserve duplicate row multiplicity');
