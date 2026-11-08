@@ -82,6 +82,10 @@ try {
   try {
     await page.locator('#app-content .hero').waitFor({ state: 'visible', timeout: 45_000 });
     await captureUxScreen('01-dashboard-desktop-pglite-error');
+    await page.keyboard.press('Tab');
+    const keyboardFocus = await page.evaluate(() => ({ visible: document.activeElement?.matches(':focus-visible'), outline: getComputedStyle(document.activeElement).outlineStyle }));
+    assert.equal(keyboardFocus.visible, true, 'Keyboard navigation must expose :focus-visible');
+    assert.notEqual(keyboardFocus.outline, 'none', 'Keyboard-focused controls must have a visible outline');
   } catch (error) {
     const diagnostic = await page.evaluate(async () => {
       const response = await fetch('./version.json?browser-diagnostic=' + Date.now(), { cache: 'no-store' }).catch(fetchError => null);
@@ -179,6 +183,24 @@ try {
   await page.locator('#sidebar .nav-item[data-nav="dashboard"]').click();
   await captureUxScreen('14-dashboard-desktop-ready-dark');
   await page.locator('#theme-toggle').click();
+  const lightContrast = await page.evaluate(() => {
+    const root = getComputedStyle(document.documentElement);
+    const rgb = value => {
+      const hex = value.trim();
+      if (hex.startsWith('#')) return [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16));
+      return (hex.match(/\\d+/g) || []).slice(0, 3).map(Number);
+    };
+    const luminance = value => rgb(value).map(channel => channel / 255).map(channel => channel <= .04045 ? channel / 12.92 : ((channel + .055) / 1.055) ** 2.4).reduce((sum, channel, index) => sum + channel * [.2126, .7152, .0722][index], 0);
+    const ratio = (foreground, background) => { const values = [luminance(foreground), luminance(background)].sort((a, b) => b - a); return (values[0] + .05) / (values[1] + .05); };
+    return {
+      mutedOnBackground: ratio(root.getPropertyValue('--muted'), root.getPropertyValue('--bg')),
+      accentOnPanel: ratio(root.getPropertyValue('--accent2'), root.getPropertyValue('--panel')),
+      sidebarLabelOnBackground: ratio(getComputedStyle(document.querySelector('.sidebar-label')).color, root.getPropertyValue('--bg'))
+    };
+  });
+  assert.ok(lightContrast.mutedOnBackground >= 4.5, `Light muted text contrast must be at least 4.5:1: ${JSON.stringify(lightContrast)}`);
+  assert.ok(lightContrast.accentOnPanel >= 4.5, `Light accent text contrast must be at least 4.5:1: ${JSON.stringify(lightContrast)}`);
+  assert.ok(lightContrast.sidebarLabelOnBackground >= 4.5, `Light sidebar label contrast must be at least 4.5:1: ${JSON.stringify(lightContrast)}`);
   await captureUxScreen('15-dashboard-desktop-light');
   await page.locator('#theme-toggle').click();
   await page.locator('#sidebar .nav-item[data-nav="courses"]').click();
@@ -342,14 +364,22 @@ try {
 
   await page.setViewportSize({ width: 320, height: 740 });
   await assertNoHorizontalOverflow(320);
-  await captureUxScreen('12-dashboard-mobile-320');
+  const narrowPracticeColumns = await page.locator('.exercise-list').evaluate(element => getComputedStyle(element).gridTemplateColumns.split(' ').length);
+  assert.equal(narrowPracticeColumns, 1, 'Practice tasks must use one readable column at 320px');
+  await captureUxScreen('12-practice-mobile-320');
   await menuButton.click();
   await page.locator('#sidebar .nav-item[data-nav="dashboard"]').click();
   await page.locator('#app-content .hero').waitFor({ state: 'visible' });
   await assertNoHorizontalOverflow(320);
+  await captureUxScreen('25-dashboard-mobile-320');
   await menuButton.click();
   await page.locator('#sidebar .nav-item[data-nav="playground"]').click();
   await page.locator('#playground-editor').waitFor({ state: 'attached' });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  const reducedMotionStyles = await page.locator('#sidebar .nav-item').first().evaluate(element => ({ transition: getComputedStyle(element).transitionDuration, scroll: getComputedStyle(document.documentElement).scrollBehavior }));
+  assert.equal(reducedMotionStyles.scroll, 'auto', 'Reduced-motion preference must disable smooth document scrolling');
+  assert.ok(parseFloat(reducedMotionStyles.transition) < .001, `Reduced-motion preference must reduce transitions: ${reducedMotionStyles.transition}`);
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
   await assertNoHorizontalOverflow(320);
   await captureUxScreen('13-playground-mobile-320');
   assert.equal(await readEditor(page.locator('#playground-editor')), draft, 'Navigation must not discard the saved SQL draft');
