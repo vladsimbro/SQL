@@ -11,7 +11,7 @@ Last verified: 2026-11-08
 - **Last app/course code HEAD:** d26c32f6dfb6cbc498b8d73997b64235f8588d2d (последующие коммиты меняют только статус и CI workflow).
 - **App build:** 20261108-95.
 - **Latest validation + deploy:** workflow 42508601118 — success for 8cdf766e; validate job 128816556670, deploy job 128816623899, browser-smoke job 128816705064 — all success.
-- **Latest Pages build/deployment:** workflow 42508645838 — success for current main HEAD 1277fcea; build job 128816710761, report-build-status job 128816813095, deploy job 128816813186 — all success.
+- **Last confirmed successful Pages build/deployment before the status-only handoff:** workflow 42508645838 — success for commit 1277fcea; build job 128816710761, report-build-status job 128816813095, deploy job 128816813186 — all success.
 - **Latest live browser smoke:** shell 480 ms; recovery after failed PGlite import 6900 ms; database reset 5864 ms; SQL execution, editor persistence, mobile menu, focus restoration, 390 px and 320 px layouts all passed. Timings are environment-dependent diagnostics, not performance guarantees.
 - **Remaining in Stage 7:** GitHub About is still empty (description=null, homepage=null, topics=[]). All 29 non-main branch refs have since been deleted. The live branches endpoint and `git/matching-refs/heads/` both return only `main`; no further branch cleanup or merge is needed. The current GitHub integration does not expose repository-metadata write operations, so About remains the sole external blocker. Keep PROJECT_STATUS.md as the permanent handoff.
 - **Handoff update:** a status-only change skips the custom validate/deploy/browser-smoke workflow. GitHub Pages may still run its separate managed Jekyll build/deploy; this happened for handoff commit 8a14e19f and succeeded (run 42506417303).
@@ -136,7 +136,8 @@ work/sql-academy-stage3-batch6-2026-11-07b is the only branch proven to have no 
 - Last application/course code HEAD: d26c32f6dfb6cbc498b8d73997b64235f8588d2d (no app/course code changed during cleanup).
 - App build: 20261108-95
 - Latest full validation + deploy workflow: 42508601118 — success for commit 8cdf766e. Validate job 128816556670, deploy job 128816623899 and browser-smoke job 128816705064 all succeeded.
-- Latest separate Pages build/deployment workflow: 42508645838 — success for current main HEAD 1277fcea. Build job 128816710761, report-build-status job 128816813095 and deploy job 128816813186 all succeeded.
+- Last confirmed successful separate Pages build/deployment before the status-only handoff: workflow 42508645838 for commit 1277fcea. Build job 128816710761, report-build-status job 128816813095 and deploy job 128816813186 all succeeded.
+- After status-only commit 256d7c247cfa113b1a54a1b52a885194156840ec, managed Pages workflow 42511764837 was in progress at the last check. Do not claim that run successful until GitHub reports conclusion=success.
 - The browser smoke reran in the latest full validation and passed. Its detailed timings are retained above only as diagnostics from the previous recorded run.
 - No Node.js 20 deprecation warning appeared in the latest browser job logs.
 - Workflow hardening commits: 81121d2c (Action major upgrades + least-privilege deploy permissions), dccb274e (ignore status-only pushes/PRs).
