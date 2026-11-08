@@ -25,6 +25,10 @@ for (const track of learningTracks) {
 }
 assert.ok(appSource.includes('function renderCourses()') && appSource.includes('data-open-course='), 'The app must render and open the standalone course catalog');
 assert.ok(appSource.includes('[data-open-course]'), 'Course catalog actions must be included in delegated click handling');
+assert.ok(appSource.includes('[data-practice-track]') && appSource.includes('state.practiceTrack=track.id'), 'Practice must allow selecting a separate course');
+assert.ok(appSource.includes('moduleById(exercise.m)?.track===state.practiceTrack'), 'Practice exercises must be filtered by the selected course');
+assert.ok(appSource.includes('state.view===\'practice\'?state.practiceTrack'), 'The global progress indicator must follow the selected practice course');
+assert.ok(learningTracks.every(track => exercises.some(exercise => modules.find(module => module.id === exercise.m)?.track === track.id)), 'Every course must have its own linked practice tasks');
 assert.ok(appSource.includes('moduleLessons(m.track).map(mod=>'), 'A lesson sidebar must show only modules from the active course');
 assert.ok(htmlSource.includes('data-nav="courses"'), 'The primary navigation must expose the course catalog');
 assert.ok(cssSource.includes('.course-grid') && cssSource.includes('.course-card'), 'The course catalog must have dedicated responsive styles');
