@@ -7,7 +7,8 @@
 - Репозиторий: https://github.com/vladsimbro/SQL
 - GitHub Pages: https://vladsimbro.github.io/SQL/
 - Основная ветка: main.
-- Текущий HEAD main: 8bd962da7de1110f16573f7c0aeabda98f50ea1a.
+- Текущий HEAD main перед этой status-only актуализацией: 55d861b3132bf2676478702e18492c330668767b.
+- Последний code/test commit: 8bd962da7de1110f16573f7c0aeabda98f50ea1a.
 - Последний полностью успешный end-to-end workflow до accessibility-изменений: 42529611099 на commit 5fd2f24cee76a3c2ea05253a83537527c138fb05; validate/deploy/browser-smoke — success.
 - Последние runtime changes: commit 615d457462e07d7b886818e455ce88b40b2a7b26; validate и deploy — success. Browser-smoke для этого SHA остаётся in_progress без опубликованных шагов/логов на момент обновления.
 - Последний commit 8bd962da7de1110f16573f7c0aeabda98f50ea1a исправляет parser цветов в новых accessibility assertions; workflow 42529995249 ещё pending.
@@ -221,7 +222,8 @@ Workflow .github/workflows/pages.yml выполняет JS syntax checks, npm ru
 
 - Репозиторий: vladsimbro/SQL.
 - Основная и единственная ветка: main.
-- Текущий HEAD main: 8bd962da7de1110f16573f7c0aeabda98f50ea1a.
+- Текущий HEAD main перед этой status-only актуализацией: 55d861b3132bf2676478702e18492c330668767b.
+- Последний code/test commit: 8bd962da7de1110f16573f7c0aeabda98f50ea1a.
 - Открытых PR и Issues нет.
 - Последний полностью успешный end-to-end commit: 5fd2f24cee76a3c2ea05253a83537527c138fb05.
 - Последний runtime commit: 615d457462e07d7b886818e455ce88b40b2a7b26; validate/deploy success, browser-smoke in_progress.
@@ -277,15 +279,15 @@ Workflow .github/workflows/pages.yml выполняет JS syntax checks, npm ru
 
 | Экран / сценарий | Desktop | Mobile | Статус аудита |
 |---|---|---|---|
-| Главная и продолжение обучения | Smoke + source review | Overflow на 320 px | Частично проверено |
-| Каталог SQL / PostgreSQL | Smoke + проверка двух карточек | Не проверено отдельно | Частично проверено |
-| Программа и урок | URL/history + разделение курса | Не проверено отдельно | Частично проверено |
-| Практика SQL / PostgreSQL | Smoke + переключение курса | Overflow на 320 px | Частично проверено |
-| Контрольные работы | Source review | Не проверено | Не завершено |
-| E-commerce / Delivery / Product | Прохождение задач и финального вывода | Не проверено | Частично проверено |
-| Playground / результаты SQL | Реальное выполнение запроса | Overflow на 320 px, черновик сохранён | Частично проверено |
-| Учебная схема / справочник / глоссарий | Source review | Не проверено | Не завершено |
-| Светлая / тёмная тема | Source review | Не проверено отдельно | Не завершено |
+| Главная и продолжение обучения | 1440 px screenshots, dark/light | 390 px и 320 px screenshots + overflow checks | Частично проверено |
+| Каталог SQL / PostgreSQL | 1440 px screenshot, две карточки | 390 px screenshot | Частично проверено |
+| Программа и урок | SQL и PostgreSQL ready-state screenshots, URL/history | SQL lesson 390 px screenshot | Частично проверено |
+| Практика SQL / PostgreSQL | 1440 px screenshot, переключение курса | 390 px screenshot; 320 px screenshot до one-column fix | Частично проверено; новый 320 px assertion ожидает CI |
+| Контрольные работы | 1440 px screenshot | Не проверено | Не завершено |
+| E-commerce / Delivery / Product | Прохождение задач и финального вывода, 1440 px screenshot | Product project 390 px screenshot | Частично проверено |
+| Playground / результаты SQL | 1440 px screenshot, реальное выполнение запроса | 320 px screenshot + overflow | Частично проверено |
+| Учебная схема / справочник / глоссарий | 1440 px screenshots | Не проверено | Не завершено |
+| Светлая / тёмная тема | Dark/light screenshots; новые contrast assertions | Не проверено отдельно | Частично проверено; assertions ожидают CI |
 
 Следующее действие UX/UI: дождаться итогового browser-smoke для build 20261109-107, проверить contrast/focus/reduced-motion/320px assertions и изучить свежие screenshots; затем завершить mobile walkthrough незакрытых экранов и оценить dashboard metric 173.
 
@@ -396,7 +398,8 @@ Workflow .github/workflows/pages.yml выполняет JS syntax checks, npm ru
 Текущая незавершённая задача:
 - Финальная проверка accessibility/mobile изменений в GitHub Actions.
 - Commit 615d457462e07d7b886818e455ce88b40b2a7b26: validate success, deploy success; browser-smoke остаётся in_progress без шагов/логов.
-- Последний commit 8bd962da7de1110f16573f7c0aeabda98f50ea1a исправляет parser shorthand hex в contrast assertion; workflow 42529995249 pending.
+- Последний code/test commit 8bd962da7de1110f16573f7c0aeabda98f50ea1a исправляет parser shorthand hex в contrast assertion; workflow 42529995249 pending.
+- Status-only commit 55d861b3132bf2676478702e18492c330668767b обновил передачу работы; Pages workflow 42530226548 in_progress.
 - Browser-smoke должен подтвердить focus-visible, контраст >=4.5:1, reduced-motion и одноколоночную практику на 320 px.
 
 Следующая конкретная задача:
@@ -406,17 +409,21 @@ Workflow .github/workflows/pages.yml выполняет JS syntax checks, npm ru
 - После полного аудита определить P0/P1/P2; отдельно решить, следует ли заменить общую цифру 173 урока на dashboard более ясным отображением двух самостоятельных курсов.
 - Не переписывать CSS целиком и не менять стабильные IDs, URL, прогресс, черновики, backup/restore или поведение PGlite/CodeMirror.
 
-Последний завершённый commit SHA:
+Последний проверенный code/test commit SHA:
 - 8bd962da7de1110f16573f7c0aeabda98f50ea1a.
+Последний проверенный main HEAD до этой status-only актуализации:
+- 55d861b3132bf2676478702e18492c330668767b.
 
 Последний результат тестирования:
 - Полностью успешный workflow: 42529611099 на 5fd2f24, validate/deploy/browser-smoke success.
 - Для runtime commit 615d457: validate success, deploy success; browser-smoke in_progress.
-- Для последнего commit 8bd962d: workflow 42529995249 pending; Pages workflow 42529994915 success.
+- Для code/test commit 8bd962d: workflow 42529995249 pending; Pages workflow 42529994915 success.
+- Для status-only HEAD 55d861b: Pages workflow 42530226548 in_progress.
 - Локальные npm/Playwright команды в этой сессии не запускались.
 
 Состояние GitHub Pages:
 - URL: https://vladsimbro.github.io/SQL/
 - Последняя подтверждённая публикация: commit 8bd962da7de1110f16573f7c0aeabda98f50ea1a; Pages workflow 42529994915 success.
+- Новая status-only публикация для commit 55d861b: Pages workflow 42530226548 in_progress на момент обновления.
 - Runtime build: 20261109-107.
 - Custom validate/deploy для runtime commit 615d457 завершились success; browser-smoke ещё не подтверждён.
