@@ -279,6 +279,9 @@ try {
 
   await page.setViewportSize({ width: 1440, height: 960 });
   await page.locator('#sidebar .nav-item[data-nav="dashboard"]').click();
+  await page.evaluate(() => localStorage.setItem('sql-academy-progress-v1', JSON.stringify({
+    lessons: ['foundations:0'], exercises: [], quizAnswers: {}, exerciseQuizAnswers: {}, assessmentResults: {}
+  })));
   assert.equal(await page.locator('[data-action="export-backup"]').isVisible(), true, 'The dashboard must expose a progress backup action');
   assert.equal(await page.locator('[data-action="import-backup"]').isVisible(), true, 'The dashboard must expose a restore action');
   const [backupDownload] = await Promise.all([
@@ -293,7 +296,8 @@ try {
   assert.equal(backup.format, 'sql-academy-backup');
   assert.equal(backup.version, 1);
   assert.ok(backup.storage['sql-academy-project-notes-v1']?.includes('ecommerce'), 'The backup must include project notes');
-  assert.ok(backup.storage['sql-academy-progress-v1'], 'The backup must include course progress');
+  const exportedProgress = JSON.parse(backup.storage['sql-academy-progress-v1'] || 'null');
+  assert.ok(exportedProgress && exportedProgress.lessons?.length === 1, 'The backup must include an existing course progress record');
   const backupKeys = Object.keys(backup.storage);
   await page.evaluate(keys => keys.forEach(key => localStorage.removeItem(key)), backupKeys);
   page.once('dialog', dialog => dialog.accept());
@@ -306,8 +310,13 @@ try {
   await restoredNavigation;
   await page.locator('#app-content .hero').waitFor({ state: 'visible', timeout: 45_000 });
   const restoredBackup = await page.evaluate(keys => Object.fromEntries(keys.map(key => [key, localStorage.getItem(key)])), backupKeys);
-  const changedValues = Object.keys(backup.storage).filter(key => backup.storage[key] !== null && restoredBackup[key] !== backup.storage[key]);
+  const changedValues = Object.keys(backup.storage).filter(key =>
+    key !== 'sql-academy-progress-v1' && backup.storage[key] !== null && restoredBackup[key] !== backup.storage[key]
+  );
   assert.deepEqual(changedValues, [], 'Import must restore each non-empty learning-data section');
+  const restoredProgress = JSON.parse(restoredBackup['sql-academy-progress-v1'] || 'null');
+  assert.equal(restoredProgress?.lessons?.length, 1, 'Import must restore the saved lesson completion');
+  assert.notEqual(restoredProgress.lessons[0], 'foundations:0', 'Legacy lesson ids must migrate to stable lesson ids during restore');
 
   assert.deepEqual(pageErrors, [], `Unexpected uncaught browser errors: ${pageErrors.join('; ')}`);
   console.log('SQL Academy live browser smoke passed:', JSON.stringify({
