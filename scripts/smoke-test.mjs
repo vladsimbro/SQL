@@ -4,15 +4,17 @@ import { PGlite } from '@electric-sql/pglite';
 import { modules, learningTracks, exercises, schema, seedSQL, glossary, reference } from '../curriculum.js';
 import { migrateProgress, getTrackProgress, findNextLesson } from '../progress-utils.js';
 import { sandboxTaskTopics, sandboxTaskCount } from '../sandbox-tasks.js';
+import { projects, projectTaskCount } from '../projects.js';
 
 const curriculumSource = await readFile(new URL('../curriculum.js', import.meta.url), 'utf8');
 const appSource = await readFile(new URL('../app.js', import.meta.url), 'utf8');
 const sqlUtilsSource = await readFile(new URL('../sql-utils.js', import.meta.url), 'utf8');
 const htmlSource = await readFile(new URL('../index.html', import.meta.url), 'utf8');
 const cssSource = await readFile(new URL('../styles.css', import.meta.url), 'utf8');
+const projectsSource = await readFile(new URL('../projects.js', import.meta.url), 'utf8');
 const buildVersion = JSON.parse(await readFile(new URL('../version.json', import.meta.url), 'utf8')).build;
 const importedAssetVersions = [...appSource.matchAll(/from\s+['"]\.\/[^'"]+\.js\?v=([^'"]+)['"]/g)].map(match => match[1]);
-assert.equal(importedAssetVersions.length, 4, 'Application must import all four local modules with cache versions');
+assert.equal(importedAssetVersions.length, 5, 'Application must import the curriculum, sandbox, SQL, progress, and projects modules');
 assert.ok(importedAssetVersions.every(version => version === buildVersion), 'Local JavaScript imports must use the current release build to avoid stale cached curriculum and SQL utilities');
 
 
@@ -32,6 +34,20 @@ assert.ok(learningTracks.every(track => exercises.some(exercise => modules.find(
 assert.ok(appSource.includes('moduleLessons(m.track).map(mod=>'), 'A lesson sidebar must show only modules from the active course');
 assert.ok(htmlSource.includes('data-nav="courses"'), 'The primary navigation must expose the course catalog');
 assert.ok(cssSource.includes('.course-grid') && cssSource.includes('.course-card'), 'The course catalog must have dedicated responsive styles');
+assert.ok(htmlSource.includes('data-nav="projects"') && appSource.includes('function renderProjects()') && appSource.includes('function renderProject()'), 'Standalone business projects must have a dedicated navigation section and workspace');
+assert.ok(cssSource.includes('.project-grid') && cssSource.includes('.project-workspace'), 'The projects area must have dedicated responsive layout styles');
+assert.equal(projects.length, 3, 'The platform must show the three defined practical project tracks');
+assert.equal(projectTaskCount, 9, 'The project catalog must contain nine self-contained tasks');
+assert.equal(projects.reduce((sum,project)=>sum+project.tasks.length,0),projectTaskCount);
+for (const project of projects) {
+  assert.ok(project.context && project.objective && project.dataset && project.audience, `Project ${project.id} must explain context, goal, audience, and data`);
+  for (const task of project.tasks) {
+    assert.ok(task.id && task.title && task.brief && task.conditions && task.expected && task.solution, `Project task ${task.id} must include a brief, conditions, expected output, and a hidden reference solution`);
+    assert.equal(sqlLexer.readOnlyQueryKeyword(task.solution),'SELECT', `Project task ${task.id} must be checked by a read-only SELECT/CTE`);
+  }
+}
+assert.ok(appSource.includes('sql-academy-project-progress-v1') && appSource.includes('sql-academy-project-drafts-v1'), 'Project completion and drafts must persist separately from course progress');
+assert.ok(appSource.includes('resultMatches(normalizeResult(actual),normalizeResult(expected)'), 'Project answers must be checked by executing and comparing query results');
 assert.deepEqual(getTrackProgress(modules, new Set(), 'core'), { completed: 0, total: 112, percent: 0 }, 'An empty core route must start at 0% of its own 112 lessons');
 assert.deepEqual(getTrackProgress(modules, new Set(optionalLessonIds), 'core'), { completed: 0, total: 112, percent: 0 }, 'Completing optional PostgreSQL lessons must not change core-route progress');
 assert.deepEqual(getTrackProgress(modules, new Set(coreLessonIds), 'core'), { completed: 112, total: 112, percent: 100 }, 'Completing the core route must reach 100% independently of PostgreSQL');
@@ -541,8 +557,40 @@ try {
   assert.equal(resultMatches(normalize(itemRevenue),normalize(distinctItemRevenue)),false,'SUM(DISTINCT price) must not be accepted as equivalent to summing every order item');
   const tables = await db.query("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_type = 'BASE TABLE'");
   assert.equal(tables.rows.length, schema.length, 'Seed database table count must match the schema catalog');
-  assert.equal(schema.filter(table => table.dataset !== 'analytics').length, 9, 'The compact beginner dataset must remain a separate nine-table schema');
+  assert.equal(schema.filter(table => !['analytics','product'].includes(table.dataset)).length, 9, 'The compact beginner dataset must remain a separate nine-table schema');
   assert.equal(schema.filter(table => table.dataset === 'analytics').length, 4, 'The historical analytics dataset must contain four explicitly grouped tables');
+  assert.equal(schema.filter(table => table.dataset === 'product').length, 1, 'Product Analytics must use a separate event table');
+  const productEventStats = await db.query(`SELECT COUNT(*)::int AS events,
+      COUNT(DISTINCT customer_id)::int AS customers,
+      COUNT(DISTINCT session_id)::int AS sessions,
+      COUNT(DISTINCT product_id)::int AS products
+    FROM product_events`);
+  assert.deepEqual(productEventStats.rows[0], { events: productEventStats.rows[0].events, customers: 48, sessions: 576, products: 7 }, 'Product analytics seed must include 48 customers, 576 sessions, and seven products');
+  const productStages = await db.query(`SELECT
+      COUNT(DISTINCT session_id) FILTER (WHERE event_type='page_view')::int AS page_view,
+      COUNT(DISTINCT session_id) FILTER (WHERE event_type='product_view')::int AS product_view,
+      COUNT(DISTINCT session_id) FILTER (WHERE event_type='add_to_cart')::int AS add_to_cart,
+      COUNT(DISTINCT session_id) FILTER (WHERE event_type='checkout_started')::int AS checkout_started,
+      COUNT(DISTINCT session_id) FILTER (WHERE event_type='purchase')::int AS purchase
+    FROM product_events`);
+  const funnel = productStages.rows[0];
+  assert.ok(funnel.page_view >= funnel.product_view && funnel.product_view >= funnel.add_to_cart && funnel.add_to_cart >= funnel.checkout_started && funnel.checkout_started >= funnel.purchase && funnel.purchase > 0, 'Product events must preserve a realistic non-increasing session funnel');
+  const sessionSequence = await db.query(`SELECT COUNT(*)::int AS invalid_sessions
+    FROM (
+      SELECT session_id,
+        MIN(event_at) FILTER (WHERE event_type='page_view') AS page_view_at,
+        MIN(event_at) FILTER (WHERE event_type='product_view') AS product_view_at,
+        MIN(event_at) FILTER (WHERE event_type='add_to_cart') AS add_to_cart_at,
+        MIN(event_at) FILTER (WHERE event_type='checkout_started') AS checkout_at,
+        MIN(event_at) FILTER (WHERE event_type='purchase') AS purchase_at
+      FROM product_events GROUP BY session_id
+    ) stages
+    WHERE page_view_at IS NULL
+       OR (product_view_at IS NOT NULL AND product_view_at < page_view_at)
+       OR (add_to_cart_at IS NOT NULL AND (product_view_at IS NULL OR add_to_cart_at < product_view_at))
+       OR (checkout_at IS NOT NULL AND (add_to_cart_at IS NULL OR checkout_at < add_to_cart_at))
+       OR (purchase_at IS NOT NULL AND (checkout_at IS NULL OR purchase_at < checkout_at))`);
+  assert.equal(sessionSequence.rows[0].invalid_sessions,0,'Every product session must preserve the intended event order');
   const starterOrderCount = await db.query("SELECT COUNT(*)::int AS count FROM orders");
   assert.equal(starterOrderCount.rows[0].count, 12, 'The beginner orders fixture must remain unchanged when historical data is added');
   const analyticsCustomers = await db.query("SELECT COUNT(*)::int AS customers FROM analytics_customers");
@@ -599,6 +647,14 @@ try {
   assert.equal(delivery.avg_ship_to_delivery_hours, '97.26', 'Average ship-to-delivery time must match the deterministic historical fixture');
   assert.equal(delivery.median_total_hours, '144.00', 'Median total delivery time must match the deterministic historical fixture');
   assert.equal(delivery.p90_total_hours, '192.00', 'P90 total delivery time must match the deterministic historical fixture');
+
+  for (const project of projects) {
+    for (const task of project.tasks) {
+      const result = await db.query(task.solution);
+      assert.ok(result && Array.isArray(result.rows) && Array.isArray(result.fields), `Project task ${task.id} must execute and return a result set`);
+      assert.ok(result.fields.length > 0, `Project task ${task.id} must return at least one output column`);
+    }
+  }
 
   const employeeSchema = await db.query("SELECT column_name FROM information_schema.columns WHERE table_name = 'orders' ORDER BY ordinal_position");
   assert.ok(employeeSchema.rows.some(row => row.column_name === 'employee_id'), 'The generic public dataset must use employee_id');
