@@ -107,9 +107,80 @@ const setMobileMenuOpen = (open, { restoreFocus = false } = {}) => {
   if(expanded)sidebar.querySelector('[data-nav]')?.focus({preventScroll:true});
   else if(restoreFocus)button.focus({preventScroll:true});
 };
+const routeUrl = () => {
+  const params=new URLSearchParams();
+  params.set('view',state.view);
+  if(state.view==='roadmap')params.set('track',state.roadmapTrack);
+  if(state.view==='study'){
+    params.set('module',state.moduleId);
+    const lesson=moduleById(state.moduleId)?.lessons?.[state.lessonIndex];
+    if(lesson?.id)params.set('lesson',lesson.id);
+  }
+  if(state.view==='practice'){
+    params.set('track',state.practiceTrack);
+    if(state.exerciseId)params.set('exercise',state.exerciseId);
+  }
+  if(state.view==='assessment'){
+    params.set('track',state.assessmentTrack);
+    if(state.assessmentModuleId)params.set('module',state.assessmentModuleId);
+  }
+  if(state.view==='project'){
+    params.set('project',state.projectId);
+    if(state.projectTaskId)params.set('task',state.projectTaskId);
+  }
+  return location.pathname+location.search+'#'+params.toString();
+};
+const applyRoute = () => {
+  const params=new URLSearchParams(location.hash.slice(1));
+  if(!params.has('view'))return false;
+  const view=params.get('view');
+  const allowed=['dashboard','courses','roadmap','study','practice','projects','project','assessment','playground','schema','reference','glossary'];
+  if(!allowed.includes(view)){state.view='dashboard';return false;}
+  state.view=view;
+  if(view==='roadmap'){
+    const track=learningTracks.find(item=>item.id===params.get('track'));
+    if(track)state.roadmapTrack=track.id;
+  }
+  if(view==='study'){
+    const module=moduleById(params.get('module'));
+    if(!module){state.view='courses';return false;}
+    state.moduleId=module.id;
+    const lessonId=params.get('lesson');
+    const lessonIndex=lessonId?module.lessons.findIndex(item=>item.id===lessonId):0;
+    if(lessonIndex<0){state.view='roadmap';state.roadmapTrack=module.track||'core';return false;}
+    state.lessonIndex=lessonIndex;
+    state.roadmapTrack=module.track||'core';
+  }
+  if(view==='practice'){
+    const track=learningTracks.find(item=>item.id===params.get('track'));
+    if(track)state.practiceTrack=track.id;
+    const exercise=exercises.find(item=>item.id===params.get('exercise'));
+    if(exercise){state.exerciseId=exercise.id;state.practiceTrack=moduleById(exercise.m)?.track||state.practiceTrack;}
+  }
+  if(view==='assessment'){
+    const track=learningTracks.find(item=>item.id===params.get('track'));
+    if(track)state.assessmentTrack=track.id;
+    const module=moduleById(params.get('module'));
+    state.assessmentModuleId=module?.track===state.assessmentTrack?module.id:null;
+  }
+  if(view==='project'){
+    const project=projects.find(item=>item.id===params.get('project'));
+    if(!project){state.view='projects';return false;}
+    state.projectId=project.id;
+    state.projectTaskId=project.tasks.some(item=>item.id===params.get('task'))?params.get('task'):project.tasks[0].id;
+  }
+  return true;
+};
+const syncRoute = (replace=true) => {
+  const url=routeUrl();
+  if(location.pathname+location.search+location.hash===url)return;
+  history[replace?'replaceState':'pushState']({sqlAcademy:true},'',url);
+};
 const go = view => {
   state.navigationScrollReset=true;
-  state.view=view; render();
+  state.view=view;
+  syncRoute(false);
+  render();
   if(innerWidth<760)setMobileMenuOpen(false,{restoreFocus:true});
   window.scrollTo({top:0,behavior:'smooth'});
 };
@@ -118,6 +189,7 @@ const modulePct = m => Math.round(progressForModule(m)/m.lessons.length*100);
 const getModuleForExercise = ex => moduleById(ex.m);
 
 function render() {
+  syncRoute(true);
   const host=$('#app-content'),preserveScroll=!state.navigationScrollReset,windowY=preserveScroll?window.scrollY:0;
   const sidebarScroll=preserveScroll?($('.lesson-sidebar')?.scrollTop||0):0,exerciseScroll=preserveScroll?($('.exercise-list')?.scrollTop||0):0;
   for(const cm of state.editors.values()){try{cm.toTextArea();}catch{}}
@@ -1081,6 +1153,14 @@ function ensureSqlTooltip() {
 ensureSqlTooltip();
 loadProgress();
 loadProjectState();
+applyRoute();
+window.addEventListener('popstate',()=>{
+  applyRoute();
+  state.navigationScrollReset=true;
+  render();
+  if(innerWidth<760)setMobileMenuOpen(false);
+  window.scrollTo({top:0,behavior:'instant'});
+});
 document.documentElement.classList.toggle('light',state.theme==='light');
 $('#theme-toggle').addEventListener('click',()=>{state.theme=state.theme==='dark'?'light':'dark';document.documentElement.classList.toggle('light',state.theme==='light');localStorage.setItem('sql-academy-theme',state.theme);const meta=$('meta[name="theme-color"]');if(meta)meta.content=state.theme==='light'?'#f3f5fa':'#0a0d14';});
 const themeMeta=$('meta[name="theme-color"]');if(themeMeta)themeMeta.content=state.theme==='light'?'#f3f5fa':'#0a0d14';
