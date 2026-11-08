@@ -468,7 +468,7 @@ try {
   };
   const assertImportError = async (file, message, label) => {
     const byteLength = file.buffer?.length || 0;
-    const bytes = byteLength <= 1024 ? file.buffer?.toString('base64') || '' : '';
+    const bytes = byteLength <= 5 * 1024 * 1024 ? file.buffer?.toString('base64') || '' : '';
     await page.evaluate(({ name, mimeType, bytes, byteLength }) => {
       const input = document.querySelector('#backup-import-file');
       const payload = bytes
