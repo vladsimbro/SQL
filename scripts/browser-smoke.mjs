@@ -334,6 +334,54 @@ try {
   assert.equal(restoredProgress?.lessons?.length, 1, 'Import must restore the saved lesson completion');
   assert.notEqual(restoredProgress.lessons[0], 'foundations:0', 'Legacy lesson ids must migrate to stable lesson ids during restore');
 
+  // Invalid and declined imports must never overwrite the user's current browser data.
+  const protectedBackupState = await page.evaluate(keys => Object.fromEntries(keys.map(key => [key, localStorage.getItem(key)])), backupKeys);
+  const protectedUrl = page.url();
+  const assertBackupStateUnchanged = async label => {
+    const current = await page.evaluate(keys => Object.fromEntries(keys.map(key => [key, localStorage.getItem(key)])), backupKeys);
+    assert.deepEqual(current, protectedBackupState, label + ' must leave every backup storage key unchanged');
+    assert.equal(page.url(), protectedUrl, label + ' must not navigate or reload the application');
+  };
+  const assertImportError = async (file, message, label) => {
+    await page.locator('#backup-import-file').setInputFiles(file);
+    await page.locator('.toast').filter({ hasText: message }).waitFor({ state: 'visible', timeout: 5_000 });
+    await assertBackupStateUnchanged(label);
+  };
+
+  await assertImportError({
+    name: 'broken-backup.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from('{ this is not valid JSON')
+  }, 'Файл не содержит корректный JSON', 'An invalid JSON import');
+
+  const unsupportedBackup = { ...backup, version: backup.version + 1 };
+  await assertImportError({
+    name: 'unsupported-backup.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(unsupportedBackup))
+  }, 'Версия резервной копии не поддерживается', 'An unsupported backup version');
+
+  await assertImportError({
+    name: 'oversized-backup.json',
+    mimeType: 'application/json',
+    buffer: Buffer.alloc(5 * 1024 * 1024 + 1, 0x20)
+  }, 'Размер файла превышает 5 МБ', 'An oversized backup file');
+
+  const cancelDialogPromise = page.waitForEvent('dialog');
+  await page.locator('#backup-import-file').setInputFiles({
+    name: 'declined-backup.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(backupText)
+  });
+  const cancelDialog = await cancelDialogPromise;
+  assert.equal(cancelDialog.type(), 'confirm', 'A valid backup must require explicit confirmation');
+  await cancelDialog.dismiss();
+  await page.waitForFunction(() => {
+    const input = document.querySelector('#backup-import-file');
+    return input && input.value === '';
+  });
+  await assertBackupStateUnchanged('A declined restore confirmation');
+
   assert.deepEqual(pageErrors, [], `Unexpected uncaught browser errors: ${pageErrors.join('; ')}`);
   console.log('SQL Academy live browser smoke passed:', JSON.stringify({
     url: baseURL,
@@ -348,7 +396,7 @@ try {
       'SQL editor persistence while offline and after database reset',
       'real PostgreSQL query execution',
       'mobile menu state, Escape and focus restoration',
-      '320px layout overflow on dashboard, practice and playground'
+      '320px layout overflow on dashboard, practice and playground',\n      'backup import rejects malformed JSON, unsupported versions, and files larger than 5 MB without changing local data',\n      'declining backup restore confirmation preserves existing local data'
     ]
   }));
 } catch (error) {
