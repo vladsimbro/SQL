@@ -367,13 +367,14 @@ try {
     buffer: Buffer.alloc(5 * 1024 * 1024 + 1, 0x20)
   }, 'Размер файла превышает 5 МБ', 'An oversized backup file');
 
-  const cancelDialogPromise = page.waitForEvent('dialog');
-  await page.locator('#backup-import-file').setInputFiles({
-    name: 'declined-backup.json',
-    mimeType: 'application/json',
-    buffer: Buffer.from(backupText)
-  });
-  const cancelDialog = await cancelDialogPromise;
+  const [cancelDialog] = await Promise.all([
+    page.waitForEvent('dialog'),
+    page.locator('#backup-import-file').setInputFiles({
+      name: 'declined-backup.json',
+      mimeType: 'application/json',
+      buffer: Buffer.from(backupText)
+    })
+  ]);
   assert.equal(cancelDialog.type(), 'confirm', 'A valid backup must require explicit confirmation');
   await cancelDialog.dismiss();
   await page.waitForFunction(() => {
