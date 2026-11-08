@@ -5,14 +5,17 @@ Last verified: 2026-11-08
 ## CURRENT
 
 - **Stage:** 7 — Полная проверка, документация и выпуск.
-- **Main task:** завершить метаданные GitHub About и безопасную очистку архивных веток. README актуализирован; Stage 6 закрыт автоматизированным live browser E2E на опубликованном GitHub Pages.
-- **Last completed:** исправлен retry динамического импорта PGlite после сетевой ошибки; исправлена синтаксическая ошибка шаблона в renderPractice(), блокировавшая запуск app.js; в CI добавлен node --check; добавлен Playwright Chromium smoke test для опубликованного сайта; README обновлён (42 walkthroughs и отдельные контрольные работы).
-- **Code HEAD verified:** `d26c32f6dfb6cbc498b8d73997b64235f8588d2d`.
-- **App build:** `20261108-95`.
-- **Validation + deploy:** workflow `42491906414` — success; validate job `128765900804`, deploy job `128765953956`, browser-smoke job `128766032038`.
-- **Pages build/deployment workflow:** `42491906418` — success.
-- **Live browser timings:** first application shell `1077 ms`; retry after injected PGlite network failure `5346 ms`; database reset `4647 ms`.
-- **Remaining in Stage 7:** GitHub About (description/homepage/topics) is still empty; available GitHub connector actions expose repository metadata as read-only and do not provide update-repository or delete-ref operations. Branch audit found one fully contained branch (`work/sql-academy-stage3-batch6-2026-11-07b`, `ahead_by=0`, `behind_by=88`) and 28 other diverged branches with commits ahead of main. No branches were deleted without delete-ref capability and content proof.
+- **Main task:** закрыть оставшиеся операции сопровождения репозитория: GitHub About (описание, homepage, topics) и осторожную очистку веток. Учебная программа, практика, интерфейс, README и опубликованный сайт уже прошли проверки; не начинать этапы 0–6 заново.
+- **Last completed:** обновлены GitHub Actions до актуальных major-версий с Node.js 24 runtime; права Pages deployment сужены до deploy job; workflow пропускает запуск при изменении только PROJECT_STATUS.md. Новый validate/deploy/browser-smoke и отдельный Pages deployment завершились успешно.
+- **Verified main code/workflow HEAD (before this handoff update):** dccb274eba9d450543ea2230fd54f248bbe7c432.
+- **Last app/course code HEAD:** d26c32f6dfb6cbc498b8d73997b64235f8588d2d (последующие коммиты меняют только статус и CI workflow).
+- **App build:** 20261108-95.
+- **Validation + deploy:** workflow 42506177510 — success; validate job 128809193266, deploy job 128809269851, browser-smoke job 128809339128.
+- **Pages build/deployment workflow:** 42506177411 — success; build job 128809195915, deploy job 128809276704.
+- **Latest live browser smoke:** shell 480 ms; recovery after failed PGlite import 6900 ms; database reset 5864 ms; SQL execution, editor persistence, mobile menu, focus restoration, 390 px and 320 px layouts all passed. Timings are environment-dependent diagnostics, not performance guarantees.
+- **Remaining in Stage 7:** GitHub About is still empty; current GitHub integration has no repository-metadata write or branch delete-ref operation. Branch audit: one branch is strictly contained in main; 28 diverged branches contain unique commit objects and require patch/tree-content proof before deletion. Do not delete diverged branches merely because their work may have been cherry-picked.
+- **Handoff update:** this file is committed separately; workflow path filter excludes a commit changing only PROJECT_STATUS.md, so it will not redeploy an unchanged app.
+
 ## STAGES
 
 | Stage | Status | Evidence / remaining |
@@ -23,8 +26,46 @@ Last verified: 2026-11-08
 | 3. Качество и содержание уроков | DONE | Все 173 урока имеют обязательные материалы; 42 уникальных пошаговых сценария, включая NULL и fan-out. Исправлены SQL-подсказки для aliased UPDATE и EXPLAIN ANALYZE. CI проверяет 114 исполняемых read-only примеров и 81 таблицу ожидаемых результатов. |
 | 4. Практика, валидатор и контроль знаний | DONE | 102 обычных задания, 350 случайных задач в 14 темах, 100 модульных вопросов. Comparator сохраняет типы значений, набор столбцов, кратность строк и заданный условием порядок; допускает перестановку столбцов и строк, когда это несущественно. Execution-based PGlite-проверки покрывают SELECT/CTE, JOIN/pre-aggregation, correlated subquery/LEFT JOIN, IN/EXISTS, NOT IN с NULL, EXCEPT/INTERSECT, UNION/UNION ALL, FILTER/CASE, GROUPING SETS/UNION ALL, оконные CTE, ROWS/RANGE и другие зафиксированные эквивалентности. Отдельно проверяются отрицательные случаи, где запросы неэквивалентны. 95 random tasks и 12 обычных упражнений явно order-sensitive. 100 вопросов контрольных работ сбалансированы 25/25/25/25. |
 | 5. Учебные данные и аналитические сценарии | DONE | Добавлены 4 отдельные аналитические таблицы: `analytics_customers`, `analytics_orders`, `analytics_order_items`, `analytics_order_events`; 48 клиентов, 1 158 заказов за 36 месяцев (2023–2025), повторные покупки, статусы, отмены, полные/частичные возвраты и журнал событий. Стартовый набор из 9 таблиц и 12 исходных заказов сохранён отдельно. Связь исторического `product_id` больше не блокирует удаление товара из beginner-каталога. Четыре аналитических урока и существующие упражнения e83/e86/e87/e96 используют исторический набор: когорты, retention, чистая выручка MoM и время этапов доставки. События имеют разные детерминированные интервалы и строгий порядок created → shipped → delivered. PGlite smoke-test подтверждает cohort/retention, выручку, item totals, возвраты, 874 завершённые доставки, средние и перцентили. Workflow `42488705350` — validation и deploy success; Pages workflow `42488705054` — success. |
-| 6. Интерфейс, мобильная версия и производительность | DONE | Помимо ранней отрисовки, блокировок до `engineReady`, reset/retry, сохранения черновика и доступной мобильной навигации добавлены синтаксическая проверка JS и live Playwright Chromium smoke test опубликованного Pages. Workflow `42491906414`: validate/deploy/browser-smoke — success; Pages workflow `42491906418` — success. Проверено: первый экран 1 077 мс; искусственно сорванный импорт PGlite и Retry 5 346 мс; reset базы 4 647 мс; реальное выполнение SQL; сохранение черновика; мобильное меню, Escape и возврат фокуса; отсутствие горизонтального переполнения на ширинах 390 и 320 px на Dashboard, Practice и Playground. В ходе проверки исправлены реальная синтаксическая ошибка `renderPractice()` и retry-загрузка PGlite через новый URL после ошибки импорта. |
-| 7. Полная проверка, документация и выпуск | IN PROGRESS | README обновлён: 42 пошаговых сценария и 100 модульных вопросов в отдельном разделе «Контрольные работы»; документ содержит описание live browser smoke и команды локального запуска. Сверены все 29 веток-кандидатов с main через GitHub compare. Одна ветка строго позади main (`work/sql-academy-stage3-batch6-2026-11-07b`, ahead_by=0); остальные 28 имеют от 1 до 51 коммита ahead и diverged. Удаление пока не выполнялось: в доступном GitHub connector нет операции delete-ref, а остальные ветки требуют отдельного доказательства, что их уникальная работа уже включена в main. GitHub About description/homepage/topics остаются пустыми; connector предоставляет чтение, но не обновление метаданных репозитория. |
+| 6. Интерфейс, мобильная версия и производительность | DONE | Помимо ранней отрисовки, блокировок до engineReady, reset/retry, сохранения черновика и доступной мобильной навигации добавлены синтаксическая проверка JS и live Playwright Chromium smoke test опубликованного Pages. Последние проверки: workflow 42506177510 и Pages workflow 42506177411 — success. Browser smoke подтвердил запуск shell до готовности БД, retry импорта PGlite, сохранение SQL-черновика, реальное выполнение PostgreSQL-запроса, мобильное меню/Escape/возврат фокуса и отсутствие overflow на 390 и 320 px. В ходе первоначальной проверки исправлены синтаксическая ошибка renderPractice() и retry-загрузка PGlite через новый URL. |
+| 7. Полная проверка, документация и выпуск | IN PROGRESS | README и live browser E2E завершены. CI hardening: Actions обновлены (checkout@v7, setup-node@v7, configure-pages@v6, upload-pages-artifact@v5, deploy-pages@v5, upload-artifact@v7); runtime warnings Node.js 20 исчезли; права Pages deployment ограничены отдельным job; status-only изменения исключены из CI/deploy. Коммит dccb274e прошёл validate/deploy/browser-smoke и отдельный Pages workflow. GitHub About остаётся пустым. Из 29 не-main веток 1 строго contained (ahead=0), 28 diverged (ahead=1–51); не удалять без проверки уникальных патчей. Доступный GitHub integration не поддерживает update repository metadata и delete-ref. |
+
+## BRANCH AUDIT
+
+Сверка выполнена через GitHub compare для всех 29 веток-кандидатов относительно main на baseline f5f45adec53433070b08839e171d30a9f8d64e17. После этого main получил два CI-only коммита (81121d2c, dccb274e); значения ahead не изменились, behind для всех кандидатов увеличился на 2. Всего веток: 30 включая main. Открытых PR: 0.
+
+| Branch | Commits ahead of main at baseline |
+|---|---:|
+| audit/phase-1-review-2026-11-07 | 1 |
+| feature/lesson-walkthroughs-complete | 4 |
+| feature/postgres-optimization-stage-3 | 51 |
+| fix/relevant-sql-explanations | 7 |
+| work/sql-academy-lessons-stage3-rebased | 7 |
+| work/sql-academy-lessons-stage3 | 15 |
+| work/sql-academy-rebuild | 13 |
+| work/sql-academy-stage3-batch2-2026-11-07 | 11 |
+| work/sql-academy-stage3-batch3-2026-11-07 | 5 |
+| work/sql-academy-stage3-batch4-2026-11-07 | 5 |
+| work/sql-academy-stage3-batch5-2026-11-07 | 15 |
+| work/sql-academy-stage3-batch6-2026-11-07b | 0 |
+| work/sql-academy-stage3-batch6-2026-11-07 | 8 |
+| work/sql-academy-stage3-batch7-2026-11-07 | 11 |
+| work/sql-academy-stage3-batch8-2026-11-07 | 8 |
+| work/sql-academy-stage3-batch9-2026-11-07 | 15 |
+| work/sql-academy-stage3-batch10-2026-11-07 | 10 |
+| work/sql-academy-stage3-batch11-2026-11-07 | 4 |
+| work/sql-academy-stage3-batch12-2026-11-07 | 4 |
+| work/sql-academy-stage3-batch13-2026-11-07 | 4 |
+| work/sql-academy-stage3-batch14-2026-11-07 | 4 |
+| work/sql-academy-stage3-batch15-2026-11-07 | 4 |
+| work/sql-academy-stage3-batch16-2026-11-07 | 2 |
+| work/sql-academy-stage3-batch17-2026-11-07 | 8 |
+| work/sql-academy-stage3-batch18-2026-11-07 | 11 |
+| work/sql-academy-stage3-batch19-2026-11-07 | 4 |
+| work/sql-academy-stage3-batch20-2026-11-07 | 4 |
+| work/sql-academy-stage3-batch21-2026-11-07 | 4 |
+| work/sql-academy-stage3-batch22-2026-11-07 | 3 |
+
+work/sql-academy-stage3-batch6-2026-11-07b is the only branch proven to have no commit ahead of main. It can be deleted safely from Git history, but no branch deletion operation is exposed in this integration. For the other 28 branches, ahead commits may be exact patch equivalents already cherry-picked to main; compare commit counts alone cannot prove redundancy. Inspect their patches/trees before cleanup.
 
 ## DONE — проверяемые ограничения и результаты
 
@@ -42,28 +83,40 @@ Last verified: 2026-11-08
 
 ## BACKLOG
 
-- GitHub About: description, homepage и topics пока пусты. Заполнить, когда будет доступна операция изменения метаданных репозитория.
-- Удаление подтверждённо слитой ветки `work/sql-academy-stage3-batch6-2026-11-07b` ожидает доступной delete-ref операции.
-- Для 28 diverged веток разобрать unique patches/trees и подтвердить включение их полезных изменений в main до удаления; не удалять только по возрасту или названию.
-- Локальный clone/test run в этой сессии не использовался; executable checks и live browser E2E выполнялись в GitHub Actions.
+- **GitHub About:** description, homepage and topics are empty. Suggested description: Interactive SQL and PostgreSQL learning platform for aspiring data analysts, with structured lessons, hands-on exercises, automatic SQL checking, and a browser-based PostgreSQL sandbox.
+- **Homepage:** https://vladsimbro.github.io/SQL/
+- **Suggested topics:** sql, postgresql, data-analytics, sql-learning, education, pglite, github-pages.
+- **Branch cleanup:** work/sql-academy-stage3-batch6-2026-11-07b is the sole confirmed ancestor branch and can be removed from GitHub UI or with a local Git client. Integration currently has no delete-ref operation.
+- **Other 28 branches:** verify whether each ahead commit's patch/tree is already represented in main; only then delete. Never delete based solely on branch age or ahead counts.
+- **GitHub About write:** apply the prepared description/homepage/topics through repository Settings when UI or an authorized metadata-write integration is available.
+- Local clone/test run was not used in this session; executable checks and live browser E2E were run in GitHub Actions.
+
 ## PROJECT STATE
 
 - Repository: https://github.com/vladsimbro/SQL
 - Pages: https://vladsimbro.github.io/SQL/
-- Branch: `main`
-- Verified HEAD: `d26c32f6dfb6cbc498b8d73997b64235f8588d2d`
-- App build: `20261108-95`
-- Validation + deploy workflow: `42491906414` — success for HEAD above.
-- Validate job: `128765900804` — success, including `node --check` and all curriculum/PGlite exercise checks.
-- Deploy job: `128765953956` — success.
-- Browser-smoke job: `128766032038` — success against the published Pages URL; shell 1 077 ms, failed-import retry 5 346 ms, DB reset 4 647 ms.
-- Separate Pages build/deployment workflow: `42491906418` — success for the same HEAD.
-- Open Pull Requests: 0 (last known repository status; recheck before any merge action).
-- Branches: 30 total including main; all 29 candidates compared against main. One confirmed ancestor branch and 28 diverged branches with ahead commits.
-- GitHub About description / homepage / topics: empty; no repository-metadata update operation is available in the current connector.
-- Stage 6 bug fixes: app retry uses a new versioned module URL after failed PGlite import; the `renderPractice()` template literal was fixed; syntax checks are now part of CI.
-- README docs: corrected to 42 step-by-step scenarios and the separate «Контрольные работы» section.
-- Status handoff itself will be committed separately after this verified code HEAD; no app code changes are bundled into that status update.
+- Branch: main
+- Verified code/workflow HEAD before this handoff-only update: dccb274eba9d450543ea2230fd54f248bbe7c432
+- Last application/course code HEAD: d26c32f6dfb6cbc498b8d73997b64235f8588d2d
+- App build: 20261108-95
+- Validation + deploy workflow: 42506177510 — success for dccb274e.
+- Validate job: 128809193266 — success; includes Node syntax checks and all curriculum/PGlite exercise checks.
+- Deploy job: 128809269851 — success.
+- Browser-smoke job: 128809339128 — success against https://vladsimbro.github.io/SQL/; shell 480 ms, failed-import retry 6900 ms, DB reset 5864 ms, mobile widths 390/320 px; all checks passed.
+- Separate Pages build/deployment workflow: 42506177411 — success; build job 128809195915, deploy job 128809276704.
+- No Node.js 20 deprecation warning appeared in the latest browser job logs.
+- Workflow hardening commits: 81121d2c (Action major upgrades + least-privilege deploy permissions), dccb274e (ignore status-only pushes/PRs).
+- Action versions: actions/checkout@v7, actions/setup-node@v7, actions/configure-pages@v6, actions/upload-pages-artifact@v5, actions/deploy-pages@v5, actions/upload-artifact@v7. Project test runtime remains Node 22.
+- Global workflow permission is contents: read; only deploy job receives pages: write and id-token: write.
+- A push/PR changing only PROJECT_STATUS.md is ignored by the validation/deployment workflow.
+- Open Pull Requests: 0 at last verification.
+- Branches: 30 total including main; all 29 candidates compared. One confirmed ancestor; 28 diverged (ahead 1–51 at compare baseline f5f45ade). Full branch/ahead table is above.
+- GitHub About fields: description null, homepage null, topics empty. Repository lookup confirms the values; current integration has no write operation.
+- Current integration supports compare/search but not branch delete-ref. No branch was deleted.
+- README is up to date: 42 step-by-step scenarios and a separate «Контрольные работы» section.
+- Stage 6 browser timings vary by runner/load; values above are from the latest successful run, not stable performance guarantees.
+- This handoff update changes only PROJECT_STATUS.md; due paths-ignore, it should not trigger another full validation/deploy/browser-smoke cycle.
+
 ## NEXT ACTION
 
-Завершить Stage 7: подготовить и внести GitHub About description/homepage/topics при появлении write-доступа к метаданным; удалить только подтверждённо слитые ветки при наличии delete-ref операции; для остальных 28 diverged веток проверить unique patches/trees относительно main и документировать, какие можно безопасно архивировать. README и Stage 6 live browser E2E уже завершены. Не менять содержимое учебного курса без конкретного подтверждённого дефекта.
+Продолжать Stage 7 без повторного прохождения этапов 0–6. Сначала проверить, что этот handoff-коммит находится в main и что status-only фильтр не запустил лишний deploy. Затем выполнить только оставшиеся операции, для которых появится соответствующий доступ: заполнить GitHub About подготовленными значениями; удалить единственную подтверждённо слитую ветку work/sql-academy-stage3-batch6-2026-11-07b; проверить unique patches/trees 28 diverged веток и удалять только доказанно избыточные. До появления delete-ref и metadata-write операций не заявлять эти действия выполненными. Не менять содержание курса без конкретного дефекта.
