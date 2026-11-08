@@ -18,6 +18,16 @@ assert.ok(importedAssetVersions.every(version => version === buildVersion), 'Loc
 
 const coreLessonIds = modules.filter(module => module.track === 'core').flatMap(module => module.lessons.map(lesson => lesson.id));
 const optionalLessonIds = modules.filter(module => module.track === 'postgresql').flatMap(module => module.lessons.map(lesson => lesson.id));
+assert.deepEqual(learningTracks.map(track => track.id), ['core','postgresql'], 'Only implemented courses must be listed in the catalog');
+for (const track of learningTracks) {
+  assert.ok(track.courseTitle && track.courseLevel && track.courseAudience && track.coursePrerequisites && track.courseGoal, 'Every listed course must define its identity, audience, prerequisites, and learning goal');
+  assert.ok(track.moduleIds.length > 0 && modules.some(module => module.track === track.id), 'Every listed course must have a real curriculum');
+}
+assert.ok(appSource.includes('function renderCourses()') && appSource.includes('data-open-course='), 'The app must render and open the standalone course catalog');
+assert.ok(appSource.includes('[data-open-course]'), 'Course catalog actions must be included in delegated click handling');
+assert.ok(appSource.includes('moduleLessons(m.track).map(mod=>'), 'A lesson sidebar must show only modules from the active course');
+assert.ok(htmlSource.includes('data-nav="courses"'), 'The primary navigation must expose the course catalog');
+assert.ok(cssSource.includes('.course-grid') && cssSource.includes('.course-card'), 'The course catalog must have dedicated responsive styles');
 assert.deepEqual(getTrackProgress(modules, new Set(), 'core'), { completed: 0, total: 112, percent: 0 }, 'An empty core route must start at 0% of its own 112 lessons');
 assert.deepEqual(getTrackProgress(modules, new Set(optionalLessonIds), 'core'), { completed: 0, total: 112, percent: 0 }, 'Completing optional PostgreSQL lessons must not change core-route progress');
 assert.deepEqual(getTrackProgress(modules, new Set(coreLessonIds), 'core'), { completed: 112, total: 112, percent: 100 }, 'Completing the core route must reach 100% independently of PostgreSQL');
