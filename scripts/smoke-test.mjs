@@ -87,8 +87,14 @@ assert.ok(appSource.includes('reference.map(g=>') && appSource.includes('glossar
 assert.ok(appSource.includes('preserveOrder=false'), 'Result normalization must support order-sensitive exercises');
 assert.ok(appSource.includes('function lessonFocusTokens') && appSource.includes('function renderAnnotatedSql') && appSource.includes('function renderExampleBreakdown'), 'SQL explanations must be contextual and concise');
 const walkthroughLessons = modules.flatMap(module => module.lessons.filter(lesson => lesson.walkthrough));
-assert.equal(walkthroughLessons.length, 40, 'Only substantive, hand-authored worked scenarios should remain');
+assert.equal(walkthroughLessons.length, 42, 'Only substantive, hand-authored worked scenarios should remain');
 assert.ok(walkthroughLessons.every(lesson => lesson.walkthrough.title && lesson.walkthrough.scenario && lesson.walkthrough.steps?.length >= 3 && lesson.walkthrough.result && lesson.walkthrough.pitfall), 'Every retained worked scenario must include context, reasoning, result and pitfall');
+const nullWalkthroughLesson = modules.find(module => module.id === 'where').lessons.find(lesson => lesson.id === 'where.is-distinct-from-i-sravnenie-s-null');
+assert.ok(nullWalkthroughLesson.walkthrough.steps.length >= 4, 'NULL comparison must have a multi-step worked explanation');
+assert.ok(nullWalkthroughLesson.walkthrough.steps.some(step => step.includes('UNKNOWN')) && nullWalkthroughLesson.walkthrough.steps.some(step => step.includes('IS DISTINCT FROM')), 'NULL walkthrough must explain three-valued logic and the NULL-safe comparison');
+const fanOutWalkthroughLesson = modules.find(module => module.id === 'joins').lessons.find(lesson => lesson.id === 'joins.fan-out-pochemu-join-umnozhaet-stroki');
+assert.ok(fanOutWalkthroughLesson.walkthrough.steps.some(step => step.includes('3 × 2 = 6')) && fanOutWalkthroughLesson.walkthrough.steps.some(step => step.includes('2 400 вместо 1 200')), 'Fan-out walkthrough must quantify row multiplication and metric inflation');
+assert.ok(fanOutWalkthroughLesson.walkthrough.steps.some(step => step.includes('SUM(quantity * unit_price)')) && fanOutWalkthroughLesson.walkthrough.result.includes('1 200'), 'Fan-out walkthrough must show pre-aggregation to the correct order grain');
 assert.ok(modules.every(module => module.lessons.every(lesson => !lesson.walkthrough || !lesson.walkthrough.scenario.startsWith('Представь, что ты решаешь рабочую задачу'))), 'Generic template walkthroughs must not be shown');
 const explanationStart = appSource.indexOf('function lessonFocusTokens');
 const explanationEnd = appSource.indexOf('function renderWorkedExample', explanationStart);
