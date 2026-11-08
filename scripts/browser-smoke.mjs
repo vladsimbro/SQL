@@ -216,6 +216,33 @@ try {
   await page.locator('[data-open-project="product"]').click();
   assert.equal(await page.locator('#project-conclusion').inputValue(),conclusion,'The analytical note must persist after leaving and reopening a project');
   assert.match(await page.locator('#project-review-feedback').textContent(),/Единица анализа здесь — сессия/,'The interpretation result must persist independently for each project');
+  for (const projectId of ['ecommerce','delivery']) {
+    await page.locator('#sidebar [data-nav="projects"]').click();
+    await page.locator('[data-open-project="'+projectId+'"]').click();
+    const currentProject = projects.find(project => project.id === projectId);
+    assert.equal(await page.locator('#app-content .project-task-nav').count(), 3, `Project ${projectId} must expose all three ordered SQL tasks`);
+    assert.equal(await page.locator('#project-wrapup .project-wrapup-locked').count(), 1, `Project ${projectId} must keep its conclusion locked before its own tasks are complete`);
+    for (const task of currentProject.tasks) {
+      await page.locator('[data-project-task="'+task.id+'"]').click();
+      await writeEditor(page.locator('#project-editor'), task.solution);
+      await page.locator('[data-action="check-project-task"]').click();
+      await page.locator('#project-feedback .feedback.success').waitFor({state:'visible',timeout:15_000});
+    }
+    await page.locator('#project-wrapup .project-note-panel').waitFor({state:'visible'});
+    assert.equal(await page.locator('#project-wrapup .project-wrapup-locked').count(),0,`Project ${projectId} must unlock its conclusion after its own three SQL tasks`);
+    const projectNote = 'Итоговый вывод для проекта '+projectId+': наблюдения подтверждены рассчитанными метриками и размерами групп.';
+    await page.locator('#project-conclusion').fill(projectNote);
+    const savedNotes = JSON.parse(await page.evaluate(()=>localStorage.getItem('sql-academy-project-notes-v1')));
+    assert.equal(savedNotes[projectId],projectNote,`The ${projectId} analytical note must autosave independently`);
+    await page.locator('[data-project-review="'+projectId+':1"]').click();
+    await page.locator('#project-review-feedback .feedback.success').waitFor({state:'visible'});
+  }
+  const allProjectNotes = JSON.parse(await page.evaluate(()=>localStorage.getItem('sql-academy-project-notes-v1')));
+  assert.equal(allProjectNotes.product,conclusion,'Completing other projects must not overwrite the Product Analytics note');
+  assert.ok(allProjectNotes.ecommerce && allProjectNotes.delivery,'Each practical project must keep its own final note');
+  const allProjectReviews = JSON.parse(await page.evaluate(()=>localStorage.getItem('sql-academy-project-reviews-v1')));
+  assert.ok(allProjectReviews.product && allProjectReviews.ecommerce && allProjectReviews.delivery,'Interpretation answers must persist independently for all three projects');
+
   await page.setViewportSize({width:320,height:740});
   await assertNoHorizontalOverflow(320);
   await page.setViewportSize({width:390,height:844});

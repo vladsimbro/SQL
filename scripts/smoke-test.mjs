@@ -39,6 +39,12 @@ assert.ok(cssSource.includes('.project-grid') && cssSource.includes('.project-wo
 assert.equal(projects.length, 3, 'The platform must show the three defined practical project tracks');
 assert.equal(projectTaskCount, 9, 'The project catalog must contain nine self-contained tasks');
 assert.equal(projects.reduce((sum,project)=>sum+project.tasks.length,0),projectTaskCount);
+assert.deepEqual(projects.map(project => project.id), ['ecommerce','delivery','product'], 'The three published project identities must remain stable');
+assert.deepEqual(projects.map(project => project.tasks.map(task => task.id)), [
+  ['ecommerce-monthly-net-revenue','ecommerce-cohort-retention','ecommerce-repeat-customers'],
+  ['delivery-sla-by-store','delivery-percentiles-by-store','delivery-cancellations-by-channel'],
+  ['product-session-funnel','product-monthly-active-users','product-cohort-retention']
+], 'All existing project task IDs and their learning order must remain stable');
 for (const project of projects) {
   assert.ok(project.context && project.objective && project.dataset && project.audience, `Project ${project.id} must explain context, goal, audience, and data`);
   assert.ok(project.wrapUp && project.wrapUp.title && project.wrapUp.notePrompt && project.wrapUp.limitation, `Project ${project.id} must define a final analytical write-up and data limitations`);
@@ -655,12 +661,77 @@ try {
   assert.equal(delivery.median_total_hours, '144.00', 'Median total delivery time must match the deterministic historical fixture');
   assert.equal(delivery.p90_total_hours, '192.00', 'P90 total delivery time must match the deterministic historical fixture');
 
+  const projectResults = new Map();
   for (const project of projects) {
     for (const task of project.tasks) {
       const result = await db.query(task.solution);
       assert.ok(result && Array.isArray(result.rows) && Array.isArray(result.fields), `Project task ${task.id} must execute and return a result set`);
       assert.ok(result.fields.length > 0, `Project task ${task.id} must return at least one output column`);
+      projectResults.set(task.id, result);
     }
+  }
+
+  const repeatBuyerTask = projects.find(project => project.id === 'ecommerce').tasks.find(task => task.id === 'ecommerce-repeat-customers');
+  const repeatBuyerRows = projectResults.get(repeatBuyerTask.id).rows;
+  const directRepeatBuyerRows = await db.query(`WITH customer_purchases AS (
+    SELECT c.acquisition_channel, c.customer_id, COUNT(*)::int AS purchases
+    FROM analytics_customers c
+    JOIN analytics_orders o USING (customer_id)
+    WHERE o.status IN ('delivered','shipped')
+    GROUP BY c.acquisition_channel, c.customer_id
+  )
+  SELECT acquisition_channel,
+         COUNT(*)::int AS customers,
+         COUNT(*) FILTER (WHERE purchases > 1)::int AS repeat_customers,
+         ROUND(100.0 * COUNT(*) FILTER (WHERE purchases > 1) / NULLIF(COUNT(*),0),2)::numeric(6,2) AS repeat_customer_pct
+  FROM customer_purchases
+  GROUP BY acquisition_channel
+  ORDER BY acquisition_channel`);
+  assert.deepEqual(repeatBuyerRows, directRepeatBuyerRows.rows, 'E-commerce repeat-purchase metrics must use only customers with qualifying purchases in both numerator and denominator');
+
+  await db.exec('BEGIN;');
+  try {
+    await db.exec(`INSERT INTO analytics_customers(customer_id,registered_at,city,segment,acquisition_channel)
+      VALUES (199999, DATE '2025-12-01', 'Тестовый город', 'test', 'no-orders');`);
+    const noBuyerResults = await db.query(repeatBuyerTask.solution);
+    const noBuyerChannel = noBuyerResults.rows.find(row => row.acquisition_channel === 'no-orders');
+    assert.deepEqual(noBuyerChannel, { acquisition_channel: 'no-orders', customers: 0, repeat_customers: 0, repeat_customer_pct: null }, 'A channel with no qualifying purchases must not count its customer in the buyer denominator');
+  } finally {
+    await db.exec('ROLLBACK;');
+  }
+
+  const deliveryCancellationTask = projects.find(project => project.id === 'delivery').tasks.find(task => task.id === 'delivery-cancellations-by-channel');
+  const deliveryCancellationRows = projectResults.get(deliveryCancellationTask.id).rows;
+  const directDeliveryCancellationRows = await db.query(`SELECT s.store_name, o.sales_channel,
+         COUNT(*)::int AS total_orders,
+         COUNT(*) FILTER (WHERE o.status = 'cancelled')::int AS cancelled_orders,
+         ROUND(100.0 * COUNT(*) FILTER (WHERE o.status = 'cancelled') / COUNT(*),2)::numeric(6,2) AS cancellation_pct
+  FROM analytics_orders o
+  JOIN stores s USING (store_id)
+  GROUP BY s.store_id, s.store_name, o.sales_channel
+  ORDER BY s.store_name, o.sales_channel`);
+  assert.deepEqual(deliveryCancellationRows, directDeliveryCancellationRows.rows, 'Delivery cancellations must be comparable by store and sales channel without changing order grain');
+  assert.equal(deliveryCancellationRows.reduce((sum,row) => sum + row.total_orders,0), analytics.orders, 'Store/channel cancellation groups must cover every historical order exactly once');
+  assert.equal(deliveryCancellationRows.reduce((sum,row) => sum + row.cancelled_orders,0), analytics.cancelled_orders, 'Store/channel cancellation groups must preserve the full cancelled-order count');
+
+  const productFunnelTask = projects.find(project => project.id === 'product').tasks.find(task => task.id === 'product-session-funnel');
+  const productFunnelBefore = projectResults.get(productFunnelTask.id).rows[0];
+  await db.exec('BEGIN;');
+  try {
+    await db.exec(`INSERT INTO product_events(event_id,customer_id,session_id,event_type,product_id,event_at) VALUES
+      (99999991,1001,9999999,'page_view',1,'2025-12-01 10:00:00'),
+      (99999992,1001,9999999,'product_view',1,'2025-12-01 09:59:00'),
+      (99999993,1001,9999999,'add_to_cart',1,'2025-12-01 10:01:00'),
+      (99999994,1001,9999999,'checkout_started',1,'2025-12-01 10:02:00'),
+      (99999995,1001,9999999,'purchase',1,'2025-12-01 10:03:00');`);
+    const productFunnelAfter = (await db.query(productFunnelTask.solution)).rows[0];
+    assert.equal(productFunnelAfter.sessions, productFunnelBefore.sessions + 1, 'A newly observed malformed session must be included in the total session count');
+    assert.equal(productFunnelAfter.page_view_sessions, productFunnelBefore.page_view_sessions + 1, 'The malformed session must still count at its first event');
+    for (const field of ['product_view_sessions','cart_sessions','checkout_sessions','purchase_sessions']) {
+      assert.equal(productFunnelAfter[field], productFunnelBefore[field], `An out-of-order funnel event must not increase ${field}`);
+    }
+  } finally {
+    await db.exec('ROLLBACK;');
   }
 
   const employeeSchema = await db.query("SELECT column_name FROM information_schema.columns WHERE table_name = 'orders' ORDER BY ordinal_position");
