@@ -463,11 +463,19 @@ try {
   await page.locator('#app-content .course-card').first().waitFor({ state: 'visible' });
   await assertNoHorizontalOverflow(390);
   await captureUxScreen('28-course-catalog-mobile-light-390');
+  await page.setViewportSize({ width: 320, height: 740 });
+  await assertNoHorizontalOverflow(320);
+  await captureUxScreen('40-course-catalog-mobile-light-320');
+  await page.setViewportSize({ width: 390, height: 844 });
   await page.locator('[data-open-course="core"]').click();
   await page.locator('[data-module="foundations"]').click();
   await page.locator('.lesson-track-group').waitFor({ state: 'visible' });
   await assertNoHorizontalOverflow(390);
   await captureUxScreen('29-sql-lesson-mobile-light-390');
+  await page.setViewportSize({ width: 320, height: 740 });
+  await assertNoHorizontalOverflow(320);
+  await captureUxScreen('41-sql-lesson-mobile-light-320');
+  await page.setViewportSize({ width: 390, height: 844 });
 
   const visitLightMobileView = async nav => {
     await menuButton.click();
@@ -491,6 +499,15 @@ try {
   await visitLightMobileView('schema');
   await visitLightMobileView('reference');
   await visitLightMobileView('glossary');
+  await visitLightMobileView('projects');
+  await page.locator('[data-open-project="ecommerce"]').click();
+  await page.locator('.project-task-content h2').waitFor({ state: 'visible' });
+  await assertNoHorizontalOverflow(390);
+  await captureUxScreen('42-ecommerce-project-mobile-light-390');
+  await page.setViewportSize({ width: 320, height: 740 });
+  await assertNoHorizontalOverflow(320);
+  await captureUxScreen('43-ecommerce-project-mobile-light-320');
+  await page.setViewportSize({ width: 390, height: 844 });
   await page.locator('#theme-toggle').click();
   assert.equal(await page.locator('html').evaluate(element => element.classList.contains('light')), false, 'The browser smoke must restore the dark theme after light-theme checks');
 
