@@ -22,7 +22,7 @@ const loadPGliteModule = () => {
 };
 const state = {
   view:'dashboard', moduleId:modules[0].id, lessonIndex:0, exerciseId:exercises[0].id, roadmapTrack:'core',
-  completedLessons:new Set(), completedExercises:new Set(), db:null, expected:new Map(), randomTask:null, randomTopics:new Set(sandboxTaskTopics.map(topic=>topic.id)),
+  completedLessons:new Set(), completedExercises:new Set(), practiceTrack:'core', db:null, expected:new Map(), randomTask:null, randomTopics:new Set(sandboxTaskTopics.map(topic=>topic.id)),
   engineReady:false, engineLoading:false, engineError:null, currentRows:[], quizAnswers:{}, exerciseQuizAnswers:{}, assessmentTrack:'core', assessmentModuleId:null, assessmentAnswers:{}, assessmentSubmitted:false, assessmentResults:{}, editors:new Map(), navigationScrollReset:false, theme:localStorage.getItem('sql-academy-theme') || 'dark'
 };
 const moduleById = id => modules.find(m=>m.id===id);
@@ -52,7 +52,7 @@ const saveProgress = () => {
   updateProgress();
 };
 const updateProgress = () => {
-  const activeTrackId=state.view==='study'?(moduleById(state.moduleId)?.track||'core'):state.view==='roadmap'?state.roadmapTrack:'core';
+  const activeTrackId=state.view==='study'?(moduleById(state.moduleId)?.track||'core'):state.view==='roadmap'?state.roadmapTrack:state.view==='practice'?state.practiceTrack:state.view==='assessment'?state.assessmentTrack:'core';
   const activeTrack=learningTracks.find(track=>track.id===activeTrackId)||learningTracks[0];
   const {completed,total,percent}=getTrackProgress(modules,state.completedLessons,activeTrackId);
   $('#side-progress-label').textContent=percent+'%';
@@ -397,19 +397,28 @@ function engineNotice() {
   return '<div class="callout" role="status" style="margin-bottom:14px"><strong>Подготавливаем учебную базу.</strong> Редактор и теория доступны, проверка запросов откроется после запуска PostgreSQL и расчёта эталонных результатов.</div>';
 }
 function renderPractice() {
-  const active=exercises.find(e=>e.id===state.exerciseId)||exercises[0];
+  const trackExercises=exercises.filter(exercise=>moduleById(exercise.m)?.track===state.practiceTrack);
+  const active=trackExercises.find(exercise=>exercise.id===state.exerciseId)||trackExercises[0]||exercises[0];
+  state.exerciseId=active.id;
   const m=getModuleForExercise(active);
-  const list=exercises.map((e,i)=>`<button class="exercise-item ${e.id===active.id?'active':''}" data-exercise="${e.id}"><span class="exercise-check">${state.completedExercises.has(e.id)?'✓':String(i+1).padStart(2,'0')}</span><span><strong>${esc(e.title)}</strong><small>${esc(moduleById(e.m).title.split(':')[0])}</small></span></button>`).join('');
+  const activeTrack=learningTracks.find(track=>track.id===state.practiceTrack)||learningTracks[0];
+  const tabs=learningTracks.map(track=>{
+    const count=exercises.filter(exercise=>moduleById(exercise.m)?.track===track.id).length;
+    return `<button class="track-tab ${track.id===state.practiceTrack?'active':''}" data-practice-track="${track.id}" aria-pressed="${track.id===state.practiceTrack}"><strong>${esc(track.title)}</strong><span>${count} заданий</span></button>`;
+  }).join('');
+  const list=trackExercises.map((exercise,index)=>`<button class="exercise-item ${exercise.id===active.id?'active':''}" data-exercise="${exercise.id}"><span class="exercise-check">${state.completedExercises.has(exercise.id)?'✓':String(index+1).padStart(2,'0')}</span><span><strong>${esc(exercise.title)}</strong><small>${esc(moduleById(exercise.m).title.split(':')[0])}</small></span></button>`).join('');
+  const activeIndex=trackExercises.findIndex(exercise=>exercise.id===active.id);
   return `
-  ${pageHead(`ПРАКТИКА · ${exercises.length} ЗАДАНИЙ`,'Закрепляй SQL руками','Каждое задание проверяется сравнением результата твоего запроса с эталонным результатом, рассчитанным на той же учебной базе. Порядок строк не учитывается, если он не меняет состав результата.')}
+  ${pageHead(`ПРАКТИКА · ${esc(activeTrack.title)}`,'Практика','Выбери курс. В списке остаются только задания, связанные с его модулями; результаты и прогресс сохраняются отдельно.')}
+  <div class="track-switch practice-course-switch">${tabs}</div>
   ${engineNotice()}
   <div class="exercise-layout"><aside><input class="exercise-filter" id="exercise-search" placeholder="Найти задачу по названию…"><div class="exercise-list" id="exercise-list">${list}</div></aside>
-  <section><div class="task-card"><div class="task-meta">ЗАДАНИЕ ${exercises.indexOf(active)+1} ИЗ ${exercises.length} · ${esc(m.title)}</div><h2>${esc(active.title)} ${state.completedExercises.has(active.id)?'✓':''}</h2><p>${esc(active.task)}</p>${renderExerciseHints(active)}</div>
+  <section><div class="task-card"><div class="task-meta">ЗАДАНИЕ ${activeIndex+1} ИЗ ${trackExercises.length} · ${esc(m.title)}</div><h2>${esc(active.title)} ${state.completedExercises.has(active.id)?'✓':''}</h2><p>${esc(active.task)}</p>${renderExerciseHints(active)}</div>
   ${renderExerciseQuiz(active)}
   ${editor('','exercise-editor','Напиши SQL-запрос. Эталонное решение скрыто до нажатия «Показать решение».')}
   <div class="editor-actions" style="margin-top:10px"><button class="btn primary" data-action="check-exercise" ${state.engineReady?'':'disabled'}>Проверить решение</button>${(active.mode==='mutation'||active.mode==='transaction')?'':`<button class="btn" data-action="run-exercise" ${state.engineReady?'':'disabled'}>Выполнить запрос</button>`}<button class="btn" data-action="show-solution">Показать решение</button><button class="btn" data-action="reset-db" ${state.engineReady?'':'disabled'}>Сбросить базу</button></div>
   <div id="exercise-feedback"></div><div id="exercise-results"></div>
-  <div class="lesson-footer" style="margin-top:16px"><button class="btn" data-action="prev-exercise">← Предыдущее</button><button class="btn" data-action="next-exercise">Следующее →</button></div></section></div>`;
+  <div class="lesson-footer" style="margin-top:16px"><button class="btn" data-action="prev-exercise" ${activeIndex===0?'disabled':''}>← Предыдущее</button><button class="btn" data-action="next-exercise" ${activeIndex===trackExercises.length-1?'disabled':''}>Следующее →</button></div></section></div>`;
 }
 function editor(value,id,placeholder='') {
  const reset=id==='playground-editor'?'<button class="btn small" data-action="reset-editor">Восстановить пример</button>':'';
@@ -507,7 +516,7 @@ function handleAction(action) {
   if(action==='prev-lesson'){if(state.lessonIndex>0)state.lessonIndex--;else if(trackIndex>0){state.moduleId=trackModules[trackIndex-1].id;state.lessonIndex=trackModules[trackIndex-1].lessons.length-1;}render();}
   if(action==='next-lesson'){if(state.lessonIndex<m.lessons.length-1)state.lessonIndex++;else if(trackIndex<trackModules.length-1){state.moduleId=trackModules[trackIndex+1].id;state.lessonIndex=0;}render();}
   if(action==='lesson-practice'){const id=m.lessons[state.lessonIndex]?.practiceIds?.[0];if(id){state.exerciseId=id;go('practice');}}
-  if(action==='prev-exercise'||action==='next-exercise'){const i=exercises.findIndex(x=>x.id===state.exerciseId);state.exerciseId=exercises[Math.max(0,Math.min(exercises.length-1,i+(action==='next-exercise'?1:-1)))].id;render();}
+  if(action==='prev-exercise'||action==='next-exercise'){const trackExercises=exercises.filter(exercise=>moduleById(exercise.m)?.track===state.practiceTrack);const i=trackExercises.findIndex(exercise=>exercise.id===state.exerciseId);state.exerciseId=trackExercises[Math.max(0,Math.min(trackExercises.length-1,i+(action==='next-exercise'?1:-1)))].id;render();}
   if(action==='clear-editor')setEditorValue(state.view==='practice'?'exercise-editor':'playground-editor','');
   if(action==='reset-editor'){const sample='SELECT status, COUNT(*) AS orders_count\\nFROM orders\\nGROUP BY status\\nORDER BY orders_count DESC;';setEditorValue('playground-editor',sample);localStorage.setItem(EDITOR_KEY,sample);}
   if(action==='show-solution'){const ex=exercises.find(x=>x.id===state.exerciseId);if(ex){setEditorValue('exercise-editor',ex.solution);toast('Эталонное решение показано.');}}
@@ -746,15 +755,16 @@ async function initDatabase({reset=false}={}) {
   }
 }
 document.addEventListener('click',event=>{
- const el=event.target.closest('[data-nav],[data-open-course],[data-track],[data-module],[data-assessment-track],[data-assessment-module],[data-assessment-answer],[data-lesson],[data-exercise],[data-action],[data-copy-code],[data-sample],[data-quiz-answer],[data-exercise-quiz-answer]');if(!el)return;
+ const el=event.target.closest('[data-nav],[data-open-course],[data-practice-track],[data-track],[data-module],[data-assessment-track],[data-assessment-module],[data-assessment-answer],[data-lesson],[data-exercise],[data-action],[data-copy-code],[data-sample],[data-quiz-answer],[data-exercise-quiz-answer]');if(!el)return;
  if(el.dataset.nav){event.preventDefault();go(el.dataset.nav);return;}
  if(el.dataset.openCourse){const track=learningTracks.find(item=>item.id===el.dataset.openCourse);if(track){state.roadmapTrack=track.id;go('roadmap');}return;}
+ if(el.dataset.practiceTrack){const track=learningTracks.find(item=>item.id===el.dataset.practiceTrack);if(track){state.practiceTrack=track.id;const first=exercises.find(exercise=>moduleById(exercise.m)?.track===track.id);if(first)state.exerciseId=first.id;render();}return;}
  if(el.dataset.track){state.roadmapTrack=el.dataset.track;render();return;} if(el.dataset.assessmentTrack){state.assessmentTrack=el.dataset.assessmentTrack;state.assessmentModuleId=null;render();return;}
  if(el.dataset.assessmentModule){state.assessmentModuleId=el.dataset.assessmentModule;state.assessmentAnswers={};state.assessmentSubmitted=false;go('assessment');return;}
  if(el.dataset.assessmentAnswer){if(!state.assessmentSubmitted){const [qi,oi]=el.dataset.assessmentAnswer.split(':').map(Number);state.assessmentAnswers[qi]=oi;render();}return;}
  if(el.dataset.module){state.moduleId=el.dataset.module;state.lessonIndex=0;go('study');return;}
  if(el.dataset.lesson){const [mid,li]=el.dataset.lesson.split(':');state.moduleId=mid;state.lessonIndex=Number(li);render();return;}
- if(el.dataset.exercise){state.exerciseId=el.dataset.exercise;if(state.view!=='practice')go('practice');else render();return;}
+ if(el.dataset.exercise){const exercise=exercises.find(item=>item.id===el.dataset.exercise);state.exerciseId=el.dataset.exercise;if(exercise)state.practiceTrack=moduleById(exercise.m)?.track||'core';if(state.view!=='practice')go('practice');else render();return;}
  if(el.dataset.exerciseQuizAnswer!==undefined){
   const option=Number(el.dataset.exerciseQuizAnswer),ex=exercises.find(x=>x.id===state.exerciseId),q=ex?.quiz;
   if(ex&&q){state.exerciseQuizAnswers[ex.id]=option;saveProgress();render();}
