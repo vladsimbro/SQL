@@ -5,6 +5,7 @@ import { modules, learningTracks, exercises, schema, seedSQL, glossary, referenc
 import { migrateProgress, getTrackProgress, findNextLesson } from '../progress-utils.js';
 import { sandboxTaskTopics, sandboxTaskCount } from '../sandbox-tasks.js';
 import { projects, projectTaskCount } from '../projects.js';
+import { BACKUP_FORMAT, BACKUP_VERSION, BACKUP_STORAGE_KEYS, createBackup, parseBackup, restoreBackup } from '../backup-utils.js';
 
 const curriculumSource = await readFile(new URL('../curriculum.js', import.meta.url), 'utf8');
 const appSource = await readFile(new URL('../app.js', import.meta.url), 'utf8');
@@ -14,8 +15,11 @@ const cssSource = await readFile(new URL('../styles.css', import.meta.url), 'utf
 const projectsSource = await readFile(new URL('../projects.js', import.meta.url), 'utf8');
 const buildVersion = JSON.parse(await readFile(new URL('../version.json', import.meta.url), 'utf8')).build;
 const importedAssetVersions = [...appSource.matchAll(/from\s+['"]\.\/[^'"]+\.js\?v=([^'"]+)['"]/g)].map(match => match[1]);
-assert.equal(importedAssetVersions.length, 5, 'Application must import the curriculum, sandbox, SQL, progress, and projects modules');
+assert.equal(importedAssetVersions.length, 6, 'Application must import the curriculum, sandbox, SQL, progress, projects, and backup modules');
 assert.ok(importedAssetVersions.every(version => version === buildVersion), 'Local JavaScript imports must use the current release build to avoid stale cached curriculum and SQL utilities');
+assert.ok(appSource.includes("from './backup-utils.js?v=" + buildVersion + "'"), 'The backup utility must be loaded from the current app build');
+assert.ok(appSource.includes('data-action="export-backup"') && appSource.includes('data-action="import-backup"'), 'The dashboard must expose both backup actions');
+assert.ok(appSource.includes('prepareImportedBackup(backup)') && appSource.includes('restoreBackup(localStorage'), 'Import must normalize legacy progress and restore supported local state');
 
 
 const coreLessonIds = modules.filter(module => module.track === 'core').flatMap(module => module.lessons.map(lesson => lesson.id));
@@ -873,3 +877,60 @@ try {
 assert.ok((await readFile(new URL('../app.js', import.meta.url), 'utf8')).includes("PGlite.create({dataDir:'memory://'})"), 'Browser playground must initialize an explicit in-memory PGlite database');
 assert.ok(!/(?<!\$)\$\('[^']+'\)\.forEach\s*\(/.test(appSource), 'All DOM collection iterations must use querySelectorAll helper');
 assert.ok(appSource.includes("$$('[data-random-topic]').forEach("), 'Random topic checkboxes must be selected as a collection');
+
+class BackupTestStorage {
+  constructor() { this.values = new Map(); }
+  getItem(key) { return this.values.has(key) ? this.values.get(key) : null; }
+  setItem(key, value) { this.values.set(key, String(value)); }
+  removeItem(key) { this.values.delete(key); }
+}
+const backupSource = new BackupTestStorage();
+backupSource.setItem('sql-academy-progress-v1', JSON.stringify({
+  lessons: ['foundations.relational-model'], exercises: ['e1'],
+  quizAnswers: { 'foundations.relational-model:0': 1 }, exerciseQuizAnswers: { e1: 0 },
+  assessmentResults: { foundations: { attempts: 2, bestScore: 4, passed: true } }
+}));
+backupSource.setItem('sql-academy-editor-v1', 'SELECT 1;');
+backupSource.setItem('sql-academy-project-progress-v1', JSON.stringify(['ecommerce-monthly-net-revenue']));
+backupSource.setItem('sql-academy-project-drafts-v1', JSON.stringify({ 'ecommerce-monthly-net-revenue': 'SELECT 2;' }));
+backupSource.setItem('sql-academy-project-notes-v1', JSON.stringify({ ecommerce: 'Revenue grew.' }));
+backupSource.setItem('sql-academy-project-reviews-v1', JSON.stringify({ ecommerce: 1 }));
+backupSource.setItem('sql-academy-theme', 'light');
+const learningBackup = createBackup(backupSource, '2026-11-08T20:00:00.000Z');
+assert.equal(learningBackup.format, BACKUP_FORMAT);
+assert.equal(learningBackup.version, BACKUP_VERSION);
+assert.deepEqual(Object.keys(learningBackup.storage), [...BACKUP_STORAGE_KEYS]);
+assert.deepEqual(parseBackup(JSON.stringify(learningBackup)), learningBackup);
+const backupTarget = new BackupTestStorage();
+backupTarget.setItem('sql-academy-editor-v1', 'SELECT 999;');
+restoreBackup(backupTarget, learningBackup);
+for (const key of BACKUP_STORAGE_KEYS) assert.equal(backupTarget.getItem(key), backupSource.getItem(key), 'Backup must restore ' + key);
+const emptyBackup = parseBackup(createBackup(new BackupTestStorage()));
+assert.ok(BACKUP_STORAGE_KEYS.every(key => emptyBackup.storage[key] === null), 'An empty browser profile must also be exportable');
+assert.throws(() => parseBackup('{broken'), /корректный JSON/);
+assert.throws(() => parseBackup({ ...learningBackup, format: 'other' }), /не резервная копия/i);
+assert.throws(() => parseBackup({ ...learningBackup, version: 99 }), /не поддерживается/);
+assert.throws(() => parseBackup({ ...learningBackup, storage: { ...learningBackup.storage, unknown: 'value' } }), /неизвестные разделы/);
+assert.throws(() => parseBackup({ ...learningBackup, storage: { ...learningBackup.storage, 'sql-academy-theme': 'neon' } }), /тема оформления/);
+assert.throws(() => parseBackup({ ...learningBackup, storage: { ...learningBackup.storage, 'sql-academy-project-progress-v1': '{bad' } }), /повреждённые данные/);
+assert.throws(() => parseBackup({ ...learningBackup, storage: { ...learningBackup.storage, 'sql-academy-project-notes-v1': JSON.stringify({ ecommerce: 42 }) } }), /объектом строк/);
+class BackupFailingStorage extends BackupTestStorage {
+  failOnce = true;
+  setItem(key, value) {
+    if (this.failOnce && key === 'sql-academy-project-drafts-v1') { this.failOnce = false; throw new Error('simulated quota failure'); }
+    super.setItem(key, value);
+  }
+}
+const failingTarget = new BackupFailingStorage();
+for (const key of BACKUP_STORAGE_KEYS) {
+  const value = backupSource.getItem(key);
+  if (value !== null) failingTarget.setItem(key, 'old:' + value);
+}
+const beforeRollback = Object.fromEntries(BACKUP_STORAGE_KEYS.map(key => [key, failingTarget.getItem(key)]));
+assert.throws(() => restoreBackup(failingTarget, learningBackup), /прежние данные сохранены/);
+assert.deepEqual(
+  Object.fromEntries(BACKUP_STORAGE_KEYS.map(key => [key, failingTarget.getItem(key)])),
+  beforeRollback,
+  'A failed restore must roll back the original local data'
+);
+console.log('Progress backup checks passed: export, version and schema validation, restore, empty state and rollback.');

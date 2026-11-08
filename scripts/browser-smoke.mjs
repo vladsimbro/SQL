@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import { chromium } from 'playwright';
 import { projects } from '../projects.js';
 
@@ -275,6 +276,37 @@ try {
   await page.locator('#playground-editor').waitFor({ state: 'attached' });
   await assertNoHorizontalOverflow(320);
   assert.equal(await readEditor(page.locator('#playground-editor')), draft, 'Navigation must not discard the saved SQL draft');
+
+  await page.locator('#sidebar [data-nav="dashboard"]').click();
+  assert.equal(await page.locator('[data-action="export-backup"]').isVisible(), true, 'The dashboard must expose a progress backup action');
+  assert.equal(await page.locator('[data-action="import-backup"]').isVisible(), true, 'The dashboard must expose a restore action');
+  const [backupDownload] = await Promise.all([
+    page.waitForEvent('download'),
+    page.locator('[data-action="export-backup"]').click()
+  ]);
+  assert.match(backupDownload.suggestedFilename(), /^sql-academy-backup-\d{4}-\d{2}-\d{2}\.json$/, 'Export must create a dated JSON backup file');
+  const backupPath = await backupDownload.path();
+  assert.ok(backupPath, 'The backup download must produce a readable file');
+  const backupText = await readFile(backupPath, 'utf8');
+  const backup = JSON.parse(backupText);
+  assert.equal(backup.format, 'sql-academy-backup');
+  assert.equal(backup.version, 1);
+  assert.ok(backup.storage['sql-academy-project-notes-v1']?.includes('ecommerce'), 'The backup must include project notes');
+  assert.ok(backup.storage['sql-academy-progress-v1'], 'The backup must include course progress');
+  const backupKeys = Object.keys(backup.storage);
+  await page.evaluate(keys => keys.forEach(key => localStorage.removeItem(key)), backupKeys);
+  page.once('dialog', dialog => dialog.accept());
+  const restoredNavigation = page.waitForEvent('framenavigated', { predicate: frame => frame === page.mainFrame() });
+  await page.locator('#backup-import-file').setInputFiles({
+    name: 'sql-academy-backup-test.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(backupText)
+  });
+  await restoredNavigation;
+  await page.locator('#app-content .hero').waitFor({ state: 'visible', timeout: 45_000 });
+  const restoredBackup = await page.evaluate(keys => Object.fromEntries(keys.map(key => [key, localStorage.getItem(key)])), backupKeys);
+  const changedValues = Object.keys(backup.storage).filter(key => backup.storage[key] !== null && restoredBackup[key] !== backup.storage[key]);
+  assert.deepEqual(changedValues, [], 'Import must restore each non-empty learning-data section');
 
   assert.deepEqual(pageErrors, [], `Unexpected uncaught browser errors: ${pageErrors.join('; ')}`);
   console.log('SQL Academy live browser smoke passed:', JSON.stringify({

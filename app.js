@@ -1,8 +1,9 @@
-import { modules, learningTracks, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261108-103';
-import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261108-103';
-import { firstSqlKeyword, explainStatementKeyword, explainStatementBody, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261108-103';
-import { migrateProgress, getTrackProgress, findNextLesson } from './progress-utils.js?v=20261108-103';
-import { projects, projectTaskCount } from './projects.js?v=20261108-103';
+import { modules, learningTracks, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261108-104';
+import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261108-104';
+import { firstSqlKeyword, explainStatementKeyword, explainStatementBody, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261108-104';
+import { migrateProgress, getTrackProgress, findNextLesson } from './progress-utils.js?v=20261108-104';
+import { projects, projectTaskCount } from './projects.js?v=20261108-104';
+import { createBackup, parseBackup, restoreBackup } from './backup-utils.js?v=20261108-104';
 
 const $ = (s, root=document) => root.querySelector(s);
 const $$ = (s, root=document) => [...root.querySelectorAll(s)];
@@ -169,7 +170,11 @@ function renderDashboard() {
       <div class="stat-card"><span class="stat-label">Практика</span><strong style="font-size:17px">${exercises.length} задач</strong><small>Проверка результата</small><button class="btn small" data-nav="practice" style="margin-top:9px">Решать</button></div>
       <div class="stat-card"><span class="stat-label">Учебная схема</span><strong style="font-size:17px">9 таблиц</strong><small>Интернет-магазин</small><button class="btn small" data-nav="schema" style="margin-top:9px">Изучить</button></div>
       <div class="stat-card"><span class="stat-label">Справочник</span><strong style="font-size:17px">SQL ref</strong><small>Синтаксис и термины</small><button class="btn small" data-nav="reference" style="margin-top:9px">Открыть</button></div>
-    </div>`;
+    </div>
+    <section class="backup-panel card" aria-labelledby="backup-title">
+      <div class="backup-copy"><div class="eyebrow">СОХРАННОСТЬ ПРОГРЕССА</div><h2 id="backup-title">Резервная копия обучения</h2><p>Сохрани прогресс курсов, контрольные работы, SQL-черновики и результаты проектов в файл. Его можно восстановить в другом браузере.</p><small>Восстановление заменит текущие локальные данные. Перед этим экспортируй их, если хочешь сохранить обе версии.</small></div>
+      <div class="backup-actions"><button class="btn primary" data-action="export-backup">Скачать копию</button><button class="btn" data-action="import-backup">Восстановить из файла</button><input id="backup-import-file" type="file" accept=".json,application/json" hidden></div>
+    </section>`;
 }
 function renderCourses() {
   const cards=learningTracks.map(track=>{
@@ -654,10 +659,66 @@ function editorKeys(e) {
   if(e.key==='Tab'){e.preventDefault();const a=e.target.selectionStart,b=e.target.selectionEnd;e.target.setRangeText('  ',a,b,'end');}
   if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();handleAction(e.target.id==='exercise-editor'?'run-exercise':e.target.id==='project-editor'?'check-project-task':'run-playground');}
 }
+function downloadProgressBackup() {
+  const backup = createBackup(localStorage);
+  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'sql-academy-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+  document.body.append(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  toast('Резервная копия скачана.');
+}
+function prepareImportedBackup(backup) {
+  const storage = { ...backup.storage };
+  const migrated = migrateProgress(JSON.parse(storage[STORE_KEY] || '{}'), modules).progress;
+  const exerciseIds = new Set(exercises.map(exercise => exercise.id));
+  migrated.exercises = migrated.exercises.filter(id => exerciseIds.has(id));
+  storage[STORE_KEY] = JSON.stringify(migrated);
+  const projectIds = new Set(projects.map(project => project.id));
+  const taskIds = new Set(projects.flatMap(project => project.tasks.map(task => task.id)));
+  const savedProjectTasks = JSON.parse(storage[PROJECT_PROGRESS_KEY] || '[]');
+  storage[PROJECT_PROGRESS_KEY] = JSON.stringify([...new Set(savedProjectTasks.filter(id => taskIds.has(id)))]);
+  for (const key of [PROJECT_DRAFTS_KEY, PROJECT_NOTES_KEY, PROJECT_REVIEWS_KEY]) {
+    const values = JSON.parse(storage[key] || '{}');
+    storage[key] = JSON.stringify(Object.fromEntries(Object.entries(values).filter(([id]) =>
+      key === PROJECT_DRAFTS_KEY ? taskIds.has(id) : projectIds.has(id)
+    )));
+  }
+  return { ...backup, storage };
+}
+document.addEventListener('change', async event => {
+  const input = event.target;
+  if (!(input instanceof HTMLInputElement) || input.id !== 'backup-import-file') return;
+  const file = input.files?.[0];
+  if (!file) return;
+  try {
+    if (file.size > 5 * 1024 * 1024) throw new Error('Размер файла превышает 5 МБ.');
+    const backup = parseBackup(await file.text());
+    const confirmed = window.confirm(
+      'Восстановить резервную копию от ' + new Date(backup.createdAt).toLocaleString() +
+      '? Текущий прогресс курсов, черновики и данные проектов будут заменены. Перед восстановлением сохрани текущую копию отдельно.'
+    );
+    if (!confirmed) return;
+    restoreBackup(localStorage, prepareImportedBackup(backup));
+    window.location.reload();
+  } catch (error) {
+    console.error('SQL Academy backup import failed:', error);
+    toast('Не удалось восстановить копию: ' + (error?.message || error));
+  } finally {
+    input.value = '';
+  }
+});
+
 function handleAction(action) {
   const m=moduleById(state.moduleId)||modules[0];
   const trackModules=moduleLessons(m.track);
   const trackIndex=trackModules.findIndex(module=>module.id===m.id);
+  if(action==='export-backup'){downloadProgressBackup();return;}
+  if(action==='import-backup'){$('#backup-import-file')?.click();return;}
   if(action==='retry-engine'){initDatabase();return;}
   if(action==='check-project-task'){checkProjectTask();return;}
   if(action==='show-project-solution'){state.projectSolutionVisible=!state.projectSolutionVisible;render();return;}

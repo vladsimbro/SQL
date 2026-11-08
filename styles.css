@@ -345,3 +345,12 @@
 
 @media(max-width:900px){.project-brief{grid-template-columns:1fr}.project-workspace{grid-template-columns:1fr}.project-task-panel{order:1}.project-task-content{order:2}.project-wrapup-grid{grid-template-columns:1fr}}
 @media(max-width:760px){.project-grid{grid-template-columns:1fr}.project-card{padding:18px}.project-task-content{padding:14px}.project-task-panel{padding:12px}}
+
+/* Learning progress backup */
+.backup-panel{display:flex;align-items:center;justify-content:space-between;gap:22px;margin-top:20px;padding:19px 21px}
+.backup-copy{min-width:0;max-width:690px}
+.backup-copy h2{margin:5px 0 6px;font-size:17px;line-height:1.35}
+.backup-copy p{margin:0;color:var(--soft);font-size:12px;line-height:1.65}
+.backup-copy small{display:block;margin-top:7px;color:var(--muted);font-size:10px;line-height:1.55}
+.backup-actions{display:flex;gap:9px;flex-wrap:wrap;flex-shrink:0}
+@media(max-width:760px){.backup-panel{align-items:stretch;flex-direction:column;padding:16px}.backup-actions{display:grid;grid-template-columns:1fr}.backup-actions .btn{width:100%}}
