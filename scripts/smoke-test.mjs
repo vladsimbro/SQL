@@ -63,9 +63,9 @@ assert.ok(appSource.includes("event.key==='Escape'") && appSource.includes("rest
 assert.ok(appSource.includes("window.addEventListener('resize'"), 'Switching to desktop width must close and reset the mobile menu');
 assert.ok(appSource.includes("button.setAttribute('aria-expanded',String(expanded))"), 'The mobile menu must keep aria-expanded synchronized with its visual state');
 assert.ok(htmlSource.includes('aria-controls="sidebar"') && htmlSource.includes('aria-expanded="false"'), 'The mobile menu button must declare its controlled navigation and initial collapsed state');
-assert.equal((appSource.match(/await loadPGliteModule\\(\\)/g)||[]).length, 3, 'All browser PGlite entry points must use the retryable module loader');
+assert.equal(appSource.split('await loadPGliteModule()').length - 1, 3, 'All browser PGlite entry points must use the retryable module loader');
 assert.ok(appSource.includes('let pgliteImportAttempt = 0;') && appSource.includes('pgliteModulePromise = null;') && appSource.includes('${PGLITE_MODULE_URL}?sql-academy-attempt=${attempt}'), 'A failed PGlite module request must be retried with a fresh URL so the browser does not reuse its failed module-map entry');
-assert.ok(!appSource.includes(`import('${'https://cdn.jsdelivr.net/npm/@electric-sql/pglite@0.5.15/dist/index.js'}')`), 'Browser PGlite loading must not reuse a single unversioned dynamic-import URL');
+assert.ok(!appSource.includes("import('https://cdn.jsdelivr.net/npm/@electric-sql/pglite@0.5.15/dist/index.js')"), 'Browser PGlite loading must not reuse a single unversioned dynamic-import URL');
 const sqlLexer = new Function(sqlUtilsSource.replaceAll('export function ', 'function ') + '; return { firstSqlKeyword, sqlAfterKeyword, explainStatementKeyword, explainStatementBody, readOnlyQueryKeyword, splitStatements };')();
 assert.equal(sqlLexer.firstSqlKeyword("-- leading comment\nSELECT 1"), 'SELECT', 'Leading line comments must be ignored');
 assert.equal(sqlLexer.firstSqlKeyword('/* outer /* nested */ comment */ WITH q AS (SELECT 1) SELECT * FROM q'), 'WITH', 'Nested block comments must be ignored');
