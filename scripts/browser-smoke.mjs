@@ -396,7 +396,9 @@ try {
       'SQL editor persistence while offline and after database reset',
       'real PostgreSQL query execution',
       'mobile menu state, Escape and focus restoration',
-      '320px layout overflow on dashboard, practice and playground',\n      'backup import rejects malformed JSON, unsupported versions, and files larger than 5 MB without changing local data',\n      'declining backup restore confirmation preserves existing local data'
+      '320px layout overflow on dashboard, practice and playground',
+      'backup import rejects malformed JSON, unsupported versions, and files larger than 5 MB without changing local data',
+      'declining backup restore confirmation preserves existing local data'
     ]
   }));
 } catch (error) {
