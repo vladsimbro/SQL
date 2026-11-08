@@ -444,6 +444,15 @@ try {
   const alternativeJoin = await db.query("SELECT s.store_name, COUNT(*)::int AS order_count FROM stores s JOIN orders o USING (store_id) WHERE o.status = 'delivered' GROUP BY s.store_name");
   const alternativeSubquery = await db.query("SELECT store_name, order_count FROM (SELECT store_id, COUNT(*)::int AS order_count FROM orders WHERE status = 'delivered' GROUP BY store_id) totals JOIN stores USING (store_id)");
   assert.equal(resultMatches(normalize(alternativeJoin),normalize(alternativeSubquery)),true,'Equivalent JOIN and pre-aggregated subquery solutions must match');
+  const nullPredicate = await db.query("SELECT order_id FROM orders WHERE employee_id IS NULL ORDER BY order_id");
+  const nullSafePredicate = await db.query("SELECT order_id FROM orders WHERE employee_id IS NOT DISTINCT FROM NULL ORDER BY order_id");
+  assert.equal(resultMatches(normalize(nullPredicate,true),normalize(nullSafePredicate,true),true),true,'Equivalent NULL predicates must return the same rows and preserve requested ordering');
+  const filteredAggregate = await db.query("SELECT COUNT(*) FILTER (WHERE status = 'delivered')::int AS delivered_count FROM orders");
+  const conditionalAggregate = await db.query("SELECT SUM(CASE WHEN status = 'delivered' THEN 1 ELSE 0 END)::int AS delivered_count FROM orders");
+  assert.equal(resultMatches(normalize(filteredAggregate),normalize(conditionalAggregate)),true,'FILTER and conditional aggregation must match when they express the same metric');
+  const windowDirect = await db.query("SELECT order_id, ROW_NUMBER() OVER (ORDER BY created_at DESC, order_id DESC)::int AS position FROM orders ORDER BY position");
+  const windowCte = await db.query("WITH ranked_orders AS (SELECT order_id, created_at, ROW_NUMBER() OVER (ORDER BY created_at DESC, order_id DESC)::int AS position FROM orders) SELECT position, order_id FROM ranked_orders ORDER BY position");
+  assert.equal(resultMatches(normalize(windowDirect,true),normalize(windowCte,true),true),true,'Equivalent window calculations through a CTE must match with an explicit output order');
   const tables = await db.query("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_type = 'BASE TABLE'");
   assert.equal(tables.rows.length, schema.length, 'Seed database table count must match the schema catalog');
 
