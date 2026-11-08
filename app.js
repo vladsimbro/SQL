@@ -1,7 +1,7 @@
-import { modules, learningTracks, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261108-74';
-import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261108-74';
-import { firstSqlKeyword, explainStatementKeyword, explainStatementBody, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261108-74';
-import { migrateProgress, getTrackProgress, findNextLesson } from './progress-utils.js?v=20261108-74';
+import { modules, learningTracks, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261108-75';
+import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261108-75';
+import { firstSqlKeyword, explainStatementKeyword, explainStatementBody, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261108-75';
+import { migrateProgress, getTrackProgress, findNextLesson } from './progress-utils.js?v=20261108-75';
 
 const $ = (s, root=document) => root.querySelector(s);
 const $$ = (s, root=document) => [...root.querySelectorAll(s)];
@@ -173,12 +173,12 @@ function tokenIsContextual(token, source, index) {
   if(token==='ON') return /\bJOIN\b[\s\S]*$/i.test(before) || /\bCREATE\s+(?:UNIQUE\s+)?INDEX\b[\s\S]*$/i.test(before);
   if(token==='INTO') return previous==='INSERT';
   if(token==='ALL') return previous==='UNION';
-  if(token==='SET') return /\bUPDATE\s+[\w."]+\s*$/i.test(before);
+  if(token==='SET') return /\bUPDATE\b[\s\S]*$/i.test(before);
   if(token==='OVER'||token==='FILTER') return /^\s*\(/.test(after);
   if(token==='ROWS'||token==='RANGE') return /\b(?:BETWEEN|PRECEDING|FOLLOWING|CURRENT ROW)\b/i.test(source);
   if(token==='EXISTS') return /^\s*\(/.test(after);
   if(token==='IN') return /^\s*\(/.test(after);
-  if(token==='ANALYZE') return /^\s*(?:\(|SELECT|WITH)/i.test(after) || /\bEXPLAIN\s*$/i.test(before);
+  if(token==='ANALYZE') return /^\s*(?:SELECT|WITH)/i.test(after) || /\bEXPLAIN\s*(?:\([^)]*)?$/i.test(before);
   if(token==='BUFFERS'||token==='VERBOSE'||token==='COSTS') return /\bEXPLAIN\b/i.test(source);
   return true;
 }

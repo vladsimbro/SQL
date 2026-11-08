@@ -96,7 +96,9 @@ const explanationCode = appSource.slice(explanationStart, explanationEnd);
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 const explanationApi = new Function('esc','sqlTokenTips', explanationCode + '; return { lessonFocusTokens, renderAnnotatedSql, renderExampleBreakdown };')(escapeHtml, {
   JOIN:'Joins tables.', LEFT:'Keeps all rows from the left side.', ON:'Defines the join condition.',
-  SELECT:'Selects output columns.', FROM:'Defines the source.', WHERE:'Filters rows.'
+  SELECT:'Selects output columns.', FROM:'Defines the source.', WHERE:'Filters rows.',
+  SET:'Assigns new values to columns in an UPDATE statement.',
+  ANALYZE:'Executes the statement and reports actual plan statistics.'
 });
 const joinLesson = { title: 'INNER JOIN и LEFT JOIN', simple: 'Соединение таблиц по ключам.' };
 const joinHtml = explanationApi.renderAnnotatedSql("SELECT o.id FROM orders o LEFT JOIN customers c ON c.id = o.customer_id WHERE o.id = 7 -- note", joinLesson);
@@ -104,6 +106,16 @@ assert.ok(joinHtml.includes('data-tip=') && joinHtml.includes('>LEFT</span>') &&
 assert.ok(!joinHtml.includes('>SELECT</span>') && !joinHtml.includes('>FROM</span>') && !joinHtml.includes('>orders</span>') && !joinHtml.includes('>7</span>') && !joinHtml.includes('>note</span>'), 'Unrelated clauses, identifiers, numbers and comments must not be highlighted');
 const neutralHtml = explanationApi.renderAnnotatedSql("SELECT 'COUNT(*)' AS label, 12 FROM orders -- comment", { title: 'Клиент и сервер' });
 assert.ok(!neutralHtml.includes('data-tip='), 'Unrelated lessons must not highlight generic SQL tokens or literals');
+const aliasedUpdateHtml = explanationApi.renderAnnotatedSql(
+  "UPDATE orders AS o SET status = 'cancelled' WHERE o.order_id = 102;",
+  { title: 'UPDATE', tipTokens: ['SET'] }
+);
+assert.ok(aliasedUpdateHtml.includes('>SET</span>'), 'SET tooltip must recognize UPDATE targets with an explicit alias');
+const explainAnalyzeHtml = explanationApi.renderAnnotatedSql(
+  'EXPLAIN (ANALYZE, BUFFERS) SELECT order_id FROM orders;',
+  { title: 'EXPLAIN', tipTokens: ['ANALYZE'] }
+);
+assert.ok(explainAnalyzeHtml.includes('>ANALYZE</span>'), 'ANALYZE tooltip must recognize parenthesized EXPLAIN options');
 const breakdown = explanationApi.renderExampleBreakdown("SELECT o.id\nFROM orders o\nLEFT JOIN customers c\nON c.id = o.customer_id\nWHERE o.id = 7\n-- comment", joinLesson);
 assert.ok(breakdown.includes('Ключевые части запроса') && breakdown.includes('LEFT JOIN') && breakdown.includes('Задаёт ключ сопоставления таблиц.'));
 assert.ok(!breakdown.includes('SELECT o.id') && !breakdown.includes('WHERE o.id') && !breakdown.includes('-- comment') && !breakdown.includes('Эта строка уточняет'), 'Breakdown must omit unrelated clauses, comments and generic filler');
