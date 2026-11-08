@@ -155,10 +155,8 @@ const normalizeEnd = appSource.indexOf('\nasync function runEditorQuery', normal
 const { normalizeResult: normalize, resultMatches } = new Function(appSource.slice(normalizeStart, normalizeEnd) + '; return { normalizeResult, resultMatches };')();
 const orderedA = { rows: [{id:1},{id:2}], fields: [{name:'id'}] };
 const orderedB = { rows: [{id:2},{id:1}], fields: [{name:'id'}] };
-assert.deepEqual(normalize(orderedA), normalize(orderedB), 'Unordered tasks must ignore row order');
-assert.notDeepEqual(normalize(orderedA, true), normalize(orderedB, true), 'Ordering-sensitive normalization must preserve row order');
 assert.equal(resultMatches(normalize(orderedA),normalize(orderedB)),true,'Equivalent unordered results must match despite a different row order');
-assert.equal(resultMatches(normalize(orderedA,true),normalize(orderedB,true),true),false,'Ordering-sensitive results must reject a different row order');
+assert.equal(resultMatches(normalize(orderedA),normalize(orderedB),true),false,'Ordering-sensitive results must reject a different row order');
 const orderedTwoColumns = normalize({ rows: [{id:1,status:'delivered'},{id:2,status:'new'}], fields: [{name:'id'},{name:'status'}] });
 const reorderedColumns = normalize({ rows: [{status:'delivered',id:1},{status:'new',id:2}], fields: [{name:'status'},{name:'id'}] });
 assert.equal(resultMatches(orderedTwoColumns,reorderedColumns),true,'Equivalent results must match when selected columns are returned in a different order');
@@ -170,6 +168,12 @@ assert.equal(resultMatches(normalize({rows:[{id:1}],fields:[{name:'id'}]}),norma
 assert.equal(resultMatches(normalize({rows:[],fields:[{name:'id'},{name:'status'}]}),normalize({rows:[],fields:[{name:'status'},{name:'id'}]})),true,'Empty results must retain column names and compare independently of column order');
 assert.deepEqual(normalize({rows:[{id:1}]}).columns,['id'],'Result normalization must fall back to row keys when the driver omits field metadata');
 assert.equal(resultMatches(normalize({rows:[{payload:{b:2,a:1}}],fields:[{name:'payload'}]}),normalize({rows:[{payload:{a:1,b:2}}],fields:[{name:'payload'}]})),true,'JSON objects must compare independent of object key order');
+const oneValue = value => normalize({rows:[{value}],fields:[{name:'value'}]});
+assert.equal(resultMatches(oneValue(NaN),oneValue(null)),false,'NaN must not collapse to NULL during result comparison');
+assert.equal(resultMatches(oneValue(Infinity),oneValue(-Infinity)),false,'Positive and negative infinity must remain distinct');
+assert.equal(resultMatches(oneValue(1n),oneValue('1')),false,'BIGINT values must not collapse to text with the same characters');
+assert.equal(resultMatches(oneValue(new Date('2026-01-01T00:00:00.000Z')),oneValue('2026-01-01T00:00:00.000Z')),false,'Date values must not collapse to ISO-formatted text');
+assert.equal(resultMatches(normalize({rows:[{}],fields:[{name:'payload'}]}),normalize({rows:[{payload:{__missingColumn:true}}],fields:[{name:'payload'}]})),false,'A missing result field must not collide with a JSON object value');
 assert.equal(modules.length, 25, 'Expected 25 ordered modules');
 assert.ok(modules.every(module => module.lessons.length > 0), 'Every module must have lessons');
 assert.ok(modules.every(module => module.lessons.every(lesson => lesson.title && lesson.body && lesson.example && lesson.note)), 'Every lesson must contain title, theory, example and note');
