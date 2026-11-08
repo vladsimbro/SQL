@@ -210,12 +210,13 @@ Workflow .github/workflows/pages.yml выполняет JS syntax checks, npm ru
 - Mobile walkthrough: assessment/schema/reference/glossary на 390 px, 320 px и 667x375 landscape; для каждого сценария проверяются видимый заголовок и отсутствие horizontal overflow.
 - Для landscape ниже 520 px проверяется, что sidebar действительно scrollable, полный список навигации доступен и выбранный пункт становится active.
 - Negative backup import fixtures подаются через File + DataTransfer + change event; fixtures до 5 MB сохраняют исходные bytes, oversized fixture создаётся в браузере по длине.
-- Screenshot matrix покрывает dashboard, каталог, уроки обоих курсов, практику, проекты, assessment, Playground, schema, reference, glossary, light/dark и mobile. Новый light-mobile matrix добавляет 11 кадров; ожидаемое общее число — 48.
+- Screenshot matrix покрывает dashboard, каталог, уроки обоих курсов, практику, проекты, assessment, Playground, schema, reference, glossary, light/dark и mobile. Последний artifact содержит 48 screenshots. Новый light-mobile matrix добавляет 11 кадров; ожидаемое общее число — 48.
 
 Визуальный осмотр mobile screenshots:
 - Из artifact 13637208331 просмотрены assessment/schema/reference/glossary в portrait 320/390 px и landscape 667x375.
 - Все 12 дополнительных mobile кадров созданы; navigation walkthrough прошёл после CSS landscape fix.
 - Из artifact 13637443447 просмотрены dashboard кадры build 20261109-109; раздельные счётчики курсов читаемы на desktop и mobile 320 px.
+- Из artifact 13637946145 просмотрены 11 light-mobile кадров: dashboard 390/320, каталог, SQL lesson, practice 390/320, assessment 390/320, schema, reference и glossary; горизонтального overflow нет.
 - Assessment и glossary длинные, но содержимое остаётся в одной колонке и не выходит за ширину экрана.
 - Schema cards сохраняют названия таблиц, поля и типы; на 320 px шрифт плотный, но layout не ломается.
 - Reference groups остаются одноколоночными в landscape, что сохраняет читаемость пар «синтаксис/объяснение».
@@ -423,19 +424,19 @@ Workflow .github/workflows/pages.yml выполняет JS syntax checks, npm ru
 - Исправлен test fixture helper для backup negative cases: он сохраняет реальные bytes для файлов до 5 MB и создаёт oversized fixture в браузере по длине.
 
 Текущая незавершённая задача:
-- Mobile light-theme walkthrough добавлен в scripts/browser-smoke.mjs: dashboard, catalog, SQL lesson, practice, assessment, schema, reference, glossary на 390 px; dashboard, practice и assessment дополнительно на 320 px. Добавлены мобильные contrast assertions и возврат в dark theme после теста. Текущий HEAD 03245ca, workflow 42531862227 выполняется.
+- Mobile light-theme walkthrough добавлен в scripts/browser-smoke.mjs: dashboard, catalog, SQL lesson, practice, assessment, schema, reference, glossary на 390 px; dashboard, practice и assessment дополнительно на 320 px. Добавлены мобильные contrast assertions и возврат в dark theme после теста. Workflow 42531862227 прошёл полностью.
 
 Следующая конкретная задача:
-- Дождаться workflow 42531862227 и Pages workflow 42531862041. Если smoke падает, исправить конкретный селектор/поведение, не удаляя contrast и overflow assertions.
-- Если smoke проходит, скачать artifact, визуально проверить новые light-mobile кадры dashboard/catalog/lesson/practice/assessment/schema/reference/glossary и убедиться, что на 320 px не появляется горизонтальная прокрутка.
-- Затем завершить оставшиеся UX/UI приоритеты P0/P1/P2 и решить, нужны ли дополнительные изменения после визуального осмотра. Не переписывать стили целиком.
+- Добавить 320 px checks для course catalog, SQL lesson и project detail; проверить заголовки, длинный текст, формы и кнопки без горизонтальной прокрутки.
+- Если новые screenshots выявят подтверждённые дефекты, исправить адресно и повторить browser-smoke.
+- Затем завершить UX/UI аудит, определить оставшиеся P0/P1/P2 и зафиксировать только реальные проблемы. Не переписывать стили целиком.
 - Физические iOS/Android устройства пока не проверялись.
 - Не переписывать CSS целиком и не менять стабильные IDs, URL, прогресс, черновики, backup/restore или поведение PGlite/CodeMirror.
 
 Последний полностью проверенный code/test commit SHA:
-- 913a933cb48e70df789e5ddaede1bea8672e59ec.
-Текущий HEAD main с новым mobile light-theme тестом:
 - 03245ca39db244f3322431ad9f5b7adb92e54539.
+Последний PROJECT_STATUS.md commit:
+- 2175de0213de246e0d17f10ac1e91f9d34ec79f3.
 
 Последний результат тестирования:
 - Workflow 42529611099 на 5fd2f24: validate/deploy/browser-smoke success.
@@ -445,10 +446,10 @@ Workflow .github/workflows/pages.yml выполняет JS syntax checks, npm ru
 - Workflow 42530979109 на 7a87253: validate/deploy success, browser-smoke failure на unsupported backup fixture payload.
 - Workflow 42531150514 на 1e398e8: validate/deploy/browser-smoke success.
 - Workflow 42531466474 на 913a933: validate/deploy/browser-smoke success; build 20261109-109.
-- Workflow 42531862227 на 03245ca: validate/deploy/browser-smoke ожидает завершения.
+- Workflow 42531862227 на 03245ca: validate/deploy/browser-smoke success; build 20261109-109.
 - Локальные npm/Playwright команды в этой сессии не запускались.
 
 Состояние GitHub Pages:
 - URL: https://vladsimbro.github.io/SQL/
-- Runtime build 20261109-109: Pages workflow 42531466559 success. Текущие изменения касаются только browser-smoke script.
+- Runtime build 20261109-109: Pages workflow 42531862041 для code HEAD 03245ca success; status-only Pages workflow 42531948310 success.
 - Последняя подтверждённая публикация runtime build 20261109-108.
