@@ -1,13 +1,13 @@
 # SQL Academy — актуальное состояние и передача разработки
 
-Последнее обновление: 2026-11-09 00:36 Europe/Helsinki (UTC+02:00).
+Последнее обновление: 2026-11-09 00:37 Europe/Helsinki (UTC+02:00).
 
 ## 1. Репозиторий и текущий HEAD
 
 - Репозиторий: https://github.com/vladsimbro/SQL
 - GitHub Pages: https://vladsimbro.github.io/SQL/
 - Основная ветка: main.
-- Последний HEAD main: ec67608d0e38747f98b8f4f0fc418fd6f82d472b.
+- Последний проверенный code HEAD main: be8196d6fde6eead6614a681358ad5dde8ac3332. Последующие commits изменяют только PROJECT_STATUS.md.
 - Последний application build: 20261109-105.
 - Последний application commit с изменением runtime-кода: c24bba10d9515fd8837714632d7c412928cacb04.
 - Последняя версия URL-навигации, проверенная полным CI: a045602546da7e8bec12fcaff25626fee208aadf.
@@ -91,29 +91,28 @@ SQL Academy — статическая интерактивная платфор
 - Исправлены cache key mismatch после смены build и изоляция тестовой фикстуры контролируемого отказа PGlite.
 - Workflow 42524697272 на commit a045602 завершился success по всем трём jobs: validate, deploy и browser-smoke.
 
-## 7. Текущая задача — отрицательные сценарии импорта backup
+## 7. Отрицательные сценарии импорта backup
 
-Статус: IN_PROGRESS.
+Статус: DEPLOYED_VERIFIED.
 
-Что добавлено в scripts/browser-smoke.mjs, commit ef37fc2ad7e5f813cbd2f1a97a43faf89965eca2:
-1. Импорт повреждённого JSON.
-2. Импорт резервной копии с неподдерживаемой версией.
-3. Импорт файла размером больше 5 МБ.
-4. Отказ пользователя от подтверждения восстановления.
+В scripts/browser-smoke.mjs добавлены и проверены:
+1. Повреждённый JSON.
+2. Неподдерживаемая версия резервной копии.
+3. Файл размером больше 5 МБ.
+4. Отказ от восстановления после подтверждения.
 
-Для ошибочных/отменённых сценариев тест сравнивает все ключи backup localStorage с исходным снимком и проверяет отсутствие навигации/перезагрузки. Положительный round-trip остаётся в том же smoke-сценарии.
+Для ошибочных и отменённого сценариев проверяется неизменность всех backup localStorage keys и отсутствие навигации/перезагрузки. Положительный round-trip импорта остаётся в том же smoke-сценарии.
 
-Результат workflow 42525067404 на HEAD ef37fc2:
+Результат workflow 42525873380 на code commit be8196d6fde6eead6614a681358ad5dde8ac3332:
 - validate: success.
 - deploy: success.
-- browser-smoke: выполняется на момент последнего опроса; job устанавливал Chromium, сам тест ещё не завершился.
-- Следовательно, тесты нельзя считать пройденными до завершения browser-smoke.
+- browser-smoke: success.
+- Все четыре негативных сценария прошли в Chromium; localStorage не изменился, страница не перезагрузилась.
+- Положительный backup round-trip, восстановление данных и миграция legacy lesson ID также прошли.
 
-Критерий завершения выполнен:
-- Все четыре негативных сценария прошли в реальном Chromium browser-smoke.
-- При ошибке или отказе localStorage не изменяется, страница не перезагружается.
-- Успешный backup round-trip и остальные browser-smoke сценарии зелёные.
-- Подтверждение: workflow 42525873380, commit be8196d, все три jobs success.
+Во время разработки исправлены дефекты самого теста: экранированные символы новой строки в checks и ненадёжное ожидание native confirm. Финальный сценарий отказа использует File + DataTransfer и контролируемый window.confirm stub, возвращающий false. Runtime-код приложения не менялся.
+
+Критерий завершения выполнен. Build остаётся 20261109-105.
 
 ## 8. Проверки и CI
 
@@ -134,13 +133,15 @@ Workflow .github/workflows/pages.yml выполняет:
 
 - Репозиторий: vladsimbro/SQL.
 - Основная и единственная ветка: main.
-- Текущий HEAD: be8196d6fde6eead6614a681358ad5dde8ac3332.
-- Последний runtime build: 20261109-105.
-- Workflow 42525067404 опубликовал runtime build 20261109-105, но browser-smoke завершился failure из-за синтаксической ошибки тестового файла. Исправление теста находится в HEAD 6c715e7; новый workflow 42525207352 ожидает выполнения.
+- Последний полностью проверенный code commit: be8196d6fde6eead6614a681358ad5dde8ac3332.
+- На этом code commit workflow 42525873380 завершился success по validate, deploy и browser-smoke.
+- Последний runtime build: 20261109-105. Runtime-код после этого не менялся.
+- PROJECT_STATUS.md обновляется отдельными docs-only commits; эти изменения не требуют смены version.json.
 - URL-навигация опубликована и проверена в workflow 42524697272.
-- Удаление 29 устаревших refs было выполнено в предыдущей сессии после проверки; аудит повторно не запускать без появления новых веток.
+- Удаление 29 устаревших refs выполнено в предыдущей сессии после проверки; аудит повторно не запускать без появления новых веток.
 - AUDIT.md удалён ранее; полезные сведения об аудите сохранены в истории документа.
 - Открытые PR/issues и настройки GitHub About в текущей сессии повторно не проверялись. Не считать их значения актуальными без нового API-запроса.
+- Один автоматический default Pages deploy на docs-only commit завершился ошибкой из-за одновременного custom Pages deployment. Это не затронуло опубликованную версию: custom deploy workflow 42525873380 завершился success, после него browser-smoke опубликованного сайта также success.
 
 ## 10. Принятые технические и образовательные решения
 
@@ -157,26 +158,26 @@ Workflow .github/workflows/pages.yml выполняет:
 ## 11. Передача следующему чату
 
 Последняя завершённая задача:
-- URL/hash-навигация и browser history: DEPLOYED_VERIFIED на commit a045602, workflow 42524697272 прошёл validate, deploy и browser-smoke.
+- Отрицательные сценарии импорта backup: DEPLOYED_VERIFIED. Workflow 42525873380 на code commit be8196d завершился success по validate, deploy и browser-smoke. Повреждённый JSON, неподдерживаемая версия, файл больше 5 МБ и отказ от восстановления проверены; localStorage не меняется.
 
 Текущая незавершённая задача:
-- Негативные browser-smoke сценарии backup import добавлены в ef37fc2; первый browser-smoke выявил синтаксическую ошибку в тестовом списке checks. Исправление отправлено в 6c715e77d21758226bba4491ef5164c8d9e49327; новый CI ожидает результата.
+- Нет незавершённых runtime-изменений после backup browser-smoke. Текущий документ передачи актуализируется отдельным docs-only commit.
 
 Следующая конкретная задача:
-- Проверить новый workflow после commit be8196d6fde6eead6614a681358ad5dde8ac3332. Если browser-smoke зелёный, зафиксировать backup negative scenarios как DEPLOYED_VERIFIED. Если красный, разобрать точную причину по job logs и исправить.
-- Если success: перевести отрицательные сценарии импорта backup в DEPLOYED_VERIFIED и зафиксировать итоговый commit/Pages.
-- Если failure: получить job logs, определить, упал ли тестовый сценарий или реальная логика приложения, исправить минимально необходимое и повторить CI.
-- После этого провести следующий содержательный аудит качества учебного SQL-маршрута и практики: начать с JOIN/fan-out, зерна данных, COUNT DISTINCT, LEFT JOIN + WHERE и проверок корректности метрик. Не переписывать уроки без конкретных дефектов.
+- Провести точечный аудит качества SQL-уроков и практики по JOIN/fan-out, зерну данных, COUNT vs COUNT DISTINCT, LEFT JOIN + WHERE и корректности метрик.
+- Сначала сверить реальные уроки, задания, ожидаемые результаты и тесты. Исправлять только подтверждённые пробелы; не переписывать качественный материал и не раздувать программу.
+- После аудита реализовать связанные исправления, проверить их curriculum/browser tests, затем обновить этот документ.
 
 Последний проверенный commit SHA:
-- Текущий HEAD main на момент этой записи: ec67608d0e38747f98b8f4f0fc418fd6f82d472b (этот commit — актуализация PROJECT_STATUS.md после завершения теста).
 - Последний code commit с полностью зелёными validate/deploy/browser-smoke: be8196d6fde6eead6614a681358ad5dde8ac3332.
+- Последний подтверждённый workflow: 42525873380, все три jobs success.
+- Текущая ветка main; эта актуализация документа является docs-only и не меняет runtime build.
 
 Последний результат тестирования:
-- Workflow 42524697272: все три jobs success.
-- Workflow 42525067404: validate success, deploy success, browser-smoke failure (синтаксическая ошибка теста).\n- Workflow 42525207352: validate success, deploy success; негативные тесты JSON/version/size прошли, тест отказа подтверждения timeout из-за порядка ожидания dialog.\n- Commit 53b1d57 заменил нестабильное ожидание native confirm на управляемый отказ через window.confirm stub; проверить новый browser-smoke.
+- Workflow 42525873380: validate success, deploy success, browser-smoke success.
+- Полный browser-smoke подтвердил навигацию, основные сценарии платформы, backup round-trip и все четыре негативных сценария импорта.
 
 Состояние GitHub Pages:
 - Build приложения: 20261109-105.
-- Deploy workflow 42525067404 на HEAD ef37fc2: success.
-- Browser-smoke текущей опубликованной версии ещё не завершён на момент передачи.
+- Custom deploy workflow 42525873380: success.
+- Browser-smoke опубликованного сайта в том же workflow: success.
