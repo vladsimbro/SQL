@@ -2900,7 +2900,7 @@ export const modules = [
         "simple": "Перед расчётом выясни зерно каждой таблицы и зерно результата после JOIN. Метрика должна считаться на своём уровне.",
         "example": "SELECT order_id,\n       SUM(quantity * unit_price)::int AS items_total\nFROM order_items\nGROUP BY order_id\nORDER BY order_id;",
         "note": "Сначала сформулируй зерно метрики, затем агрегируй каждый источник до этого уровня.",
-        "practiceIds": [],
+        "practiceIds": ["e103"],
         "outcomes": [
           "Определять зерно таблиц и результата",
           "выбирать безопасный уровень агрегации для метрики."
@@ -3474,7 +3474,7 @@ export const modules = [
         "simple": "Fan-out не ошибка SQL, а изменение числа строк. Ошибка — считать метрики, не учитывая новый уровень детализации.",
         "example": "SELECT o.order_id,\n       i.item_id,\n       e.event_type\nFROM orders AS o\nJOIN order_items AS i USING (order_id)\nJOIN order_events AS e USING (order_id)\nWHERE o.order_id = 101\nORDER BY i.item_id, e.event_id;",
         "note": "SUM(DISTINCT amount) не исправляет fan-out: одинаковые суммы разных реальных платежей будут ошибочно объединены.",
-        "practiceIds": [],
+        "practiceIds": ["e103"],
         "outcomes": [
           "Распознавать fan-out",
           "агрегировать независимые детали до JOIN",
@@ -10624,6 +10624,20 @@ export const exercises = [
     "hint2": "Перед соединением проверь ключ и кардинальность связи: несколько совпадений справа могут размножить строки слева.",
     "hint3": "Каркас: EXPLAIN (ANALYZE, BUFFERS) SELECT ...; Сравни estimated и actual rows."
   }
+
+  ,
+  {
+    "id": "e103",
+    "mode": "select",
+    "m": "joins",
+    "title": "Сохрани зерно заказа при двух деталях",
+    "task": "Подготовь сводку по каждому заказу: общую стоимость товарных позиций и количество зарегистрированных событий. Заказ должен появиться в результате один раз, даже если у него несколько позиций и несколько событий. Сохрани заказы, для которых нет позиций или событий, и не допускай повторного учёта.",
+    "solution": "WITH item_totals AS (SELECT order_id, SUM(quantity * unit_price) AS items_amount FROM order_items GROUP BY order_id), event_totals AS (SELECT order_id, COUNT(*) AS events_count FROM order_events GROUP BY order_id) SELECT o.order_id, COALESCE(i.items_amount, 0) AS items_amount, COALESCE(e.events_count, 0) AS events_count FROM orders AS o LEFT JOIN item_totals AS i ON i.order_id = o.order_id LEFT JOIN event_totals AS e ON e.order_id = o.order_id ORDER BY o.order_id;",
+    "hint": "Перед соединением сформулируй зерно каждой исходной таблицы и проверь, сколько строк может относиться к одному заказу.",
+    "hint2": "Если напрямую соединить позиции и события, строки перемножатся. Для заказа с тремя позициями и двумя событиями получится шесть комбинаций.",
+    "hint3": "Сведи позиции и события к одной строке на заказ в отдельных наборах, затем присоедини их к orders. DISTINCT по сумме не решает проблему: разные реальные записи могут иметь одинаковые значения."
+  }
+
 ];
 
 export const glossary = [
