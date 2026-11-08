@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
+import { projects } from '../projects.js';
 
 const baseURL = (process.env.PAGES_URL || process.argv[2] || '').trim().replace(/\/?$/, '/');
 if (!/^https:\/\//i.test(baseURL)) {
@@ -157,6 +158,37 @@ try {
   assert.match(await page.locator('#side-progress-detail').textContent(), /61 уроков · PostgreSQL/, 'Practice progress must follow the selected course');
   await page.locator('[data-action="next-exercise"]').click();
   assert.match(await page.locator('.task-meta').textContent(), /^ЗАДАНИЕ 2 ИЗ \d+/, 'Previous/next practice navigation must stay within the selected course');
+
+  await page.locator('#sidebar [data-nav="projects"]').click();
+  assert.equal(await page.locator('#app-content .project-card').count(), 3, 'The catalog must show E-commerce, delivery, and Product Analytics projects');
+  await page.locator('[data-open-project="product"]').click();
+  const productProject=projects.find(project=>project.id==='product');
+  const firstProjectTask=productProject.tasks[0];
+  assert.equal(await page.locator('#app-content .project-task-nav').count(), 3, 'Each project must expose its three ordered tasks');
+  assert.equal(await page.locator('.project-task-content h2').textContent(), firstProjectTask.title);
+  assert.equal(await page.locator('.project-solution').count(), 0, 'Reference SQL must remain hidden by default');
+
+  const projectEditor=page.locator('#project-editor');
+  await writeEditor(projectEditor,'SELECT 1;');
+  await page.locator('[data-action="check-project-task"]').click();
+  await page.locator('#project-feedback .feedback.fail').waitFor({state:'visible'});
+  await writeEditor(projectEditor,firstProjectTask.solution);
+  await page.locator('[data-action="check-project-task"]').click();
+  await page.locator('#project-feedback .feedback.success').waitFor({state:'visible',timeout:15_000});
+  assert.equal(await page.locator('#project-task-'+firstProjectTask.id).evaluate(element=>element.classList.contains('done')),true,'A correct project result must mark the task complete');
+  assert.ok((await page.evaluate(()=>localStorage.getItem('sql-academy-project-progress-v1'))||'').includes(firstProjectTask.id),'Project completion must persist independently');
+
+  const secondProjectTask=productProject.tasks[1];
+  await page.locator('[data-project-task="'+secondProjectTask.id+'"]').click();
+  const projectDraft='SELECT customer_id FROM product_events;';
+  await writeEditor(page.locator('#project-editor'),projectDraft);
+  assert.ok((await page.evaluate(()=>localStorage.getItem('sql-academy-project-drafts-v1'))||'').includes(projectDraft),'Project drafts must be saved automatically');
+  await page.locator('[data-action="show-project-solution"]').click();
+  assert.equal(await page.locator('.project-solution').count(),1,'The reference solution must appear only after an explicit request');
+  await page.locator('[data-action="show-project-solution"]').click();
+  assert.equal(await page.locator('.project-solution').count(),0,'The reference solution must be hideable');
+  await page.locator('[data-project-task="'+secondProjectTask.id+'"]').click();
+  assert.equal(await readEditor(page.locator('#project-editor')),projectDraft,'Switching away and back must preserve the project SQL draft');
 
   await page.setViewportSize({ width: 390, height: 844 });
   const menuButton = page.locator('#mobile-menu');
