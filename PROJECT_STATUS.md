@@ -183,11 +183,11 @@ SQL Academy — статическая интерактивная платфор
 Workflow .github/workflows/pages.yml выполняет JS syntax checks, npm run test:curriculum, публикацию GitHub Pages и Playwright browser-smoke опубликованного сайта.
 
 Последняя полностью успешная end-to-end проверка:
-- Workflow: 42532549641.
-- Commit: 2b7afe484e28ba5e1af77ed1bd1039a8618cfe79.
+- Workflow: 42532828710.
+- Commit: 85779d70437459441f68ccf76738d484ee9ee7c0.
 - validate, deploy, browser-smoke: success.
-- Browser-smoke подтвердил runtime build 20261109-109; shellReadyMs=1316, recoveryMs=4499, resetReadyMs=4019.
-- Artifact sql-academy-ux-audit-screenshots: ID 13638305544, 56 screenshots.
+- Browser-smoke подтвердил runtime build 20261109-109; shellReadyMs=632, recoveryMs=6872, resetReadyMs=5852.
+- Artifact sql-academy-ux-audit-screenshots: ID 13638406396, 68 screenshots.
 
 Последние runtime/accessibility changes:
 - Build 20261109-107: light-theme contrast tokens, keyboard focus-visible, prefers-reduced-motion, instant navigation scroll при reduce и 1-column practice list при ширине <=360 px.
@@ -200,18 +200,19 @@ Browser-smoke assertions:
 - Контраст light theme tokens muted/accent/sidebar label не ниже 4.5:1.
 - prefers-reduced-motion выключает smooth scrolling и сокращает CSS transitions.
 - При 320 px список задач практики перестраивается в одну колонку.
-- Mobile walkthrough: assessment/schema/reference/glossary на 390 px, 320 px и 667x375 landscape; проверяются заголовки и отсутствие horizontal overflow.
-- Для landscape ниже 520 px проверяется scrollable sidebar и доступность всех nav items.
-- Mobile light theme: dashboard, catalog, SQL lesson, practice, assessment, schema, reference, glossary и project list на 390 px; dashboard, catalog, SQL lesson, practice, assessment и E-commerce/Delivery/Product project detail на 320 px.
+- Mobile dark/light walkthrough покрывает dashboard, catalog, SQL lesson, practice, assessment, schema, reference, glossary, project list и project details на 390/320 px; short landscape 667x375 проверяет scrollable sidebar.
+- Mobile light theme: dashboard, catalog, SQL lesson, practice, assessment, schema, reference, glossary и project list на 390 px; dashboard, catalog, SQL lesson, practice, assessment, E-commerce, Delivery и Product Analytics project detail на 320 px.
+- Desktop light theme walkthrough: course catalog, SQL/PostgreSQL lessons, practice, project catalog, E-commerce project, assessment, Playground, schema, reference и glossary на 1440 px.
 - Dashboard smoke проверяет отдельные totals SQL 112 и PostgreSQL 61.
 - Negative backup import fixtures подаются через File + DataTransfer + change event; проверяются malformed JSON, unsupported version, >5 MB и сохранность localStorage.
 - Browser smoke подтверждает PGlite failure/retry, editor persistence offline/after reset, real PostgreSQL query, mobile menu Escape/focus restoration и backup restore confirmation.
-- Последний artifact содержит 56 screenshots: desktop, dark/light, mobile 390/320, landscape 667x375.
+- Последний artifact содержит 68 screenshots: desktop, dark/light, mobile 390/320, landscape 667x375.
 
 Визуальный осмотр:
-- Просмотрены mobile screenshots assessment/schema/reference/glossary в dark theme, dashboard в dark/light, dashboard/catalog/SQL lesson/practice/assessment/schema/reference/glossary в light theme.
-- Дополнительно просмотрены 320 px light screenshots course catalog, SQL lesson, E-commerce, Delivery и Product Analytics project detail; контент, редактор и действия остаются в границах viewport.
-- E-commerce, Delivery и Product Analytics project detail на 320 px сохраняют вертикальный поток, видимые блоки контекста, задания, редактора, аналитического вывода и черновика; горизонтального overflow нет.
+- Просмотрены dark/light mobile экраны dashboard, catalog, SQL lesson, practice, assessment, schema, reference, glossary и project detail.
+- Просмотрены desktop light screenshots всех основных разделов. Типографика и вертикальная иерархия сохраняются; широкие схемы и глоссарий используют пространство desktop без переполнения.
+- На 320 px light проверены PostgreSQL lesson, E-commerce, Delivery и Product Analytics project detail; контент, редактор и действия остаются в границах viewport.
+- E-commerce, Delivery и Product Analytics project detail сохраняют вертикальный поток, блоки контекста, задания, редактора, аналитического вывода и черновика; горизонтального overflow нет.
 - Длинные страницы остаются вертикально прокручиваемыми; двухколоночная перестройка на узких экранах не требуется.
 
 Содержимое curriculum smoke:
@@ -222,10 +223,10 @@ Browser-smoke assertions:
 - Backup checks включают export, schema validation, restore, rollback, round-trip и отрицательные UI сценарии.
 
 Исторические полные проверки:
+- Workflow 42532549641 на 2b7afe4: validate/deploy/browser-smoke success.
 - Workflow 42532221074 на b920b19: validate/deploy/browser-smoke success.
 - Workflow 42531862227 на 03245ca: validate/deploy/browser-smoke success.
 - Workflow 42531466474 на 913a933: validate/deploy/browser-smoke success.
-- Workflow 42531150514 на 1e398e8: validate/deploy/browser-smoke success.
 - Workflow 42527757551 на 0ff7123: validate/deploy/browser-smoke success, включая 25 independent JOIN oracle checks.
 
 Ограничения:
@@ -236,14 +237,14 @@ Browser-smoke assertions:
 
 - Репозиторий: vladsimbro/SQL.
 - Основная и единственная ветка: main.
-- Текущий code HEAD main: 2b7afe484e28ba5e1af77ed1bd1039a8618cfe79.
-- Последний полностью успешный end-to-end commit: 2b7afe484e28ba5e1af77ed1bd1039a8618cfe79.
+- Текущий code HEAD main: 85779d70437459441f68ccf76738d484ee9ee7c0.
+- Последний полностью успешный end-to-end commit: 85779d70437459441f68ccf76738d484ee9ee7c0.
 - Открытых PR и Issues нет.
-- Workflow 42532549641 на HEAD 2b7afe4: validate/deploy/browser-smoke success.
-- Pages workflow 42532549742 на HEAD 2b7afe4: success.
+- Workflow 42532828710 на HEAD 85779d7: validate/deploy/browser-smoke success.
+- Pages workflow 42532828642 на HEAD 85779d7: in_progress на момент последней проверки.
 - Runtime build: 20261109-109.
 - GitHub Pages: https://vladsimbro.github.io/SQL/
-- Последняя подтверждённая публикация runtime build 20261109-109: Pages workflow 42532549742 success.
+- Custom deploy job для HEAD 85779d7 завершился success; Pages workflow 42532828642 ещё выполняется.
 - Последние commits меняют только browser-smoke coverage; runtime assets и архитектура приложения не менялись после build 20261109-109.
 - Удаление 29 устаревших refs выполнено ранее после проверки; аудит повторно запускать только при появлении новых веток.
 - AUDIT.md удалён ранее; полезные сведения об аудите сохранены в истории документа.
@@ -393,8 +394,8 @@ Browser-smoke assertions:
 - SQL: 17 модулей, 112 уроков. PostgreSQL: 8 модулей, 61 урок. Всего 25 модулей и 173 урока.
 - 103 обычных задания, 350 random tasks по 14 темам, 100 контрольных вопросов, 72 термина глоссария, 13 групп SQL-справочника, 14 таблиц в суммарной учебной схеме/наборах данных.
 - 3 проекта: E-commerce, аналитика доставки, Product Analytics; по 3 SQL-задачи в каждом.
-- Runtime build 20261109-109; validate/deploy/browser-smoke и Pages workflow 42532549742 success.
-- Последний screenshot artifact 13638305544 содержит 56 изображений; визуально просмотрены все новые 320 px light frames.
+- Runtime build 20261109-109; validate/deploy/browser-smoke success.
+- Последний screenshot artifact 13638406396 содержит 68 изображений; просмотрены desktop light и mobile light кадры.
 
 Последняя завершённая задача:
 - UX/UI-аудит ключевых экранов desktop/mobile и dark/light.
@@ -402,30 +403,33 @@ Browser-smoke assertions:
 - Исправлен short-landscape sidebar: вертикальная прокрутка обеспечивает доступ к нижним nav items.
 - Dashboard показывает 2 самостоятельных курса и отдельные totals SQL · 112 / PostgreSQL · 61.
 - Runtime build 20261109-109; шесть app.js import cache keys синхронизированы.
-- Mobile dark/light coverage включает dashboard, catalog, SQL lesson, practice, assessment, schema, reference, glossary, project list и project details.
+- Mobile light/dark coverage включает dashboard, catalog, SQL lesson, practice, assessment, schema, reference, glossary, project list и project details.
 - Проверены PostgreSQL lesson, E-commerce, Delivery и Product Analytics project detail на 320 px; горизонтального overflow нет.
+- Desktop light theme проверена на catalog, SQL/PostgreSQL lessons, practice, projects, assessment, Playground, schema, reference и glossary.
 - Backup negative UI scenarios и browser-smoke полностью прошли.
-- Workflow 42532549641 на 2b7afe4: validate/deploy/browser-smoke success.
+- Workflow 42532828710 на 85779d7: validate/deploy/browser-smoke success.
 
 Текущая незавершённая задача:
-- Завершить сравнительный финальный visual pass и классифицировать только реальные UX/UI проблемы P0/P1/P2.
+- Дождаться завершения Pages workflow 42532828642 для HEAD 85779d7.
+- После этого выполнить финальную классификацию UX/UI проблем P0/P1/P2; сейчас не обнаружено подтверждённых P0/P1, требующих немедленной правки.
 - Физические iOS/Android устройства и альтернативные browser engines не проверялись.
 
 Следующая конкретная задача:
-- Провести короткий финальный pass по desktop 1440 px и mobile 320/390 px в обеих темах, сосредоточившись на типографике, вертикальном ритме, видимости состояния активного курса и длинных блоках.
-- Не добавлять новые features без подтверждённого UX-дефекта; если проблем нет, закрыть UX/UI audit и перейти к следующей приоритетной задаче из этого документа.
+- Проверить Pages workflow 42532828642 и подтвердить опубликованный build 20261109-109.
+- Закрыть UX/UI audit, если нет новых подтверждённых P0/P1/P2. Не добавлять features только ради активности.
+- После закрытия UX/UI выбрать следующую приоритетную незавершённую задачу существующей платформы из PROJECT_STATUS.md; не повторять уже проверенные экраны.
 - Не переписывать CSS целиком, не менять стабильные IDs, URL, прогресс, черновики, backup/restore или поведение PGlite/CodeMirror.
 
 Последний полностью проверенный code/test commit SHA:
-- 2b7afe484e28ba5e1af77ed1bd1039a8618cfe79.
+- 85779d70437459441f68ccf76738d484ee9ee7c0.
 
 Последний результат тестирования:
-- Workflow 42532549641 на 2b7afe4: validate/deploy/browser-smoke success.
-- Browser build 20261109-109; shellReadyMs=1316, recoveryMs=4499, resetReadyMs=4019.
+- Workflow 42532828710 на 85779d7: validate/deploy/browser-smoke success.
+- Browser build 20261109-109; shellReadyMs=632, recoveryMs=6872, resetReadyMs=5852.
 - Проверены PGlite retry, editor persistence, real PostgreSQL query, mobile menu focus/Escape, overflow 320px, backup malformed/unsupported/oversized и restore decline.
-- Screenshot artifact 13638305544: 56 screenshots, 12.2 MB.
+- Screenshot artifact 13638406396: 68 screenshots, 14.7 MB.
 - Локальные npm/Playwright команды в этой сессии не запускались.
 
 Состояние GitHub Pages:
 - URL: https://vladsimbro.github.io/SQL/
-- Runtime build 20261109-109 опубликован; Pages workflow 42532549742 success.
+- Runtime build 20261109-109: custom deploy success; Pages workflow 42532828642 in_progress на момент обновления.
