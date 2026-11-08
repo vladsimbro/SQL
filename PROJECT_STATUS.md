@@ -1,15 +1,15 @@
 # SQL Academy — актуальное состояние и передача разработки
 
-Последнее обновление: 2026-11-09 00:37 Europe/Helsinki (UTC+02:00).
+Последнее обновление: 2026-11-09 00:39 Europe/Helsinki (UTC+02:00).
 
 ## 1. Репозиторий и текущий HEAD
 
 - Репозиторий: https://github.com/vladsimbro/SQL
 - GitHub Pages: https://vladsimbro.github.io/SQL/
 - Основная ветка: main.
-- Последний проверенный code HEAD main: be8196d6fde6eead6614a681358ad5dde8ac3332. Последующие commits изменяют только PROJECT_STATUS.md.
-- Последний application build: 20261109-105.
-- Последний application commit с изменением runtime-кода: c24bba10d9515fd8837714632d7c412928cacb04.
+- Последний проверенный code HEAD main: 812c248c804d5d2ebd8ff4022c2b2ad2e44677d8. Последующие commits изменяют только PROJECT_STATUS.md.
+- Последний application build: 20261109-106.
+- Последний application commit с изменением runtime-кода: 812c248c804d5d2ebd8ff4022c2b2ad2e44677d8.
 - Последняя версия URL-навигации, проверенная полным CI: a045602546da7e8bec12fcaff25626fee208aadf.
 - Последние commits добавили негативные browser-smoke сценарии backup и исправляли надёжность теста отказа от подтверждения; runtime-код приложения не менялся, version.json не менялся.
 - GitHub API подтверждает только одну ветку: main. Других активных веток и незавершённых переносов не обнаружено.
@@ -91,28 +91,44 @@ SQL Academy — статическая интерактивная платфор
 - Исправлены cache key mismatch после смены build и изоляция тестовой фикстуры контролируемого отказа PGlite.
 - Workflow 42524697272 на commit a045602 завершился success по всем трём jobs: validate, deploy и browser-smoke.
 
-## 7. Отрицательные сценарии импорта backup
+## 7. Завершённые улучшения текущей сессии
+
+### Отрицательные сценарии импорта backup
 
 Статус: DEPLOYED_VERIFIED.
 
-В scripts/browser-smoke.mjs добавлены и проверены:
+В scripts/browser-smoke.mjs проверяются:
 1. Повреждённый JSON.
 2. Неподдерживаемая версия резервной копии.
 3. Файл размером больше 5 МБ.
 4. Отказ от восстановления после подтверждения.
 
-Для ошибочных и отменённого сценариев проверяется неизменность всех backup localStorage keys и отсутствие навигации/перезагрузки. Положительный round-trip импорта остаётся в том же smoke-сценарии.
+Для ошибочных и отменённого сценариев сравниваются backup localStorage keys до и после операции, проверяется отсутствие навигации/перезагрузки. Положительный round-trip импорта и миграция legacy lesson ID остаются зелёными.
 
-Результат workflow 42525873380 на code commit be8196d6fde6eead6614a681358ad5dde8ac3332:
-- validate: success.
-- deploy: success.
-- browser-smoke: success.
-- Все четыре негативных сценария прошли в Chromium; localStorage не изменился, страница не перезагрузилась.
-- Положительный backup round-trip, восстановление данных и миграция legacy lesson ID также прошли.
+Подтверждение: workflow 42525873380 на code commit be8196d прошёл validate, deploy и browser-smoke.
 
-Во время разработки исправлены дефекты самого теста: экранированные символы новой строки в checks и ненадёжное ожидание native confirm. Финальный сценарий отказа использует File + DataTransfer и контролируемый window.confirm stub, возвращающий false. Runtime-код приложения не менялся.
+### Практика по Fan-out и безопасной агрегации
 
-Критерий завершения выполнен. Build остаётся 20261109-105.
+Статус: DEPLOYED_VERIFIED.
+
+Аудит показал, что урок «Fan-out: соединение нескольких таблиц деталей» содержал теорию и контрольный вопрос, но не имел собственной привязанной практики.
+
+Добавлено задание e103 «Сохрани зерно заказа при двух деталях»:
+- Нужно получить стоимость товарных позиций и число событий на уровне заказа.
+- Требуется сохранить заказы без позиций или событий.
+- Условие не перечисляет готовый алгоритм или SQL-команды.
+- Эталон сначала агрегирует независимые таблицы деталей до одной строки на заказ, затем соединяет агрегаты с orders.
+- Задание привязано к уроку Fan-out через practiceIds.
+- Добавлена проверка в scripts/smoke-test.mjs: идентификатор упражнения, привязка к уроку и соответствие счётчиков.
+- Банк обычных заданий вырос с 102 до 103; SELECT-заданий с 88 до 89.
+- version.json обновлён до 20261109-106, все шесть импортов локальных JS-модулей в app.js синхронизированы с новым cache key.
+
+Проверки:
+- Workflow 42526324089 на commit 812c248: validate success, deploy success, browser-smoke success.
+- Curriculum smoke-test выполнил эталонное решение e103 на PGlite.
+- Browser-smoke опубликованного build 20261109-106 прошёл.
+
+Критерий завершения выполнен: пользователь может перейти из урока Fan-out к самостоятельной задаче, решить её без готового алгоритма и получить автопроверку по результату SQL.
 
 ## 8. Проверки и CI
 
@@ -124,7 +140,7 @@ Workflow .github/workflows/pages.yml выполняет:
 
 Подтверждённые результаты:
 - Workflow 42524697272 на a045602: validate success, deploy success, browser-smoke success.
-- Workflow 42525873380 на be8196d: validate success, deploy success, browser-smoke success.
+- Workflow 42525873380 на be8196d: validate success, deploy success, browser-smoke success.\n- Workflow 42526324089 на 812c248: validate success, deploy success, browser-smoke success; проверены обновлённый курс и build 20261109-106.
 - Ранее workflow 42522635871 на commit 4629cb7 прошёл все три jobs.
 - Ранее выявленный сбой validate на cdea1c4 был вызван устаревшими cache keys и исправлен в c24bba1.
 - Старые промежуточные красные/отменённые workflow не считать актуальным состоянием, если более поздний полный запуск на соответствующем коде завершился success.
@@ -133,9 +149,9 @@ Workflow .github/workflows/pages.yml выполняет:
 
 - Репозиторий: vladsimbro/SQL.
 - Основная и единственная ветка: main.
-- Последний полностью проверенный code commit: be8196d6fde6eead6614a681358ad5dde8ac3332.
-- На этом code commit workflow 42525873380 завершился success по validate, deploy и browser-smoke.
-- Последний runtime build: 20261109-105. Runtime-код после этого не менялся.
+- Последний полностью проверенный code commit: 812c248c804d5d2ebd8ff4022c2b2ad2e44677d8.
+- На этом code commit workflow 42526324089 завершился success по validate, deploy и browser-smoke.
+- Последний runtime build: 20261109-106. Runtime-код после этого не менялся.
 - PROJECT_STATUS.md обновляется отдельными docs-only commits; эти изменения не требуют смены version.json.
 - URL-навигация опубликована и проверена в workflow 42524697272.
 - Удаление 29 устаревших refs выполнено в предыдущей сессии после проверки; аудит повторно не запускать без появления новых веток.
@@ -158,26 +174,29 @@ Workflow .github/workflows/pages.yml выполняет:
 ## 11. Передача следующему чату
 
 Последняя завершённая задача:
-- Отрицательные сценарии импорта backup: DEPLOYED_VERIFIED. Workflow 42525873380 на code commit be8196d завершился success по validate, deploy и browser-smoke. Повреждённый JSON, неподдерживаемая версия, файл больше 5 МБ и отказ от восстановления проверены; localStorage не меняется.
+- Добавлено и опубликовано упражнение e103 по Fan-out и безопасной агрегации. Урок Fan-out теперь ведёт к собственной практике; эталонное решение проверено PGlite. Workflow 42526324089 на code commit 812c248 завершился success по validate, deploy и browser-smoke.
+- Отрицательные сценарии импорта backup также завершены: workflow 42525873380 прошёл все три jobs.
 
 Текущая незавершённая задача:
-- Нет незавершённых runtime-изменений после backup browser-smoke. Текущий документ передачи актуализируется отдельным docs-only commit.
+- Нет незавершённых изменений кода. PROJECT_STATUS.md актуализируется отдельным docs-only commit.
 
 Следующая конкретная задача:
-- Провести точечный аудит качества SQL-уроков и практики по JOIN/fan-out, зерну данных, COUNT vs COUNT DISTINCT, LEFT JOIN + WHERE и корректности метрик.
-- Сначала сверить реальные уроки, задания, ожидаемые результаты и тесты. Исправлять только подтверждённые пробелы; не переписывать качественный материал и не раздувать программу.
-- После аудита реализовать связанные исправления, проверить их curriculum/browser tests, затем обновить этот документ.
+- Продолжить точечный аудит JOIN и агрегации: проверить покрытие COUNT vs COUNT DISTINCT, LEFT JOIN + WHERE/ON и сохранение нулевых групп в обычных заданиях и 25 random JOIN tasks.
+- Проверить не только наличие формулировок, но и данные, эталонные результаты, граничные случаи и неоднозначность бизнес-метрик.
+- Исправлять только подтверждённые пробелы; сохранить самостоятельность заданий, не раскрывать готовый алгоритм в условии.
+- После правок прогнать curriculum smoke, browser-smoke, обновить version.json при runtime-изменениях и снова актуализировать этот документ.
 
 Последний проверенный commit SHA:
-- Последний code commit с полностью зелёными validate/deploy/browser-smoke: be8196d6fde6eead6614a681358ad5dde8ac3332.
-- Последний подтверждённый workflow: 42525873380, все три jobs success.
-- Текущая ветка main; эта актуализация документа является docs-only и не меняет runtime build.
+- Последний code commit с полностью зелёными validate/deploy/browser-smoke: 812c248c804d5d2ebd8ff4022c2b2ad2e44677d8.
+- Подтверждающий workflow: 42526324089, все три jobs success.
+- Эта актуализация PROJECT_STATUS.md — отдельное изменение документа; runtime build не меняется.
 
 Последний результат тестирования:
-- Workflow 42525873380: validate success, deploy success, browser-smoke success.
-- Полный browser-smoke подтвердил навигацию, основные сценарии платформы, backup round-trip и все четыре негативных сценария импорта.
+- Workflow 42526324089: validate success, deploy success, browser-smoke success.
+- PGlite выполнил эталонный SQL e103 и сравнил результат с ожидаемым.
+- Полный browser-smoke опубликованного сайта прошёл, включая URL-навигацию и негативные backup-сценарии.
 
 Состояние GitHub Pages:
-- Build приложения: 20261109-105.
-- Custom deploy workflow 42525873380: success.
+- Build приложения: 20261109-106.
+- Custom deploy workflow 42526324089: success.
 - Browser-smoke опубликованного сайта в том же workflow: success.
