@@ -52,10 +52,12 @@ const saveProgress = () => {
   updateProgress();
 };
 const updateProgress = () => {
-  const {completed,total,percent}=getTrackProgress(modules,state.completedLessons,'core');
+  const activeTrackId=state.view==='study'?(moduleById(state.moduleId)?.track||'core'):state.view==='roadmap'?state.roadmapTrack:'core';
+  const activeTrack=learningTracks.find(track=>track.id===activeTrackId)||learningTracks[0];
+  const {completed,total,percent}=getTrackProgress(modules,state.completedLessons,activeTrackId);
   $('#side-progress-label').textContent=percent+'%';
   $('#side-progress-bar').style.width=percent+'%';
-  $('#side-progress-detail').textContent=completed+' из '+total+' уроков основного маршрута';
+  $('#side-progress-detail').textContent=completed+' из '+total+' уроков · '+activeTrack.title;
   $('#exercise-count').textContent=exercises.length;
 };
 const toast = message => {
@@ -115,15 +117,15 @@ function renderDashboard() {
   const next=findNextLesson(modules,state.completedLessons);
   const recent=core.slice(0,5);
   return `
-    <section class="hero"><div class="eyebrow">ОСНОВНОЙ МАРШРУТ · JUNIOR DATA ANALYST</div><h1>SQL — не набор команд.<br>Это способ думать о данных.</h1><p>Основной курс ведёт от реляционной модели к самостоятельной аналитике. Отдельный маршрут помогает глубже изучить PostgreSQL без обязательной задержки на администрировании.</p><div class="hero-actions"><button class="btn primary" data-action="continue">Продолжить обучение →</button><button class="btn ghost" data-nav="courses">Каталог курсов</button></div></section>
+    <section class="hero"><div class="eyebrow">КУРС SQL · JUNIOR DATA ANALYST</div><h1>SQL — не набор команд.<br>Это способ думать о данных.</h1><p>Курс ведёт от реляционной модели к самостоятельной аналитике. PostgreSQL изучается отдельно, со своей программой и прогрессом.</p><div class="hero-actions"><button class="btn primary" data-action="continue">Продолжить обучение →</button><button class="btn ghost" data-nav="courses">Каталог курсов</button></div></section>
     <div class="stats-grid">
-      <div class="stat-card"><span class="stat-label">Уроков в программе</span><strong>${lessonTotal}</strong><small>Основной и дополнительный маршруты</small></div>
+      <div class="stat-card"><span class="stat-label">Уроков в программе</span><strong>${lessonTotal}</strong><small>Два самостоятельных курса</small></div>
       <div class="stat-card"><span class="stat-label">Практических задач</span><strong>${exercises.length}</strong><small>С реальной проверкой SQL</small></div>
-      <div class="stat-card"><span class="stat-label">Пройдено в основном маршруте</span><strong>${coreProgress.completed}</strong><small>Из ${coreProgress.total} уроков Junior Data Analyst</small></div>
+      <div class="stat-card"><span class="stat-label">Пройдено в курсе SQL</span><strong>${coreProgress.completed}</strong><small>Из ${coreProgress.total} уроков Junior Data Analyst</small></div>
       <div class="stat-card"><span class="stat-label">Решено задач</span><strong>${state.completedExercises.size}</strong><small>Из ${exercises.length} практических</small></div>
     </div>
     <div class="grid-2">
-      <div class="card"><div class="eyebrow">СЛЕДУЮЩИЙ ШАГ</div><div class="continue-card" style="margin-top:12px"><div class="continue-icon">↗</div><div><h3>${next?esc(next.lesson.title):'Все уроки пройдены'}</h3><p>${next?`${esc(next.module.title)} · урок ${next.index+1} из ${next.module.lessons.length}`:'Основной и дополнительный маршруты завершены.'}</p>${next?'<button class="btn primary small" data-action="open-next">Открыть урок</button>':'<button class="btn small" data-nav="roadmap">Открыть программу</button>'}</div></div></div>
+      <div class="card"><div class="eyebrow">СЛЕДУЮЩИЙ ШАГ</div><div class="continue-card" style="margin-top:12px"><div class="continue-icon">↗</div><div><h3>${next?esc(next.lesson.title):'Все уроки пройдены'}</h3><p>${next?`${esc(next.module.title)} · урок ${next.index+1} из ${next.module.lessons.length}`:'Оба курса завершены.'}</p>${next?'<button class="btn primary small" data-action="open-next">Открыть урок</button>':'<button class="btn small" data-nav="courses">Открыть курсы</button>'}</div></div></div>
       <div class="card"><div class="eyebrow">ОБУЧЕНИЕ В БРАУЗЕРЕ</div><h3 style="margin:8px 0 5px;font-size:15px">Настоящий PostgreSQL, а не имитация</h3><p style="color:var(--muted);font-size:11px;margin:0">Запросы исполняются локально через WebAssembly. Учебная схема уже заполнена данными, а прогресс сохраняется в браузере.</p></div>
     </div>
     <div class="section-row"><h2>Основной курс</h2><button class="btn small" data-nav="courses">Все курсы →</button></div>
@@ -142,8 +144,8 @@ function renderCourses() {
     const lessons=trackModules.reduce((sum,module)=>sum+module.lessons.length,0);
     const progress=getTrackProgress(modules,state.completedLessons,track.id);
     return `<article class="course-card">
-      <div class="course-card-top"><span class="eyebrow">${track.required?'ОСНОВНОЙ КУРС':'САМОСТОЯТЕЛЬНЫЙ КУРС'}</span><span class="course-level">${esc(track.courseLevel)}</span></div>
-      <h2>${esc(track.courseTitle)}</h2>
+      <div class="course-card-top"><span class="eyebrow">${track.required?'ОСНОВНОЙ КУРС':'УГЛУБЛЁННЫЙ КУРС'}</span><span class="course-level">${esc(track.courseLevel)}</span></div>
+      <h2>${esc(track.title)}</h2>
       <p class="course-goal">${esc(track.courseGoal)}</p>
       <div class="course-facts">
         <div><strong>Для кого</strong><p>${esc(track.courseAudience)}</p></div>
@@ -162,7 +164,7 @@ function renderRoadmap() {
   const selectedModules=moduleLessons(selected.id);
   const groups=new Map();
   selectedModules.forEach((module,index)=>{if(!groups.has(module.stage))groups.set(module.stage,[]);groups.get(module.stage).push({module,index});});
-  return pageHead('ПРОГРАММА КУРСА',esc(selected.courseTitle),selected.description,'<button class="btn" data-nav="courses">← Все курсы</button>')+
+  return pageHead('ПРОГРАММА КУРСА',esc(selected.title),selected.description,'<button class="btn" data-nav="courses">← Все курсы</button>')+
   `<div class="track-intro"><div class="eyebrow">${esc(selected.courseLevel)}</div><p>${esc(selected.description)}</p><p><strong>Предварительные знания:</strong> ${esc(selected.coursePrerequisites)}</p></div>`+
   [...groups.entries()].map(([stage,items])=>`<section class="roadmap-stage"><div class="roadmap-stage-head"><span>${esc(stage)}</span><h2>${esc(stage.split(' · ')[1])}</h2><small>${items.reduce((sum,item)=>sum+item.module.lessons.length,0)} уроков</small></div><div class="module-list">${items.map(item=>moduleRow(item.module,item.index)).join('')}</div></section>`).join('');
 }
@@ -336,10 +338,10 @@ function renderStudy() {
  const m=moduleById(state.moduleId)||modules[0];state.lessonIndex=Math.max(0,Math.min(state.lessonIndex,m.lessons.length-1));
  const l=m.lessons[state.lessonIndex],done=state.completedLessons.has(lessonKey(m.id,state.lessonIndex)),trackEnd=moduleLessons(m.track).at(-1)?.id===m.id&&state.lessonIndex===m.lessons.length-1;
  const activeTrack=learningTracks.find(track=>track.id===m.track)||learningTracks[0];
- const sidebar=`<section class="lesson-track-group"><h3>${esc(activeTrack.courseTitle)}</h3><p>${esc(activeTrack.subtitle)}</p>${moduleLessons(m.track).map(mod=>`<div style="margin-bottom:13px"><h4>${String(mod.trackOrder).padStart(2,'0')} · ${esc(mod.title)}</h4>${mod.lessons.map((lesson,li)=>`<button class="lesson-nav-item ${mod.id===m.id&&li===state.lessonIndex?'active':''} ${state.completedLessons.has(lessonKey(mod.id,li))?'done':''}" data-lesson="${mod.id}:${li}"><span class="dot">${state.completedLessons.has(lessonKey(mod.id,li))?'✓':'○'}</span>${esc(lesson.title)}</button>`).join('')}</div>`).join('')}</section>`;
+ const sidebar=`<section class="lesson-track-group"><h3>${esc(activeTrack.title)}</h3><p>${esc(activeTrack.subtitle)}</p>${moduleLessons(m.track).map(mod=>`<div style="margin-bottom:13px"><h4>${String(mod.trackOrder).padStart(2,'0')} · ${esc(mod.title)}</h4>${mod.lessons.map((lesson,li)=>`<button class="lesson-nav-item ${mod.id===m.id&&li===state.lessonIndex?'active':''} ${state.completedLessons.has(lessonKey(mod.id,li))?'done':''}" data-lesson="${mod.id}:${li}"><span class="dot">${state.completedLessons.has(lessonKey(mod.id,li))?'✓':'○'}</span>${esc(lesson.title)}</button>`).join('')}</div>`).join('')}</section>`;
  const practice=(l.practiceIds||[]).map(id=>{const ex=exercises.find(e=>e.id===id);return ex?`<button class="btn" data-exercise="${ex.id}">Практика: ${esc(ex.title)} →</button>`:''}).join('');
  const outcomes=(l.outcomes||[]).length?`<div class="lesson-card"><div class="eyebrow">РЕЗУЛЬТАТ УРОКА</div><h2>Что ты должен уметь</h2><ul>${l.outcomes.map(item=>`<li>${esc(item)}</li>`).join('')}</ul></div>`:'';
- return `${pageHead(esc(activeTrack.courseTitle).toUpperCase()+' · МОДУЛЬ '+String(m.trackOrder).padStart(2,'0'),m.title,m.desc,'<button class="btn" data-nav="roadmap">← К программе курса</button>')}<div class="split-layout"><aside class="card lesson-sidebar"><h3>Содержание курса</h3>${sidebar}</aside><article class="lesson-content">
+ return `${pageHead(esc(activeTrack.title).toUpperCase()+' · МОДУЛЬ '+String(m.trackOrder).padStart(2,'0'),m.title,m.desc,'<button class="btn" data-nav="roadmap">← К программе курса</button>')}<div class="split-layout"><aside class="card lesson-sidebar"><h3>Содержание курса</h3>${sidebar}</aside><article class="lesson-content">
  <div class="lesson-card"><div class="eyebrow">${esc(m.stage)} · УРОК ${state.lessonIndex+1} ИЗ ${m.lessons.length}</div><h1>${esc(l.title)}</h1>${lessonBody(l,m)}${renderLessonQuiz(l)}${practice?`<div class="lesson-footer lesson-practice-links">${practice}</div>`:''}<div class="lesson-footer"><button class="btn primary" data-action="complete-lesson">${done?'✓ Урок завершён':'Отметить урок завершённым'}</button></div></div>${outcomes}
  <div class="lesson-card"><div class="lesson-footer"><button class="btn" data-action="prev-lesson" ${state.lessonIndex===0?'disabled':''}>← Предыдущий урок</button><button class="btn primary" data-action="next-lesson" ${trackEnd?'disabled':''}>${trackEnd?(m.track==='core'?'Курс SQL для аналитика завершён':'Курс PostgreSQL завершён'):state.lessonIndex===m.lessons.length-1?'Следующий модуль →':'Следующий урок →'}</button></div></div></article></div>`;
 }
