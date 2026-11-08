@@ -7,12 +7,12 @@
 - Репозиторий: https://github.com/vladsimbro/SQL
 - GitHub Pages: https://vladsimbro.github.io/SQL/
 - Основная ветка: main; GitHub API подтверждает единственную ветку main.
-- Текущий HEAD main: f30a0ef732d9d8e94163d8067b00cf16e298a4ff (кодовая правка ожидает завершения CI).
-- Последний проверенный code/test commit: 0bc69b665a90d9dcb026d0066d67728e7e2f0f94; текущий code commit f30a0ef732d9d8e94163d8067b00cf16e298a4ff ожидает CI.
-- Текущий build приложения: 20261109-113.
-- Полный workflow 42535155972 на 0bc69b6: validate, deploy и browser-smoke — success.
-- Pages workflow 42535155787 на 0bc69b6: build и deploy — success.
-- Browser-smoke проверил фактически опубликованный GitHub Pages сайт; screenshot artifact загружен, failure screenshot пропущен, поскольку job завершился успешно.
+- Текущий HEAD main: af336cbeaf60b15a52314a801441c3886b053ac6 (последний commit обновляет только PROJECT_STATUS.md).
+- Последний проверенный code/test commit: f30a0ef732d9d8e94163d8067b00cf16e298a4ff.
+- Build приложения: 20261109-113.
+- Полный workflow 42536065602 на f30a0ef: validate, deploy и browser-smoke — success.
+- Pages workflow 42536098883 на af336cb: build и deploy — success.
+- Browser-smoke проверил опубликованный GitHub Pages сайт; UX audit screenshots загружены, failure screenshot пропущен после успешного теста.
 - Открытых Pull Requests нет. Ветка только main; незавершённых переносов между ветками не обнаружено.
 - Изменения выполнялись через GitHub API; локальный clone и локальный git status не использовались.
 - Предыдущие SHA/build/workflow в исторических разделах ниже относятся к прежним состояниям. Для текущего состояния использовать этот раздел и финальную передачу в конце документа.
@@ -564,8 +564,8 @@ Browser-smoke assertions:
 - **Последняя завершённая задача:** аудит Foundations/Relational/Types/Anatomy (25 уроков); исправлено противоречие «оплаченные»/delivered в логическом порядке SELECT.
 - **Текущая незавершённая задача:** общий педагогический аудит основного SQL-курса — IN_PROGRESS.
 - **Следующая конкретная задача:** аудит SELECT/WHERE и e01–e15, включая ошибочную подсказку e13 (LOWER вместо UPPER).
-- **Последний проверенный commit SHA:** `0bc69b665a90d9dcb026d0066d67728e7e2f0f94`; новый code commit `f30a0ef732d9d8e94163d8067b00cf16e298a4ff` ожидает CI.
-- **Последний результат тестирования:** предыдущий commit `0bc69b6` прошёл validate/deploy/browser-smoke; проверка структуры после текущего исправления подтверждена чтением исходника, CI ожидается.
+- **Последний проверенный code commit SHA:** `f30a0ef732d9d8e94163d8067b00cf16e298a4ff`; текущий HEAD main `af336cbeaf60b15a52314a801441c3886b053ac6` — обновление документа.
+- **Последний результат тестирования:** workflow `42536065602` на `f30a0ef` — validate/deploy/browser-smoke success; curriculum smoke: 25 модулей, 173 урока, 100 knowledge checks, 103 runnable exercises, 350 random tasks; 81 expected result tables и 114 read-only lesson examples выполнены; backup checks passed.
 - **Состояние GitHub:** code commit отправлен в main; единственная ветка main, открытых PR не проверялось повторно в этой сессии.
-- **Состояние GitHub Pages:** build `20261109-113` запущен; публикация текущего SHA ещё не подтверждена.
+- **Состояние GitHub Pages:** build `20261109-113` опубликован; Pages workflow `42536098883` на актуальном документальном HEAD `af336cb` — success.
 
