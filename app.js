@@ -534,7 +534,7 @@ async function checkExercise() {
 function normalizeResult(result,preserveOrder=false) {
   const normalizeValue=value=>value instanceof Date?value.toISOString():typeof value==='bigint'?String(value):value;
   const rows=(result.rows||[]).map(row=>Object.fromEntries(Object.entries(row).map(([key,value])=>[key,normalizeValue(value)])));
-  const columns=(result.fields||[]).map(field=>field.name);
+  let columns=(result.fields||[]).map(field=>field.name);
   if(!columns.length&&rows.length)columns=Object.keys(rows[0]);
   if(!preserveOrder)rows.sort((a,b)=>JSON.stringify(a).localeCompare(JSON.stringify(b)));
   return {columns,rows};

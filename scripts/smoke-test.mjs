@@ -158,6 +158,7 @@ assert.equal(resultMatches(duplicateRows,missingDuplicate),false,'Result compari
 assert.equal(resultMatches(normalize({rows:[{id:1}],fields:[{name:'id'}]}),normalize({rows:[{id:1}],fields:[{name:'id'},{name:'extra'}]})),false,'Result comparison must reject missing or extra output columns');
 assert.equal(resultMatches(normalize({rows:[{id:1}],fields:[{name:'id'}]}),normalize({rows:[{id:2}],fields:[{name:'id'}]})),false,'Result comparison must reject a different value even when row counts match');
 assert.equal(resultMatches(normalize({rows:[],fields:[{name:'id'},{name:'status'}]}),normalize({rows:[],fields:[{name:'status'},{name:'id'}]})),true,'Empty results must retain column names and compare independently of column order');
+assert.deepEqual(normalize({rows:[{id:1}]}).columns,['id'],'Result normalization must fall back to row keys when the driver omits field metadata');
 assert.equal(resultMatches(normalize({rows:[{payload:{b:2,a:1}}],fields:[{name:'payload'}]}),normalize({rows:[{payload:{a:1,b:2}}],fields:[{name:'payload'}]})),true,'JSON objects must compare independent of object key order');
 assert.equal(modules.length, 25, 'Expected 25 ordered modules');
 assert.ok(modules.every(module => module.lessons.length > 0), 'Every module must have lessons');
