@@ -2,8 +2,12 @@ name: Validate and deploy SQL Academy
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - PROJECT_STATUS.md
   pull_request:
     branches: [main]
+    paths-ignore:
+      - PROJECT_STATUS.md
   workflow_dispatch:
 permissions:
   contents: read
