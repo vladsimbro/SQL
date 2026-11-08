@@ -1,7 +1,7 @@
-import { modules, learningTracks, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261108-90';
-import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261108-90';
-import { firstSqlKeyword, explainStatementKeyword, explainStatementBody, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261108-90';
-import { migrateProgress, getTrackProgress, findNextLesson } from './progress-utils.js?v=20261108-90';
+import { modules, learningTracks, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261108-91';
+import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261108-91';
+import { firstSqlKeyword, explainStatementKeyword, explainStatementBody, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261108-91';
+import { migrateProgress, getTrackProgress, findNextLesson } from './progress-utils.js?v=20261108-91';
 
 const $ = (s, root=document) => root.querySelector(s);
 const $$ = (s, root=document) => [...root.querySelectorAll(s)];
@@ -10,7 +10,7 @@ const EDITOR_KEY = 'sql-academy-editor-v1';
 const state = {
   view:'dashboard', moduleId:modules[0].id, lessonIndex:0, exerciseId:exercises[0].id, roadmapTrack:'core',
   completedLessons:new Set(), completedExercises:new Set(), db:null, expected:new Map(), randomTask:null, randomTopics:new Set(sandboxTaskTopics.map(topic=>topic.id)),
-  engineReady:false, currentRows:[], quizAnswers:{}, exerciseQuizAnswers:{}, assessmentTrack:'core', assessmentModuleId:null, assessmentAnswers:{}, assessmentSubmitted:false, assessmentResults:{}, editors:new Map(), navigationScrollReset:false, theme:localStorage.getItem('sql-academy-theme') || 'dark'
+  engineReady:false, engineLoading:false, engineError:null, currentRows:[], quizAnswers:{}, exerciseQuizAnswers:{}, assessmentTrack:'core', assessmentModuleId:null, assessmentAnswers:{}, assessmentSubmitted:false, assessmentResults:{}, editors:new Map(), navigationScrollReset:false, theme:localStorage.getItem('sql-academy-theme') || 'dark'
 };
 const moduleById = id => modules.find(m=>m.id===id);
 const lessonTotal = modules.reduce((n,m)=>n+m.lessons.length,0);
@@ -67,7 +67,8 @@ function render() {
   $('#breadcrumb-current').textContent=label[state.view]||'Учебник';
   updateProgress();
   const pages={dashboard:renderDashboard,roadmap:renderRoadmap,study:renderStudy,practice:renderPractice,assessment:renderAssessment,playground:renderPlayground,schema:renderSchema,reference:renderReference,glossary:renderGlossary};
-  host.innerHTML=(pages[state.view]||renderDashboard)();
+  const engineError=state.engineError?'<div class="feedback fail" role="alert" style="margin-bottom:16px"><strong>Не удалось запустить PostgreSQL.</strong><p>Этап: '+esc(state.engineError.stage)+'</p><p>'+esc(state.engineError.message)+'</p><details><summary>Технические подробности</summary><pre>'+esc(state.engineError.detail)+'</pre></details><button class="btn primary" data-action="retry-engine">Повторить запуск</button></div>':'';
+  host.innerHTML=engineError+(pages[state.view]||renderDashboard)();
   bindPage();
   requestAnimationFrame(()=>{
     if(state.view==='study')$('.lesson-sidebar')?.scrollTo({top:sidebarScroll,behavior:'instant'});
@@ -345,17 +346,22 @@ function renderExerciseHints(exercise) {
   ].filter(([, value]) => value);
   return levels.map(([label, value]) => `<details class="hint"><summary>${label}</summary><p>${esc(value)}</p></details>`).join('');
 }
+function engineNotice() {
+  if(state.engineReady || state.engineError) return '';
+  return '<div class="callout" role="status" style="margin-bottom:14px"><strong>Подготавливаем учебную базу.</strong> Редактор и теория доступны, проверка запросов откроется после запуска PostgreSQL и расчёта эталонных результатов.</div>';
+}
 function renderPractice() {
   const active=exercises.find(e=>e.id===state.exerciseId)||exercises[0];
   const m=getModuleForExercise(active);
   const list=exercises.map((e,i)=>`<button class="exercise-item ${e.id===active.id?'active':''}" data-exercise="${e.id}"><span class="exercise-check">${state.completedExercises.has(e.id)?'✓':String(i+1).padStart(2,'0')}</span><span><strong>${esc(e.title)}</strong><small>${esc(moduleById(e.m).title.split(':')[0])}</small></span></button>`).join('');
   return `
   ${pageHead(`ПРАКТИКА · ${exercises.length} ЗАДАНИЙ`,'Закрепляй SQL руками','Каждое задание проверяется сравнением результата твоего запроса с эталонным результатом, рассчитанным на той же учебной базе. Порядок строк не учитывается, если он не меняет состав результата.')}
+  ${engineNotice()}
   <div class="exercise-layout"><aside><input class="exercise-filter" id="exercise-search" placeholder="Найти задачу по названию…"><div class="exercise-list" id="exercise-list">${list}</div></aside>
   <section><div class="task-card"><div class="task-meta">ЗАДАНИЕ ${exercises.indexOf(active)+1} ИЗ ${exercises.length} · ${esc(m.title)}</div><h2>${esc(active.title)} ${state.completedExercises.has(active.id)?'✓':''}</h2><p>${esc(active.task)}</p>${renderExerciseHints(active)}</div>
   ${renderExerciseQuiz(active)}
   ${editor('','exercise-editor','Напиши SQL-запрос. Эталонное решение скрыто до нажатия «Показать решение».')}
-  <div class="editor-actions" style="margin-top:10px"><button class="btn primary" data-action="check-exercise">Проверить решение</button>${(active.mode==='mutation'||active.mode==='transaction')?'':'<button class="btn" data-action="run-exercise">Выполнить запрос</button>'}<button class="btn" data-action="show-solution">Показать решение</button><button class="btn" data-action="reset-db">Сбросить базу</button></div>
+  <div class="editor-actions" style="margin-top:10px"><button class="btn primary" data-action="check-exercise" ${state.engineReady?'':'disabled'}>Проверить решение</button>${(active.mode==='mutation'||active.mode==='transaction')?'':'<button class="btn" data-action="run-exercise" ${state.engineReady?'':'disabled'}>Выполнить запрос</button>'}<button class="btn" data-action="show-solution">Показать решение</button><button class="btn" data-action="reset-db" ${state.engineReady?'':'disabled'}>Сбросить базу</button></div>
   <div id="exercise-feedback"></div><div id="exercise-results"></div>
   <div class="lesson-footer" style="margin-top:16px"><button class="btn" data-action="prev-exercise">← Предыдущее</button><button class="btn" data-action="next-exercise">Следующее →</button></div></section></div>`;
 }
@@ -368,17 +374,18 @@ function setEditorValue(id,value){const cm=state.editors.get(id);if(cm){cm.setVa
 function renderRandomTaskPanel() {
   const selected=state.randomTopics.size,active=state.randomTask;
   const topics=sandboxTaskTopics.map(topic=>`<label class="random-topic-option"><input type="checkbox" data-random-topic="${topic.id}" ${state.randomTopics.has(topic.id)?'checked':''}><span>${esc(topic.title)}</span><small>25</small></label>`).join('');
-  const taskCard=active?`<div class="random-task-card"><div class="task-meta">${esc(sandboxTaskTopics.find(topic=>topic.id===active.topic)?.title||'SQL')} · ${esc(active.id)}</div><h3>${esc(active.title)}</h3><p>${esc(active.prompt)}</p><details class="hint"><summary>Подсказка</summary><p>${esc(active.hint)}</p></details><details class="hint"><summary>Показать эталонное решение</summary><pre class="random-solution">${esc(active.solution)}</pre><button class="btn small" data-action="insert-random-solution">Вставить решение в редактор</button></details><div id="random-task-feedback"></div><button class="btn primary small" data-action="check-random-task">Проверить мой запрос</button></div>`:'<div class="random-task-empty">Выбери одну или несколько тем и нажми «Случайное задание». Каждое задание можно проверить на текущей учебной базе.</div>';
+  const taskCard=active?`<div class="random-task-card"><div class="task-meta">${esc(sandboxTaskTopics.find(topic=>topic.id===active.topic)?.title||'SQL')} · ${esc(active.id)}</div><h3>${esc(active.title)}</h3><p>${esc(active.prompt)}</p><details class="hint"><summary>Подсказка</summary><p>${esc(active.hint)}</p></details><details class="hint"><summary>Показать эталонное решение</summary><pre class="random-solution">${esc(active.solution)}</pre><button class="btn small" data-action="insert-random-solution">Вставить решение в редактор</button></details><div id="random-task-feedback"></div><button class="btn primary small" data-action="check-random-task" ${state.engineReady?'':'disabled'}>Проверить мой запрос</button></div>`:'<div class="random-task-empty">Выбери одну или несколько тем и нажми «Случайное задание». Каждое задание можно проверить на текущей учебной базе.</div>';
   return `<section class="random-task-panel"><div class="random-task-head"><div><div class="eyebrow">ТРЕНАЖЁР · ${sandboxTaskCount} ЗАДАНИЙ</div><h2>Случайное задание</h2><p>Выбирай несколько тем одновременно. Задания требуют не только знать конструкции, но и сочетать фильтрацию, JOIN, агрегацию, CTE и оконные функции.</p></div><div class="random-task-actions"><button class="btn small" data-action="select-all-random-topics">Все темы</button><button class="btn small" data-action="clear-random-topics">Снять выбор</button></div></div><div class="random-topic-grid">${topics}</div><div class="random-task-controls"><span>${selected} из ${sandboxTaskTopics.length} тем выбрано</span><button class="btn primary" data-action="new-random-task" ${selected?'':'disabled'}>Случайное задание</button></div>${taskCard}</section>`;
 }
 function renderPlayground() {
   const val=localStorage.getItem(EDITOR_KEY)||"SELECT status, COUNT(*) AS orders_count\nFROM orders\nGROUP BY status\nORDER BY orders_count DESC;";
   return `
     ${pageHead('SQL LAB · СВОБОДНЫЙ РЕЖИМ','SQL-песочница','Пиши любые запросы к учебной базе. Можно читать и изменять данные, создавать временные таблицы и экспериментировать. Кнопка сброса пересоздаёт учебную схему и данные.')}
+    ${engineNotice()}
     <div class="grid-2" style="margin-bottom:14px"><div class="callout"><strong>Подключение:</strong> PostgreSQL в WebAssembly, запущенный внутри браузера. Запросы не отправляются на сервер курса. После перезагрузки песочница создаётся заново.</div><div class="callout"><strong>Горячая клавиша:</strong> Ctrl + Enter выполняет SQL. Для нескольких команд можно вводить их через точку с запятой.</div></div>
     ${renderRandomTaskPanel()}
     ${editor(val,'playground-editor')}
-    <div class="editor-actions" style="margin-top:10px"><button class="btn primary" data-action="run-playground">▶ Выполнить SQL</button><button class="btn" data-action="reset-db">Сбросить учебную базу</button><button class="btn" data-action="insert-sample">Вставить пример JOIN</button></div>
+    <div class="editor-actions" style="margin-top:10px"><button class="btn primary" data-action="run-playground" ${state.engineReady?'':'disabled'}>▶ Выполнить SQL</button><button class="btn" data-action="reset-db" ${state.engineReady?'':'disabled'}>Сбросить учебную базу</button><button class="btn" data-action="insert-sample">Вставить пример JOIN</button></div>
     <div id="playground-results"></div>`;
 }
 function renderSchema() {
@@ -433,6 +440,7 @@ function handleAction(action) {
   const m=moduleById(state.moduleId)||modules[0];
   const trackModules=moduleLessons(m.track);
   const trackIndex=trackModules.findIndex(module=>module.id===m.id);
+  if(action==='retry-engine'){initDatabase();return;}
   if(action==='assessment-back'){state.assessmentModuleId=null;state.assessmentAnswers={};state.assessmentSubmitted=false;render();return;}
   if(action==='assessment-retry'){state.assessmentAnswers={};state.assessmentSubmitted=false;render();return;}
   if(action==='assessment-submit'){
@@ -477,6 +485,7 @@ function handleAction(action) {
 async function checkRandomTask(){
  const task=state.randomTask,feedback=$('#random-task-feedback'),sql=getEditorValue('playground-editor').trim();
  if(!task||!feedback)return;
+ if(!state.engineReady||!state.db){feedback.innerHTML='<div class="feedback fail">Проверка станет доступна после подготовки PostgreSQL.</div>';return;}
  if(!sql){feedback.innerHTML='<div class="feedback fail">Сначала напиши запрос в редакторе.</div>';return;}
  try{
   const parts=splitStatements(sql);
@@ -489,7 +498,7 @@ async function checkRandomTask(){
  }catch(error){feedback.innerHTML='<div class="feedback fail"><strong>Ошибка:</strong> '+esc(error.message)+'</div>';}
 }
 async function checkExercise() {
-  if(!state.db){toast('База ещё загружается');return;}
+  if(!state.engineReady||!state.db){toast('PostgreSQL ещё подготавливает учебную базу и эталонные результаты.');return;}
   const ex=exercises.find(x=>x.id===state.exerciseId),sql=getEditorValue('exercise-editor').trim();
   const feedback=$('#exercise-feedback'),results=$('#exercise-results');
   if(!sql){feedback.innerHTML='<div class="feedback fail">Напиши SQL-запрос перед проверкой.</div>';return;}
@@ -590,7 +599,7 @@ function resultMatches(actual,expected,preserveOrder=false) {
   return JSON.stringify(actualRows)===JSON.stringify(expectedRows);
 }
 async function runEditorQuery(sql,target) {
-  const host=$('#'+target);if(!host)return;if(!state.db){host.innerHTML='<div class="feedback fail">PostgreSQL ещё загружается.</div>';return;}
+  const host=$('#'+target);if(!host)return;if(!state.engineReady||!state.db){host.innerHTML='<div class="feedback fail">PostgreSQL ещё подготавливает учебную базу.</div>';return;}
   if(!sql.trim()){host.innerHTML='<div class="feedback fail">Редактор пустой. Добавь SQL-запрос.</div>';return;}
   const start=performance.now();
   try{
@@ -605,11 +614,8 @@ function renderResult(result,elapsed) {
   const table='<table class="result-table"><thead><tr>'+cols.map(c=>'<th>'+esc(c)+'</th>').join('')+'</tr></thead><tbody>'+rows.slice(0,500).map(r=>'<tr>'+cols.map(c=>'<td>'+esc(r[c]===null?'NULL':r[c] instanceof Date?r[c].toISOString():r[c])+'</td>').join('')+'</tr>').join('')+'</tbody></table>';
   return '<div class="result-panel"><div class="result-head"><strong>Результат запроса</strong><small>'+elapsed+' ms · '+rows.length+' строк'+(rows.length>500?' · показаны первые 500':'')+'</small></div><div class="result-body">'+table+'</div></div>';
 }
-async function resetDatabase() {
-  const button=$('[data-action="reset-db"]');if(button){button.disabled=true;button.textContent='Сброс…';}
-  try{if(state.db)await state.db.close();const {PGlite}=await import('https://cdn.jsdelivr.net/npm/@electric-sql/pglite@0.5.15/dist/index.js');state.db=new PGlite();await state.db.exec(seedSQL);await prepareExpected();toast('Учебная база пересоздана.');}
-  catch(err){console.error(err);toast('Не удалось пересоздать базу: '+err.message);}
-  finally{if(button){button.disabled=false;button.textContent='Сбросить базу';}}
+function resetDatabase() {
+  return initDatabase({reset:true});
 }
 async function prepareExpected() {
   state.expected.clear();
@@ -646,12 +652,26 @@ async function prepareExpected() {
     throw new Error(`Не удалось подготовить эталонные результаты (${state.expected.size}/${exercises.length}). ${failures.join('; ')}`);
   }
 }
-async function initDatabase() {
+function rerenderPreservingEditor() {
+  const editorId=state.view==='practice'?'exercise-editor':state.view==='playground'?'playground-editor':null;
+  const editorValue=editorId&&$('#'+editorId)?getEditorValue(editorId):null;
+  render();
+  if(editorId&&editorValue!==null)setEditorValue(editorId,editorValue);
+}
+async function initDatabase({reset=false}={}) {
+  if(state.engineLoading)return;
+  const retrying=Boolean(state.engineError);
+  state.engineLoading=true;
+  state.engineReady=false;
+  state.engineError=null;
+  state.expected.clear();
   const status=$('#engine-status'),pill=$('.engine-pill');
   let stage='загрузка библиотеки PGlite';
   pill.classList.remove('ready','error');
-  status.textContent='Запуск PostgreSQL…';
+  status.textContent=reset?'Пересоздание учебной базы…':'Запуск PostgreSQL…';
+  if(reset||retrying)rerenderPreservingEditor();
   try{
+    if(state.db){await state.db.close();state.db=null;}
     const {PGlite}=await import('https://cdn.jsdelivr.net/npm/@electric-sql/pglite@0.5.15/dist/index.js');
     stage='создание временной базы данных';
     state.db=await PGlite.create({dataDir:'memory://'});
@@ -659,17 +679,24 @@ async function initDatabase() {
     await state.db.exec(seedSQL);
     stage='подготовка эталонных результатов практики';
     await prepareExpected();
-    state.engineReady=true;pill.classList.add('ready');status.textContent='PostgreSQL готов';
-    stage='отрисовка интерфейса после запуска базы';
-    render();
+    state.engineReady=true;
+    state.engineLoading=false;
+    state.engineError=null;
+    pill.classList.add('ready');status.textContent='PostgreSQL готов';
+    rerenderPreservingEditor();
+    if(reset)toast('Учебная база пересоздана.');
   }catch(err){
     console.error('SQL Academy database initialization failed:',stage,err);
     state.engineReady=false;
+    state.engineLoading=false;
     if(state.db){try{await state.db.close();}catch{} state.db=null;}
     pill.classList.add('error');status.textContent='Ошибка движка';
-    const detail=esc(err?.stack||err?.message||String(err));
-    $('#app-content').innerHTML='<div class="empty-state"><h2>Не удалось запустить PostgreSQL</h2><p><strong>Этап:</strong> '+esc(stage)+'</p><p>'+detail+'</p><p>Проверь подключение к CDN только если не загрузилась библиотека. Если ошибка возникла на другом этапе, это уже проблема инициализации базы, а не интернет-соединения.</p><button class="btn primary" id="retry-engine">Повторить запуск</button></div>';
-    $('#retry-engine').addEventListener('click',initDatabase);
+    state.engineError={
+      stage,
+      message:String(err?.message||err),
+      detail:String(err?.stack||err?.message||err)
+    };
+    rerenderPreservingEditor();
   }
 }
 document.addEventListener('click',event=>{
@@ -717,4 +744,5 @@ const themeMeta=$('meta[name="theme-color"]');if(themeMeta)themeMeta.content=sta
 $('#mobile-menu').addEventListener('click',()=>$('#sidebar').classList.toggle('open'));
 document.addEventListener('click',e=>{if(innerWidth<760&&$('#sidebar').classList.contains('open')&&!e.target.closest('#sidebar')&&!e.target.closest('#mobile-menu'))$('#sidebar').classList.remove('open');});
 document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){const active=document.activeElement;if(active?.classList.contains('sql-editor'))return;}});
+render();
 initDatabase();

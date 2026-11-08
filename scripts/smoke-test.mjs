@@ -54,6 +54,10 @@ assert.equal(exercises.filter(exercise => exercise.mode === 'transaction').lengt
 assert.equal(exercises.length, 102, 'Expected 102 total practice exercises');
 assert.ok(exercises.every(exercise => modules.some(module => module.id === exercise.m)), 'Every exercise must belong to a real module');
 assert.ok(appSource.includes("from './sql-utils.js?v="), 'Application must use the shared SQL parser module');
+assert.ok(appSource.includes("render();\ninitDatabase();"), 'The application shell must render before PostgreSQL initialization begins');
+assert.ok(appSource.includes("state.engineLoading=true") && appSource.includes("state.engineError="), 'Database startup must expose loading and recoverable error states');
+assert.ok(appSource.includes('data-action="retry-engine"'), 'A database startup error must offer an in-app retry action');
+assert.ok(appSource.includes("!state.engineReady||!state.db"), 'Database-dependent actions must be guarded until initialization finishes');
 const sqlLexer = new Function(sqlUtilsSource.replaceAll('export function ', 'function ') + '; return { firstSqlKeyword, sqlAfterKeyword, explainStatementKeyword, explainStatementBody, readOnlyQueryKeyword, splitStatements };')();
 assert.equal(sqlLexer.firstSqlKeyword("-- leading comment\nSELECT 1"), 'SELECT', 'Leading line comments must be ignored');
 assert.equal(sqlLexer.firstSqlKeyword('/* outer /* nested */ comment */ WITH q AS (SELECT 1) SELECT * FROM q'), 'WITH', 'Nested block comments must be ignored');
