@@ -1,8 +1,8 @@
-import { modules, learningTracks, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261108-101';
-import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261108-101';
-import { firstSqlKeyword, explainStatementKeyword, explainStatementBody, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261108-101';
-import { migrateProgress, getTrackProgress, findNextLesson } from './progress-utils.js?v=20261108-101';
-import { projects, projectTaskCount } from './projects.js?v=20261108-101';
+import { modules, learningTracks, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261108-102';
+import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261108-102';
+import { firstSqlKeyword, explainStatementKeyword, explainStatementBody, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261108-102';
+import { migrateProgress, getTrackProgress, findNextLesson } from './progress-utils.js?v=20261108-102';
+import { projects, projectTaskCount } from './projects.js?v=20261108-102';
 
 const $ = (s, root=document) => root.querySelector(s);
 const $$ = (s, root=document) => [...root.querySelectorAll(s)];
@@ -10,6 +10,8 @@ const STORE_KEY = 'sql-academy-progress-v1';
 const EDITOR_KEY = 'sql-academy-editor-v1';
 const PROJECT_PROGRESS_KEY = 'sql-academy-project-progress-v1';
 const PROJECT_DRAFTS_KEY = 'sql-academy-project-drafts-v1';
+const PROJECT_NOTES_KEY = 'sql-academy-project-notes-v1';
+const PROJECT_REVIEWS_KEY = 'sql-academy-project-reviews-v1';
 const PGLITE_MODULE_URL = 'https://cdn.jsdelivr.net/npm/@electric-sql/pglite@0.5.15/dist/index.js';
 let pgliteImportAttempt = 0;
 let pgliteModulePromise = null;
@@ -26,7 +28,7 @@ const loadPGliteModule = () => {
 const state = {
   view:'dashboard', moduleId:modules[0].id, lessonIndex:0, exerciseId:exercises[0].id, roadmapTrack:'core',
   completedLessons:new Set(), completedExercises:new Set(), practiceTrack:'core',
-  projectId:'ecommerce', projectTaskId:'ecommerce-monthly-net-revenue', completedProjectTasks:new Set(), projectDrafts:{}, projectSolutionVisible:false,
+  projectId:'ecommerce', projectTaskId:'ecommerce-monthly-net-revenue', completedProjectTasks:new Set(), projectDrafts:{}, projectNotes:{}, projectReviews:{}, projectSolutionVisible:false,
   db:null, expected:new Map(), randomTask:null, randomTopics:new Set(sandboxTaskTopics.map(topic=>topic.id)),
   engineReady:false, engineLoading:false, engineError:null, currentRows:[], quizAnswers:{}, exerciseQuizAnswers:{}, assessmentTrack:'core', assessmentModuleId:null, assessmentAnswers:{}, assessmentSubmitted:false, assessmentResults:{}, editors:new Map(), navigationScrollReset:false, theme:localStorage.getItem('sql-academy-theme') || 'dark'
 };
@@ -60,6 +62,8 @@ const loadProjectState = () => {
   try {
     state.completedProjectTasks = new Set(JSON.parse(localStorage.getItem(PROJECT_PROGRESS_KEY)||'[]'));
     state.projectDrafts = JSON.parse(localStorage.getItem(PROJECT_DRAFTS_KEY)||'{}');
+    state.projectNotes = JSON.parse(localStorage.getItem(PROJECT_NOTES_KEY)||'{}');
+    state.projectReviews = JSON.parse(localStorage.getItem(PROJECT_REVIEWS_KEY)||'{}');
   } catch (error) {
     console.warn('Could not restore project progress:',error);
     state.completedProjectTasks = new Set();
@@ -70,6 +74,14 @@ const saveProjectProgress = () => localStorage.setItem(PROJECT_PROGRESS_KEY,JSON
 const saveProjectDraft = (taskId,value) => {
   state.projectDrafts[taskId]=value;
   localStorage.setItem(PROJECT_DRAFTS_KEY,JSON.stringify(state.projectDrafts));
+};
+const saveProjectNote = (projectId,value) => {
+  state.projectNotes[projectId]=value;
+  localStorage.setItem(PROJECT_NOTES_KEY,JSON.stringify(state.projectNotes));
+};
+const saveProjectReview = (projectId,choice) => {
+  state.projectReviews[projectId]=choice;
+  localStorage.setItem(PROJECT_REVIEWS_KEY,JSON.stringify(state.projectReviews));
 };
 const updateProgress = () => {
   const activeTrackId=state.view==='study'?(moduleById(state.moduleId)?.track||'core'):state.view==='roadmap'?state.roadmapTrack:state.view==='practice'?state.practiceTrack:state.view==='assessment'?state.assessmentTrack:'core';
@@ -201,6 +213,59 @@ function renderProjects() {
   return pageHead('ПРАКТИЧЕСКИЕ КЕЙСЫ','Проекты','Самостоятельные бизнес-задачи, где нужно выбрать подход к анализу, проверить метрики и объяснить результат.')+
     `<div class="project-grid">${cards}</div>`;
 }
+function renderProjectWrapUp(project,unlocked) {
+  if(!unlocked) return `<section class="project-wrapup" id="project-wrapup">
+    <div class="project-wrapup-locked">
+      <span class="eyebrow">ФИНАЛЬНЫЙ ЭТАП</span>
+      <h2>Итоговая аналитическая записка</h2>
+      <p>Сначала выполни три SQL-задания проекта. После этого откроются проверка качества выводов, вопросы для записки и проверка интерпретации.</p>
+    </div>
+  </section>`;
+  const wrap=project.wrapUp;
+  const review=wrap.review;
+  const selected=Number.isInteger(state.projectReviews[project.id])?state.projectReviews[project.id]:null;
+  const answered=selected!==null;
+  const options=review.options.map((option,index)=>{
+    const correct=index===review.correctIndex;
+    const selectedClass=answered&&index===selected?(correct?' is-correct':' is-incorrect'):'';
+    const revealClass=answered&&correct&&index!==selected?' is-correct':'';
+    return `<button class="project-review-option${selectedClass}${revealClass}" data-project-review="${project.id}:${index}" ${answered?'disabled':''}>${String.fromCharCode(65+index)}. ${esc(option)}</button>`;
+  }).join('');
+  const answer=answered?(
+    selected===review.correctIndex
+      ? `<div class="feedback success" role="status"><strong>Верная интерпретация.</strong><p>${esc(review.explanation)}</p></div>`
+      : `<div class="feedback fail" role="status"><strong>Не совсем. Верный вариант: ${String.fromCharCode(65+review.correctIndex)}.</strong><p>${esc(review.explanation)}</p></div>`
+  ):'';
+  return `<section class="project-wrapup" id="project-wrapup">
+    <div class="project-wrapup-heading">
+      <span class="eyebrow">ФИНАЛЬНЫЙ ЭТАП · ${esc(project.title)}</span>
+      <h2>${esc(wrap.title)}</h2>
+      <p>SQL-результат — ещё не бизнес-вывод. Проверь данные, объясни наблюдения и отдели факт от гипотезы.</p>
+    </div>
+    <div class="project-wrapup-grid">
+      <section class="project-wrapup-panel">
+        <h3>Проверка надёжности</h3>
+        <ul class="project-check-list">${wrap.checks.map(item=>`<li>${esc(item)}</li>`).join('')}</ul>
+        <h3>Проверь интерпретацию</h3>
+        <p class="project-review-prompt">${esc(review.prompt)}</p>
+        <div class="project-review-options">${options}</div>
+        <div id="project-review-feedback">${answer}</div>
+      </section>
+      <section class="project-wrapup-panel project-note-panel">
+        <label for="project-conclusion">Черновик итоговой записки</label>
+        <p>${esc(wrap.notePrompt)}</p>
+        <textarea id="project-conclusion" data-project-conclusion="${project.id}" rows="9" maxlength="5000" placeholder="Наблюдения → интерпретация → ограничение → рекомендация">${esc(state.projectNotes[project.id]||'')}</textarea>
+        <small>Сохраняется автоматически отдельно для каждого проекта в этом браузере.</small>
+      </section>
+    </div>
+    <section class="project-wrapup-prompts">
+      <h3>Что должно попасть в итоговый вывод</h3>
+      <ol>${wrap.prompts.map(item=>`<li>${esc(item)}</li>`).join('')}</ol>
+    </section>
+    <p class="project-limitation"><strong>Ограничения данных.</strong> ${esc(wrap.limitation)}</p>
+  </section>`;
+}
+
 function renderProject() {
   const project=projects.find(item=>item.id===state.projectId)||projects[0];
   const active=project.tasks.find(task=>task.id===state.projectTaskId)||project.tasks[0];
@@ -243,7 +308,8 @@ function renderProject() {
         ${solution}
         <div id="project-feedback"></div>
       </section>
-    </div>`;
+    </div>
+    ${renderProjectWrapUp(project,completed===project.tasks.length)}`;
 }
 
 function renderRoadmap() {
@@ -670,6 +736,7 @@ async function checkProjectTask(){
     const nav=$('#project-task-'+task.id);
     if(nav){nav.classList.add('done');$('.project-task-status',nav).textContent='✓';$('small',nav).textContent='Проверено';}
     feedback.innerHTML='<div class="feedback success"><strong>Верно!</strong><p>Запрос вернул ожидаемый результат. Задание отмечено как выполненное.</p></div>';
+    if(done===project.tasks.length){const wrap=$('#project-wrapup');if(wrap)wrap.outerHTML=renderProjectWrapUp(project,true);}
     if(!wasCompleted)toast('Задание проекта пройдено');
   }catch(error){
     feedback.innerHTML='<div class="feedback fail"><strong>Ошибка запроса:</strong><p>'+esc(error.message)+'</p></div>';
@@ -892,12 +959,29 @@ async function initDatabase({reset=false}={}) {
     rerenderPreservingEditor();
   }
 }
+document.addEventListener('input',event=>{
+ const field=event.target.closest('[data-project-conclusion]');
+ if(!field)return;
+ saveProjectNote(field.dataset.projectConclusion,field.value);
+});
 document.addEventListener('click',event=>{
- const el=event.target.closest('[data-nav],[data-open-course],[data-open-project],[data-project-task],[data-practice-track],[data-track],[data-module],[data-assessment-track],[data-assessment-module],[data-assessment-answer],[data-lesson],[data-exercise],[data-action],[data-copy-code],[data-sample],[data-quiz-answer],[data-exercise-quiz-answer]');if(!el)return;
+ const el=event.target.closest('[data-nav],[data-open-course],[data-open-project],[data-project-task],[data-project-review],[data-practice-track],[data-track],[data-module],[data-assessment-track],[data-assessment-module],[data-assessment-answer],[data-lesson],[data-exercise],[data-action],[data-copy-code],[data-sample],[data-quiz-answer],[data-exercise-quiz-answer]');if(!el)return;
  if(el.dataset.nav){event.preventDefault();go(el.dataset.nav);return;}
  if(el.dataset.openCourse){const track=learningTracks.find(item=>item.id===el.dataset.openCourse);if(track){state.roadmapTrack=track.id;go('roadmap');}return;}
  if(el.dataset.openProject){const project=projects.find(item=>item.id===el.dataset.openProject);if(project){state.projectId=project.id;state.projectTaskId=project.tasks[0].id;state.projectSolutionVisible=false;go('project');}return;}
  if(el.dataset.projectTask){state.projectTaskId=el.dataset.projectTask;state.projectSolutionVisible=false;render();return;}
+ if(el.dataset.projectReview){
+  const [projectId,choiceText]=el.dataset.projectReview.split(':');
+  const project=projects.find(item=>item.id===projectId);
+  const choice=Number(choiceText);
+  if(!project||!Number.isInteger(choice)||choice<0||choice>=project.wrapUp.review.options.length||Number.isInteger(state.projectReviews[projectId]))return;
+  if(project.tasks.every(task=>state.completedProjectTasks.has(task.id))){
+   saveProjectReview(projectId,choice);
+   const wrap=$('#project-wrapup');
+   if(wrap)wrap.outerHTML=renderProjectWrapUp(project,true);
+  }
+  return;
+ }
  if(el.dataset.practiceTrack){const track=learningTracks.find(item=>item.id===el.dataset.practiceTrack);if(track){state.practiceTrack=track.id;const first=exercises.find(exercise=>moduleById(exercise.m)?.track===track.id);if(first)state.exerciseId=first.id;render();}return;}
  if(el.dataset.track){state.roadmapTrack=el.dataset.track;render();return;} if(el.dataset.assessmentTrack){state.assessmentTrack=el.dataset.assessmentTrack;state.assessmentModuleId=null;render();return;}
  if(el.dataset.assessmentModule){state.assessmentModuleId=el.dataset.assessmentModule;state.assessmentAnswers={};state.assessmentSubmitted=false;go('assessment');return;}

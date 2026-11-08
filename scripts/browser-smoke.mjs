@@ -167,6 +167,7 @@ try {
   assert.equal(await page.locator('#app-content .project-task-nav').count(), 3, 'Each project must expose its three ordered tasks');
   assert.equal((await page.locator('.project-task-content h2').textContent()).trim(), firstProjectTask.title);
   assert.equal(await page.locator('.project-solution').count(), 0, 'Reference SQL must remain hidden by default');
+  assert.equal(await page.locator('#project-wrapup .project-wrapup-locked').count(), 1, 'The final analysis stage must stay locked until all SQL tasks are complete');
 
   const projectEditor=page.locator('#project-editor');
   await writeEditor(projectEditor,'SELECT 1;');
@@ -189,6 +190,35 @@ try {
   assert.equal(await page.locator('.project-solution').count(),0,'The reference solution must be hideable');
   await page.locator('[data-project-task="'+secondProjectTask.id+'"]').click();
   assert.equal(await readEditor(page.locator('#project-editor')),projectDraft,'Switching away and back must preserve the project SQL draft');
+  await writeEditor(page.locator('#project-editor'),secondProjectTask.solution);
+  await page.locator('[data-action="check-project-task"]').click();
+  await page.locator('#project-feedback .feedback.success').waitFor({state:'visible',timeout:15_000});
+
+  const thirdProjectTask=productProject.tasks[2];
+  await page.locator('[data-project-task="'+thirdProjectTask.id+'"]').click();
+  await writeEditor(page.locator('#project-editor'),thirdProjectTask.solution);
+  await page.locator('[data-action="check-project-task"]').click();
+  await page.locator('#project-feedback .feedback.success').waitFor({state:'visible',timeout:15_000});
+  await page.locator('#project-wrapup .project-note-panel').waitFor({state:'visible'});
+  assert.equal(await page.locator('#project-wrapup .project-wrapup-locked').count(),0,'Completing every SQL task must unlock the project conclusion stage');
+  const conclusion='Главная потеря сессий возникает до оформления заказа. Нужно проверить удобство карточки товара и отдельно сравнить поведение новых и возвращающихся пользователей.';
+  await page.locator('#project-conclusion').fill(conclusion);
+  assert.equal(JSON.parse(await page.evaluate(()=>localStorage.getItem('sql-academy-project-notes-v1'))).product,conclusion,'The analytical note must autosave under its project id');
+  await page.locator('[data-project-review="product:1"]').click();
+  await page.locator('#project-review-feedback .feedback.success').waitFor({state:'visible'});
+  assert.match(await page.locator('#project-review-feedback').textContent(),/Единица анализа здесь — сессия/,'The interpretation check must explain why session grain matters after the answer');
+  assert.equal(await page.locator('[data-project-review]').count(),3,'The submitted interpretation must reveal the answer and lock further changes');
+
+  await page.locator('#sidebar [data-nav="projects"]').click();
+  await page.locator('[data-open-project="delivery"]').click();
+  assert.equal(await page.locator('#project-wrapup .project-wrapup-locked').count(),1,'Each project must unlock its own conclusion stage independently');
+  await page.locator('#sidebar [data-nav="projects"]').click();
+  await page.locator('[data-open-project="product"]').click();
+  assert.equal(await page.locator('#project-conclusion').inputValue(),conclusion,'The analytical note must persist after leaving and reopening a project');
+  assert.match(await page.locator('#project-review-feedback').textContent(),/Единица анализа здесь — сессия/,'The interpretation result must persist independently for each project');
+  await page.setViewportSize({width:320,height:740});
+  await assertNoHorizontalOverflow(320);
+  await page.setViewportSize({width:390,height:844});
 
   await page.setViewportSize({ width: 390, height: 844 });
   const menuButton = page.locator('#mobile-menu');

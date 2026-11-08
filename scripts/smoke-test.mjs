@@ -35,18 +35,22 @@ assert.ok(appSource.includes('moduleLessons(m.track).map(mod=>'), 'A lesson side
 assert.ok(htmlSource.includes('data-nav="courses"'), 'The primary navigation must expose the course catalog');
 assert.ok(cssSource.includes('.course-grid') && cssSource.includes('.course-card'), 'The course catalog must have dedicated responsive styles');
 assert.ok(htmlSource.includes('data-nav="projects"') && appSource.includes('function renderProjects()') && appSource.includes('function renderProject()'), 'Standalone business projects must have a dedicated navigation section and workspace');
-assert.ok(cssSource.includes('.project-grid') && cssSource.includes('.project-workspace'), 'The projects area must have dedicated responsive layout styles');
+assert.ok(cssSource.includes('.project-grid') && cssSource.includes('.project-workspace') && cssSource.includes('.project-wrapup-grid'), 'The projects area and final analysis stage must have dedicated responsive layout styles');
 assert.equal(projects.length, 3, 'The platform must show the three defined practical project tracks');
 assert.equal(projectTaskCount, 9, 'The project catalog must contain nine self-contained tasks');
 assert.equal(projects.reduce((sum,project)=>sum+project.tasks.length,0),projectTaskCount);
 for (const project of projects) {
   assert.ok(project.context && project.objective && project.dataset && project.audience, `Project ${project.id} must explain context, goal, audience, and data`);
+  assert.ok(project.wrapUp && project.wrapUp.title && project.wrapUp.notePrompt && project.wrapUp.limitation, `Project ${project.id} must define a final analytical write-up and data limitations`);
+  assert.ok(project.wrapUp.checks.length >= 3 && project.wrapUp.prompts.length >= 3, `Project ${project.id} must guide data-quality checks and business conclusions`);
+  assert.ok(project.wrapUp.review.prompt && project.wrapUp.review.options.length === 3 && Number.isInteger(project.wrapUp.review.correctIndex) && project.wrapUp.review.correctIndex >= 0 && project.wrapUp.review.correctIndex < 3 && project.wrapUp.review.explanation, `Project ${project.id} must include a validated interpretation question`);
   for (const task of project.tasks) {
     assert.ok(task.id && task.title && task.brief && task.conditions && task.expected && task.solution, `Project task ${task.id} must include a brief, conditions, expected output, and a hidden reference solution`);
     assert.match(task.solution.trim(), /^(WITH|SELECT)\b/i, `Project task ${task.id} must use SELECT or WITH ... SELECT`);
   }
 }
-assert.ok(appSource.includes('sql-academy-project-progress-v1') && appSource.includes('sql-academy-project-drafts-v1'), 'Project completion and drafts must persist separately from course progress');
+assert.ok(appSource.includes('sql-academy-project-progress-v1') && appSource.includes('sql-academy-project-drafts-v1') && appSource.includes('sql-academy-project-notes-v1') && appSource.includes('sql-academy-project-reviews-v1'), 'Project completion, SQL drafts, analytical notes, and review answers must persist separately from course progress');
+assert.ok(appSource.includes('function renderProjectWrapUp(project,unlocked)') && appSource.includes('data-project-review=') && appSource.includes('data-project-conclusion='), 'Projects must unlock a final analysis stage with a saved conclusion draft and interpretation check');
 assert.ok(appSource.includes('resultMatches(normalizeResult(actual),normalizeResult(expected)'), 'Project answers must be checked by executing and comparing query results');
 assert.deepEqual(getTrackProgress(modules, new Set(), 'core'), { completed: 0, total: 112, percent: 0 }, 'An empty core route must start at 0% of its own 112 lessons');
 assert.deepEqual(getTrackProgress(modules, new Set(optionalLessonIds), 'core'), { completed: 0, total: 112, percent: 0 }, 'Completing optional PostgreSQL lessons must not change core-route progress');
