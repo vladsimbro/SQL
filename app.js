@@ -34,7 +34,6 @@ const state = {
   engineReady:false, engineLoading:false, engineError:null, currentRows:[], quizAnswers:{}, exerciseQuizAnswers:{}, assessmentTrack:'core', assessmentModuleId:null, assessmentAnswers:{}, assessmentSubmitted:false, assessmentResults:{}, editors:new Map(), navigationScrollReset:false, theme:localStorage.getItem('sql-academy-theme') || 'dark'
 };
 const moduleById = id => modules.find(m=>m.id===id);
-const lessonTotal = modules.reduce((n,m)=>n+m.lessons.length,0);
 const lessonKey = (mid,idx)=>moduleById(mid)?.lessons[idx]?.id || mid+':'+idx;
 const quizKey = (mid,idx,questionIndex)=>lessonKey(mid,idx)+':'+questionIndex;
 const moduleLessons = trackId => modules.filter(module=>module.track===trackId);
@@ -223,10 +222,15 @@ function renderDashboard() {
   const coreProgress=getTrackProgress(modules,state.completedLessons,'core');
   const next=findNextLesson(modules,state.completedLessons);
   const recent=core.slice(0,5);
+  const courseCounts=learningTracks.map(track=>{
+    const total=moduleLessons(track.id).reduce((sum,module)=>sum+module.lessons.length,0);
+    const name=track.id==='core'?'SQL':track.title;
+    return `<span data-course-count="${track.id}">${esc(name)} · ${total}</span>`;
+  }).join('');
   return `
     <section class="hero"><div class="eyebrow">КУРС SQL · JUNIOR DATA ANALYST</div><h1>SQL — не набор команд.<br>Это способ думать о данных.</h1><p>Курс ведёт от реляционной модели к самостоятельной аналитике. PostgreSQL изучается отдельно, со своей программой и прогрессом.</p><div class="hero-actions"><button class="btn primary" data-action="continue">Продолжить обучение →</button><button class="btn ghost" data-nav="courses">Каталог курсов</button></div></section>
     <div class="stats-grid">
-      <div class="stat-card"><span class="stat-label">Уроков в программе</span><strong>${lessonTotal}</strong><small>Два самостоятельных курса</small></div>
+      <div class="stat-card"><span class="stat-label">Самостоятельных курсов</span><strong>${learningTracks.length}</strong><div class="stat-course-counts">${courseCounts}</div></div>
       <div class="stat-card"><span class="stat-label">Практических задач</span><strong>${exercises.length}</strong><small>С реальной проверкой SQL</small></div>
       <div class="stat-card"><span class="stat-label">Пройдено в курсе SQL</span><strong>${coreProgress.completed}</strong><small>Из ${coreProgress.total} уроков Junior Data Analyst</small></div>
       <div class="stat-card"><span class="stat-label">Решено задач</span><strong>${state.completedExercises.size}</strong><small>Из ${exercises.length} практических</small></div>
