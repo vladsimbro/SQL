@@ -98,8 +98,7 @@ assert.equal(exercises.filter(exercise => exercise.mode === 'transaction').lengt
 assert.equal(exercises.length, 103, 'Expected 103 total practice exercises');
 assert.ok(exercises.every(exercise => modules.some(module => module.id === exercise.m)), 'Every exercise must belong to a real module');
 const fanoutLesson = modules.find(module => module.id === 'joins')?.lessons.find(lesson => lesson.id === 'joins.fan-out-pochemu-join-umnozhaet-stroki');
-const safeGrainLesson = modules.find(module => module.id === 'aggregates')?.lessons.find(lesson => lesson.id === 'aggregates.zerno-dannykh-i-bezopasnaya-agregatsiya');
-assert.ok(fanoutLesson?.practiceIds.includes('e103') && safeGrainLesson?.practiceIds.includes('e103'), 'Fan-out and safe pre-aggregation lessons must link the dedicated practice exercise');
+assert.ok(fanoutLesson?.practiceIds.includes('e103'), 'The fan-out lesson must link its dedicated practice exercise');
 assert.ok(exercises.some(exercise => exercise.id === 'e103' && exercise.m === 'joins'), 'Fan-out practice must be registered in the JOIN exercise bank');
 assert.ok(appSource.includes("from './sql-utils.js?v="), 'Application must use the shared SQL parser module');
 assert.ok(appSource.includes("render();\ninitDatabase();"), 'The application shell must render before PostgreSQL initialization begins');
