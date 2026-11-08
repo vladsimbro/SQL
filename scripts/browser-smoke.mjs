@@ -388,7 +388,18 @@ try {
   const visitMobileAuditView = async (nav, width, height, suffix) => {
     await page.setViewportSize({ width, height });
     await menuButton.click();
-    await page.locator('#sidebar .nav-item[data-nav="'+nav+'"]').click();
+    const navItem = page.locator('#sidebar .nav-item[data-nav="'+nav+'"]');
+    if (height < 520) {
+      const sidebarMetrics = await page.locator('#sidebar').evaluate(element => ({
+        overflowY: getComputedStyle(element).overflowY,
+        scrollHeight: element.scrollHeight,
+        clientHeight: element.clientHeight
+      }));
+      assert.equal(sidebarMetrics.overflowY, 'auto', 'Short landscape navigation must be vertically scrollable');
+      assert.ok(sidebarMetrics.scrollHeight > sidebarMetrics.clientHeight, 'Landscape sidebar must expose the complete navigation list');
+    }
+    await navItem.click();
+    assert.equal(await navItem.evaluate(element => element.classList.contains('active')), true, nav+' must become the active mobile navigation view');
     await page.locator('#app-content h1, #app-content h2').first().waitFor({ state: 'visible' });
     await assertNoHorizontalOverflow(width);
     const heading = (await page.locator('#app-content h1, #app-content h2').first().innerText()).trim();
