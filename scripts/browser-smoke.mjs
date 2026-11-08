@@ -148,6 +148,16 @@ try {
   await page.locator('[data-action="run-playground"]').click();
   await page.locator('#playground-results .result-table').waitFor({ state: 'visible', timeout: 30_000 });
 
+  await page.locator('#sidebar [data-nav="practice"]').click();
+  assert.equal(await page.locator('[data-practice-track="core"]').getAttribute('aria-pressed'), 'true');
+  assert.ok(await page.locator('.exercise-item').count() > 0, 'The SQL course must expose its own practice tasks');
+  await page.locator('[data-practice-track="postgresql"]').click();
+  assert.equal(await page.locator('[data-practice-track="postgresql"]').getAttribute('aria-pressed'), 'true');
+  assert.match(await page.locator('.task-meta').textContent(), /^ЗАДАНИЕ 1 ИЗ \d+/, 'Switching practice courses must start at the first task of the selected course');
+  assert.match(await page.locator('#side-progress-detail').textContent(), /61 уроков · PostgreSQL/, 'Practice progress must follow the selected course');
+  await page.locator('[data-action="next-exercise"]').click();
+  assert.match(await page.locator('.task-meta').textContent(), /^ЗАДАНИЕ 2 ИЗ \d+/, 'Previous/next practice navigation must stay within the selected course');
+
   await page.setViewportSize({ width: 390, height: 844 });
   const menuButton = page.locator('#mobile-menu');
   assert.equal(await menuButton.getAttribute('aria-expanded'), 'false');
