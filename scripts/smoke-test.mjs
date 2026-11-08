@@ -494,6 +494,22 @@ try {
   const storeMetricsJoined = await db.query("SELECT s.store_id, COUNT(o.order_id)::int AS order_count, COALESCE(SUM(o.total_amount),0)::numeric AS revenue FROM stores s LEFT JOIN orders o ON o.store_id = s.store_id GROUP BY s.store_id ORDER BY s.store_id");
   const storeMetricsPreAggregated = await db.query("WITH order_metrics AS (SELECT store_id, COUNT(*)::int AS order_count, SUM(total_amount) AS revenue FROM orders GROUP BY store_id) SELECT s.store_id, COALESCE(m.order_count,0)::int AS order_count, COALESCE(m.revenue,0)::numeric AS revenue FROM stores s LEFT JOIN order_metrics m ON m.store_id = s.store_id ORDER BY s.store_id");
   assert.equal(resultMatches(normalize(storeMetricsJoined,true),normalize(storeMetricsPreAggregated,true),true),true,'LEFT JOIN aggregation and pre-aggregation must match at store grain, including stores without orders');
+  const correlatedCounts = await db.query("SELECT c.customer_id, (SELECT COUNT(*)::int FROM orders o WHERE o.customer_id = c.customer_id) AS order_count FROM customers c ORDER BY c.customer_id");
+  const joinedCounts = await db.query("SELECT c.customer_id, COUNT(o.order_id)::int AS order_count FROM customers c LEFT JOIN orders o ON o.customer_id = c.customer_id GROUP BY c.customer_id ORDER BY c.customer_id");
+  assert.equal(resultMatches(normalize(correlatedCounts,true),normalize(joinedCounts,true),true),true,'A correlated scalar subquery and LEFT JOIN aggregation must match for customers with and without orders');
+  const customersWithoutOrdersExcept = await db.query("SELECT customer_id FROM customers EXCEPT SELECT customer_id FROM orders ORDER BY customer_id");
+  const customersWithoutOrdersNotExists = await db.query("SELECT c.customer_id FROM customers c WHERE NOT EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.customer_id) ORDER BY c.customer_id");
+  assert.equal(resultMatches(normalize(customersWithoutOrdersExcept,true),normalize(customersWithoutOrdersNotExists,true),true),true,'EXCEPT and NOT EXISTS must match for a set-valued customer exclusion');
+  const customersWithOrdersIntersect = await db.query("SELECT customer_id FROM customers INTERSECT SELECT customer_id FROM orders ORDER BY customer_id");
+  const customersWithOrdersExists = await db.query("SELECT DISTINCT c.customer_id FROM customers c WHERE EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.customer_id) ORDER BY c.customer_id");
+  assert.equal(resultMatches(normalize(customersWithOrdersIntersect,true),normalize(customersWithOrdersExists,true),true),true,'INTERSECT and EXISTS with DISTINCT must match for customers with orders');
+  const groupedSets = await db.query("SELECT CASE WHEN GROUPING(store_id) = 1 THEN 'all' ELSE 'store' END AS grouping_level, store_id, COUNT(*)::int AS order_count, SUM(total_amount)::numeric AS revenue FROM orders GROUP BY GROUPING SETS ((store_id), ()) ORDER BY grouping_level, store_id NULLS LAST");
+  const groupedUnion = await db.query("SELECT 'store'::text AS grouping_level, store_id, COUNT(*)::int AS order_count, SUM(total_amount)::numeric AS revenue FROM orders GROUP BY store_id UNION ALL SELECT 'all'::text AS grouping_level, NULL::bigint AS store_id, COUNT(*)::int AS order_count, SUM(total_amount)::numeric AS revenue FROM orders ORDER BY grouping_level, store_id NULLS LAST");
+  assert.equal(resultMatches(normalize(groupedSets,true),normalize(groupedUnion,true),true),true,'GROUPING SETS and an explicit UNION ALL of store totals and grand total must match');
+  const runningRows = await db.query("SELECT created_at, order_id, SUM(total_amount) OVER (ORDER BY created_at, order_id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS running_total FROM orders ORDER BY created_at, order_id");
+  const runningRange = await db.query("SELECT created_at, order_id, SUM(total_amount) OVER (ORDER BY created_at RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS running_total FROM orders ORDER BY created_at, order_id");
+  assert.equal(resultMatches(normalize(runningRows,true),normalize(runningRange,true),true),false,'ROWS and RANGE frames must remain distinct when multiple orders share a date');
+
   const itemRevenue = await db.query("SELECT SUM(unit_price) AS revenue FROM order_items");
   const distinctItemRevenue = await db.query("SELECT SUM(DISTINCT unit_price) AS revenue FROM order_items");
   assert.equal(resultMatches(normalize(itemRevenue),normalize(distinctItemRevenue)),false,'SUM(DISTINCT price) must not be accepted as equivalent to summing every order item');
