@@ -187,7 +187,7 @@ try {
     const root = getComputedStyle(document.documentElement);
     const rgb = value => {
       const hex = value.trim();
-      if (hex.startsWith('#')) return [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16));
+      if (hex.startsWith('#')) { const digits = hex.slice(1); return digits.length === 3 ? digits.split('').map(channel => parseInt(channel + channel, 16)) : [0, 2, 4].map(i => parseInt(digits.slice(i, i + 2), 16)); }
       return (hex.match(/\d+/g) || []).slice(0, 3).map(Number);
     };
     const luminance = value => rgb(value).map(channel => channel / 255).map(channel => channel <= .04045 ? channel / 12.92 : ((channel + .055) / 1.055) ** 2.4).reduce((sum, channel, index) => sum + channel * [.2126, .7152, .0722][index], 0);
