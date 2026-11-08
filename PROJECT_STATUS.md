@@ -7,7 +7,7 @@
 - Репозиторий: https://github.com/vladsimbro/SQL
 - GitHub Pages: https://vladsimbro.github.io/SQL/
 - Основная ветка: main.
-- HEAD main перед этой docs-only актуализацией: 7831f40557d7e8e5edbd118e68a42762f1665ad5.
+- HEAD main перед этой docs-only актуализацией: b749b4c970a83f2a2d94656b4f67413b8b6f0e55.
 - Последний полностью проверенный code/test commit: 10f0f560f60b7e1ab6a5b3a9b14332a7e1fa923b; workflow 42526644205 завершился success по validate, deploy и browser-smoke.
 - Новый test commit 7831f40557d7e8e5edbd118e68a42762f1665ad5 добавил независимые oracle-проверки 25 random JOIN вариантов; CI для него ещё не подтверждён.
 - Последний application build: 20261109-106.
@@ -365,7 +365,7 @@ Workflow .github/workflows/pages.yml выполняет:
 - Workflow 42526644205: completed/success после rerun browser-smoke; все 3 jobs success.
 - Pages workflow 42526643918: success для того же SHA.
 - Application build: 20261109-106.
-- HEAD main перед docs-only актуализацией: df4cb056309aa7251d92da905792aa3a4e2c07c0.
+- HEAD main перед последней docs-only актуализацией: 7831f40557d7e8e5edbd118e68a42762f1665ad5.
 
 Последний результат тестирования:
 - Validate success: JS syntax + npm run test:curriculum; PGlite checked e103: 12 unique orders, order 101 metrics (1200,2), order 104 zero events, synthetic order 113 preserved with metrics (0,0).
