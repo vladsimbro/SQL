@@ -456,8 +456,8 @@ try {
     assert.equal(page.url(), protectedUrl, label + ' must not navigate or reload the application');
   };
   const assertImportError = async (file, message, label) => {
-    const bytes = file.buffer ? file.buffer.toString('base64') : '';
     const byteLength = file.buffer?.length || 0;
+    const bytes = byteLength <= 1024 ? file.buffer?.toString('base64') || '' : '';
     await page.evaluate(({ name, mimeType, bytes, byteLength }) => {
       const input = document.querySelector('#backup-import-file');
       const payload = bytes
