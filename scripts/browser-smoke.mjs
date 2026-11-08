@@ -11,7 +11,10 @@ if (!/^https:\/\//i.test(baseURL)) {
 const browser = await chromium.launch({ headless: true });
 const page = await browser.newPage({ viewport: { width: 1440, height: 960 } });
 await mkdir('ux-audit-screenshots', { recursive: true });
-const captureUxScreen = name => page.screenshot({ path: `ux-audit-screenshots/${name}.png`, fullPage: true, animations: 'disabled' });
+const captureUxScreen = async name => {
+  await page.locator('.toast').waitFor({ state: 'detached', timeout: 3_000 }).catch(() => {});
+  await page.screenshot({ path: `ux-audit-screenshots/${name}.png`, fullPage: true, animations: 'disabled' });
+};
 const pageErrors = [];
 const consoleErrors = [];
 const failedRequests = [];
@@ -135,14 +138,14 @@ try {
   assert.equal(await page.locator('.lesson-track-group h3').textContent(), 'SQL для аналитика данных');
   assert.equal(await page.locator('.lesson-track-group').count(), 1, 'A lesson must show only its own course in the sidebar');
   assert.match(await page.locator('#side-progress-detail').textContent(), /112 уроков · SQL для аналитика данных/, 'Sidebar progress must follow the selected SQL course');
-  await captureUxScreen('03-sql-lesson-desktop');
+  await captureUxScreen('03-sql-lesson-desktop-pglite-error');
   await page.locator('#sidebar [data-nav="courses"]').click();
   await page.locator('[data-open-course="postgresql"]').click();
   await page.locator('[data-module="ddl"]').click();
   assert.equal(await page.locator('.lesson-track-group h3').textContent(), 'PostgreSQL');
   assert.equal(await page.locator('.lesson-track-group').count(), 1, 'The PostgreSQL lesson must not show the SQL course in its sidebar');
   assert.match(await page.locator('#side-progress-detail').textContent(), /61 уроков · PostgreSQL/, 'Sidebar progress must follow the selected PostgreSQL course');
-  await captureUxScreen('04-postgresql-lesson-desktop');
+  await captureUxScreen('04-postgresql-lesson-desktop-pglite-error');
 
   await page.locator('#sidebar [data-nav="playground"]').click();
   const editor = page.locator('#playground-editor');
@@ -180,6 +183,16 @@ try {
   await page.locator('#theme-toggle').click();
   await page.locator('#sidebar .nav-item[data-nav="courses"]').click();
   await captureUxScreen('16-course-catalog-desktop-ready');
+  await page.locator('[data-open-course="core"]').click();
+  await page.locator('[data-module="foundations"]').click();
+  await page.locator('.lesson-track-group').waitFor({ state: 'visible' });
+  await captureUxScreen('23-sql-lesson-desktop-ready');
+  await page.locator('#sidebar .nav-item[data-nav="courses"]').click();
+  await page.locator('[data-open-course="postgresql"]').click();
+  await page.locator('[data-module="ddl"]').click();
+  await page.locator('.lesson-track-group').waitFor({ state: 'visible' });
+  await captureUxScreen('24-postgresql-lesson-desktop-ready');
+  await page.locator('#sidebar .nav-item[data-nav="courses"]').click();
   await page.locator('#sidebar .nav-item[data-nav="assessment"]').click();
   await captureUxScreen('17-assessment-desktop');
   await page.locator('#sidebar .nav-item[data-nav="schema"]').click();
