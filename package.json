@@ -4,9 +4,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test:curriculum": "node scripts/smoke-test.mjs"
+    "test:curriculum": "node scripts/smoke-test.mjs",
+    "test:browser": "node scripts/browser-smoke.mjs"
   },
   "devDependencies": {
-    "@electric-sql/pglite": "0.5.15"
+    "@electric-sql/pglite": "0.5.15",
+    "playwright": "1.65.0"
   }
 }

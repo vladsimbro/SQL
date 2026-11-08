@@ -27,6 +27,8 @@ jobs:
       - name: Validate curriculum and run all exercise solutions
         run: npm run test:curriculum
   deploy:
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     needs: validate
     environment:
@@ -45,3 +47,31 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+  browser-smoke:
+    if: needs.deploy.result == 'success'
+    needs: deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install browser test dependency
+        run: npm install --no-package-lock
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Test the deployed GitHub Pages site
+        env:
+          PAGES_URL: ${{ needs.deploy.outputs.page_url }}
+        run: npm run test:browser
+      - name: Upload browser failure screenshot
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sql-academy-browser-smoke-failure
+          path: browser-smoke-failure.png
+          if-no-files-found: ignore

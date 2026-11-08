@@ -1,12 +1,25 @@
-import { modules, learningTracks, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261108-93';
-import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261108-93';
-import { firstSqlKeyword, explainStatementKeyword, explainStatementBody, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261108-93';
-import { migrateProgress, getTrackProgress, findNextLesson } from './progress-utils.js?v=20261108-93';
+import { modules, learningTracks, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261108-94';
+import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261108-94';
+import { firstSqlKeyword, explainStatementKeyword, explainStatementBody, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261108-94';
+import { migrateProgress, getTrackProgress, findNextLesson } from './progress-utils.js?v=20261108-94';
 
 const $ = (s, root=document) => root.querySelector(s);
 const $$ = (s, root=document) => [...root.querySelectorAll(s)];
 const STORE_KEY = 'sql-academy-progress-v1';
 const EDITOR_KEY = 'sql-academy-editor-v1';
+const PGLITE_MODULE_URL = 'https://cdn.jsdelivr.net/npm/@electric-sql/pglite@0.5.15/dist/index.js';
+let pgliteImportAttempt = 0;
+let pgliteModulePromise = null;
+const loadPGliteModule = () => {
+  if (!pgliteModulePromise) {
+    const attempt = ++pgliteImportAttempt;
+    pgliteModulePromise = import(`${PGLITE_MODULE_URL}?sql-academy-attempt=${attempt}`).catch(error => {
+      pgliteModulePromise = null;
+      throw error;
+    });
+  }
+  return pgliteModulePromise;
+};
 const state = {
   view:'dashboard', moduleId:modules[0].id, lessonIndex:0, exerciseId:exercises[0].id, roadmapTrack:'core',
   completedLessons:new Set(), completedExercises:new Set(), db:null, expected:new Map(), randomTask:null, randomTopics:new Set(sandboxTaskTopics.map(topic=>topic.id)),
@@ -534,7 +547,7 @@ async function checkExercise() {
     if(ex.mode==='mutation' || ex.mode==='transaction') {
       if(ex.mode==='mutation' && parts.some(part=>!['INSERT','UPDATE','DELETE','CREATE','ALTER','DROP','MERGE'].includes(firstSqlKeyword(part)))) throw new Error('Каждая команда в этом задании должна изменять данные или структуру: INSERT, UPDATE, DELETE, CREATE, ALTER, DROP либо MERGE.');
       if(ex.mode==='transaction' && (ex.requiredPatterns||[]).some(pattern=>!new RegExp(pattern,'i').test(sql))) throw new Error('В запросе отсутствует одна из обязательных команд транзакции. Сверься с условием задания.');
-      const {PGlite}=await import('https://cdn.jsdelivr.net/npm/@electric-sql/pglite@0.5.15/dist/index.js');
+      const {PGlite}=await loadPGliteModule();
       const isolatedDb=new PGlite();
       try {
         await isolatedDb.exec(seedSQL);
@@ -642,7 +655,7 @@ async function prepareExpected() {
           await state.db.exec('ROLLBACK;');
         }
       } else if(ex.mode==='transaction') {
-        const {PGlite}=await import('https://cdn.jsdelivr.net/npm/@electric-sql/pglite@0.5.15/dist/index.js');
+        const {PGlite}=await loadPGliteModule();
         const isolatedDb=new PGlite();
         try {
           await isolatedDb.exec(seedSQL);
@@ -682,7 +695,7 @@ async function initDatabase({reset=false}={}) {
   if(reset||retrying)rerenderPreservingEditor();
   try{
     if(state.db){await state.db.close();state.db=null;}
-    const {PGlite}=await import('https://cdn.jsdelivr.net/npm/@electric-sql/pglite@0.5.15/dist/index.js');
+    const {PGlite}=await loadPGliteModule();
     stage='создание временной базы данных';
     state.db=await PGlite.create({dataDir:'memory://'});
     stage='создание учебных таблиц и данных';

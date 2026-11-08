@@ -1,0 +1,154 @@
+import assert from 'node:assert/strict';
+import { chromium } from 'playwright';
+
+const baseURL = (process.env.PAGES_URL || process.argv[2] || '').trim().replace(/\/?$/, '/');
+if (!/^https:\/\//i.test(baseURL)) {
+  throw new Error('Pass the deployed GitHub Pages URL as PAGES_URL or the first argument.');
+}
+
+const browser = await chromium.launch({ headless: true });
+const page = await browser.newPage({ viewport: { width: 1440, height: 960 } });
+const pageErrors = [];
+page.on('pageerror', error => pageErrors.push(error.message));
+
+let blockFirstPGliteRequest = true;
+await page.route(
+  /https:\/\/cdn\.jsdelivr\.net\/npm\/@electric-sql\/pglite@0\.5\.15\/dist\/index\.js(?:\?.*)?$/,
+  async route => {
+    if (blockFirstPGliteRequest) {
+      blockFirstPGliteRequest = false;
+      await route.abort('failed');
+      return;
+    }
+    await route.continue();
+  }
+);
+
+const readEditor = locator => locator.evaluate(element =>
+  element.CodeMirror ? element.CodeMirror.getValue() : element.value
+);
+const writeEditor = (locator, value) => locator.evaluate((element, nextValue) => {
+  if (element.CodeMirror) element.CodeMirror.setValue(nextValue);
+  else {
+    element.value = nextValue;
+    element.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+}, value);
+const waitForEngine = () => page.waitForFunction(
+  () => document.querySelector('#engine-status')?.textContent === 'PostgreSQL готов',
+  null,
+  { timeout: 240_000 }
+);
+const assertNoHorizontalOverflow = async width => {
+  const metrics = await page.evaluate(() => ({
+    viewport: window.innerWidth,
+    document: document.documentElement.scrollWidth,
+    body: document.body.scrollWidth
+  }));
+  assert.ok(
+    metrics.document <= width + 1 && metrics.body <= width + 1,
+    `Horizontal overflow at ${width}px: ${JSON.stringify(metrics)}`
+  );
+};
+
+let screenshotTaken = false;
+try {
+  const navigationStartedAt = Date.now();
+  await page.goto(baseURL, { waitUntil: 'domcontentloaded', timeout: 90_000 });
+  await page.locator('#app-content .hero').waitFor({ state: 'visible', timeout: 45_000 });
+  const shellReadyMs = Date.now() - navigationStartedAt;
+  assert.ok(shellReadyMs < 30_000, `The initial learning interface took too long to render: ${shellReadyMs}ms`);
+
+  const build = await page.evaluate(async () => {
+    const response = await fetch('./version.json', { cache: 'no-store' });
+    if (!response.ok) throw new Error('Cannot read the deployed version.json');
+    return (await response.json()).build;
+  });
+  assert.ok(typeof build === 'string' && build.length > 0, 'The deployed app must publish a build identifier');
+
+  await page.locator('#app-content .feedback[role="alert"]').waitFor({ state: 'visible', timeout: 60_000 });
+  assert.equal(await page.locator('#engine-status').textContent(), 'Ошибка движка');
+  assert.equal(await page.locator('#app-content .hero').isVisible(), true, 'Database failure must not replace the learning page');
+  assert.equal(await page.locator('#app-content [data-action="retry-engine"]').isVisible(), true, 'Database failure must expose a retry action');
+
+  await page.locator('#sidebar [data-nav="playground"]').click();
+  const editor = page.locator('#playground-editor');
+  await editor.waitFor({ state: 'attached' });
+  const draft = 'SELECT status, COUNT(*)::int AS orders_count\nFROM orders\nGROUP BY status\nORDER BY orders_count DESC;';
+  await writeEditor(editor, draft);
+  assert.equal(await page.evaluate(() => localStorage.getItem('sql-academy-editor-v1')), draft, 'The SQL draft must be saved while PostgreSQL is unavailable');
+  assert.equal(await page.locator('[data-action="run-playground"]').isDisabled(), true, 'SQL execution must stay disabled until the engine is ready');
+
+  const recoveryStartedAt = Date.now();
+  await page.getByRole('button', { name: 'Повторить запуск' }).click();
+  await waitForEngine();
+  const recoveryMs = Date.now() - recoveryStartedAt;
+  assert.ok(recoveryMs > 0, 'The retry path must complete after the initial module request fails');
+  assert.equal(await readEditor(editor), draft, 'Retrying PostgreSQL must preserve the in-progress SQL editor value');
+
+  await page.locator('[data-action="run-playground"]').click();
+  await page.locator('#playground-results .result-table').waitFor({ state: 'visible', timeout: 30_000 });
+  const queryHeaders = await page.locator('#playground-results .result-table thead th').allTextContents();
+  assert.deepEqual(queryHeaders, ['status', 'orders_count'], 'The playground must execute a real query against the seeded PostgreSQL database');
+
+  const resetStartedAt = Date.now();
+  await page.locator('[data-action="reset-db"]').click();
+  await waitForEngine();
+  const resetReadyMs = Date.now() - resetStartedAt;
+  assert.equal(await readEditor(editor), draft, 'Resetting the database must preserve the SQL draft');
+  await page.locator('[data-action="run-playground"]').click();
+  await page.locator('#playground-results .result-table').waitFor({ state: 'visible', timeout: 30_000 });
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  const menuButton = page.locator('#mobile-menu');
+  assert.equal(await menuButton.getAttribute('aria-expanded'), 'false');
+  await menuButton.click();
+  assert.equal(await menuButton.getAttribute('aria-expanded'), 'true', 'Mobile menu must expose its expanded state');
+  assert.equal(await page.locator('#sidebar').evaluate(element => element.classList.contains('open')), true);
+  assert.equal(await page.evaluate(() => document.activeElement?.getAttribute('data-nav')), 'dashboard', 'Opening the mobile menu must move focus into navigation');
+  await page.keyboard.press('Escape');
+  assert.equal(await menuButton.getAttribute('aria-expanded'), 'false', 'Escape must close the mobile menu');
+  assert.equal(await page.evaluate(() => document.activeElement?.id), 'mobile-menu', 'Escape must restore focus to the menu trigger');
+
+  await menuButton.click();
+  await page.locator('#sidebar [data-nav="practice"]').click();
+  await page.locator('#app-content .exercise-layout').waitFor({ state: 'visible' });
+  assert.equal(await menuButton.getAttribute('aria-expanded'), 'false', 'Following a mobile navigation link must close the menu');
+  assert.equal(await page.evaluate(() => document.activeElement?.id), 'mobile-menu', 'Navigation must return focus to the mobile menu trigger');
+
+  await page.setViewportSize({ width: 320, height: 740 });
+  await assertNoHorizontalOverflow(320);
+  await menuButton.click();
+  await page.locator('#sidebar .nav-item[data-nav="dashboard"]').click();
+  await page.locator('#app-content .hero').waitFor({ state: 'visible' });
+  await assertNoHorizontalOverflow(320);
+  await menuButton.click();
+  await page.locator('#sidebar .nav-item[data-nav="playground"]').click();
+  await page.locator('#playground-editor').waitFor({ state: 'attached' });
+  await assertNoHorizontalOverflow(320);
+  assert.equal(await readEditor(page.locator('#playground-editor')), draft, 'Navigation must not discard the saved SQL draft');
+
+  assert.deepEqual(pageErrors, [], `Unexpected uncaught browser errors: ${pageErrors.join('; ')}`);
+  console.log('SQL Academy live browser smoke passed:', JSON.stringify({
+    url: baseURL,
+    build,
+    shellReadyMs,
+    recoveryMs,
+    resetReadyMs,
+    mobileWidths: [390, 320],
+    checks: [
+      'initial shell before database readiness',
+      'failed PGlite import and successful retry with a fresh module URL',
+      'SQL editor persistence while offline and after database reset',
+      'real PostgreSQL query execution',
+      'mobile menu state, Escape and focus restoration',
+      '320px layout overflow on dashboard, practice and playground'
+    ]
+  }));
+} catch (error) {
+  await page.screenshot({ path: 'browser-smoke-failure.png', fullPage: true }).catch(() => {});
+  screenshotTaken = true;
+  throw error;
+} finally {
+  await browser.close();
+}
