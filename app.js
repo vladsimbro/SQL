@@ -1,4 +1,4 @@
-import { modules, learningTracks, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261108-85';
+import { modules, learningTracks, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261108-86';
 import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261108-85';
 import { firstSqlKeyword, explainStatementKeyword, explainStatementBody, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261108-85';
 import { migrateProgress, getTrackProgress, findNextLesson } from './progress-utils.js?v=20261108-85';

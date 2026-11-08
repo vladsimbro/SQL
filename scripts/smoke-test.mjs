@@ -562,6 +562,20 @@ try {
   const employeeSchema = await db.query("SELECT column_name FROM information_schema.columns WHERE table_name = 'orders' ORDER BY ordinal_position");
   assert.ok(employeeSchema.rows.some(row => row.column_name === 'employee_id'), 'The generic public dataset must use employee_id');
 
+  const historicalProductSevenBefore = await db.query("SELECT COUNT(*)::int AS count FROM analytics_order_items WHERE product_id = 7");
+  assert.ok(historicalProductSevenBefore.rows[0].count > 0, 'Historical order items must retain product 7 snapshot references');
+  await db.exec('BEGIN;');
+  try {
+    await db.exec("DELETE FROM products WHERE product_id = 7;");
+    const historicalProductSevenAfter = await db.query("SELECT COUNT(*)::int AS count FROM analytics_order_items WHERE product_id = 7");
+    assert.equal(
+      historicalProductSevenAfter.rows[0].count,
+      historicalProductSevenBefore.rows[0].count,
+      'Deleting a starter catalog product must not remove or block historical order-item facts'
+    );
+  } finally {
+    await db.exec('ROLLBACK;');
+  }
 
   let checked = 0;
   let randomChecked = 0;
