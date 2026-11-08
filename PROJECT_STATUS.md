@@ -1,17 +1,18 @@
 # SQL Academy — актуальное состояние и передача разработки
 
-Последнее обновление: 2026-11-09, Europe/Helsinki (UTC+02:00); после добавления независимых JOIN regression checks.
+Последнее обновление: 2026-11-09; после первичного UX/UI-аудита и внедрения адресных accessibility/mobile улучшений.
 
 ## 1. Репозиторий и текущий HEAD
 
 - Репозиторий: https://github.com/vladsimbro/SQL
 - GitHub Pages: https://vladsimbro.github.io/SQL/
 - Основная ветка: main.
-- Текущий HEAD main: 0ff7123749eac681bc1fd3fb1f0b29a64d58d1a9.
-- Последний полностью проверенный code/test commit: 0ff7123749eac681bc1fd3fb1f0b29a64d58d1a9; workflow 42527757551 завершился success по validate, deploy и browser-smoke.
-- Независимые oracle-проверки 25 random JOIN вариантов добавлены в cda363c6c14d30bd30054e767cf914c364e48604; первый CI на нём выявил несовпадение ожидаемого количества строк для synthetic order 113. Исправление в 0ff7123 прошло полный CI.
-- Последний Pages workflow для актуального HEAD: 42527756866, completed/success.
-- Последний application build: 20261109-106.
+- Текущий HEAD main: 8bd962da7de1110f16573f7c0aeabda98f50ea1a.
+- Последний полностью успешный end-to-end workflow до accessibility-изменений: 42529611099 на commit 5fd2f24cee76a3c2ea05253a83537527c138fb05; validate/deploy/browser-smoke — success.
+- Последние runtime changes: commit 615d457462e07d7b886818e455ce88b40b2a7b26; validate и deploy — success. Browser-smoke для этого SHA остаётся in_progress без опубликованных шагов/логов на момент обновления.
+- Последний commit 8bd962da7de1110f16573f7c0aeabda98f50ea1a исправляет parser цветов в новых accessibility assertions; workflow 42529995249 ещё pending.
+- Последний Pages workflow: 42529994915 для SHA 8bd962d, completed/success.
+- Последний application build: 20261109-107.
 - Последний curriculum/runtime feature commit для e103: 4c11353646d9ddf9bb0caca5a48a7d8444625df5; последующие commits согласовали cache keys, уникальную связь практики, счётчики и PGlite expected-result tests.
 - URL/hash-навигация проверена workflow 42524697272; backup negative cases — workflow 42525873380.
 - GitHub API подтверждает только одну ветку: main. Открытых Pull Requests и Issues нет.
@@ -178,57 +179,64 @@ SQL Academy — статическая интерактивная платфор
 
 ## 8. Проверки и CI
 
-Workflow .github/workflows/pages.yml выполняет:
-1. Проверку синтаксиса JS.
-2. npm run test:curriculum: программа, задания и эталонные решения.
-3. Публикацию на GitHub Pages после успешной валидации.
-4. Playwright browser-smoke опубликованного сайта после deploy.
+Workflow .github/workflows/pages.yml выполняет JS syntax checks, npm run test:curriculum, публикацию GitHub Pages и Playwright browser-smoke опубликованного сайта.
 
-Последняя подтверждённая полная проверка актуального main:
-- Workflow: 42527757551.
-- Commit: 0ff7123749eac681bc1fd3fb1f0b29a64d58d1a9.
-- validate: success; JS syntax checks и npm run test:curriculum, включая независимые oracle-сверки 25 random JOIN вариантов.
-- deploy: success.
-- browser-smoke: success; проверена опубликованная страница, URL/history, отдельные курсы и прогресс, PGlite retry и выполнение SQL, практика, проекты, mobile navigation, узкие экраны и backup сценарии.
-- Все три jobs workflow 42527757551 завершились success.
-- Отдельный Pages workflow 42527756866 для того же SHA: completed/success.
+Последняя полностью успешная end-to-end проверка:
+- Workflow: 42529611099.
+- Commit: 5fd2f24cee76a3c2ea05253a83537527c138fb05.
+- validate, deploy, browser-smoke: success.
+- Browser-smoke проверил 24 screenshot captures для первичного UX-аудита; artifact sql-academy-ux-audit-screenshots создан (artifact ID 13636399706).
 
-Содержимое curriculum smoke:
+Последние runtime changes:
+- Commit 615d457462e07d7b886818e455ce88b40b2a7b26 содержит build 20261109-107, новые light-theme contrast tokens, глобальный focus-visible, prefers-reduced-motion, instant navigation scroll при системной настройке reduce и 1-column practice list при ширине <=360 px.
+- Workflow 42529947128 на 615d457: validate success, deploy success; browser-smoke остаётся in_progress, API не показывает steps/logs.
+- Commit 8bd962da7de1110f16573f7c0aeabda98f50ea1a исправляет поддержку shorthand hex (#fff) в тестовом contrast parser. Workflow 42529995249 ещё pending на момент обновления.
+- Pages workflow 42529994915 для SHA 8bd962d: completed/success.
+
+Новые browser-smoke assertions:
+- Клавиатурный переход должен активировать :focus-visible с видимой outline.
+- Контраст light theme tokens muted/accent/sidebar label должен быть не ниже 4.5:1.
+- prefers-reduced-motion должен выключать smooth scrolling и сокращать CSS transitions.
+- При 320 px список задач практики должен перестраиваться в одну колонку.
+- Screenshot matrix покрывает dashboard, каталог, уроки обоих курсов, практику, проекты, assessment, Playground, schema, reference, glossary, light/dark и mobile 390/320.
+
+Содержимое curriculum smoke (подтверждено validate на последних runtime commits):
 - 25 модулей, 173 урока, 100 knowledge checks, 72 термина, 13 групп справочника.
 - 103 обычных запускаемых задания, включая 89 SELECT, 350 random sandbox tasks, 14 seed tables.
-- 81 таблица ожидаемых результатов и 114 read-only SQL-примеров проверялись предыдущим полным baseline; текущая проверка дополнительно усилила e103 точными результатами.
-- Все 350 random решений выполняются на PGlite; задачи проверяются как read-only SELECT/CTE и проверяется наличие массива rows.
-- Backup checks: экспорт, формат и schema validation, restore, empty state, rollback, round-trip и отрицательные UI сценарии.
+- 81 таблица ожидаемых результатов и 114 read-only SQL-примеров проверялись предыдущим полным baseline.
+- Все 350 random решений выполняются на PGlite; проверяются read-only SELECT/CTE и массив rows.
+- Backup checks включают export, schema validation, restore, rollback, round-trip и отрицательные UI сценарии.
 
 Исторические полные проверки:
-- Workflow 42524697272 на a045602: validate/deploy/browser-smoke success.
-- Workflow 42525873380 на be8196d: validate/deploy/browser-smoke success.
-- Workflow 42526324089 на 812c248: validate/deploy/browser-smoke success.
-- Ранее workflow 42522635871 на 4629cb7 прошёл все три jobs.
+- Workflow 42527757551 на 0ff7123: validate/deploy/browser-smoke success, включая 25 independent JOIN oracle checks.
+- Workflow 42526644205 на 10f0f56: validate/deploy/browser-smoke success.
+- Workflow 42524697272, 42525873380 и 42526324089: все три jobs success.
 
 Ограничения:
-- Локальный clone и локальные node/npm/Playwright команды в этой сессии не запускались; пакет PGlite отсутствует в локальном окружении, сетевой доступ контейнера отключён.
-- Для нового test commit cda363c6c14d30bd30054e767cf914c364e48604 результат GitHub Actions ещё не подтверждён: API combined status вернул пустой список, а доступный метод получения workflow runs не возвращает push-triggered runs.
-- Один browser-smoke запуск на commit 10f0f56 упал при внешней загрузке PGlite с CDN; повтор этого же job прошёл без изменения кода. PGlite остаётся CDN-зависимостью, поэтому при повторении такого сбоя сначала проверять внешнюю загрузку модуля.
-- Ручное тестирование на реальных iOS/Android устройствах и других browser engines не выполнялось.
+- Локальный clone и локальные npm/Playwright команды в этой сессии не запускались; подтверждение получено через GitHub Actions.
+- Ручное тестирование на физических iOS/Android устройствах и других browser engines не выполнялось.
+- PGlite 0.5.15 остаётся CDN-зависимостью; первый запрос в browser-smoke намеренно блокируется для проверки retry, поэтому в логах могут быть ожидаемые initial ERR_FAILED.
 
 ## 9. GitHub и публикация
 
 - Репозиторий: vladsimbro/SQL.
 - Основная и единственная ветка: main.
-- Текущий HEAD main: 0ff7123749eac681bc1fd3fb1f0b29a64d58d1a9.
+- Текущий HEAD main: 8bd962da7de1110f16573f7c0aeabda98f50ea1a.
 - Открытых PR и Issues нет.
-- Последний полностью проверенный code/test commit: 0ff7123749eac681bc1fd3fb1f0b29a64d58d1a9.
-- Workflow 42527757551: validate, deploy и browser-smoke — success.
-- Pages workflow 42527756866 для SHA 0ff7123: completed/success.
-- Runtime build: 20261109-106.
+- Последний полностью успешный end-to-end commit: 5fd2f24cee76a3c2ea05253a83537527c138fb05.
+- Последний runtime commit: 615d457462e07d7b886818e455ce88b40b2a7b26; validate/deploy success, browser-smoke in_progress.
+- Последний test-only commit: 8bd962da7de1110f16573f7c0aeabda98f50ea1a; workflow pending.
+- Pages workflow 42529994915 для SHA 8bd962d: completed/success.
+- Runtime build: 20261109-107.
 - GitHub Pages: https://vladsimbro.github.io/SQL/
+- Runtime assets изменены, поэтому version.json обновлён до 20261109-107 и внутренние app.js import cache keys синхронизированы.
+- Последняя подтверждённая публикация: GitHub Pages workflow 42529994915 для SHA 8bd962d — success.
 - Изменения только PROJECT_STATUS.md не требуют смены version.json.
 - URL-навигация опубликована и проверена в workflow 42524697272.
 - Отрицательные backup UI сценарии опубликованы и проверены в workflow 42525873380.
 - Удаление 29 устаревших refs выполнено в предыдущей сессии после проверки; аудит повторно запускать только при появлении новых веток.
 - AUDIT.md удалён ранее; полезные сведения об аудите сохранены в истории документа.
-- Автоматический Pages deployment может конфликтовать с custom deploy workflow, если два Pages deploy запускаются параллельно. В этой сессии финальный Pages workflow 42526643918 завершился success.
+- Автоматический Pages deployment может конфликтовать с custom deploy workflow, если два Pages deploy запускаются параллельно.
 
 ## 10. Принятые технические и образовательные решения
 
@@ -244,21 +252,26 @@ Workflow .github/workflows/pages.yml выполняет:
 
 ## 11. UX/UI и пользовательский опыт
 
-Статус направления: IN_PROGRESS (первичный source-level аудит и проверка автоматизированных desktop/mobile сценариев выполнены; полноценный визуальный осмотр экранов ещё не завершён). Это самостоятельное направление развития платформы, а не набор случайных косметических исправлений. Полноценную переработку интерфейса начинать после текущих приоритетных проверок учебного содержания и практики. Подготовительный UX/UI-аудит можно выполнить раньше, не меняя без необходимости работающий интерфейс.
+Статус направления: IN_PROGRESS (первичный source-level и визуальный аудит выполнены по 24 скриншотам; первые адресные accessibility/mobile улучшения внедрены, финальный browser-smoke для build 20261109-107 ещё ожидает подтверждения). Это самостоятельное направление развития платформы, а не набор случайных косметических исправлений. Полноценную переработку интерфейса начинать после текущих приоритетных проверок учебного содержания и практики. Подготовительный UX/UI-аудит можно выполнить раньше, не меняя без необходимости работающий интерфейс.
 
-### Предварительные наблюдения по текущему интерфейсу (source-level)
+### Результаты первичного source-level и визуального аудита
 
-Статус: IN_PROGRESS; это технические наблюдения по исходникам, а не подтверждённые визуальные дефекты.
+Статус: IN_PROGRESS. Просмотрены 24 Playwright screenshots; часть кадров намеренно показывает initial PGlite failure state, а чистые desktop ready-state кадры доступны отдельно.
 
 - Подтверждённые экраны и сценарии в коде: главная, каталог двух курсов, программа/урок, практика двух курсов, три проекта, контрольные работы, Playground, учебная схема, справочник, глоссарий и тема оформления.
 - Playwright на актуальном main проверяет desktop 1440×960; mobile 390×844 и 320×740. На мобильном подтверждены aria-expanded, перенос фокуса в меню, закрытие Escape с возвратом фокуса, закрытие после перехода и отсутствие горизонтального overflow на dashboard, practice и Playground при 320 px.
 - Playwright подтверждает изоляцию курсов: каталог показывает ровно SQL и PostgreSQL; экран урока показывает только свой курс; боковой прогресс переключается между 112 уроками SQL и 61 уроком PostgreSQL. Практика также имеет отдельные вкладки по курсам.
 - На dashboard отображается общее число 173 урока, хотя каталоги и прогресс разделены. Это не общий список, но может создавать неоднозначность; оценить вариант отображения двух отдельных показателей вместо общей цифры (приоритет P2, до визуального подтверждения).
 - В styles.css обнаружено 17 media-query блоков с пересекающимися диапазонами 560–1100 px и повторяющимися точками 760 px. Необходимо оценить консолидацию без изменения поведения.
-- В CSS не обнаружена обработка prefers-reduced-motion; при этом присутствуют 9 transition declarations и 1 animation declaration. Добавить поддержку системного сокращения движения после проверки влияния на редактор и навигацию (P1 доступность).
-- В CSS нет общей системы `:focus-visible` для основных кнопок и навигации; кастомный focus-visible найден у `.sql-tip`. Нужен keyboard walkthrough и согласованный видимый focus для интерактивных компонентов (P1 доступность). Наличие/отсутствие дефекта на конкретном браузере пока не подтверждено визуально.
+- Внедрена поддержка prefers-reduced-motion: CSS сокращает transitions/animations и отключает smooth scroll; app.js выбирает instant scroll при системной настройке reduce. Статус IMPLEMENTED; browser assertion ожидает итогового CI.
+- Добавлена общая система :focus-visible для ссылок, кнопок, полей и tabindex элементов. Статус IMPLEMENTED; Playwright проверяет клавиатурный фокус и видимую outline.
+- Светлая тема получила более контрастные --muted (#5f6f86) и --accent2 (#0c795e); .sidebar-label использует общий muted token. Расчётные значения для ключевых пар превышают 4.5:1; Playwright assertions добавлены.
+- На ширине <=360 px список задач практики перестраивается в одну колонку. Это адресует обнаруженную на 320 px чрезмерно узкую двухколоночную сетку; assertion добавлен.
+- Runtime build обновлён до 20261109-107; шесть внутренних импортов app.js синхронизированы с версией.
+- В CSS по-прежнему 17 media-query блоков; их консолидация отложена до завершения полного визуального аудита и не является целью сама по себе.
 - В app.js найдено 27 inline style-атрибутов, в styles.css — 19 `!important`; это технические маркеры для ревизии, а не автоматически дефекты.
-- Мобильный каркас sidebar + topbar работает в автоматизированных проверках. Полноценный визуальный осмотр экранов, ориентации, длинного содержимого, контрастности и реальных iOS/Android устройств ещё не выполнялся.
+- Просмотрены desktop: dashboard, каталог, уроки SQL/PostgreSQL, практика, проекты, assessment, Playground, schema, reference и glossary; mobile: dashboard, каталог, SQL lesson, practice, project и Playground. Проверены обе темы на desktop.
+- Мобильный каркас sidebar + topbar работает в автоматизированных проверках. Не завершены mobile-проверки assessment/schema/reference/glossary, landscape orientation, длинных таблиц и физических iOS/Android устройств.
 
 ### Первичная экранная матрица и покрытие
 
@@ -274,7 +287,7 @@ Workflow .github/workflows/pages.yml выполняет:
 | Учебная схема / справочник / глоссарий | Source review | Не проверено | Не завершено |
 | Светлая / тёмная тема | Source review | Не проверено отдельно | Не завершено |
 
-Следующее действие UX/UI: получить и визуально изучить screenshots ключевых экранов на desktop и mobile, затем завершить walkthrough незакрытых экранов и расставить подтверждённые P0/P1/P2 до любых визуальных изменений.
+Следующее действие UX/UI: дождаться итогового browser-smoke для build 20261109-107, проверить contrast/focus/reduced-motion/320px assertions и изучить свежие screenshots; затем завершить mobile walkthrough незакрытых экранов и оценить dashboard metric 173.
 
 ### Цель
 
@@ -293,7 +306,7 @@ Workflow .github/workflows/pages.yml выполняет:
 
 ### План работ
 
-1. **UX/UI-аудит текущей платформы — PLANNED**
+1. **UX/UI-аудит текущей платформы — IN_PROGRESS**
    - Инвентаризировать главную страницу, каталог, экран курса, модуль/урок, практику, контрольные работы, проекты, Playground, справочник, глоссарий и настройки темы.
    - Пройти ключевые сценарии на desktop и mobile: найти курс, продолжить урок, открыть связанное задание, выполнить SQL, посмотреть результат, вернуться назад, восстановить состояние по URL.
    - Зафиксировать проблемы по влиянию на обучение: критические препятствия, существенные неудобства, косметические несогласованности.
@@ -370,39 +383,40 @@ Workflow .github/workflows/pages.yml выполняет:
 - SQL: 17 модулей, 112 уроков. PostgreSQL: 8 модулей, 61 урок. Всего 25 модулей и 173 урока.
 - 103 обычных задания, 350 random tasks по 14 темам, 100 контрольных вопросов, 72 термина глоссария, 13 групп SQL-справочника, 14 таблиц в суммарной учебной схеме/наборах данных.
 - 3 проекта: E-commerce, аналитика доставки, Product Analytics; по 3 SQL-задачи в каждом.
-- Приложение опубликовано с build 20261109-106. Последний Pages workflow 42527756866 для commit 0ff7123 завершился success.
-- URL/hash-навигация, backup export/import и основные browser-smoke сценарии ранее проверены; последний полный workflow также проверил курсы, PGlite retry, выполнение SQL, проекты и мобильную навигацию.
-- Независимые oracle regression checks для 25 random JOIN вариантов прошли validate в последнем полном workflow.
+- Runtime build: 20261109-107; Pages workflow 42529994915 для SHA 8bd962d завершился success.
+- 24 screenshots получены через Playwright artifact и просмотрены. Screen matrix охватывает ключевые desktop страницы, обе темы и основные mobile экраны.
+- 25 независимых JOIN oracle regression checks ранее прошли validate на commit 0ff7123.
 
 Последняя завершённая задача:
-- Независимые expected-result regression checks для всех 25 random JOIN вариантов в пяти семействах, включая уникальность зерна, ожидаемое число строк и дополнительные инварианты.
-- Первоначальный CI на cda363c выявил ошибку ожидаемого количества строк для synthetic order 113; корректировка expectedCounts выполнена в commit 0ff7123.
-- Workflow 42527757551 на commit 0ff7123749eac681bc1fd3fb1f0b29a64d58d1a9: validate success, deploy success, browser-smoke success.
-- Pages workflow 42527756866 для того же SHA: completed/success.
+- Первичный визуальный UX/UI-аудит по 24 screenshots и source review.
+- Внедрены: light-theme contrast tokens, общий keyboard focus-visible, prefers-reduced-motion для CSS и навигационного scroll, одноколоночный список практики на <=360 px.
+- Обновлён runtime build до 20261109-107 и синхронизированы шесть app.js import cache keys.
+- Последний полностью успешный end-to-end workflow до этих изменений: 42529611099 на 5fd2f24 (validate/deploy/browser-smoke success).
 
 Текущая незавершённая задача:
-- UX/UI-аудит существующей платформы. Выполнен source-level обзор ключевых экранов, адаптивных правил и части Playwright сценариев. Статус IN_PROGRESS.
-- Подтверждено автоматическими проверками: desktop 1440×960; mobile 390×844 и 320×740; мобильное меню, Escape, возврат фокуса, отсутствие горизонтального overflow на dashboard/practice/Playground при 320 px; отдельный прогресс двух курсов.
-- Не выполнен визуальный осмотр screenshots, полная проверка всех экранов на mobile, проверка ориентаций, контраста, длинных таблиц/текста, светлой/тёмной темы и реальных iOS/Android устройств.
-- Предварительные UX-кандидаты: поддержка prefers-reduced-motion (P1), общие focus-visible состояния (P1), оценка общей цифры 173 урока на dashboard (P2), консолидация 17 media-query блоков после проверки каскада.
+- Финальная проверка accessibility/mobile изменений в GitHub Actions.
+- Commit 615d457462e07d7b886818e455ce88b40b2a7b26: validate success, deploy success; browser-smoke остаётся in_progress без шагов/логов.
+- Последний commit 8bd962da7de1110f16573f7c0aeabda98f50ea1a исправляет parser shorthand hex в contrast assertion; workflow 42529995249 pending.
+- Browser-smoke должен подтвердить focus-visible, контраст >=4.5:1, reduced-motion и одноколоночную практику на 320 px.
 
 Следующая конкретная задача:
-- Организовать визуальный аудит: получить screenshots dashboard, каталога, программы/урока, практики, проектов, контрольных и инструментов на desktop 1440 px и mobile 390/320 px; изучить их, пройти незакрытые сценарии, проверить обе темы и длинное содержимое.
-- По результатам составить подтверждённый список P0/P1/P2 и только затем внедрять минимальные согласованные изменения. Не переписывать CSS целиком и не менять стабильные IDs, URL, прогресс, черновики, backup/restore или поведение PGlite/CodeMirror.
-- Критерий завершения аудита: экранная матрица заполнена фактами, у каждой проблемы есть воспроизводимый сценарий, приоритет и критерий исправления; отдельно указаны ограничения, которые невозможно проверить без физических устройств.
+- Проверить завершение workflow 42529995249 на HEAD 8bd962d. Если browser-smoke проходит, скачать artifact sql-academy-ux-audit-screenshots, проверить кадры 12-practice-mobile-320, 25-dashboard-mobile-320, 15-dashboard-desktop-light, а также focus/reduced-motion assertions.
+- Если CI падает, исправлять конкретную причину, не отключая проверки и не ослабляя критерии.
+- Затем завершить mobile walkthrough для assessment, schema, reference и glossary на 390/320 px; проверить landscape, длинные таблицы/текст и тему оформления. Физические iOS/Android устройства пока не проверялись.
+- После полного аудита определить P0/P1/P2; отдельно решить, следует ли заменить общую цифру 173 урока на dashboard более ясным отображением двух самостоятельных курсов.
+- Не переписывать CSS целиком и не менять стабильные IDs, URL, прогресс, черновики, backup/restore или поведение PGlite/CodeMirror.
 
 Последний завершённый commit SHA:
-- 0ff7123749eac681bc1fd3fb1f0b29a64d58d1a9.
+- 8bd962da7de1110f16573f7c0aeabda98f50ea1a.
 
 Последний результат тестирования:
-- Workflow 42527757551: все jobs success (validate, deploy, browser-smoke).
-- Validate включает JS syntax checks и npm run test:curriculum; 25 random JOIN вариантов сверены с независимыми oracle на PGlite.
-- Browser-smoke: опубликованный сайт, URL/history, раздельные курсы и прогресс, PGlite retry, выполнение SQL, практика, три проекта, backup сценарии, mobile menu/focus и overflow на 320 px.
-- Отдельный Pages workflow 42527756866: completed/success.
-- Локальные npm/Playwright команды в этой сессии не запускались; подтверждение получено от GitHub Actions.
+- Полностью успешный workflow: 42529611099 на 5fd2f24, validate/deploy/browser-smoke success.
+- Для runtime commit 615d457: validate success, deploy success; browser-smoke in_progress.
+- Для последнего commit 8bd962d: workflow 42529995249 pending; Pages workflow 42529994915 success.
+- Локальные npm/Playwright команды в этой сессии не запускались.
 
 Состояние GitHub Pages:
 - URL: https://vladsimbro.github.io/SQL/
-- Последняя подтверждённая публикация: commit 0ff7123749eac681bc1fd3fb1f0b29a64d58d1a9; Pages workflow 42527756866 success.
-- Runtime build остаётся 20261109-106: после него менялись только тесты и документация, поэтому version.json не обновлялся.
-- Custom workflow 42527757551: validate/deploy/browser-smoke all success.
+- Последняя подтверждённая публикация: commit 8bd962da7de1110f16573f7c0aeabda98f50ea1a; Pages workflow 42529994915 success.
+- Runtime build: 20261109-107.
+- Custom validate/deploy для runtime commit 615d457 завершились success; browser-smoke ещё не подтверждён.
