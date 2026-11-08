@@ -730,4 +730,4 @@ try {
 
 assert.ok((await readFile(new URL('../app.js', import.meta.url), 'utf8')).includes("PGlite.create({dataDir:'memory://'})"), 'Browser playground must initialize an explicit in-memory PGlite database');
 assert.ok(!/(?<!\$)\$\('[^']+'\)\.forEach\s*\(/.test(appSource), 'All DOM collection iterations must use querySelectorAll helper');
-assert.ok(appSource.includes("$('[data-random-topic]').forEach("), 'Random topic checkboxes must be selected as a collection');
+assert.ok(appSource.includes("$$('[data-random-topic]').forEach("), 'Random topic checkboxes must be selected as a collection');
