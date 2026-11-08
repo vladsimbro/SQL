@@ -165,7 +165,7 @@ try {
   const productProject=projects.find(project=>project.id==='product');
   const firstProjectTask=productProject.tasks[0];
   assert.equal(await page.locator('#app-content .project-task-nav').count(), 3, 'Each project must expose its three ordered tasks');
-  assert.equal(await page.locator('.project-task-content h2').textContent(), firstProjectTask.title);
+  assert.equal((await page.locator('.project-task-content h2').textContent()).trim(), firstProjectTask.title);
   assert.equal(await page.locator('.project-solution').count(), 0, 'Reference SQL must remain hidden by default');
 
   const projectEditor=page.locator('#project-editor');
