@@ -183,11 +183,11 @@ SQL Academy — статическая интерактивная платфор
 Workflow .github/workflows/pages.yml выполняет JS syntax checks, npm run test:curriculum, публикацию GitHub Pages и Playwright browser-smoke опубликованного сайта.
 
 Последняя полностью успешная end-to-end проверка:
-- Workflow: 42531466474.
-- Commit: 913a933cb48e70df789e5ddaede1bea8672e59ec.
+- Workflow: 42532221074.
+- Commit: b920b19c57457ddfc897c8614f914626a89fe373.
 - validate, deploy, browser-smoke: success.
-- Browser-smoke подтвердил runtime build 20261109-109; shellReadyMs=1385, recoveryMs=5433, resetReadyMs=4667.
-- Artifact sql-academy-ux-audit-screenshots: ID 13637443447, 37 screenshots.
+- Browser-smoke подтвердил runtime build 20261109-109; shellReadyMs=641, recoveryMs=6825, resetReadyMs=5988.
+- Artifact sql-academy-ux-audit-screenshots: ID 13637936905, 53 screenshots.
 
 Последние runtime/accessibility changes:
 - Commit 615d457462e07d7b886818e455ce88b40b2a7b26: build 20261109-107, light-theme contrast tokens, глобальный focus-visible, prefers-reduced-motion, instant navigation scroll при системной настройке reduce и 1-column practice list при ширине <=360 px.
@@ -200,7 +200,7 @@ Workflow .github/workflows/pages.yml выполняет JS syntax checks, npm ru
 - Browser smoke проверяет точные отдельные totals SQL 112 и PostgreSQL 61.
 - Workflow 42530979109 на 7a87253: validate/deploy success; browser-smoke прошёл landscape nav и все 37 screenshot captures, затем завершился failure на unsupported backup version test.
 - Причина последнего failure: test helper намеренно переставал передавать содержимое файлов размером >1 KB, поэтому валидный JSON unsupported-version fixture превращался в нулевой массив байтов. Исправлено: реальные bytes передаются для всех fixtures <=5 MB; только oversized fixture создаётся как пустой файл требуемого размера, поскольку приложение отклоняет его до чтения содержимого.
-- Текущий HEAD 913a933cb48e70df789e5ddaede1bea8672e59ec: validate/deploy/browser-smoke success; Pages workflow 42531466559 success.
+- Текущий code HEAD b920b19c57457ddfc897c8614f914626a89fe373: validate/deploy/browser-smoke success; Pages workflow 42532220255 success.
 
 Новые browser-smoke assertions:
 - Keyboard navigation активирует :focus-visible с видимой outline.
@@ -210,13 +210,13 @@ Workflow .github/workflows/pages.yml выполняет JS syntax checks, npm ru
 - Mobile walkthrough: assessment/schema/reference/glossary на 390 px, 320 px и 667x375 landscape; для каждого сценария проверяются видимый заголовок и отсутствие horizontal overflow.
 - Для landscape ниже 520 px проверяется, что sidebar действительно scrollable, полный список навигации доступен и выбранный пункт становится active.
 - Negative backup import fixtures подаются через File + DataTransfer + change event; fixtures до 5 MB сохраняют исходные bytes, oversized fixture создаётся в браузере по длине.
-- Screenshot matrix покрывает dashboard, каталог, уроки обоих курсов, практику, проекты, assessment, Playground, schema, reference, glossary, light/dark и mobile. Последний artifact содержит 48 screenshots. Новый light-mobile matrix добавляет 11 кадров; ожидаемое общее число — 48.
+- Screenshot matrix покрывает dashboard, каталог, уроки обоих курсов, практику, проекты, assessment, Playground, schema, reference, glossary, light/dark и mobile. Последний artifact содержит 53 screenshots, включая 16 light-theme mobile кадров.
 
 Визуальный осмотр mobile screenshots:
 - Из artifact 13637208331 просмотрены assessment/schema/reference/glossary в portrait 320/390 px и landscape 667x375.
 - Все 12 дополнительных mobile кадров созданы; navigation walkthrough прошёл после CSS landscape fix.
 - Из artifact 13637443447 просмотрены dashboard кадры build 20261109-109; раздельные счётчики курсов читаемы на desktop и mobile 320 px.
-- Из artifact 13637946145 просмотрены 11 light-mobile кадров: dashboard 390/320, каталог, SQL lesson, practice 390/320, assessment 390/320, schema, reference и glossary; горизонтального overflow нет.
+- Из artifact 13637946145 просмотрены light-mobile кадры dashboard 390/320, catalog 390/320, SQL lesson 390/320, practice 390/320, assessment 390/320, schema, reference, glossary, project list и E-commerce project detail 390/320; горизонтального overflow нет.
 - Assessment и glossary длинные, но содержимое остаётся в одной колонке и не выходит за ширину экрана.
 - Schema cards сохраняют названия таблиц, поля и типы; на 320 px шрифт плотный, но layout не ломается.
 - Reference groups остаются одноколоночными в landscape, что сохраняет читаемость пар «синтаксис/объяснение».
