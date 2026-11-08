@@ -575,7 +575,7 @@ try {
     },
     {
       params: ['delivered','shipped','new','cancelled','delivered'],
-      expectedCounts: [6,3,1,1,6],
+      expectedCounts: [6,3,2,1,6], // Includes synthetic order 113 from the fan-out regression fixture.
       query: `SELECT o.order_id, o.total_amount,
                      COALESCE((SELECT SUM(p.amount) FROM payments p
                                WHERE p.order_id = o.order_id AND p.payment_status = 'paid'), 0) AS paid_amount
