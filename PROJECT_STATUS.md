@@ -5,15 +5,15 @@ Last verified: 2026-11-08
 ## CURRENT
 
 - **Stage:** 7 — Полная проверка, документация и выпуск.
-- **Main task:** закрыть оставшиеся операции сопровождения репозитория: GitHub About (описание, homepage, topics) и осторожную очистку веток. Учебная программа, практика, интерфейс, README и опубликованный сайт уже прошли проверки; не начинать этапы 0–6 заново.
-- **Last completed:** обновлены GitHub Actions до актуальных major-версий с Node.js 24 runtime; права Pages deployment сужены до deploy job; status-only commits пропускают custom validate/deploy/browser-smoke. Все 29 не-main веток семантически проверены, merge/cherry-pick не требуется. По запросу удалён архивный AUDIT.md из main; его итоговый branch review и handoff сохранены в PROJECT_STATUS.md.
-- **Verified main code/workflow HEAD (before this handoff update):** dccb274eba9d450543ea2230fd54f248bbe7c432.
+- **Main task:** завершить единственную оставшуюся операцию сопровождения репозитория — заполнить GitHub About (description, homepage, topics). Учебная программа, практика, интерфейс, README, очистка веток и опубликованный сайт проверены; не начинать этапы 0–6 заново.
+- **Last completed:** обновлены GitHub Actions до актуальных major-версий с Node.js 24 runtime; права Pages deployment сужены до deploy job; status-only commits пропускают custom validate/deploy/browser-smoke. Все 29 не-main веток семантически проверены и впоследствии удалены. Повторная проверка GitHub API подтверждает, что осталась только `main`. По запросу удалён архивный AUDIT.md; итоговый branch review и handoff сохранены в этом документе.
+- **Current main HEAD:** 1277fcea775767e01f97caaa7a855287f32c48ef (последний commit меняет только PROJECT_STATUS.md; код приложения и курсов не менялся).
 - **Last app/course code HEAD:** d26c32f6dfb6cbc498b8d73997b64235f8588d2d (последующие коммиты меняют только статус и CI workflow).
 - **App build:** 20261108-95.
-- **Validation + deploy:** workflow 42506177510 — success; validate job 128809193266, deploy job 128809269851, browser-smoke job 128809339128.
-- **Pages build/deployment workflow:** 42506177411 — success; build job 128809195915, deploy job 128809276704.
+- **Latest validation + deploy:** workflow 42508601118 — success for 8cdf766e; validate job 128816556670, deploy job 128816623899, browser-smoke job 128816705064 — all success.
+- **Latest Pages build/deployment:** workflow 42508645838 — success for current main HEAD 1277fcea; build job 128816710761, report-build-status job 128816813095, deploy job 128816813186 — all success.
 - **Latest live browser smoke:** shell 480 ms; recovery after failed PGlite import 6900 ms; database reset 5864 ms; SQL execution, editor persistence, mobile menu, focus restoration, 390 px and 320 px layouts all passed. Timings are environment-dependent diagnostics, not performance guarantees.
-- **Remaining in Stage 7:** GitHub About is still empty. All 29 non-main branches have been reviewed; no functional work needs merging. The branch refs have NOT been deleted because the available GitHub integration exposes no delete-branch/delete-ref operation (it only supports reads and ref updates). The user explicitly requests keeping main only; once a deletion-capable GitHub UI/API session is available, delete all 29 non-main refs. Keep PROJECT_STATUS.md as the permanent handoff. AUDIT.md was deleted from main by request.
+- **Remaining in Stage 7:** GitHub About is still empty (description=null, homepage=null, topics=[]). All 29 non-main branch refs have since been deleted. The live branches endpoint and `git/matching-refs/heads/` both return only `main`; no further branch cleanup or merge is needed. The current GitHub integration does not expose repository-metadata write operations, so About remains the sole external blocker. Keep PROJECT_STATUS.md as the permanent handoff.
 - **Handoff update:** a status-only change skips the custom validate/deploy/browser-smoke workflow. GitHub Pages may still run its separate managed Jekyll build/deploy; this happened for handoff commit 8a14e19f and succeeded (run 42506417303).
 
 ## STAGES
@@ -27,11 +27,11 @@ Last verified: 2026-11-08
 | 4. Практика, валидатор и контроль знаний | DONE | 102 обычных задания, 350 случайных задач в 14 темах, 100 модульных вопросов. Comparator сохраняет типы значений, набор столбцов, кратность строк и заданный условием порядок; допускает перестановку столбцов и строк, когда это несущественно. Execution-based PGlite-проверки покрывают SELECT/CTE, JOIN/pre-aggregation, correlated subquery/LEFT JOIN, IN/EXISTS, NOT IN с NULL, EXCEPT/INTERSECT, UNION/UNION ALL, FILTER/CASE, GROUPING SETS/UNION ALL, оконные CTE, ROWS/RANGE и другие зафиксированные эквивалентности. Отдельно проверяются отрицательные случаи, где запросы неэквивалентны. 95 random tasks и 12 обычных упражнений явно order-sensitive. 100 вопросов контрольных работ сбалансированы 25/25/25/25. |
 | 5. Учебные данные и аналитические сценарии | DONE | Добавлены 4 отдельные аналитические таблицы: `analytics_customers`, `analytics_orders`, `analytics_order_items`, `analytics_order_events`; 48 клиентов, 1 158 заказов за 36 месяцев (2023–2025), повторные покупки, статусы, отмены, полные/частичные возвраты и журнал событий. Стартовый набор из 9 таблиц и 12 исходных заказов сохранён отдельно. Связь исторического `product_id` больше не блокирует удаление товара из beginner-каталога. Четыре аналитических урока и существующие упражнения e83/e86/e87/e96 используют исторический набор: когорты, retention, чистая выручка MoM и время этапов доставки. События имеют разные детерминированные интервалы и строгий порядок created → shipped → delivered. PGlite smoke-test подтверждает cohort/retention, выручку, item totals, возвраты, 874 завершённые доставки, средние и перцентили. Workflow `42488705350` — validation и deploy success; Pages workflow `42488705054` — success. |
 | 6. Интерфейс, мобильная версия и производительность | DONE | Помимо ранней отрисовки, блокировок до engineReady, reset/retry, сохранения черновика и доступной мобильной навигации добавлены синтаксическая проверка JS и live Playwright Chromium smoke test опубликованного Pages. Последние проверки: workflow 42506177510 и Pages workflow 42506177411 — success. Browser smoke подтвердил запуск shell до готовности БД, retry импорта PGlite, сохранение SQL-черновика, реальное выполнение PostgreSQL-запроса, мобильное меню/Escape/возврат фокуса и отсутствие overflow на 390 и 320 px. В ходе первоначальной проверки исправлены синтаксическая ошибка renderPractice() и retry-загрузка PGlite через новый URL. |
-| 7. Полная проверка, документация и выпуск | IN PROGRESS | README и live browser E2E завершены. CI hardening прошёл успешно: Actions обновлены, permissions сужены, status-only изменения пропускают custom test/deploy workflow. Все 29 веток не-main проверены по compare/files, коммитам и содержимому; функциональной работы для merge/cherry-pick не осталось. Удалён устаревший AUDIT.md; передача контекста сохранена в PROJECT_STATUS.md. Фактические refs остаются: 1 branch ancestor (ahead=0), 28 diverged (ahead=1–51). Требуется удалить все 29 non-main refs и заполнить GitHub About; delete-ref и metadata-write операции недоступны в текущей интеграции. |
+| 7. Полная проверка, документация и выпуск | IN PROGRESS | README и live browser E2E завершены. CI hardening прошёл успешно. Все 29 не-main refs удалены; повторная проверка GitHub API подтверждает, что существует только `main`. Открытых PR нет. Актуальная проверка `validate`, `deploy`, `browser-smoke` и отдельная публикация Pages прошли успешно. Осталась только настройка GitHub About (description, homepage, topics); текущая интеграция не предоставляет операцию записи repository metadata. |
 
 ## BRANCH AUDIT
 
-Сверка выполнена через GitHub compare для всех 29 веток-кандидатов относительно main на baseline f5f45adec53433070b08839e171d30a9f8d64e17. После этого main получил два CI-only коммита (81121d2c, dccb274e); значения ahead не изменились, behind для всех кандидатов увеличился на 2. Всего веток: 30 включая main. Открытых PR: 0.
+Историческая сверка выполнена через GitHub compare для всех 29 веток-кандидатов относительно main на baseline f5f45adec53433070b08839e171d30a9f8d64e17. После этого main получил два CI-only коммита (81121d2c, dccb274e); значения ahead не изменились, behind для всех кандидатов увеличился на 2. На момент аудита было 30 веток включая main. Впоследствии все 29 не-main refs удалены; текущая проверка GitHub API показывает только main. Открытых PR: 0.
 
 | Branch | Commits ahead of main at baseline |
 |---|---:|
@@ -99,9 +99,9 @@ work/sql-academy-stage3-batch6-2026-11-07b is the only branch proven to have no 
 ### Cleanup conclusion
 
 - Не создавать PR и не cherry-pick: недостающих функциональных изменений не найдено. AUDIT.md удалён из main коммитом 8cdf766e; README не ссылался на этот файл, итог branch review находится в PROJECT_STATUS.md.
-- Ветка `work/sql-academy-stage3-batch6-2026-11-07b` может быть удалена без потери коммитов, поскольку её HEAD является ancestor main.
-- Остальные 28 веток можно считать устаревшими по содержимому и кандидатами на удаление после принятия решения об отказе от сохранения промежуточной commit history. Их commit SHAs не входят в main, хотя функциональный результат уже перенесён/переработан.
-- Удаление веток сейчас не выполнено: в активном GitHub toolset отсутствует delete-ref/delete-branch action. Не пытаться имитировать удаление force-update ветки на main. Все 29 refs помечены как удаляемые по запросу пользователя; оставить только main после появления deletion-capable access.
+- Ветка `work/sql-academy-stage3-batch6-2026-11-07b` была единственной веткой-ancestor (ahead=0); сейчас она удалена вместе с остальными не-main refs.
+- Остальные 28 diverged-веток содержали промежуточную commit history, функциональные результаты которой уже присутствовали в main или были заменены более актуальными решениями. Все они также удалены; новых merge/cherry-pick не потребовалось.
+- Очистка завершена: актуальные GitHub API `branches?per_page=100` и `git/matching-refs/heads/` возвращают только `main`. Удаление не имитировалось обновлением refs и не затронуло main.
 - GitHub About также остаётся ручной операцией: текущий toolset не предоставляет update-repository metadata. PROJECT_STATUS.md оставить в main как handoff; AUDIT.md удалён.
 
 ## DONE — проверяемые ограничения и результаты
@@ -123,8 +123,7 @@ work/sql-academy-stage3-batch6-2026-11-07b is the only branch proven to have no 
 - **GitHub About:** description, homepage and topics are empty. Suggested description: Interactive SQL and PostgreSQL learning platform for aspiring data analysts, with structured lessons, hands-on exercises, automatic SQL checking, and a browser-based PostgreSQL sandbox.
 - **Homepage:** https://vladsimbro.github.io/SQL/
 - **Suggested topics:** sql, postgresql, data-analytics, sql-learning, education, pglite, github-pages.
-- **Branch cleanup:** work/sql-academy-stage3-batch6-2026-11-07b is the sole confirmed ancestor branch and can be removed from GitHub UI or with a local Git client. Integration currently has no delete-ref operation.
-- **Other 28 branches:** semantic file/commit review is complete; no missing feature was identified. Their commit history is unique, but code/lesson outcomes are superseded in main. Delete only if the decision is to discard intermediate commit history; no merge/cherry-pick is needed.
+- **Branch cleanup:** complete. GitHub currently exposes only `main`; all 29 non-main refs are absent. No merge/cherry-pick was necessary.
 - **GitHub About write:** apply the prepared description/homepage/topics through repository Settings when UI or an authorized metadata-write integration is available.
 - Local clone/test run was not used in this session; executable checks and live browser E2E were run in GitHub Actions.
 
@@ -133,27 +132,25 @@ work/sql-academy-stage3-batch6-2026-11-07b is the only branch proven to have no 
 - Repository: https://github.com/vladsimbro/SQL
 - Pages: https://vladsimbro.github.io/SQL/
 - Branch: main
-- Verified main HEAD after AUDIT.md deletion: 8cdf766e94f0b392f9d5522ca1c9444573d64e7f
+- Verified current main HEAD: 1277fcea775767e01f97caaa7a855287f32c48ef
 - Last application/course code HEAD: d26c32f6dfb6cbc498b8d73997b64235f8588d2d (no app/course code changed during cleanup).
 - App build: 20261108-95
-- Validation + deploy workflow: 42506177510 — success for dccb274e.
-- Validate job: 128809193266 — success; includes Node syntax checks and all curriculum/PGlite exercise checks.
-- Deploy job: 128809269851 — success.
-- Browser-smoke job: 128809339128 — success against https://vladsimbro.github.io/SQL/; shell 480 ms, failed-import retry 6900 ms, DB reset 5864 ms, mobile widths 390/320 px; all checks passed.
-- Separate Pages build/deployment workflow: 42506177411 — success; build job 128809195915, deploy job 128809276704.
+- Latest full validation + deploy workflow: 42508601118 — success for commit 8cdf766e. Validate job 128816556670, deploy job 128816623899 and browser-smoke job 128816705064 all succeeded.
+- Latest separate Pages build/deployment workflow: 42508645838 — success for current main HEAD 1277fcea. Build job 128816710761, report-build-status job 128816813095 and deploy job 128816813186 all succeeded.
+- The browser smoke reran in the latest full validation and passed. Its detailed timings are retained above only as diagnostics from the previous recorded run.
 - No Node.js 20 deprecation warning appeared in the latest browser job logs.
 - Workflow hardening commits: 81121d2c (Action major upgrades + least-privilege deploy permissions), dccb274e (ignore status-only pushes/PRs).
 - Action versions: actions/checkout@v7, actions/setup-node@v7, actions/configure-pages@v6, actions/upload-pages-artifact@v5, actions/deploy-pages@v5, actions/upload-artifact@v7. Project test runtime remains Node 22.
 - Global workflow permission is contents: read; only deploy job receives pages: write and id-token: write.
 - A push/PR changing only PROJECT_STATUS.md is ignored by the custom validate/deploy/browser-smoke workflow. The separate GitHub-managed Pages Jekyll build/deploy may still run; observed successfully on handoff commit 8a14e19f (run 42506417303).
 - Open Pull Requests: 0 at last verification.
-- Branches: 30 total including main; all 29 candidates compared and semantically reviewed. One confirmed ancestor (ahead=0); 28 diverged (ahead 1–51). No unique functional content requiring merge was found; see Semantic review section above.
+- Branches: only `main` currently exists. The 29 non-main refs listed in the historical audit were removed after semantic review; no unique functional content required merging.
 - GitHub About fields: description null, homepage null, topics empty. Repository lookup confirms the values; current integration has no write operation.
-- Current integration supports compare/search and ref updates, but not branch delete-ref. No non-main branch was deleted; 29 refs remain pending deletion.
+- The connected GitHub integration has no delete-ref operation, but cleanup is already complete: live API responses list only `main`; no non-main refs remain.
 - README is up to date: 42 step-by-step scenarios and a separate «Контрольные работы» section.
 - Stage 6 browser timings vary by runner/load; values above are from the latest successful run, not stable performance guarantees.
 - This handoff update changes only PROJECT_STATUS.md; paths-ignore prevents the custom validation/deploy/browser-smoke cycle, but does not suppress the separate GitHub-managed Pages build/deploy.
 
 ## NEXT ACTION
 
-Продолжать Stage 7 без повторного прохождения этапов 0–6. Проверить Pages run после удаления AUDIT.md и status-only handoff. Ветки уже аудированы: не открывать PR и не переносить изменения. Следующее действие: удалить все 29 non-main branch refs через GitHub Branches UI или delete-ref-capable integration, оставить только main. PROJECT_STATUS.md сохранить. Затем при наличии write-доступа заполнить GitHub About и закрыть Stage 7. До появления delete-ref и metadata-write операций не заявлять эти действия выполненными. Не менять содержание курса без конкретного дефекта.
+Продолжать Stage 7 без повторного прохождения этапов 0–6. Очистка веток подтверждена: единственный refs/heads/main остался в репозитории. Проверки validate/deploy/browser-smoke и отдельная публикация Pages после удаления AUDIT.md прошли успешно. Единственное оставшееся действие — заполнить GitHub About: description, homepage и topics. Текущая интеграция не поддерживает запись repository metadata, поэтому не заявлять About настроенным. PROJECT_STATUS.md сохранить как основной handoff. Не менять содержание курсов без конкретного дефекта.
