@@ -58,7 +58,7 @@ assert.ok(appSource.includes("render();\ninitDatabase();"), 'The application she
 assert.ok(appSource.includes("state.engineLoading=true") && appSource.includes("state.engineError="), 'Database startup must expose loading and recoverable error states');
 assert.ok(appSource.includes('data-action="retry-engine"'), 'A database startup error must offer an in-app retry action');
 assert.ok(appSource.includes("!state.engineReady||!state.db"), 'Database-dependent actions must be guarded until initialization finishes');
-assert.ok(appSource.includes("function setMobileMenuOpen"), 'Mobile navigation must use one function to synchronize its open state');
+assert.ok(/setMobileMenuOpen\s*=\s*\(open/.test(appSource), 'Mobile navigation must use one function to synchronize its open state');
 assert.ok(appSource.includes("event.key==='Escape'") && appSource.includes("restoreFocus:true"), 'Escape must close the mobile menu and restore focus to its trigger');
 assert.ok(appSource.includes("window.addEventListener('resize'"), 'Switching to desktop width must close and reset the mobile menu');
 assert.ok(appSource.includes("button.setAttribute('aria-expanded',String(expanded))"), 'The mobile menu must keep aria-expanded synchronized with its visual state');
