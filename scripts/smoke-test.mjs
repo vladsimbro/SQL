@@ -41,7 +41,8 @@ assert.deepEqual(legacyProgress.progress.exercises, ['e1'], 'Duplicate and malfo
 assert.deepEqual(legacyProgress.progress.exerciseQuizAnswers, { e1: 3 }, 'Exercise quiz answers must survive progress migration');
 assert.deepEqual(legacyProgress.progress.assessmentResults, { select: { attempts: 1, bestScore: 3, passed: true } }, 'Assessment results must survive progress migration');
 assert.equal(legacyProgress.changed, true, 'Legacy progress must be marked for one-time persistence');
-assert.equal(migrateProgress(legacyProgress.progress, modules).changed, false, 'Stable progress must not be rewritten on every page load');assert.ok(curriculumSource.includes('export const exercises = ['), 'Practice exercises must be exported as a named dataset');
+assert.equal(migrateProgress(legacyProgress.progress, modules).changed, false, 'Stable progress must not be rewritten on every page load');
+assert.ok(curriculumSource.includes('export const exercises = ['), 'Practice exercises must be exported as a named dataset');
 assert.ok(curriculumSource.includes('export const learningTracks = [') && curriculumSource.includes('export const exercises = ['), 'Learning routes and practice arrays must be exported separately');
 assert.ok(Array.isArray(glossary) && glossary.length >= 30, 'Glossary must contain at least 30 usable terms');
 assert.ok(Array.isArray(reference) && reference.length >= 8, 'SQL quick reference must contain usable topic groups');
@@ -370,7 +371,7 @@ assert.ok(modules.every(module=>['core','postgresql'].includes(module.track)&&Nu
 const lessonIds=modules.flatMap(module=>module.lessons.map(lesson=>lesson.id));
 assert.equal(new Set(lessonIds).size,173,'Every lesson must have a unique stable ID');
 assert.ok(lessonIds.every(id=>typeof id==='string'&&id.length>4),'Every lesson ID must be stable and non-empty');
-assert.ok(appSource.includes('legacyIds.get(value)')&&appSource.includes('quizKey('),'Progress migration must convert legacy positional lesson and quiz keys');
+assert.ok(appSource.includes('migrateProgress(saved,modules)')&&appSource.includes('state.completedLessons=new Set(progress.lessons)'), 'Application must restore normalized stable-ID progress before rendering');
 assert.ok(appSource.includes('data-track=')&&appSource.includes('state.roadmapTrack'),'Roadmap must allow switching between core and optional routes');
 assert.ok(modules.findIndex(module => module.id === 'select') < modules.findIndex(module => module.id === 'ddl'), 'Read-query fundamentals must be taught before schema modification');
 assert.ok(modules.findIndex(module=>module.id==='workflow')<modules.findIndex(module=>module.id==='ddl'),'The optional PostgreSQL route must follow the complete analyst route');

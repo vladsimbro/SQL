@@ -5,54 +5,56 @@ Last verified: 2026-11-08
 ## CURRENT
 
 - **Stage:** 1 — Надёжность основного функционала
-- **Main task:** исправить и проверить согласованность прогресса основного маршрута и перехода к следующему уроку между двумя маршрутами.
-- **Done:** актуальное состояние main, CI, Pages deployment, состав программы и существующие тесты сверены; две ошибки навигации/прогресса воспроизводятся по текущему коду.
-- **Remaining:** проверить изменения Stage 1 после CI и дополнить поведенческие проверки навигации, прогресса и миграции.
+- **Main task:** завершить регрессионную проверку прогресса, миграции и перехода между основным и дополнительным маршрутами.
+- **Done:** исправлена логика прогресса основного маршрута и унифицирован выбор следующего урока; добавлены поведенческие тесты чистых функций.
+- **Remaining:** повторно выполнить CI после исправления устаревшего тестового ожидания; затем проверить остальные сценарии Stage 1.
 
 ## STAGES
 
 | Stage | Status | Evidence / remaining |
 |---|---|---|
-| 0. Сверка состояния и сохранение прогресса | DONE | Проверены main, HEAD, состав репозитория, 28 веток, отсутствие открытых PR, последние Actions и Pages deployment. PROJECT_STATUS.md создан в этой рабочей сессии. |
-| 1. Надёжность основного функционала | IN PROGRESS | В текущем изменении исправляется прогресс основного маршрута и единый выбор следующего урока; добавляются тесты миграции и перехода между маршрутами. Остальные пользовательские сценарии требуют проверки. |
-| 2. Структура и логика учебной программы | DONE | 25 модулей: 17 модулей / 112 уроков в основном маршруте и 8 модулей / 61 урок в дополнительном. CI проверяет порядок двух маршрутов, устойчивые ID и ключевые связи между темами. |
-| 3. Качество и содержание уроков | IN PROGRESS | Текущие проверки подтверждают 40 пошаговых сценариев, 114 исполняемых SQL-примеров и 81 ожидаемую таблицу результата. Требуется закончить сверку незавершённых веток Stage 3 и ручную проверку методического качества. |
-| 4. Практика, валидатор и контроль знаний | IN PROGRESS | 102 практических задания, 350 случайных задач / 14 тем, 100 вопросов в банках модулей. Исполнение эталонов проходит CI; семантическое принятие эквивалентных пользовательских запросов требует отдельной проверки. |
-| 5. Учебные данные и аналитические сценарии | IN PROGRESS | Используются 9 таблиц. Требуется проверить временной охват, повторные покупки, возвраты и пригодность данных для когортной и временной аналитики. |
-| 6. Интерфейс, мобильная версия и производительность | IN PROGRESS | В initDatabase() первый render() вызывается после создания схемы и подготовки всех эталонов. Нужна оценка и проверка более раннего отображения интерфейса без разрешения практики до готовности движка. |
-| 7. Полная проверка, документация и выпуск | IN PROGRESS | Последний workflow validation и Pages deployment прошёл успешно. Нужны полная пользовательская проверка, live-проверка сайта в браузере, актуализация документации и безопасное завершение работы с ветками. |
+| 0. Сверка состояния и сохранение прогресса | DONE | Проверены main, HEAD, структура, 28 веток, отсутствие открытых PR и последние Actions. Статус проекта создан и находится в корне. |
+| 1. Надёжность основного функционала | IN PROGRESS | Исправлены две ошибки: прогресс теперь считается по 112 урокам core-маршрута; карточка следующего урока и её обработчик используют единый resolver. Добавлены тесты прогресса, перехода и миграции. Первый CI для 290552d упал на старом assertion, проверявшем уже удалённую реализацию миграции; тест заменён на проверку новой интеграции. Требуется повторный CI и проверка остальных сценариев. |
+| 2. Структура и логика учебной программы | DONE | 25 модулей: 17 / 112 уроков core, 8 / 61 урок PostgreSQL. CI проверяет порядок, маршруты, устойчивые ID и связи тем. |
+| 3. Качество и содержание уроков | IN PROGRESS | 40 пошаговых сценариев. До последнего изменения CI подтверждал 114 исполняемых SQL-примеров и 81 ожидаемую таблицу результата. Нужны patch-level сверка веток Stage 3 и методическая оценка. |
+| 4. Практика, валидатор и контроль знаний | IN PROGRESS | 102 практических задания, 350 случайных задач в 14 темах и 100 вопросов контрольных работ. Эталонные SQL-решения исполняются в CI; корректность эквивалентных пользовательских запросов требует отдельной проверки. |
+| 5. Учебные данные и аналитические сценарии | IN PROGRESS | 9 таблиц. Нужна оценка календарного охвата, повторных покупок, отмен/возвратов и возможностей когортной аналитики. |
+| 6. Интерфейс, мобильная версия и производительность | IN PROGRESS | Подтверждённый недостаток: первый render вызывается после заполнения базы и подготовки всех эталонов. Нужна проверка ранней отрисовки без доступа к практике до готовности БД. |
+| 7. Полная проверка, документация и выпуск | IN PROGRESS | Родительский commit проходил validation и Pages deployment. На 290552d Pages deployment прошёл, но validation упал на устаревшем assertion. Новая проверка ожидает запуска после исправления теста. |
 
 ## DONE
 
-- Основная ветка репозитория — main.
-- Основной аналитический маршрут и дополнительный маршрут PostgreSQL разделены; дополнительный маршрут не входит в состав основных 112 уроков.
-- Последняя подтверждённая проверка CI до текущего изменения: 25 модулей, 173 урока, 100 knowledge checks, 72 термина глоссария, 13 групп справочника, 102 задания, 350 случайных задач и 9 таблиц.
-- Последняя подтверждённая проверка SQL-примеров: 114 read-only примеров выполнены, 81 ожидаемая таблица результата сверена.
-- Последняя подтверждённая публикация: GitHub Pages deploy job завершился success для коммита e4a2af2.
+- Ветка main является основной.
+- Core-маршрут Junior Data Analyst отделён от дополнительного маршрута PostgreSQL.
+- До изменений CI подтверждал: 25 модулей, 173 урока, 100 вопросов контроля знаний, 72 термина глоссария, 13 групп справочника, 102 практических задания, 350 случайных задач и 9 таблиц.
+- До изменений CI подтвердил 114 исполняемых read-only примеров и 81 таблицу ожидаемых результатов.
+- Коммит 290552d добавил progress-utils.js, исправления app.js и новые тесты; Pages deployment для него завершился успешно.
 
 ## BACKLOG
 
-- Провести patch-level сверку 27 веток помимо main. Многие ветки расходятся с текущей историей main; сравнение статистики само по себе не доказывает, что их уникальные изменения уже перенесены. Не удалять ветки до проверки содержимого.
-- Проверить валидатор на действительно эквивалентных запросах, а не только на совпадении эталонных результатов.
+- Провести patch-level сверку 27 веток помимо main. Статистика сравнения commit не доказывает, что уникальное содержимое веток сохранено. Не удалять их до проверки.
+- Проверить валидатор на корректных эквивалентных запросах.
 - Проверить диапазон дат и бизнес-сценарии учебных данных.
 - Проверить сайт в реальном браузере на desktop и mobile.
+- Исправить устаревший текст README: сейчас он утверждает, что модульные контрольные работы не отображаются как отдельный тестовый блок, хотя в приложении уже есть отдельный раздел assessment. Выполнить на этапе документации.
 
 ## PROJECT STATE
 
 - Repository: https://github.com/vladsimbro/SQL
 - Pages: https://vladsimbro.github.io/SQL/
-- Branch at inspection: main
-- Last verified code HEAD before this change: e4a2af2bc5cad3881bff433c154b23c29fd32413
-- App build before this change: 20261107-73
-- Latest confirmed validation workflow: 42378308270 — success (2026-11-07 13:44 UTC)
-- Latest confirmed Pages workflow: 42378307762 — success (2026-11-07 13:44 UTC)
+- Current branch: main
+- Current implementation commit: 290552d5684c73eb8a6b196bc53b2033577e641c
+- App build: 20261108-74
+- Latest validation workflow: 42438489911 — failure at obsolete source-string assertion for progress migration; new behavior tests were not reached.
+- Latest Pages workflow: 42438489668 — success for commit 290552d.
+- Previous validation workflow: 42378308270 — success for parent e4a2af2; confirmed 114 read-only examples, 81 expected-result tables, 102 practical exercises, 350 random tasks, 9 seed tables.
 - Open Pull Requests: 0
-- Branches: 28 total, including main
-- Repository description / homepage / topics at inspection: empty / empty / empty
-- Local clone and local test execution: unavailable in this environment because github.com DNS resolution failed. GitHub Actions is the available executable test environment.
-- Live Pages URL could not be fetched by the current browser tool; successful GitHub Pages build and deploy jobs are confirmed, but direct page interaction is not independently verified.
-- Known implementation issue for Stage 6: database initialization still delays the first application render until prepareExpected() completes.
+- Branches: 28 total including main
+- Repository description / homepage / topics: empty / empty / empty at last metadata check.
+- Local clone/test execution is unavailable in this environment because GitHub DNS resolution failed. GitHub Actions is the executable test environment.
+- GitHub Pages workflow succeeded, but direct browser interaction with the live page could not be independently verified in this session.
+- Known Stage 6 issue: first application render waits for database seed and expected-result preparation.
 
 ## NEXT ACTION
 
-Verify CI for build 20261108-74, then continue Stage 1 with the remaining navigation, storage, database-ready and recovery scenarios.
+Run validation on the corrected regression test, then continue Stage 1 with navigation, progress storage, reset and engine recovery scenarios.
