@@ -590,11 +590,15 @@ try {
       const task = joinRandomTasks[pattern * 5 + variant];
       assert.ok(task && task.id === `rnd-joins-${String(pattern * 5 + variant + 1).padStart(2,'0')}`, 'JOIN task order must remain grouped into its five documented families');
       const params = oracleCase.params.length ? [oracleCase.params[variant]] : [];
-      const [actual, expected] = await Promise.all([
-        db.query(task.solution),
-        db.query(oracleCase.query, params)
-      ]);
+      const actual = await db.query(task.solution);
+      const expected = await db.query(oracleCase.query, params);
       assert.equal(actual.rows.length, oracleCase.expectedCounts[variant], `JOIN task ${task.id} must return the expected number of rows`);
+      const grainColumn = ['order_id','store_name','employee_id','product_name','order_id'][pattern];
+      assert.equal(
+        new Set(actual.rows.map(row => row[grainColumn])).size,
+        actual.rows.length,
+        `JOIN task ${task.id} must preserve one result row per ${grainColumn}`
+      );
       assert.equal(
         resultMatches(normalize(actual), normalize(expected), task.orderMatters),
         true,
@@ -606,6 +610,7 @@ try {
   assert.equal(Number(storeZeroOrderCount.rows.find(row => row.store_name === 'Запасной')?.orders_count), 0, 'A store without orders must remain with a zero count');
   const employeeZeroCounts = await db.query(joinOracleCases[2].query, ['new']);
   assert.ok(employeeZeroCounts.rows.every(row => Number(row.orders_count) === 0), 'Employees without orders of the selected status must remain with zero counts');
+  assert.equal(Number(employeeZeroCounts.rows.find(row => Number(row.employee_id) === 5)?.orders_count), 0, 'An employee without any assigned orders must remain with zero counts');
   const coffeeProduct = await db.query(joinOracleCases[3].query, ['Продукты']);
   assert.deepEqual(
     coffeeProduct.rows.map(row => [Number(row.orders_count), Number(row.units_sold)]),
