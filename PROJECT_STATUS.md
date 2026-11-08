@@ -13,7 +13,7 @@ Last verified: 2026-11-08
 - **Validation + deploy:** workflow 42506177510 — success; validate job 128809193266, deploy job 128809269851, browser-smoke job 128809339128.
 - **Pages build/deployment workflow:** 42506177411 — success; build job 128809195915, deploy job 128809276704.
 - **Latest live browser smoke:** shell 480 ms; recovery after failed PGlite import 6900 ms; database reset 5864 ms; SQL execution, editor persistence, mobile menu, focus restoration, 390 px and 320 px layouts all passed. Timings are environment-dependent diagnostics, not performance guarantees.
-- **Remaining in Stage 7:** GitHub About is still empty; current GitHub integration has no repository-metadata write or branch delete-ref operation. Branch audit: one branch is strictly contained in main; 28 diverged branches contain unique commit objects and require patch/tree-content proof before deletion. Do not delete diverged branches merely because their work may have been cherry-picked.
+- **Remaining in Stage 7:** GitHub About is still empty; current GitHub integration has no repository-metadata write or branch delete-ref operation. All 29 non-main branches have now had their changed files, ahead commits, and functional scope reviewed. No unrecovered feature or lesson improvement was identified: useful content is present in main as the current version, renamed/reworked, or deliberately removed as generic filler. One branch is provably an ancestor (ahead=0); the other 28 have unique commit objects but their functionality is superseded. No branch was deleted.
 - **Handoff update:** a status-only change skips the custom validate/deploy/browser-smoke workflow. GitHub Pages may still run its separate managed Jekyll build/deploy; this happened for handoff commit 8a14e19f and succeeded (run 42506417303).
 
 ## STAGES
@@ -27,7 +27,7 @@ Last verified: 2026-11-08
 | 4. Практика, валидатор и контроль знаний | DONE | 102 обычных задания, 350 случайных задач в 14 темах, 100 модульных вопросов. Comparator сохраняет типы значений, набор столбцов, кратность строк и заданный условием порядок; допускает перестановку столбцов и строк, когда это несущественно. Execution-based PGlite-проверки покрывают SELECT/CTE, JOIN/pre-aggregation, correlated subquery/LEFT JOIN, IN/EXISTS, NOT IN с NULL, EXCEPT/INTERSECT, UNION/UNION ALL, FILTER/CASE, GROUPING SETS/UNION ALL, оконные CTE, ROWS/RANGE и другие зафиксированные эквивалентности. Отдельно проверяются отрицательные случаи, где запросы неэквивалентны. 95 random tasks и 12 обычных упражнений явно order-sensitive. 100 вопросов контрольных работ сбалансированы 25/25/25/25. |
 | 5. Учебные данные и аналитические сценарии | DONE | Добавлены 4 отдельные аналитические таблицы: `analytics_customers`, `analytics_orders`, `analytics_order_items`, `analytics_order_events`; 48 клиентов, 1 158 заказов за 36 месяцев (2023–2025), повторные покупки, статусы, отмены, полные/частичные возвраты и журнал событий. Стартовый набор из 9 таблиц и 12 исходных заказов сохранён отдельно. Связь исторического `product_id` больше не блокирует удаление товара из beginner-каталога. Четыре аналитических урока и существующие упражнения e83/e86/e87/e96 используют исторический набор: когорты, retention, чистая выручка MoM и время этапов доставки. События имеют разные детерминированные интервалы и строгий порядок created → shipped → delivered. PGlite smoke-test подтверждает cohort/retention, выручку, item totals, возвраты, 874 завершённые доставки, средние и перцентили. Workflow `42488705350` — validation и deploy success; Pages workflow `42488705054` — success. |
 | 6. Интерфейс, мобильная версия и производительность | DONE | Помимо ранней отрисовки, блокировок до engineReady, reset/retry, сохранения черновика и доступной мобильной навигации добавлены синтаксическая проверка JS и live Playwright Chromium smoke test опубликованного Pages. Последние проверки: workflow 42506177510 и Pages workflow 42506177411 — success. Browser smoke подтвердил запуск shell до готовности БД, retry импорта PGlite, сохранение SQL-черновика, реальное выполнение PostgreSQL-запроса, мобильное меню/Escape/возврат фокуса и отсутствие overflow на 390 и 320 px. В ходе первоначальной проверки исправлены синтаксическая ошибка renderPractice() и retry-загрузка PGlite через новый URL. |
-| 7. Полная проверка, документация и выпуск | IN PROGRESS | README и live browser E2E завершены. CI hardening: Actions обновлены (checkout@v7, setup-node@v7, configure-pages@v6, upload-pages-artifact@v5, deploy-pages@v5, upload-artifact@v7); runtime warnings Node.js 20 исчезли; права Pages deployment ограничены отдельным job; status-only изменения исключены из custom validate/deploy/browser-smoke workflow; отдельный GitHub-managed Pages build/deploy может запускаться. Коммит dccb274e прошёл validate/deploy/browser-smoke и отдельный Pages workflow. GitHub About остаётся пустым. Из 29 не-main веток 1 строго contained (ahead=0), 28 diverged (ahead=1–51); не удалять без проверки уникальных патчей. Доступный GitHub integration не поддерживает update repository metadata и delete-ref. |
+| 7. Полная проверка, документация и выпуск | IN PROGRESS | README и live browser E2E завершены. CI hardening прошёл успешно: Actions обновлены, permissions сужены, status-only изменения пропускают custom test/deploy workflow. Все 29 веток не-main проверены по compare/files, коммитам и содержимому; не найдено функциональной работы, которую нужно переносить в main. Старые ветки содержат историю промежуточной разработки, устаревшие тексты, build/cache bumps и тесты, заменённые более актуальными. 1 branch ancestor (ahead=0), 28 diverged (ahead=1–51); безопасных merge-кандидатов не осталось. Осталось удалить устаревшие refs и заполнить GitHub About; доступный GitHub integration не поддерживает эти операции. |
 
 ## BRANCH AUDIT
 
@@ -67,6 +67,43 @@ Last verified: 2026-11-08
 
 work/sql-academy-stage3-batch6-2026-11-07b is the only branch proven to have no commit ahead of main. It can be deleted safely from Git history, but no branch deletion operation is exposed in this integration. For the other 28 branches, ahead commits may be exact patch equivalents already cherry-picked to main; compare commit counts alone cannot prove redundancy. Inspect their patches/trees before cleanup.
 
+### Semantic review of every non-main branch
+
+Содержимое проверено относительно актуального main, а не только по названиям веток или ahead count. Итог: merge не требуется. Commit SHAs в diverged ветках уникальны, но новые для main функциональные области не обнаружены; это не означает, что SHA-коммиты буквально одинаковы.
+
+| Branch(es) | Что нашли | Что в current main | Решение |
+|---|---|---|---|
+| audit/phase-1-review-2026-11-07 | Исторический AUDIT.md, 467 строк | Старый документ является построчным подмножеством актуального AUDIT.md в main (489 строк) | Не переносить; ветка устарела |
+| feature/lesson-walkthroughs-complete | Попытка добавить walkthrough во все 173 урока | Позднее сознательно удалены 133 шаблонных walkthrough; оставлены 42 содержательных сценария | Не переносить: это вернёт удалённый filler |
+| feature/postgres-optimization-stage-3 | 51 коммит: PostgreSQL optimization, EXPLAIN, индексы, tooltip, исправления примеров и тесты | Ключевые уроки Nested Loop/Hash/Merge Join, Bitmap/Index Only Scan, GIN/GiST/BRIN и EXPLAIN есть; 14 старых названий уроков переименованы/разделены/объединены в актуальной программе. Все CSS selectors этой ветки есть в main | Не переносить: актуальная версия уже в main |
+| fix/relevant-sql-explanations | 7 коммитов: короткие контекстные пояснения, удаление 133 filler-сценариев, исправления aliased UPDATE и EXPLAIN ANALYZE | Текущий app.js содержит соответствующие правила SET/ANALYZE/ON; curriculum содержит curated 42 сценария | Не переносить |
+| work/sql-academy-lessons-stage3-rebased | Rebase/CI/cache commits поверх промежуточной версии уроков | Более поздняя редакция Stage 3 и тесты находятся в main | Не переносить |
+| work/sql-academy-lessons-stage3 | 15 коммитов: примеры, expected results, JOIN/NULL/date explanations, компактность уроков | Main содержит проверенные ожидаемые результаты, JOIN/NULL/fan-out сценарии, обновлённые материалы и тесты | Не переносить |
+| work/sql-academy-rebuild | 13 коммитов: аудит, разделение маршрутов, stable lesson IDs, навигация и прогресс | В main действуют маршруты 112 уроков Analyst + 61 PostgreSQL, устойчивая миграция прогресса; AUDIT.md обновлён | Не переносить |
+| batch2–batch4 | Типы/даты, COUNT после LEFT JOIN, aggregation grain, JOIN cardinality и unmatched rows | Эти фундаментальные объяснения и соответствующие regression checks есть в main | Не переносить |
+| batch5 | ROWS/RANGE peers, временные ряды и оконные примеры | Оконные рамки и календарная логика доработаны более поздними Stage 3 коммитами в main | Не переносить |
+| batch6 (8 ahead) + batch7 | Subquery/CTE/set operations, deterministic pagination, DISTINCT ON, rollups | Main содержит CTE/set-operation проверки и стабильные пагинацию/сортировку | Не переносить |
+| batch6-2026-11-07b (0 ahead) | Нет ни одного коммита сверх main | Полностью позади main | Единственная ветка, безопасная по Git ancestry |
+| batch8–batch9 | Типы, числовой scale, даты, NULL, COALESCE и выражения | Main содержит исправленные результаты, типизацию и проверки NULL/числовых значений | Не переносить |
+| batch10–batch11 | DDL/DML/transactions, delivery percentiles, event fan-out, SUM DISTINCT | Main содержит безопасные mutation tests, аналитику событий и защиту зерна бизнес-метрик | Не переносить |
+| batch12–batch14 | Ranking peers/ties, window offsets/frames, NTILE, top-N | Main содержит актуальные семантические проверки ранжирования, окон и top-N | Не переносить |
+| batch15 | Cohort size и month-over-month retention | Main содержит исторический dataset, cohort/retention и их проверяемые результаты | Не переносить |
+| batch16–batch17 | Date/interval/SLA, rolling 7-day calendar windows и warm-up days | Main содержит корректные временные границы, календарные окна и SLA-сценарии | Не переносить |
+| batch18 | Итоговый аналитический отчёт, ranking и стабильная сортировка | Main содержит end-to-end проверку аналитического отчёта и порядка результата | Не переносить |
+| batch19–batch20 | Строгая последовательность событий в funnel; snapshot deduplication vs event history | Main содержит временной funnel и раздельную семантику snapshots/events | Не переносить |
+| batch21 | Monthly store revenue share и правильный denominator | Main содержит проверяемую долю выручки с корректным знаменателем | Не переносить |
+| batch22 | CTE chain и aggregation grain | Main содержит отдельную проверку CTE pipeline и grain | Не переносить |
+
+Для batch2–batch22 названия веток соответствуют точным префиксам `work/sql-academy-stage3-batchN-2026-11-07`; для batch6 существуют две ветки с суффиксами без `b` и с `b`. Их branch-specific commits в основном представляют шаги одной последовательной переработки; актуальные итоги Stage 3 находятся в main.
+
+### Cleanup conclusion
+
+- Не создавать PR и не cherry-pick: недостающих функциональных изменений не найдено.
+- Ветка `work/sql-academy-stage3-batch6-2026-11-07b` может быть удалена без потери коммитов, поскольку её HEAD является ancestor main.
+- Остальные 28 веток можно считать устаревшими по содержимому и кандидатами на удаление после принятия решения об отказе от сохранения промежуточной commit history. Их commit SHAs не входят в main, хотя функциональный результат уже перенесён/переработан.
+- Удаление веток сейчас не выполнено: в активном GitHub toolset отсутствует delete-ref/delete-branch action. Не пытаться имитировать удаление force-update ветки на main.
+- GitHub About также остаётся ручной операцией: текущий toolset не предоставляет update-repository metadata.
+
 ## DONE — проверяемые ограничения и результаты
 
 - Основная ветка: `main`; default branch — `main`.
@@ -87,7 +124,7 @@ work/sql-academy-stage3-batch6-2026-11-07b is the only branch proven to have no 
 - **Homepage:** https://vladsimbro.github.io/SQL/
 - **Suggested topics:** sql, postgresql, data-analytics, sql-learning, education, pglite, github-pages.
 - **Branch cleanup:** work/sql-academy-stage3-batch6-2026-11-07b is the sole confirmed ancestor branch and can be removed from GitHub UI or with a local Git client. Integration currently has no delete-ref operation.
-- **Other 28 branches:** verify whether each ahead commit's patch/tree is already represented in main; only then delete. Never delete based solely on branch age or ahead counts.
+- **Other 28 branches:** semantic file/commit review is complete; no missing feature was identified. Their commit history is unique, but code/lesson outcomes are superseded in main. Delete only if the decision is to discard intermediate commit history; no merge/cherry-pick is needed.
 - **GitHub About write:** apply the prepared description/homepage/topics through repository Settings when UI or an authorized metadata-write integration is available.
 - Local clone/test run was not used in this session; executable checks and live browser E2E were run in GitHub Actions.
 
@@ -110,7 +147,7 @@ work/sql-academy-stage3-batch6-2026-11-07b is the only branch proven to have no 
 - Global workflow permission is contents: read; only deploy job receives pages: write and id-token: write.
 - A push/PR changing only PROJECT_STATUS.md is ignored by the custom validate/deploy/browser-smoke workflow. The separate GitHub-managed Pages Jekyll build/deploy may still run; observed successfully on handoff commit 8a14e19f (run 42506417303).
 - Open Pull Requests: 0 at last verification.
-- Branches: 30 total including main; all 29 candidates compared. One confirmed ancestor; 28 diverged (ahead 1–51 at compare baseline f5f45ade). Full branch/ahead table is above.
+- Branches: 30 total including main; all 29 candidates compared and semantically reviewed. One confirmed ancestor (ahead=0); 28 diverged (ahead 1–51). No unique functional content requiring merge was found; see Semantic review section above.
 - GitHub About fields: description null, homepage null, topics empty. Repository lookup confirms the values; current integration has no write operation.
 - Current integration supports compare/search but not branch delete-ref. No branch was deleted.
 - README is up to date: 42 step-by-step scenarios and a separate «Контрольные работы» section.
@@ -119,4 +156,4 @@ work/sql-academy-stage3-batch6-2026-11-07b is the only branch proven to have no 
 
 ## NEXT ACTION
 
-Продолжать Stage 7 без повторного прохождения этапов 0–6. Проверить последний generated Pages run после status-only handoff (custom validation/deploy/browser-smoke должен быть пропущен). Затем выполнить только оставшиеся операции, для которых появится соответствующий доступ: заполнить GitHub About подготовленными значениями; удалить единственную подтверждённо слитую ветку work/sql-academy-stage3-batch6-2026-11-07b; проверить unique patches/trees 28 diverged веток и удалять только доказанно избыточные. До появления delete-ref и metadata-write операций не заявлять эти действия выполненными. Не менять содержание курса без конкретного дефекта.
+Продолжать Stage 7 без повторного прохождения этапов 0–6. Проверить последний generated Pages run после status-only handoff. Ветки уже аудированы: не открывать PR и не переносить изменения; осталось удалить устаревшие refs (одна branch доказанно ancestor, остальные 28 имеют только промежуточную историю с уже представленным/переработанным содержимым) и заполнить GitHub About. Удалять ветки можно только через UI или после появления delete-ref операции; текущая интеграция её не предоставляет. До появления delete-ref и metadata-write операций не заявлять эти действия выполненными. Не менять содержание курса без конкретного дефекта.
