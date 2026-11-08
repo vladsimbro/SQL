@@ -268,7 +268,6 @@ try {
   await page.setViewportSize({ width: 320, height: 740 });
   await assertNoHorizontalOverflow(320);
   await menuButton.click();
-  await page.locator('#mobile-menu').click();
   await page.locator('#sidebar .nav-item[data-nav="dashboard"]').click();
   await page.locator('#app-content .hero').waitFor({ state: 'visible' });
   await assertNoHorizontalOverflow(320);
