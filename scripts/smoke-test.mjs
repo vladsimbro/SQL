@@ -912,7 +912,7 @@ assert.throws(() => parseBackup({ ...learningBackup, format: 'other' }), /не �
 assert.throws(() => parseBackup({ ...learningBackup, version: 99 }), /не поддерживается/);
 assert.throws(() => parseBackup({ ...learningBackup, storage: { ...learningBackup.storage, unknown: 'value' } }), /неизвестные разделы/);
 assert.throws(() => parseBackup({ ...learningBackup, storage: { ...learningBackup.storage, 'sql-academy-theme': 'neon' } }), /тема оформления/);
-assert.throws(() => parseBackup({ ...learningBackup, storage: { ...learningBackup.storage, 'sql-academy-project-progress-v1': '{bad' } }), /повреждённые данные/);
+assert.throws(() => parseBackup({ ...learningBackup, storage: { ...learningBackup.storage, 'sql-academy-project-progress-v1': '{bad' } }), /повреждённые данные/i);
 assert.throws(() => parseBackup({ ...learningBackup, storage: { ...learningBackup.storage, 'sql-academy-project-notes-v1': JSON.stringify({ ecommerce: 42 }) } }), /объектом строк/);
 class BackupFailingStorage extends BackupTestStorage {
   failOnce = true;
