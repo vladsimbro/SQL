@@ -20,7 +20,7 @@ const coreLessonIds = modules.filter(module => module.track === 'core').flatMap(
 const optionalLessonIds = modules.filter(module => module.track === 'postgresql').flatMap(module => module.lessons.map(lesson => lesson.id));
 assert.deepEqual(learningTracks.map(track => track.id), ['core','postgresql'], 'Only implemented courses must be listed in the catalog');
 for (const track of learningTracks) {
-  assert.ok(track.courseTitle && track.courseLevel && track.courseAudience && track.coursePrerequisites && track.courseGoal, 'Every listed course must define its identity, audience, prerequisites, and learning goal');
+  assert.ok(track.title && track.courseLevel && track.courseAudience && track.coursePrerequisites && track.courseGoal, 'Every listed course must define its identity, audience, prerequisites, and learning goal');
   assert.ok(track.moduleIds.length > 0 && modules.some(module => module.track === track.id), 'Every listed course must have a real curriculum');
 }
 assert.ok(appSource.includes('function renderCourses()') && appSource.includes('data-open-course='), 'The app must render and open the standalone course catalog');
