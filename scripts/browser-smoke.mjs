@@ -456,7 +456,19 @@ try {
     assert.equal(page.url(), protectedUrl, label + ' must not navigate or reload the application');
   };
   const assertImportError = async (file, message, label) => {
-    await page.locator('#backup-import-file').setInputFiles(file);
+    const bytes = file.buffer ? file.buffer.toString('base64') : '';
+    const byteLength = file.buffer?.length || 0;
+    await page.evaluate(({ name, mimeType, bytes, byteLength }) => {
+      const input = document.querySelector('#backup-import-file');
+      const payload = bytes
+        ? Uint8Array.from(atob(bytes), character => character.charCodeAt(0))
+        : new Uint8Array(byteLength);
+      const selected = new File([payload], name, { type: mimeType });
+      const transfer = new DataTransfer();
+      transfer.items.add(selected);
+      input.files = transfer.files;
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    }, { name: file.name, mimeType: file.mimeType, bytes, byteLength });
     await page.locator('.toast').filter({ hasText: message }).waitFor({ state: 'visible', timeout: 5_000 });
     await assertBackupStateUnchanged(label);
   };
