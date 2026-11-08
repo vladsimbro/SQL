@@ -43,7 +43,7 @@ for (const project of projects) {
   assert.ok(project.context && project.objective && project.dataset && project.audience, `Project ${project.id} must explain context, goal, audience, and data`);
   for (const task of project.tasks) {
     assert.ok(task.id && task.title && task.brief && task.conditions && task.expected && task.solution, `Project task ${task.id} must include a brief, conditions, expected output, and a hidden reference solution`);
-    assert.equal(sqlLexer.readOnlyQueryKeyword(task.solution),'SELECT', `Project task ${task.id} must be checked by a read-only SELECT/CTE`);
+    assert.match(task.solution.trim(), /^(WITH|SELECT)\\b/i, `Project task ${task.id} must use SELECT or WITH ... SELECT`);
   }
 }
 assert.ok(appSource.includes('sql-academy-project-progress-v1') && appSource.includes('sql-academy-project-drafts-v1'), 'Project completion and drafts must persist separately from course progress');
@@ -97,6 +97,9 @@ assert.equal(appSource.split('await loadPGliteModule()').length - 1, 3, 'All bro
 assert.ok(appSource.includes('let pgliteImportAttempt = 0;') && appSource.includes('pgliteModulePromise = null;') && appSource.includes('${PGLITE_MODULE_URL}?sql-academy-attempt=${attempt}'), 'A failed PGlite module request must be retried with a fresh URL so the browser does not reuse its failed module-map entry');
 assert.ok(!appSource.includes("import('https://cdn.jsdelivr.net/npm/@electric-sql/pglite@0.5.15/dist/index.js')"), 'Browser PGlite loading must not reuse a single unversioned dynamic-import URL');
 const sqlLexer = new Function(sqlUtilsSource.replaceAll('export function ', 'function ') + '; return { firstSqlKeyword, sqlAfterKeyword, explainStatementKeyword, explainStatementBody, readOnlyQueryKeyword, splitStatements };')();
+for (const project of projects) for (const task of project.tasks) {
+  assert.equal(sqlLexer.readOnlyQueryKeyword(task.solution),'SELECT', `Project task ${task.id} must be a read-only SELECT/CTE`);
+}
 assert.equal(sqlLexer.firstSqlKeyword("-- leading comment\nSELECT 1"), 'SELECT', 'Leading line comments must be ignored');
 assert.equal(sqlLexer.firstSqlKeyword('/* outer /* nested */ comment */ WITH q AS (SELECT 1) SELECT * FROM q'), 'WITH', 'Nested block comments must be ignored');
 assert.equal(sqlLexer.firstSqlKeyword(sqlLexer.sqlAfterKeyword('EXPLAIN /* comment */ SELECT 1', 'EXPLAIN')), 'SELECT', 'Comments after EXPLAIN must be ignored');
