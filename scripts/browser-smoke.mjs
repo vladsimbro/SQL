@@ -418,6 +418,82 @@ try {
     await visitMobileAuditView(nav, 667, 375, 'landscape-667');
   }
 
+  // Check the mobile light theme separately; dark-theme coverage alone is not enough.
+  await page.setViewportSize({ width: 390, height: 844 });
+  await menuButton.click();
+  await page.locator('#sidebar .nav-item[data-nav="dashboard"]').click();
+  await page.locator('#app-content .hero').waitFor({ state: 'visible' });
+  await page.locator('#theme-toggle').click();
+  assert.equal(await page.locator('html').evaluate(element => element.classList.contains('light')), true, 'The mobile theme toggle must activate the light theme');
+  const mobileLightContrast = await page.evaluate(() => {
+    const root = getComputedStyle(document.documentElement);
+    const rgb = value => {
+      const hex = value.trim();
+      if (hex.startsWith('#')) {
+        const digits = hex.slice(1);
+        return digits.length === 3
+          ? digits.split('').map(channel => parseInt(channel + channel, 16))
+          : [0, 2, 4].map(index => parseInt(digits.slice(index, index + 2), 16));
+      }
+      return (hex.match(/\\d+/g) || []).slice(0, 3).map(Number);
+    };
+    const luminance = value => rgb(value).map(channel => channel / 255).map(channel => channel <= .04045 ? channel / 12.92 : ((channel + .055) / 1.055) ** 2.4).reduce((sum, channel, index) => sum + channel * [.2126, .7152, .0722][index], 0);
+    const ratio = (foreground, background) => {
+      const values = [luminance(foreground), luminance(background)].sort((left, right) => right - left);
+      return (values[0] + .05) / (values[1] + .05);
+    };
+    return {
+      mutedOnBackground: ratio(root.getPropertyValue('--muted'), root.getPropertyValue('--bg')),
+      accentOnPanel: ratio(root.getPropertyValue('--accent2'), root.getPropertyValue('--panel')),
+      sidebarLabelOnBackground: ratio(getComputedStyle(document.querySelector('.sidebar-label')).color, root.getPropertyValue('--bg'))
+    };
+  });
+  assert.ok(mobileLightContrast.mutedOnBackground >= 4.5, 'Mobile light muted text contrast must be at least 4.5:1');
+  assert.ok(mobileLightContrast.accentOnPanel >= 4.5, 'Mobile light accent contrast must be at least 4.5:1');
+  assert.ok(mobileLightContrast.sidebarLabelOnBackground >= 4.5, 'Mobile light sidebar label contrast must be at least 4.5:1');
+  await assertNoHorizontalOverflow(390);
+  await captureUxScreen('26-dashboard-mobile-light-390');
+  await page.setViewportSize({ width: 320, height: 740 });
+  await assertNoHorizontalOverflow(320);
+  await captureUxScreen('27-dashboard-mobile-light-320');
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await menuButton.click();
+  await page.locator('#sidebar .nav-item[data-nav="courses"]').click();
+  await page.locator('#app-content .course-card').first().waitFor({ state: 'visible' });
+  await assertNoHorizontalOverflow(390);
+  await captureUxScreen('28-course-catalog-mobile-light-390');
+  await page.locator('[data-open-course="core"]').click();
+  await page.locator('[data-module="foundations"]').click();
+  await page.locator('.lesson-track-group').waitFor({ state: 'visible' });
+  await assertNoHorizontalOverflow(390);
+  await captureUxScreen('29-sql-lesson-mobile-light-390');
+
+  const visitLightMobileView = async nav => {
+    await menuButton.click();
+    const item = page.locator('#sidebar .nav-item[data-nav="'+nav+'"]');
+    await item.click();
+    await assert.equal(await item.evaluate(element => element.classList.contains('active')), true, nav+' must remain navigable in the light theme');
+    await page.locator('#app-content h1, #app-content h2').first().waitFor({ state: 'visible' });
+    await assertNoHorizontalOverflow(390);
+    await captureUxScreen(nav+'-mobile-light-390');
+  };
+  await visitLightMobileView('practice');
+  await page.setViewportSize({ width: 320, height: 740 });
+  await assertNoHorizontalOverflow(320);
+  await captureUxScreen('30-practice-mobile-light-320');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await visitLightMobileView('assessment');
+  await page.setViewportSize({ width: 320, height: 740 });
+  await assertNoHorizontalOverflow(320);
+  await captureUxScreen('31-assessment-mobile-light-320');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await visitLightMobileView('schema');
+  await visitLightMobileView('reference');
+  await visitLightMobileView('glossary');
+  await page.locator('#theme-toggle').click();
+  assert.equal(await page.locator('html').evaluate(element => element.classList.contains('light')), false, 'The browser smoke must restore the dark theme after light-theme checks');
+
   await page.setViewportSize({ width: 1440, height: 960 });
   await page.locator('#sidebar .nav-item[data-nav="dashboard"]').click();
   await page.evaluate(() => localStorage.setItem('sql-academy-progress-v1', JSON.stringify({
