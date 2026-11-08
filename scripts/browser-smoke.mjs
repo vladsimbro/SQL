@@ -367,17 +367,19 @@ try {
     buffer: Buffer.alloc(5 * 1024 * 1024 + 1, 0x20)
   }, 'Размер файла превышает 5 МБ', 'An oversized backup file');
 
-  let canceledDialogType = null;
-  page.once('dialog', dialog => {
-    canceledDialogType = dialog.type();
-    void dialog.dismiss();
+  await page.evaluate(() => {
+    window.__backupConfirmCalls = 0;
+    window.confirm = () => {
+      window.__backupConfirmCalls += 1;
+      return false;
+    };
   });
   await page.locator('#backup-import-file').setInputFiles({
     name: 'declined-backup.json',
     mimeType: 'application/json',
     buffer: Buffer.from(backupText)
   });
-  assert.equal(canceledDialogType, 'confirm', 'A valid backup must require explicit confirmation');
+  await page.waitForFunction(() => window.__backupConfirmCalls === 1);
   await page.waitForFunction(() => {
     const input = document.querySelector('#backup-import-file');
     return input && input.value === '';
