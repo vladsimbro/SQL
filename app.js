@@ -1,12 +1,14 @@
-import { modules, learningTracks, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261109-109';
-import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261109-109';
-import { firstSqlKeyword, explainStatementKeyword, explainStatementBody, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261109-109';
-import { migrateProgress, getTrackProgress, findNextLesson } from './progress-utils.js?v=20261109-109';
-import { projects, projectTaskCount } from './projects.js?v=20261109-109';
-import { createBackup, parseBackup, restoreBackup } from './backup-utils.js?v=20261109-109';
+import { modules, learningTracks, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261109-110';
+import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261109-110';
+import { firstSqlKeyword, explainStatementKeyword, explainStatementBody, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261109-110';
+import { migrateProgress, getTrackProgress, findNextLesson } from './progress-utils.js?v=20261109-110';
+import { projects, projectTaskCount } from './projects.js?v=20261109-110';
+import { createBackup, parseBackup, restoreBackup } from './backup-utils.js?v=20261109-110';
+import { buildQuizOptionOrders, quizOptionKey } from './quiz-options.js?v=20261109-110';
 
 const $ = (s, root=document) => root.querySelector(s);
 const $$ = (s, root=document) => [...root.querySelectorAll(s)];
+const quizOptionOrders = buildQuizOptionOrders(modules);
 const STORE_KEY = 'sql-academy-progress-v1';
 const EDITOR_KEY = 'sql-academy-editor-v1';
 const PROJECT_PROGRESS_KEY = 'sql-academy-project-progress-v1';
@@ -565,8 +567,8 @@ function lessonBody(l,m) {
 function renderLessonQuiz(l) {
  const bank=l.quiz||[];if(!bank.length)return '';
  return `<section class="quiz-panel"><div class="eyebrow">МИНИ-ТЕСТ · ПОСЛЕ ОБЪЯСНЕНИЯ</div><h2>Проверь понимание</h2><p class="quiz-intro">Вопрос относится к материалу этого урока. Сначала изучи объяснение и пример, затем отвечай.</p>
- ${bank.map((q,index)=>{const key=quizKey(state.moduleId,state.lessonIndex,index),selected=state.quizAnswers[key],answered=selected!==undefined,correct=selected===q.answer;
- return `<div class="quiz-question"><div class="quiz-question-title"><span>ВОПРОС ${index+1} ИЗ ${bank.length}</span><strong>${esc(q.question)}</strong></div><div class="quiz-options">${q.options.map((opt,oi)=>`<button class="quiz-option ${answered&&oi===selected?(correct?'correct':'incorrect'):''} ${answered&&correct&&oi===q.answer?'answer-key':''}" data-quiz-answer="${index}:${oi}" ${answered&&correct?'disabled':''}><span class="quiz-radio">${String.fromCharCode(65+oi)}</span><span>${esc(opt)}</span></button>`).join('')}</div>${answered?`<div class="quiz-feedback ${correct?'correct':'incorrect'}"><strong>${correct?'Верно!':'Пока нет.'}</strong> ${esc(q.explanation)}${!correct?' Попробуй ещё раз, опираясь на объяснение выше.':''}</div>`:''}</div>`;}).join('')}
+ ${bank.map((q,index)=>{const key=quizKey(state.moduleId,state.lessonIndex,index),selected=state.quizAnswers[key],answered=selected!==undefined,correct=selected===q.answer,track=moduleById(state.moduleId)?.track,order=quizOptionOrders.get(quizOptionKey(q,track))||q.options.map((_,oi)=>oi);
+ return `<div class="quiz-question"><div class="quiz-question-title"><span>ВОПРОС ${index+1} ИЗ ${bank.length}</span><strong>${esc(q.question)}</strong></div><div class="quiz-options">${order.map((oi,displayIndex)=>`<button class="quiz-option ${answered&&oi===selected?(correct?'correct':'incorrect'):''} ${answered&&correct&&oi===q.answer?'answer-key':''}" data-quiz-answer="${index}:${oi}" ${answered&&correct?'disabled':''}><span class="quiz-radio">${String.fromCharCode(65+displayIndex)}</span><span>${esc(q.options[oi])}</span></button>`).join('')}</div>${answered?`<div class="quiz-feedback ${correct?'correct':'incorrect'}"><strong>${correct?'Верно!':'Пока нет.'}</strong> ${esc(q.explanation)}${!correct?' Попробуй ещё раз, опираясь на объяснение выше.':''}</div>`:''}</div>`;}).join('')}
  <div class="quiz-summary">${bank.every((q,index)=>state.quizAnswers[quizKey(state.moduleId,state.lessonIndex,index)]===q.answer)?'<strong>Проверка пройдена.</strong>':'Ответь на вопрос, чтобы закрепить материал.'}</div></section>`;
 }
 function renderStudy() {
@@ -601,10 +603,11 @@ function renderAssessment() {
   html+='<section class="card assessment-test"><div class="assessment-progress"><span>Ответы</span><strong>'+answered+' из '+bank.length+'</strong></div><div class="progress-track"><span style="width:'+(bank.length?answered/bank.length*100:0)+'%"></span></div>';
   html+=bank.map((question,index)=>{
     const chosen=state.assessmentAnswers[index],correct=chosen===question.answer;
-    let options=question.options.map((option,optionIndex)=>{
+    const order=quizOptionOrders.get(quizOptionKey(question,selected.track))||question.options.map((_,optionIndex)=>optionIndex);
+    let options=order.map((optionIndex,displayIndex)=>{
       const selectedAnswer=chosen===optionIndex;
       const cls=state.assessmentSubmitted&&optionIndex===question.answer?' correct':state.assessmentSubmitted&&selectedAnswer&&!correct?' incorrect':'';
-      return '<button class="quiz-option'+(selectedAnswer&&!state.assessmentSubmitted?' selected':'')+cls+'" data-assessment-answer="'+index+':'+optionIndex+'" '+(state.assessmentSubmitted?'disabled':'')+'><span class="quiz-radio">'+String.fromCharCode(65+optionIndex)+'</span><span>'+esc(option)+'</span></button>';
+      return '<button class="quiz-option'+(selectedAnswer&&!state.assessmentSubmitted?' selected':'')+cls+'" data-assessment-answer="'+index+':'+optionIndex+'" '+(state.assessmentSubmitted?'disabled':'')+'><span class="quiz-radio">'+String.fromCharCode(65+displayIndex)+'</span><span>'+esc(question.options[optionIndex])+'</span></button>';
     }).join('');
     return '<article class="assessment-question"><div class="eyebrow">ВОПРОС '+(index+1)+' ИЗ '+bank.length+'</div><h3>'+esc(question.question)+'</h3><div class="quiz-options">'+options+'</div>'+(state.assessmentSubmitted?'<div class="quiz-feedback '+(correct?'correct':'incorrect')+'"><strong>'+(correct?'Верно':'Неверно')+'</strong> '+esc(question.explanation)+'</div>':'')+'</article>';
   }).join('');
