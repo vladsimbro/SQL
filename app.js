@@ -182,7 +182,8 @@ const go = view => {
   syncRoute(false);
   render();
   if(innerWidth<760)setMobileMenuOpen(false,{restoreFocus:true});
-  window.scrollTo({top:0,behavior:'smooth'});
+  const reducedMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  window.scrollTo({top:0,behavior:reducedMotion?'instant':'smooth'});
 };
 const progressForModule = m => m.lessons.filter((_,i)=>state.completedLessons.has(lessonKey(m.id,i))).length;
 const modulePct = m => Math.round(progressForModule(m)/m.lessons.length*100);
