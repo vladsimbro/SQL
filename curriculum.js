@@ -9136,8 +9136,8 @@ export const exercises = [
     "task": "Получи список различных статусов заказов. Повторы должны исчезнуть.",
     "solution": "SELECT DISTINCT status FROM orders;",
     "hint": "Здесь важны не заказы, а набор уникальных значений status. Подумай, на каком этапе убрать повторы.",
-    "hint2": "Определи набор столбцов и источник. Если условие не ограничивает строки, WHERE не нужен.",
-    "hint3": "Каркас: SELECT нужные_столбцы FROM таблица;"
+    "hint2": "DISTINCT применяется к выбранным столбцам: здесь оставь только status, иначе уникальными будут комбинации нескольких полей.",
+    "hint3": "Каркас: SELECT DISTINCT status FROM orders;"
   },
   {
     "id": "e04",
@@ -9147,8 +9147,8 @@ export const exercises = [
     "task": "Покажи order_id и сумму заказа с условной наценкой 10%. Назови вычисляемый столбец amount_with_fee.",
     "solution": "SELECT order_id, total_amount * 1.10 AS amount_with_fee FROM orders;",
     "hint": "Вычисление наценки делается прямо в списке SELECT. Не забудь дать выражению требуемый псевдоним.",
-    "hint2": "Определи набор столбцов и источник. Если условие не ограничивает строки, WHERE не нужен.",
-    "hint3": "Каркас: SELECT нужные_столбцы FROM таблица;"
+    "hint2": "Сумму с наценкой получишь умножением total_amount на 1.10; исходная строка таблицы не изменится.",
+    "hint3": "Каркас: SELECT order_id, total_amount * 1.10 AS amount_with_fee FROM orders;"
   },
   {
     "id": "e05",
@@ -9158,8 +9158,8 @@ export const exercises = [
     "task": "Найди заказы дороже 2 000. Верни order_id и total_amount.",
     "solution": "SELECT order_id, total_amount FROM orders WHERE total_amount > 2000;",
     "hint": "Сумма должна пройти один порог. Проверь знак сравнения: «дороже» не включает равную сумму.",
-    "hint2": "Проверь каждую часть условия отдельно. AND сужает выборку, OR объединяет условия; скобки задают нужный приоритет.",
-    "hint3": "Каркас: SELECT столбцы FROM таблица WHERE условие_1 AND/OR условие_2;"
+    "hint2": "Порог строгий: заказы ровно на 2 000 не попадут в результат. Фильтруй именно total_amount.",
+    "hint3": "Каркас: SELECT order_id, total_amount FROM orders WHERE total_amount > 2000;"
   },
   {
     "id": "e06",
@@ -9169,8 +9169,8 @@ export const exercises = [
     "task": "Найди заказы со статусом delivered или shipped. Выведи order_id и status.",
     "solution": "SELECT order_id, status FROM orders WHERE status IN ('delivered', 'shipped');",
     "hint": "Два статуса удобно представить одним набором допустимых значений, а не двумя независимыми проверками.",
-    "hint2": "Проверь каждую часть условия отдельно. AND сужает выборку, OR объединяет условия; скобки задают нужный приоритет.",
-    "hint3": "Каркас: SELECT столбцы FROM таблица WHERE условие_1 AND/OR условие_2;"
+    "hint2": "IN проверяет, входит ли status в список допустимых значений. Каждое текстовое значение заключи в одинарные кавычки.",
+    "hint3": "Каркас: WHERE status IN ('delivered', 'shipped');"
   },
   {
     "id": "e07",
@@ -9180,8 +9180,8 @@ export const exercises = [
     "task": "Найди заказы стоимостью от 900 до 2 000 включительно. Выведи order_id и total_amount.",
     "solution": "SELECT order_id, total_amount FROM orders WHERE total_amount BETWEEN 900 AND 2000;",
     "hint": "Диапазон суммы включает обе границы, если использовать BETWEEN.",
-    "hint2": "BETWEEN включает обе границы. Для временных интервалов часто безопаснее использовать начало включительно и конец исключительно.",
-    "hint3": "Каркас: SELECT столбцы FROM таблица WHERE условие_1 AND/OR условие_2;"
+    "hint2": "Обе границы суммы включаются. Не подменяй диапазон строгими операторами > и <.",
+    "hint3": "Каркас: WHERE total_amount BETWEEN 900 AND 2000;"
   },
   {
     "id": "e08",
@@ -9202,8 +9202,8 @@ export const exercises = [
     "task": "Найди доставленные заказы дороже 1 000 либо отправленные заказы дороже 2 000. Выведи ID и статус.",
     "solution": "SELECT order_id, status FROM orders WHERE (status = 'delivered' AND total_amount > 1000) OR (status = 'shipped' AND total_amount > 2000);",
     "hint": "Разложи составное условие на группы скобками: сначала реши, где требуется AND, а где OR.",
-    "hint2": "Проверь каждую часть условия отдельно. AND сужает выборку, OR объединяет условия; скобки задают нужный приоритет.",
-    "hint3": "Каркас: SELECT столбцы FROM таблица WHERE условие_1 AND/OR условие_2;"
+    "hint2": "В первой группе одновременно нужны delivered и сумма больше 1 000; во второй — shipped и сумма больше 2 000. Свяжи две группы через OR.",
+    "hint3": "Каркас: WHERE (условие_1 AND условие_2) OR (условие_3 AND условие_4);"
   },
   {
     "id": "e10",
@@ -9215,7 +9215,7 @@ export const exercises = [
     "solution": "SELECT order_id, total_amount FROM orders ORDER BY total_amount DESC, order_id DESC LIMIT 5;",
     "hint": "Сортировка по total_amount должна идти по убыванию, а LIMIT ограничит уже отсортированный результат.",
     "hint2": "Сначала задай основной порядок, затем дополнительный ключ для разрешения равенств. LIMIT без однозначного ORDER BY не гарантирует стабильную выборку.",
-    "hint3": "Каркас: ORDER BY основной_ключ DESC, дополнительный_ключ ASC LIMIT n;"
+    "hint3": "Каркас: ORDER BY total_amount DESC, order_id DESC LIMIT 5;"
   },
   {
     "id": "e11",
@@ -9227,7 +9227,7 @@ export const exercises = [
     "solution": "SELECT order_id, created_at FROM orders ORDER BY created_at DESC, order_id DESC LIMIT 3;",
     "hint": "Для последних заказов сортируй дату от новых к старым. Добавь order_id, чтобы разрешить одинаковые даты.",
     "hint2": "Сначала задай основной порядок, затем дополнительный ключ для разрешения равенств. LIMIT без однозначного ORDER BY не гарантирует стабильную выборку.",
-    "hint3": "Каркас: ORDER BY основной_ключ DESC, дополнительный_ключ ASC LIMIT n;"
+    "hint3": "Каркас: ORDER BY created_at DESC, order_id DESC LIMIT 3;"
   },
   {
     "id": "e12",
@@ -9238,8 +9238,8 @@ export const exercises = [
     "task": "Выведи вторую страницу по 4 заказа. Сортировка: order_id по возрастанию.",
     "solution": "SELECT order_id FROM orders ORDER BY order_id LIMIT 4 OFFSET 4;",
     "hint": "Номер страницы нужно перевести в смещение строк; не забудь, что первая страница начинается с нуля.",
-    "hint2": "Сначала задай основной порядок, затем дополнительный ключ для разрешения равенств. LIMIT без однозначного ORDER BY не гарантирует стабильную выборку.",
-    "hint3": "Каркас: ORDER BY основной_ключ DESC, дополнительный_ключ ASC LIMIT n;"
+    "hint2": "Для второй страницы по 4 строки нужно пропустить первые четыре записи в стабильном порядке по order_id.",
+    "hint3": "Каркас: ORDER BY order_id ASC LIMIT 4 OFFSET 4;"
   },
   {
     "id": "e13",
@@ -9249,7 +9249,7 @@ export const exercises = [
     "task": "Покажи имена клиентов в верхнем регистре. Назови столбец customer_upper.",
     "solution": "SELECT UPPER(customer_name) AS customer_upper FROM customers;",
     "hint": "Для верхнего регистра используй UPPER, а LOWER выполняет обратное преобразование. Результат можно вывести как отдельный вычисляемый столбец.",
-    "hint2": "Проверь типы операндов и поведение выражения при NULL. Вычисляемому столбцу дай псевдоним.",
+    "hint2": "В SELECT примени UPPER(customer_name), затем задай результату псевдоним customer_upper.",
     "hint3": "Каркас: SELECT столбец, выражение AS alias FROM таблица;"
   },
   {
@@ -9261,7 +9261,7 @@ export const exercises = [
     "solution": "SELECT order_id, CASE WHEN total_amount >= 3000 THEN 'high' WHEN total_amount >= 1000 THEN 'medium' ELSE 'low' END AS amount_band FROM orders;",
     "hint": "CASE проверяет условия последовательно. Расположи более высокий порог раньше низкого.",
     "hint2": "CASE проверяет WHEN по порядку и возвращает результат первого истинного условия. Размести более узкие или высокие пороги раньше общих.",
-    "hint3": "Каркас: SELECT столбец, выражение AS alias FROM таблица;"
+    "hint3": "Каркас: CASE WHEN условие THEN значение WHEN условие THEN значение ELSE значение END AS amount_band;"
   },
   {
     "id": "e15",
@@ -9271,8 +9271,8 @@ export const exercises = [
     "task": "Покажи ID заказа и employee_id. Если сотрудник не назначен, выведи текст 'not assigned'. Назови поле employee.",
     "solution": "SELECT order_id, COALESCE(employee_id::text, 'not assigned') AS employee FROM orders;",
     "hint": "COALESCE выбирает первое не-NULL значение. Подставляй подпись только там, где поле действительно отсутствует.",
-    "hint2": "COALESCE выбирает первое ненулевое значение. Если аргументы разных типов, приведи их к совместимому типу.",
-    "hint3": "Каркас: SELECT столбец, выражение AS alias FROM таблица;"
+    "hint2": "employee_id хранится числом, а подпись — текстом. Приведи ID к text, чтобы оба аргумента COALESCE имели совместимый тип.",
+    "hint3": "Каркас: COALESCE(employee_id::text, 'not assigned') AS employee;"
   },
   {
     "id": "e16",
