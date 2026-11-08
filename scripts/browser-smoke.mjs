@@ -374,11 +374,14 @@ try {
       return false;
     };
   });
-  await page.locator('#backup-import-file').setInputFiles({
-    name: 'declined-backup.json',
-    mimeType: 'application/json',
-    buffer: Buffer.from(backupText)
-  });
+  await page.evaluate(backupContent => {
+    const input = document.querySelector('#backup-import-file');
+    const file = new File([backupContent], 'declined-backup.json', { type: 'application/json' });
+    const transfer = new DataTransfer();
+    transfer.items.add(file);
+    input.files = transfer.files;
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+  }, backupText);
   await page.waitForFunction(() => window.__backupConfirmCalls === 1);
   await page.waitForFunction(() => {
     const input = document.querySelector('#backup-import-file');
