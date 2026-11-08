@@ -389,6 +389,7 @@ const orderSensitiveExerciseIds = exercises.filter(exercise => exercise.orderMat
 assert.deepEqual(orderSensitiveExerciseIds, ['e10','e11','e12','e38','e41','e56','e59','e72','e73','e74','e75','e77'], 'Only tasks that explicitly require final row order must compare it');
 assert.ok(exercises.filter(exercise => exercise.orderMatters).every(exercise => exercise.solution.toUpperCase().includes('ORDER BY')), 'Every order-sensitive exercise must define an explicit final or result-defining order');
 assert.ok(exercises.find(exercise => exercise.id === 'e59').solution.includes('ORDER BY n') && exercises.find(exercise => exercise.id === 'e59').task.includes('по возрастанию'), 'Recursive sequence task must state and implement ascending output order');
+assert.ok(exercises.find(exercise => exercise.id === 'e38').solution.trim().endsWith('ORDER BY created_at, order_id;'), 'Running-total task must define final output order in addition to the window calculation order');
 assert.equal(new Set(exercises.map(exercise => exercise.hint)).size, exercises.length, 'Every practical exercise must have a unique task-specific hint');
 const progressiveHintExercises = exercises.filter(exercise => exercise.hint2 || exercise.hint3);
 assert.equal(progressiveHintExercises.length, exercises.length, 'All practical tasks must expose three progressive hint levels');

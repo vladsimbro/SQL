@@ -9479,7 +9479,7 @@ export const exercises = [
     "m": "windows",
     "title": "Накопительная выручка",
     "task": "Выведи order_id, дату и сумму заказа, а также накопительную сумму по всем заказам в порядке даты и ID. Явно задай рамку ROWS.",
-    "solution": "SELECT order_id, created_at, total_amount, SUM(total_amount) OVER (ORDER BY created_at, order_id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS running_revenue FROM orders;",
+    "solution": "SELECT order_id, created_at, total_amount, SUM(total_amount) OVER (ORDER BY created_at, order_id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS running_revenue FROM orders ORDER BY created_at, order_id;",
     "hint": "Для накопительной выручки используй SUM как оконную функцию и задай порядок событий внутри раздела.",
     "hint2": "Оконное вычисление сохраняет строки исходного набора. Раздел PARTITION BY и порядок ORDER BY определяют, с какими строками сравнивается текущая.",
     "hint3": "Каркас: функция() OVER (PARTITION BY ключ ORDER BY дата ROWS BETWEEN ... AND ...);"
