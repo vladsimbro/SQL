@@ -444,8 +444,9 @@ function renderPlayground() {
     <div id="playground-results"></div>`;
 }
 function renderSchema() {
-  const starterSchema=schema.filter(table=>table.dataset!=='analytics');
+  const starterSchema=schema.filter(table=>!['analytics','product'].includes(table.dataset));
   const analyticsSchema=schema.filter(table=>table.dataset==='analytics');
+  const productSchema=schema.filter(table=>table.dataset==='product');
   const renderCards=tables=>tables.map(t=>`<div class="schema-card"><div class="schema-card-head"><strong>${esc(t.name)}</strong><small>${t.columns.length} поля</small></div><p>${esc(t.grain)}</p><div class="schema-cols">${t.columns.map(c=>`<div class="schema-col"><strong>${esc(c[0])}</strong><span>${esc(c[1])}</span><em>${esc(c[2])}</em></div>`).join('')}</div></div>`).join('');
   return `
     ${pageHead('DATASET · УЧЕБНАЯ МОДЕЛЬ','Учебная база данных','Два связанных набора: компактная стартовая схема для первых запросов и отдельная историческая модель для аналитики клиентов, заказов, возвратов и событий.')}
@@ -454,6 +455,9 @@ function renderSchema() {
     <div class="section-row"><h2>Исторический аналитический набор</h2><span>4 таблицы · 36 месяцев · повторные покупки</span></div>
     <div class="callout" style="margin-bottom:16px"><strong>Отдельное зерно:</strong> analytics_orders — одна строка на заказ; analytics_order_items — одна строка на товарную позицию; analytics_order_events — одна строка на событие. Поле refund_amount позволяет считать чистую выручку, не приравнивая сумму заказа к полученным деньгам.</div>
     <div class="schema-grid">${renderCards(analyticsSchema)}</div>
+    <div class="section-row"><h2>Событийная модель Product Analytics</h2><span>576 пользовательских сессий</span></div>
+    <div class="callout" style="margin-bottom:16px"><strong>Зерно события:</strong> одна запись описывает одно действие пользователя в рамках сессии. События имеют временной порядок от просмотра страницы до покупки; незавершённые воронки сохранены, а не достроены искусственно.</div>
+    <div class="schema-grid">${renderCards(productSchema)}</div>
     <div class="section-row"><h2>Быстрые исследовательские запросы</h2><span>Откроются в песочнице</span></div>
     <div class="module-list">
       <div class="module-row" data-sample="SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name;"><div class="module-number">01</div><div class="module-info"><strong>Посмотреть таблицы</strong><small>information_schema.tables</small></div><span>→</span></div>
