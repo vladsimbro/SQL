@@ -11,7 +11,9 @@ const variants = {
 };
 const task = (topic, n, title, prompt, hint, solution) => ({
   id: `rnd-${topic}-${String(n).padStart(2,'0')}`,
-  topic, title, prompt: prompt + ` Вариант №${n}: используй именно указанные в этом условии параметры.`, hint: hint + ` Для варианта №${n} проверь конкретный порог, статус или размер выборки из условия, а не переноси значение из соседней карточки.`, solution
+  topic, title, prompt: prompt + ` Вариант №${n}: используй именно указанные в этом условии параметры.`, hint: hint + ` Для варианта №${n} проверь конкретный порог, статус или размер выборки из условия, а не переноси значение из соседней карточки.`,
+  orderMatters: /(?:сортир|алфавитн|по убыванию|по возрастанию|последн|первые\\s+\\d+|страниц|в порядке|ранг|ранжир|сначала самые|самые (?:дорогие|дешёвые|дешевые|новые|старые))/i.test(prompt),
+  solution
 });
 const topics = [];
 function addTopic(id,title,items){if(items.length!==25)throw new Error(`${id}: expected 25 tasks, got ${items.length}`);topics.push({id,title,tasks:items});}

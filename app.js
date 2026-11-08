@@ -1,7 +1,7 @@
-import { modules, learningTracks, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261108-77';
-import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261108-77';
-import { firstSqlKeyword, explainStatementKeyword, explainStatementBody, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261108-77';
-import { migrateProgress, getTrackProgress, findNextLesson } from './progress-utils.js?v=20261108-77';
+import { modules, learningTracks, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261108-78';
+import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261108-78';
+import { firstSqlKeyword, explainStatementKeyword, explainStatementBody, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261108-78';
+import { migrateProgress, getTrackProgress, findNextLesson } from './progress-utils.js?v=20261108-78';
 
 const $ = (s, root=document) => root.querySelector(s);
 const $$ = (s, root=document) => [...root.querySelectorAll(s)];
@@ -471,8 +471,9 @@ async function checkRandomTask(){
   const parts=splitStatements(sql);
   if(parts.length!==1)throw new Error('Для случайного задания используй один SELECT-запрос.');
   if(readOnlyQueryKeyword(parts[0])!=='SELECT')throw new Error('Проверка случайных заданий принимает только SELECT или WITH ... SELECT. Изменяющие запросы остаются доступны через обычный запуск песочницы.');
+  const preserveOrder=Boolean(task.orderMatters);
   const [actual,expected]=await Promise.all([state.db.query(parts[0]),state.db.query(task.solution)]);
-  const passed=resultMatches(normalizeResult(actual),normalizeResult(expected));
+  const passed=resultMatches(normalizeResult(actual,preserveOrder),normalizeResult(expected,preserveOrder),preserveOrder);
   feedback.innerHTML=passed?'<div class="feedback success"><strong>Верно!</strong> Результат совпадает с эталоном.</div>':'<div class="feedback fail"><strong>Пока не совпало.</strong> Запрос выполнился, но набор столбцов, значения или порядок строк отличаются. Проверь зерно результата и условия задачи.</div>';
  }catch(error){feedback.innerHTML='<div class="feedback fail"><strong>Ошибка:</strong> '+esc(error.message)+'</div>';}
 }

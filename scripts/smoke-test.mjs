@@ -141,6 +141,11 @@ assert.equal(modules.filter(module=>module.track==='postgresql').reduce((sum,mod
 assert.ok(appSource.includes("const core=moduleLessons('core')")&&appSource.includes('const trackModules=moduleLessons(m.track)'), 'Continue and lesson navigation must stay inside the selected learning route');
 assert.equal(glossary.length, 72, 'Expected 72 glossary terms');
 assert.equal(reference.length, 13, 'Expected 13 reference groups');
+const allRandomTasks = sandboxTaskTopics.flatMap(topic => topic.tasks);
+const orderSensitiveRandomTasks = allRandomTasks.filter(task => task.orderMatters);
+assert.equal(orderSensitiveRandomTasks.length, 80, 'Random tasks that explicitly request result order must preserve row order during validation');
+assert.ok(orderSensitiveRandomTasks.every(task => /\\bORDER\\s+BY\\b/i.test(task.solution)), 'Every random task with an explicit ordering requirement must define ORDER BY in its reference solution');
+assert.ok(allRandomTasks.every(task => typeof task.orderMatters === 'boolean'), 'Every random task must declare whether output row order matters');
 const normalizeStart = appSource.indexOf('function normalizeResult');
 const normalizeEnd = appSource.indexOf('\nasync function runEditorQuery', normalizeStart);
 const { normalizeResult: normalize, resultMatches } = new Function(appSource.slice(normalizeStart, normalizeEnd) + '; return { normalizeResult, resultMatches };')();
