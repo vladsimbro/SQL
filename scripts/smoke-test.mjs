@@ -525,6 +525,98 @@ try {
   const orderWithoutEvents = baseFanOutMetrics.rows.find(row => Number(row.order_id) === 104);
   assert.ok(orderWithoutEvents, 'An order without events must remain in the result');
   assert.equal(Number(orderWithoutEvents.events_count), 0, 'An order without events must report zero events rather than disappear');
+
+  // Compare all random JOIN variants with independent query oracles.
+  // The task solutions use joins/aggregations; the oracles use correlated subqueries
+  // so the expected rows are not produced by re-running the same solution shape.
+  const joinRandomTasks = sandboxTaskTopics.find(topic => topic.id === 'joins')?.tasks || [];
+  assert.equal(joinRandomTasks.length, 25, 'JOIN random practice must contain exactly 25 variants');
+  const joinOracleCases = [
+    {
+      params: ['Москва','Казань','Пермь','Омск','Тверь'],
+      expectedCounts: [3,4,3,0,0],
+      query: `SELECT o.order_id,
+                     (SELECT c.customer_name FROM customers c WHERE c.customer_id = o.customer_id) AS customer_name,
+                     o.status, o.total_amount
+              FROM orders o
+              WHERE EXISTS (
+                SELECT 1 FROM customers c
+                WHERE c.customer_id = o.customer_id AND c.city = $1
+              )
+              ORDER BY o.order_id`
+    },
+    {
+      params: [],
+      expectedCounts: [5,5,5,5,5],
+      query: `SELECT s.store_name, s.city,
+                     (SELECT COUNT(*) FROM orders o WHERE o.store_id = s.store_id) AS orders_count
+              FROM stores s
+              ORDER BY s.city, s.store_name`
+    },
+    {
+      params: ['delivered','shipped','new','cancelled','delivered'],
+      expectedCounts: [5,5,5,5,5],
+      query: `SELECT e.employee_id, e.employee_name,
+                     (SELECT COUNT(*) FROM orders o
+                      WHERE o.employee_id = e.employee_id AND o.status = $1) AS orders_count
+              FROM employees e
+              ORDER BY orders_count DESC, e.employee_id`
+    },
+    {
+      params: ['Техника','Посуда','Продукты','Аксессуары','Подарки'],
+      expectedCounts: [2,2,1,1,0],
+      query: `SELECT p.product_name,
+                     (SELECT COUNT(DISTINCT oi.order_id) FROM order_items oi WHERE oi.product_id = p.product_id) AS orders_count,
+                     (SELECT SUM(oi.quantity) FROM order_items oi WHERE oi.product_id = p.product_id) AS units_sold
+              FROM products p
+              WHERE p.category = $1
+                AND EXISTS (SELECT 1 FROM order_items oi WHERE oi.product_id = p.product_id)
+              ORDER BY units_sold DESC`
+    },
+    {
+      params: ['delivered','shipped','new','cancelled','delivered'],
+      expectedCounts: [6,3,1,1,6],
+      query: `SELECT o.order_id, o.total_amount,
+                     COALESCE((SELECT SUM(p.amount) FROM payments p
+                               WHERE p.order_id = o.order_id AND p.payment_status = 'paid'), 0) AS paid_amount
+              FROM orders o
+              WHERE o.status = $1
+              ORDER BY o.order_id`
+    }
+  ];
+  for (let pattern = 0; pattern < joinOracleCases.length; pattern++) {
+    const oracleCase = joinOracleCases[pattern];
+    for (let variant = 0; variant < 5; variant++) {
+      const task = joinRandomTasks[pattern * 5 + variant];
+      assert.ok(task && task.id === `rnd-joins-${String(pattern * 5 + variant + 1).padStart(2,'0')}`, 'JOIN task order must remain grouped into its five documented families');
+      const params = oracleCase.params.length ? [oracleCase.params[variant]] : [];
+      const [actual, expected] = await Promise.all([
+        db.query(task.solution),
+        db.query(oracleCase.query, params)
+      ]);
+      assert.equal(actual.rows.length, oracleCase.expectedCounts[variant], `JOIN task ${task.id} must return the expected number of rows`);
+      assert.equal(
+        resultMatches(normalize(actual), normalize(expected), task.orderMatters),
+        true,
+        `JOIN task ${task.id} must match its independent correlated-subquery oracle`
+      );
+    }
+  }
+  const storeZeroOrderCount = await db.query(joinOracleCases[1].query);
+  assert.equal(Number(storeZeroOrderCount.rows.find(row => row.store_name === 'Запасной')?.orders_count), 0, 'A store without orders must remain with a zero count');
+  const employeeZeroCounts = await db.query(joinOracleCases[2].query, ['new']);
+  assert.ok(employeeZeroCounts.rows.every(row => Number(row.orders_count) === 0), 'Employees without orders of the selected status must remain with zero counts');
+  const coffeeProduct = await db.query(joinOracleCases[3].query, ['Продукты']);
+  assert.deepEqual(
+    coffeeProduct.rows.map(row => [Number(row.orders_count), Number(row.units_sold)]),
+    [[4,5]],
+    'Product metrics must distinguish four distinct orders from five physical units'
+  );
+  const unpaidNewOrder = await db.query(joinOracleCases[4].query, ['new']);
+  assert.equal(Number(unpaidNewOrder.rows[0]?.paid_amount), 0, 'An order without a successful payment must report zero');
+  const refundedOrder = await db.query(joinOracleCases[4].query.replace('WHERE o.status = $1','WHERE o.order_id = 106'), []);
+  assert.equal(Number(refundedOrder.rows[0]?.paid_amount), 0, 'A refunded payment must not count as a successful payment');
+  console.log('Verified all 25 random JOIN variants against independent correlated-subquery oracles.');
   const equivalentSelect = await db.query("SELECT order_id, status FROM orders WHERE status = 'delivered'");
   const equivalentCte = await db.query("WITH delivered_orders AS (SELECT status, order_id FROM orders WHERE status IN ('delivered')) SELECT status, order_id FROM delivered_orders");
   assert.equal(resultMatches(normalize(equivalentSelect),normalize(equivalentCte)),true,'Equivalent SELECT and CTE solutions must match even when output columns are reordered');
