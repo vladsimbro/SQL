@@ -4,17 +4,17 @@ Last verified: 2026-11-08
 
 ## CURRENT
 
-- **Stage:** 1 — Надёжность основного функционала
-- **Main task:** завершить регрессионную проверку прогресса, миграции и перехода между основным и дополнительным маршрутами.
-- **Done:** исправлена логика прогресса основного маршрута и унифицирован выбор следующего урока; добавлены поведенческие тесты чистых функций.
-- **Remaining:** повторно выполнить CI после исправления устаревшего тестового ожидания; затем проверить остальные сценарии Stage 1.
+- **Stage:** 3 — Качество и содержание уроков
+- **Main task:** закончить содержательную и методическую сверку всех уроков основного и PostgreSQL-маршрутов, не повторяя уже проверенные материалы.
+- **Done:** этапы 0–2 подтверждены; исправлены ошибки прогресса и перехода между маршрутами, новые регрессионные тесты прошли GitHub Actions.
+- **Remaining:** patch-level сверка веток Stage 3 и проверка методического качества уроков на предмет пробелов, повторов и неточных формулировок.
 
 ## STAGES
 
 | Stage | Status | Evidence / remaining |
 |---|---|---|
 | 0. Сверка состояния и сохранение прогресса | DONE | Проверены main, HEAD, структура, 28 веток, отсутствие открытых PR и последние Actions. Статус проекта создан и находится в корне. |
-| 1. Надёжность основного функционала | IN PROGRESS | Исправлены две ошибки: прогресс теперь считается по 112 урокам core-маршрута; карточка следующего урока и её обработчик используют единый resolver. Добавлены тесты прогресса, перехода и миграции. Первый CI для 290552d упал на старом assertion, проверявшем уже удалённую реализацию миграции; тест заменён на проверку новой интеграции. Требуется повторный CI и проверка остальных сценариев. |
+| 1. Надёжность основного функционала | DONE | Исправлены знаменатель основного прогресса и расхождение между карточкой следующего урока и обработчиком перехода. Добавлены проверки 0/112, 112/112, влияния дополнительного маршрута, перехода core → PostgreSQL и миграции старого прогресса. Проверки прошли в workflow 42438597079; UI end-to-end будет дополнительно проверен на этапе 7. |
 | 2. Структура и логика учебной программы | DONE | 25 модулей: 17 / 112 уроков core, 8 / 61 урок PostgreSQL. CI проверяет порядок, маршруты, устойчивые ID и связи тем. |
 | 3. Качество и содержание уроков | IN PROGRESS | 40 пошаговых сценариев. До последнего изменения CI подтверждал 114 исполняемых SQL-примеров и 81 ожидаемую таблицу результата. Нужны patch-level сверка веток Stage 3 и методическая оценка. |
 | 4. Практика, валидатор и контроль знаний | IN PROGRESS | 102 практических задания, 350 случайных задач в 14 темах и 100 вопросов контрольных работ. Эталонные SQL-решения исполняются в CI; корректность эквивалентных пользовательских запросов требует отдельной проверки. |
@@ -45,9 +45,9 @@ Last verified: 2026-11-08
 - Current branch: main
 - Current implementation commit: 290552d5684c73eb8a6b196bc53b2033577e641c
 - App build: 20261108-74
-- Latest validation workflow: 42438489911 — failure at obsolete source-string assertion for progress migration; new behavior tests were not reached.
-- Latest Pages workflow: 42438489668 — success for commit 290552d.
-- Previous validation workflow: 42378308270 — success for parent e4a2af2; confirmed 114 read-only examples, 81 expected-result tables, 102 practical exercises, 350 random tasks, 9 seed tables.
+- Latest validation workflow: 42438597079 — success for commit f127d15; 81 expected-result tables, 114 lesson examples, 102 practical tasks, 350 random tasks and 9 seed tables verified.
+- Latest Pages workflow: 42438596806 — build and deploy success for commit f127d15.
+- Previous validation workflow: 42378308270 — success for parent e4a2af2.
 - Open Pull Requests: 0
 - Branches: 28 total including main
 - Repository description / homepage / topics: empty / empty / empty at last metadata check.
@@ -57,4 +57,4 @@ Last verified: 2026-11-08
 
 ## NEXT ACTION
 
-Run validation on the corrected regression test, then continue Stage 1 with navigation, progress storage, reset and engine recovery scenarios.
+Continue Stage 3: inspect the outstanding Stage 3 branches against main and reconcile any unique lesson edits before editing more curriculum content.
