@@ -112,11 +112,13 @@ try {
   await page.locator('[data-module="foundations"]').click();
   assert.equal(await page.locator('.lesson-track-group h3').textContent(), 'SQL для аналитика данных');
   assert.equal(await page.locator('.lesson-track-group').count(), 1, 'A lesson must show only its own course in the sidebar');
+  assert.match(await page.locator('#side-progress-detail').textContent(), /112 уроков · SQL для аналитика данных/, 'Sidebar progress must follow the selected SQL course');
   await page.locator('#sidebar [data-nav="courses"]').click();
   await page.locator('[data-open-course="postgresql"]').click();
   await page.locator('[data-module="ddl"]').click();
   assert.equal(await page.locator('.lesson-track-group h3').textContent(), 'PostgreSQL');
   assert.equal(await page.locator('.lesson-track-group').count(), 1, 'The PostgreSQL lesson must not show the SQL course in its sidebar');
+  assert.match(await page.locator('#side-progress-detail').textContent(), /61 уроков · PostgreSQL/, 'Sidebar progress must follow the selected PostgreSQL course');
 
   await page.locator('#sidebar [data-nav="playground"]').click();
   const editor = page.locator('#playground-editor');
