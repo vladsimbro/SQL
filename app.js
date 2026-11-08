@@ -1,8 +1,8 @@
-import { modules, learningTracks, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261108-99';
-import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261108-99';
-import { firstSqlKeyword, explainStatementKeyword, explainStatementBody, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261108-99';
-import { migrateProgress, getTrackProgress, findNextLesson } from './progress-utils.js?v=20261108-99';
-import { projects, projectTaskCount } from './projects.js?v=20261108-99';
+import { modules, learningTracks, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261108-100';
+import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261108-100';
+import { firstSqlKeyword, explainStatementKeyword, explainStatementBody, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261108-100';
+import { migrateProgress, getTrackProgress, findNextLesson } from './progress-utils.js?v=20261108-100';
+import { projects, projectTaskCount } from './projects.js?v=20261108-100';
 
 const $ = (s, root=document) => root.querySelector(s);
 const $$ = (s, root=document) => [...root.querySelectorAll(s)];
@@ -536,7 +536,7 @@ function renderSchema() {
   const productSchema=schema.filter(table=>table.dataset==='product');
   const renderCards=tables=>tables.map(t=>`<div class="schema-card"><div class="schema-card-head"><strong>${esc(t.name)}</strong><small>${t.columns.length} поля</small></div><p>${esc(t.grain)}</p><div class="schema-cols">${t.columns.map(c=>`<div class="schema-col"><strong>${esc(c[0])}</strong><span>${esc(c[1])}</span><em>${esc(c[2])}</em></div>`).join('')}</div></div>`).join('');
   return `
-    ${pageHead('DATASET · УЧЕБНАЯ МОДЕЛЬ','Учебная база данных','Два связанных набора: компактная стартовая схема для первых запросов и отдельная историческая модель для аналитики клиентов, заказов, возвратов и событий.')}
+    ${pageHead('DATASET · УЧЕБНАЯ МОДЕЛЬ','Учебная база данных','Три набора для разных задач: компактная стартовая схема, историческая e-commerce модель и отдельные пользовательские события Product Analytics.')}
     <div class="callout" style="margin-bottom:16px"><strong>Стартовый набор:</strong> 9 таблиц с небольшим числом записей. Здесь удобно изучать связи, NULL, JOIN и зерно без сотен строк на экране.</div>
     <div class="schema-grid">${renderCards(starterSchema)}</div>
     <div class="section-row"><h2>Исторический аналитический набор</h2><span>4 таблицы · 36 месяцев · повторные покупки</span></div>
@@ -622,7 +622,7 @@ function handleAction(action) {
   if(action==='next-lesson'){if(state.lessonIndex<m.lessons.length-1)state.lessonIndex++;else if(trackIndex<trackModules.length-1){state.moduleId=trackModules[trackIndex+1].id;state.lessonIndex=0;}render();}
   if(action==='lesson-practice'){const id=m.lessons[state.lessonIndex]?.practiceIds?.[0];if(id){state.exerciseId=id;go('practice');}}
   if(action==='prev-exercise'||action==='next-exercise'){const trackExercises=exercises.filter(exercise=>moduleById(exercise.m)?.track===state.practiceTrack);const i=trackExercises.findIndex(exercise=>exercise.id===state.exerciseId);state.exerciseId=trackExercises[Math.max(0,Math.min(trackExercises.length-1,i+(action==='next-exercise'?1:-1)))].id;render();}
-  if(action==='clear-editor')setEditorValue(state.view==='practice'?'exercise-editor':'playground-editor','');
+  if(action==='clear-editor')setEditorValue(state.view==='practice'?'exercise-editor':state.view==='project'?'project-editor':'playground-editor','');
   if(action==='reset-editor'){const sample='SELECT status, COUNT(*) AS orders_count\\nFROM orders\\nGROUP BY status\\nORDER BY orders_count DESC;';setEditorValue('playground-editor',sample);localStorage.setItem(EDITOR_KEY,sample);}
   if(action==='show-solution'){const ex=exercises.find(x=>x.id===state.exerciseId);if(ex){setEditorValue('exercise-editor',ex.solution);toast('Эталонное решение показано.');}}
   if(action==='check-exercise')checkExercise();
