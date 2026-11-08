@@ -215,7 +215,7 @@ assert.ok(dedupLesson.body.includes('Не используй PARTITION BY order_
 assert.deepEqual(dedupLesson.exampleResult.rows, [[101,2,'2026-01-01 10:00:00','paid',1000],[102,4,'2026-01-01 09:30:00','paid',2000],[103,5,'2026-01-01 11:00:00','new',1500]], 'Deduplication must keep the latest deterministic version per business key');
 assert.deepEqual(analyticsModule.lessons.find(lesson => lesson.title === 'Качество данных и проверки').exampleResult.rows, [[19,12,7]], 'Join-grain check must expose row multiplication from order items');
 assert.ok(analyticsModule.lessons.find(lesson => lesson.title === 'Медиана и перцентили').example.includes('event_times') && !analyticsModule.lessons.find(lesson => lesson.title === 'Медиана и перцентили').example.includes('JOIN order_events delivered'), 'Delivery percentile calculation must pre-aggregate event types to one row per order');
-assert.deepEqual(analyticsModule.lessons.find(lesson => lesson.title === 'Медиана и перцентили').exampleResult.rows, [[300,444]], 'Delivery percentiles must be computed once per order');
+assert.deepEqual(analyticsModule.lessons.find(lesson => lesson.title === 'Медиана и перцентили').exampleResult.rows, [[874,'47.89','97.26','144.00','192.00']], 'Delivery stage averages and percentiles must be computed once per order');
 
 assert.equal(analyticsModule.lessons.length, 13, 'Analytics module must include period comparisons, conversion and combined-query workflow');
 assert.deepEqual(analyticsModule.lessons.find(lesson => lesson.title === 'Когортный анализ').exampleResult.rows, [['2026-01-01',3],['2026-02-01',2]], 'Cohort example must show separate cohort sizes across months');
