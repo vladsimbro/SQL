@@ -371,6 +371,12 @@ assert.ok(modules.every(module => module.quiz?.length >= 4), 'Every module must 
 const quizQuestions = modules.flatMap(module => module.quiz);
 assert.equal(quizQuestions.length, 100, 'Expected 100 knowledge-check questions');
 assert.ok(quizQuestions.every(question => question.question && question.options?.length === 4 && Number.isInteger(question.answer) && question.answer >= 0 && question.answer < 4 && question.explanation), 'Every quiz question must have four options, a valid answer and an explanation');
+const answerPositionCounts = [0,0,0,0];
+for (const question of quizQuestions) answerPositionCounts[question.answer]++;
+assert.deepEqual(answerPositionCounts, [25,25,25,25], 'Correct answer positions must be balanced across the 100-question assessment bank');
+assert.ok(modules.every(module => module.quiz.map(question => question.answer).sort((a,b)=>a-b).join(',') === '0,1,2,3'), 'Each four-question module assessment must use each correct answer position exactly once');
+assert.equal(new Set(quizQuestions.map(question => question.question.trim().toLowerCase())).size, quizQuestions.length, 'Assessment questions must be unique');
+assert.ok(quizQuestions.every(question => new Set(question.options.map(option => option.trim().toLowerCase())).size === 4), 'Every assessment question must have four distinct options');
 assert.ok(appSource.includes("editor('','exercise-editor'"), 'Practice editor must start empty');
 assert.ok(appSource.includes('navigationScrollReset') && appSource.includes('sidebarScroll'), 'Lesson navigation must preserve scroll position');
 assert.ok(appSource.includes('renderExerciseQuiz') && appSource.includes('data-exercise-quiz-answer'), 'Every practical exercise must render an interactive knowledge check');
