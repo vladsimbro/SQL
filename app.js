@@ -1154,13 +1154,15 @@ ensureSqlTooltip();
 loadProgress();
 loadProjectState();
 applyRoute();
-window.addEventListener('popstate',()=>{
+const restoreRouteFromLocation = () => {
   applyRoute();
   state.navigationScrollReset=true;
   render();
   if(innerWidth<760)setMobileMenuOpen(false);
   window.scrollTo({top:0,behavior:'instant'});
-});
+};
+window.addEventListener('popstate',restoreRouteFromLocation);
+window.addEventListener('hashchange',restoreRouteFromLocation);
 document.documentElement.classList.toggle('light',state.theme==='light');
 $('#theme-toggle').addEventListener('click',()=>{state.theme=state.theme==='dark'?'light':'dark';document.documentElement.classList.toggle('light',state.theme==='light');localStorage.setItem('sql-academy-theme',state.theme);const meta=$('meta[name="theme-color"]');if(meta)meta.content=state.theme==='light'?'#f3f5fa':'#0a0d14';});
 const themeMeta=$('meta[name="theme-color"]');if(themeMeta)themeMeta.content=state.theme==='light'?'#f3f5fa':'#0a0d14';
