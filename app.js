@@ -1,7 +1,7 @@
-import { modules, learningTracks, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261108-94';
-import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261108-94';
-import { firstSqlKeyword, explainStatementKeyword, explainStatementBody, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261108-94';
-import { migrateProgress, getTrackProgress, findNextLesson } from './progress-utils.js?v=20261108-94';
+import { modules, learningTracks, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261108-95';
+import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261108-95';
+import { firstSqlKeyword, explainStatementKeyword, explainStatementBody, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261108-95';
+import { migrateProgress, getTrackProgress, findNextLesson } from './progress-utils.js?v=20261108-95';
 
 const $ = (s, root=document) => root.querySelector(s);
 const $$ = (s, root=document) => [...root.querySelectorAll(s)];
@@ -384,7 +384,7 @@ function renderPractice() {
   <section><div class="task-card"><div class="task-meta">ЗАДАНИЕ ${exercises.indexOf(active)+1} ИЗ ${exercises.length} · ${esc(m.title)}</div><h2>${esc(active.title)} ${state.completedExercises.has(active.id)?'✓':''}</h2><p>${esc(active.task)}</p>${renderExerciseHints(active)}</div>
   ${renderExerciseQuiz(active)}
   ${editor('','exercise-editor','Напиши SQL-запрос. Эталонное решение скрыто до нажатия «Показать решение».')}
-  <div class="editor-actions" style="margin-top:10px"><button class="btn primary" data-action="check-exercise" ${state.engineReady?'':'disabled'}>Проверить решение</button>${(active.mode==='mutation'||active.mode==='transaction')?'':'<button class="btn" data-action="run-exercise" ${state.engineReady?'':'disabled'}>Выполнить запрос</button>'}<button class="btn" data-action="show-solution">Показать решение</button><button class="btn" data-action="reset-db" ${state.engineReady?'':'disabled'}>Сбросить базу</button></div>
+  <div class="editor-actions" style="margin-top:10px"><button class="btn primary" data-action="check-exercise" ${state.engineReady?'':'disabled'}>Проверить решение</button>${(active.mode==='mutation'||active.mode==='transaction')?'':`<button class="btn" data-action="run-exercise" ${state.engineReady?'':'disabled'}>Выполнить запрос</button>`}<button class="btn" data-action="show-solution">Показать решение</button><button class="btn" data-action="reset-db" ${state.engineReady?'':'disabled'}>Сбросить базу</button></div>
   <div id="exercise-feedback"></div><div id="exercise-results"></div>
   <div class="lesson-footer" style="margin-top:16px"><button class="btn" data-action="prev-exercise">← Предыдущее</button><button class="btn" data-action="next-exercise">Следующее →</button></div></section></div>`;
 }
