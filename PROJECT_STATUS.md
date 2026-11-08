@@ -1,17 +1,17 @@
 # SQL Academy — актуальное состояние и передача разработки
 
-Последнее обновление: 2026-11-09 00:23 Europe/Helsinki (UTC+02:00).
+Последнее обновление: 2026-11-09 00:26 Europe/Helsinki (UTC+02:00).
 
 ## 1. Репозиторий и текущий HEAD
 
 - Репозиторий: https://github.com/vladsimbro/SQL
 - GitHub Pages: https://vladsimbro.github.io/SQL/
 - Основная ветка: main.
-- Последний HEAD main: ef37fc2ad7e5f813cbd2f1a97a43faf89965eca2.
+- Последний HEAD main: 6c715e77d21758226bba4491ef5164c8d9e49327.
 - Последний application build: 20261109-105.
 - Последний application commit с изменением runtime-кода: c24bba10d9515fd8837714632d7c412928cacb04.
 - Последняя версия URL-навигации, проверенная полным CI: a045602546da7e8bec12fcaff25626fee208aadf.
-- Последний commit добавляет только browser-smoke тесты отрицательных сценариев импорта backup; version.json не менялся, потому что runtime-код приложения не менялся.
+- Последние commits добавили негативные browser-smoke сценарии backup и исправили синтаксическую ошибку в списке checks; runtime-код приложения не менялся, version.json не менялся.
 - GitHub API подтверждает только одну ветку: main. Других активных веток и незавершённых переносов не обнаружено.
 - Изменения выполняются через GitHub API. Локальный clone и локальный git status в этой сессии не использовались.
 
@@ -133,9 +133,9 @@ Workflow .github/workflows/pages.yml выполняет:
 
 - Репозиторий: vladsimbro/SQL.
 - Основная и единственная ветка: main.
-- Текущий HEAD: ef37fc2ad7e5f813cbd2f1a97a43faf89965eca2.
+- Текущий HEAD: 6c715e77d21758226bba4491ef5164c8d9e49327.
 - Последний runtime build: 20261109-105.
-- Workflow 42525067404 выполнил deploy на текущем HEAD успешно; browser-smoke ещё выполнялся.
+- Workflow 42525067404 опубликовал runtime build 20261109-105, но browser-smoke завершился failure из-за синтаксической ошибки тестового файла. Исправление теста находится в HEAD 6c715e7; новый workflow 42525207352 ожидает выполнения.
 - URL-навигация опубликована и проверена в workflow 42524697272.
 - Удаление 29 устаревших refs было выполнено в предыдущей сессии после проверки; аудит повторно не запускать без появления новых веток.
 - AUDIT.md удалён ранее; полезные сведения об аудите сохранены в истории документа.
@@ -159,7 +159,7 @@ Workflow .github/workflows/pages.yml выполняет:
 - URL/hash-навигация и browser history: DEPLOYED_VERIFIED на commit a045602, workflow 42524697272 прошёл validate, deploy и browser-smoke.
 
 Текущая незавершённая задача:
-- Негативные browser-smoke сценарии backup import добавлены в commit ef37fc2ad7e5f813cbd2f1a97a43faf89965eca2. Validate и deploy успешны; browser-smoke выполнялся на момент последней проверки.
+- Негативные browser-smoke сценарии backup import добавлены в ef37fc2; первый browser-smoke выявил синтаксическую ошибку в тестовом списке checks. Исправление отправлено в 6c715e77d21758226bba4491ef5164c8d9e49327; новый CI ожидает результата.
 
 Следующая конкретная задача:
 - Проверить завершение workflow 42525067404 и результат browser-smoke job.
@@ -168,12 +168,12 @@ Workflow .github/workflows/pages.yml выполняет:
 - После этого провести следующий содержательный аудит качества учебного SQL-маршрута и практики: начать с JOIN/fan-out, зерна данных, COUNT DISTINCT, LEFT JOIN + WHERE и проверок корректности метрик. Не переписывать уроки без конкретных дефектов.
 
 Последний проверенный commit SHA:
-- Текущий HEAD main: ef37fc2ad7e5f813cbd2f1a97a43faf89965eca2.
+- Текущий HEAD main: 6c715e77d21758226bba4491ef5164c8d9e49327.
 - Последний commit с полностью зелёными validate/deploy/browser-smoke: a045602546da7e8bec12fcaff25626fee208aadf.
 
 Последний результат тестирования:
 - Workflow 42524697272: все три jobs success.
-- Workflow 42525067404: validate success, deploy success, browser-smoke in_progress при последнем опросе.
+- Workflow 42525067404: validate success, deploy success, browser-smoke failure (синтаксическая ошибка теста). Исправление в 6c715e7, новый workflow 42525207352 ожидает выполнения.
 
 Состояние GitHub Pages:
 - Build приложения: 20261109-105.
