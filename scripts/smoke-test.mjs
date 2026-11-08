@@ -98,7 +98,7 @@ assert.equal(exercises.filter(exercise => exercise.mode === 'transaction').lengt
 assert.equal(exercises.length, 103, 'Expected 103 total practice exercises');
 assert.ok(exercises.every(exercise => modules.some(module => module.id === exercise.m)), 'Every exercise must belong to a real module');
 const fanoutLesson = modules.find(module => module.id === 'joins')?.lessons.find(lesson => lesson.id === 'joins.fan-out-pochemu-join-umnozhaet-stroki');
-assert.ok(fanoutLesson?.practiceIds.includes('e103'), 'The fan-out lesson must link its dedicated practice exercise');
+assert.deepEqual(fanoutLesson?.practiceIds, ['e103'], 'The fan-out lesson must link its dedicated practice exercise exactly once');
 assert.ok(exercises.some(exercise => exercise.id === 'e103' && exercise.m === 'joins'), 'Fan-out practice must be registered in the JOIN exercise bank');
 assert.ok(appSource.includes("from './sql-utils.js?v="), 'Application must use the shared SQL parser module');
 assert.ok(appSource.includes("render();\ninitDatabase();"), 'The application shell must render before PostgreSQL initialization begins');
@@ -514,6 +514,17 @@ assert.ok(appSource.includes('ex.requiredPatterns'), 'EXPLAIN exercises must val
 const db = new PGlite();
 try {
   await db.exec(seedSQL);
+  const fanOutExercise = exercises.find(exercise => exercise.id === 'e103');
+  assert.ok(fanOutExercise && fanOutExercise.m === 'joins' && fanOutExercise.mode === 'select', 'The dedicated fan-out exercise must exist in the JOIN course');
+  const baseFanOutMetrics = await db.query(fanOutExercise.solution);
+  assert.equal(baseFanOutMetrics.rows.length, 12, 'Fan-out solution must return exactly one row for every seeded order');
+  assert.equal(new Set(baseFanOutMetrics.rows.map(row => row.order_id)).size, 12, 'Fan-out solution must preserve one row per order');
+  const firstFanOutOrder = baseFanOutMetrics.rows.find(row => Number(row.order_id) === 101);
+  assert.ok(firstFanOutOrder, 'Fan-out solution must retain order 101');
+  assert.deepEqual([Number(firstFanOutOrder.items_amount), Number(firstFanOutOrder.events_count)], [1200, 2], 'Order 101 must total three item lines once and count its two events once');
+  const orderWithoutEvents = baseFanOutMetrics.rows.find(row => Number(row.order_id) === 104);
+  assert.ok(orderWithoutEvents, 'An order without events must remain in the result');
+  assert.equal(Number(orderWithoutEvents.events_count), 0, 'An order without events must report zero events rather than disappear');
   const equivalentSelect = await db.query("SELECT order_id, status FROM orders WHERE status = 'delivered'");
   const equivalentCte = await db.query("WITH delivered_orders AS (SELECT status, order_id FROM orders WHERE status IN ('delivered')) SELECT status, order_id FROM delivered_orders");
   assert.equal(resultMatches(normalize(equivalentSelect),normalize(equivalentCte)),true,'Equivalent SELECT and CTE solutions must match even when output columns are reordered');
@@ -824,6 +835,13 @@ try {
     }
     checked++;
   }
+  await db.exec("INSERT INTO orders VALUES (113, 1, NULL, 1, 'new', 0, '2026-01-16');");
+  const fanOutWithEmptyOrder = await db.query(fanOutExercise.solution);
+  assert.equal(fanOutWithEmptyOrder.rows.length, 13, 'Fan-out solution must retain an order with no item lines and no events');
+  const emptyDetailOrder = fanOutWithEmptyOrder.rows.find(row => Number(row.order_id) === 113);
+  assert.ok(emptyDetailOrder, 'Order without either detail source must remain in the result');
+  assert.deepEqual([Number(emptyDetailOrder.items_amount), Number(emptyDetailOrder.events_count)], [0, 0], 'Missing item and event details must be represented as zero metrics');
+
   await db.exec('CREATE TEMP TABLE practice_categories (category_id INTEGER NOT NULL, category_name TEXT NOT NULL);');
   const invalidPrimaryKeyResult = await db.query(exercises.find(exercise => exercise.id === 'e61').checkQuery);
   assert.ok(invalidPrimaryKeyResult.rows.every(row => !row.is_primary_key), 'A table without PRIMARY KEY must fail the e61 structural check');
