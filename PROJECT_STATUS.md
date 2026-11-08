@@ -237,13 +237,14 @@ Browser-smoke assertions:
 
 - Репозиторий: vladsimbro/SQL.
 - Основная и единственная ветка: main.
-- Текущий HEAD main: 18f1f06bc2c917432aceeab35dc24351e48b3cc0 (status-only commit).
-- Последний code/test commit: 85779d70437459441f68ccf76738d484ee9ee7c0.
+- Последний code/test commit в main: 85779d70437459441f68ccf76738d484ee9ee7c0.
+- После него в main выполнялись только status-only обновления PROJECT_STATUS.md; runtime code не менялся.
 - Последний полностью успешный end-to-end commit: 85779d70437459441f68ccf76738d484ee9ee7c0.
 - Открытых PR и Issues нет.
 - Workflow 42532828710 на HEAD 85779d7: validate/deploy/browser-smoke success.
 - Pages workflow 42532828642 на HEAD 85779d7: success.
 - Pages workflow 42533060796 на status-only HEAD 18f1f06: success.
+- Pages workflow 42533166574 на следующем status-only HEAD: success.
 - Runtime build: 20261109-109.
 - GitHub Pages: https://vladsimbro.github.io/SQL/
 - Custom deploy job для HEAD 85779d7 завершился success; Pages workflow 42532828642 завершился success.
@@ -436,4 +437,4 @@ Browser-smoke assertions:
 Состояние GitHub Pages:
 - URL: https://vladsimbro.github.io/SQL/
 - Runtime build 20261109-109: custom deploy workflow 42532828710 success; Pages workflow 42532828642 success.
-- Последний status-only commit 18f1f06 также опубликован: Pages workflow 42533060796 success.
+- Status-only публикации после code/test commit также завершились success: workflows 42533060796 и 42533166574.
