@@ -9439,7 +9439,7 @@ export const exercises = [
   },
   {
     "id": "e35",
-    "orderMatters": true,
+    "orderMatters": false,
     "mode": "select",
     "m": "windows",
     "title": "Нумерация заказов клиента",
@@ -9462,7 +9462,7 @@ export const exercises = [
   },
   {
     "id": "e37",
-    "orderMatters": true,
+    "orderMatters": false,
     "mode": "select",
     "m": "windows",
     "title": "Предыдущий заказ клиента",
@@ -9635,7 +9635,7 @@ export const exercises = [
   },
   {
     "id": "e52",
-    "orderMatters": true,
+    "orderMatters": false,
     "mode": "select",
     "m": "joins",
     "title": "Последнее событие каждого заказа",
@@ -9647,7 +9647,7 @@ export const exercises = [
   },
   {
     "id": "e53",
-    "orderMatters": true,
+    "orderMatters": false,
     "mode": "select",
     "m": "select",
     "title": "Последний заказ каждого клиента",
@@ -9685,7 +9685,7 @@ export const exercises = [
     "mode": "select",
     "m": "analytics",
     "title": "Календарь без пропущенных дней",
-    "task": "Покажи каждый день с 10 по 17 января 2026 года и число заказов в этот день. Дни без заказов должны выводиться с нулём. Используй generate_series и LEFT JOIN.",
+    "task": "Покажи каждый день с 10 по 17 января 2026 года и число заказов в этот день. Дни без заказов должны выводиться с нулём. Выведи дни по возрастанию даты. Используй generate_series и LEFT JOIN.",
     "solution": "WITH days AS (SELECT generate_series(DATE '2026-01-10', DATE '2026-01-17', INTERVAL '1 day')::date AS day), daily AS (SELECT created_at, COUNT(*) AS orders_count FROM orders GROUP BY created_at) SELECT days.day, COALESCE(daily.orders_count, 0) AS orders_count FROM days LEFT JOIN daily ON daily.created_at = days.day ORDER BY days.day;",
     "hint": "Сначала создай календарь всех дней, затем LEFT JOIN дневной агрегат. COALESCE нужен для дней без фактов.",
     "hint2": "Сначала определи зерно результата: одна строка должна описывать именно ту группу, по которой выполняется агрегирование.",
@@ -9719,8 +9719,8 @@ export const exercises = [
     "mode": "select",
     "m": "cte",
     "title": "Рекурсивная последовательность",
-    "task": "Создай рекурсивный CTE, который возвращает числа от 1 до 10 включительно.",
-    "solution": "WITH RECURSIVE numbers(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM numbers WHERE n < 10) SELECT n FROM numbers;",
+    "task": "Создай рекурсивный CTE, который возвращает числа от 1 до 10 включительно. Выведи их по возрастанию.",
+    "solution": "WITH RECURSIVE numbers(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM numbers WHERE n < 10) SELECT n FROM numbers ORDER BY n;",
     "hint": "Рекурсивный CTE состоит из стартовой строки и шага, который ссылается на предыдущее поколение.",
     "hint2": "Обе части операции должны возвращать одинаковое число столбцов с совместимыми типами. Помни, что UNION убирает дубликаты, а UNION ALL сохраняет.",
     "hint3": "Каркас: WITH подготовка AS (SELECT ...) SELECT ... FROM подготовка;"
@@ -9970,7 +9970,7 @@ export const exercises = [
     "mode": "select",
     "m": "datetime",
     "title": "Календарь заказов без пропусков",
-    "task": "Покажи каждый день с 10 по 17 января 2026 года и число заказов в этот день. Дни без заказов должны присутствовать с нулём.",
+    "task": "Покажи каждый день с 10 по 17 января 2026 года и число заказов в этот день. Дни без заказов должны присутствовать с нулём. Выведи дни по возрастанию даты.",
     "solution": "WITH calendar AS (SELECT generate_series(DATE '2026-01-10', DATE '2026-01-17', INTERVAL '1 day')::date AS day), daily AS (SELECT created_at, COUNT(*) AS orders_count FROM orders GROUP BY created_at) SELECT c.day, COALESCE(d.orders_count, 0) AS orders_count FROM calendar c LEFT JOIN daily d ON d.created_at = c.day ORDER BY c.day;",
     "orderMatters": true,
     "quiz": {
@@ -9995,7 +9995,7 @@ export const exercises = [
     "title": "Время от создания до доставки",
     "task": "Для заказов, у которых есть события создания и доставки, рассчитай длительность между этими событиями в часах.",
     "solution": "SELECT created.order_id, EXTRACT(EPOCH FROM (delivered.event_at - created.event_at)) / 3600.0 AS delivery_hours FROM order_events created JOIN order_events delivered ON delivered.order_id = created.order_id WHERE created.event_type = 'created' AND delivered.event_type = 'delivered' ORDER BY created.order_id;",
-    "orderMatters": true,
+    "orderMatters": false,
     "quiz": {
       "question": "Что возвращает EXTRACT(EPOCH FROM delivered_at - created_at)?",
       "options": [
