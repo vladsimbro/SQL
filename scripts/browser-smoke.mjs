@@ -384,6 +384,28 @@ try {
   await captureUxScreen('13-playground-mobile-320');
   assert.equal(await readEditor(page.locator('#playground-editor')), draft, 'Navigation must not discard the saved SQL draft');
 
+  // Complete the mobile walkthrough for the remaining reference and assessment views.
+  const visitMobileAuditView = async (nav, width, height, suffix) => {
+    await page.setViewportSize({ width, height });
+    await menuButton.click();
+    await page.locator('#sidebar .nav-item[data-nav="'+nav+'"]').click();
+    await page.locator('#app-content h1, #app-content h2').first().waitFor({ state: 'visible' });
+    await assertNoHorizontalOverflow(width);
+    const heading = (await page.locator('#app-content h1, #app-content h2').first().innerText()).trim();
+    assert.ok(heading.length > 0, nav+' must render a visible page heading at '+width+'px');
+    await captureUxScreen(nav+'-mobile-'+suffix);
+  };
+
+  for (const nav of ['assessment', 'schema', 'reference', 'glossary']) {
+    await visitMobileAuditView(nav, 390, 844, '390');
+    await visitMobileAuditView(nav, 320, 740, '320');
+  }
+
+  // A narrow landscape viewport catches layouts that pass portrait-only checks.
+  for (const nav of ['assessment', 'schema', 'reference', 'glossary']) {
+    await visitMobileAuditView(nav, 667, 375, 'landscape-667');
+  }
+
   await page.setViewportSize({ width: 1440, height: 960 });
   await page.locator('#sidebar .nav-item[data-nav="dashboard"]').click();
   await page.evaluate(() => localStorage.setItem('sql-academy-progress-v1', JSON.stringify({
