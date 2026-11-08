@@ -12,7 +12,7 @@ const variants = {
 const task = (topic, n, title, prompt, hint, solution) => ({
   id: `rnd-${topic}-${String(n).padStart(2,'0')}`,
   topic, title, prompt: prompt + ` Вариант №${n}: используй именно указанные в этом условии параметры.`, hint: hint + ` Для варианта №${n} проверь конкретный порог, статус или размер выборки из условия, а не переноси значение из соседней карточки.`,
-  orderMatters: /(?:сортир|алфавит|по убыванию|по возрастанию|последн|первые\s+\d+|страниц|в порядке|ранг|ранжир|сначала самые|самые (?:дорогие|дешёвые|дешевые|новые|старые))/i.test(prompt),
+  orderMatters: /(?:сортир|алфавит|по убыванию|по возрастанию|последн|первые\s+\d+|страниц|в порядке|ранг|ранжир|топ|не более|при одинаков|сначала самые|самые (?:дорогие|дешёвые|дешевые|новые|старые))/i.test(prompt),
   solution
 });
 const topics = [];
@@ -41,7 +41,7 @@ addTopic('where','WHERE и логические условия',fiveByFive('wher
 ]));
 // 3. ORDER BY and pagination.
 addTopic('sorting','Сортировка и пагинация',fiveByFive('sorting',[
- [0,1,2,3,4].map(i=>['Рейтинг по сумме',`Выведи топ заказов по сумме. При одинаковой сумме номер заказа должен разрешать ничью. Покажи не более ${variants.limits[i]} строк.`,`Сначала отсортируй по total_amount по убыванию, затем по уникальному order_id. LIMIT применяется после сортировки.`,`SELECT order_id, total_amount FROM orders ORDER BY total_amount DESC, order_id;`]),
+ [0,1,2,3,4].map(i=>['Рейтинг по сумме',`Выведи топ заказов по сумме. При одинаковой сумме номер заказа должен разрешать ничью. Покажи не более ${variants.limits[i]} строк.`,`Сначала отсортируй по total_amount по убыванию, затем по уникальному order_id. LIMIT применяется после сортировки.`,`SELECT order_id, total_amount FROM orders ORDER BY total_amount DESC, order_id LIMIT ${variants.limits[i]};`]),
  [0,1,2,3,4].map(i=>['Каталог по цене',`Выведи ${variants.limits[i]} самых дешёвых товаров. При одинаковой цене сортируй по названию.`,`Направление сортировки для цены здесь ASC. Второй критерий делает результат предсказуемым.`,`SELECT product_name, category, price FROM products ORDER BY price ASC, product_name LIMIT ${variants.limits[i]};`]),
  [0,1,2,3,4].map(i=>['Страница клиентов',`Покажи страницу номер ${i+1} из списка клиентов, по ${variants.limits[i]} записей на странице. Сортировка по customer_id.`,`OFFSET равен номеру страницы минус один, умноженному на размер страницы. Сортировка должна быть стабильной.`,`SELECT customer_id, customer_name, city FROM customers ORDER BY customer_id LIMIT ${variants.limits[i]} OFFSET ${i*variants.limits[i]};`]),
  [0,1,2,3,4].map(i=>['Свежие заказы',`Покажи ${variants.limits[i]} последних заказов. Если даты совпадают, более высокий order_id должен идти первым.`,`created_at хранится как DATE. Сортируй оба критерия по убыванию.`,`SELECT order_id, created_at, status FROM orders ORDER BY created_at DESC, order_id DESC LIMIT ${variants.limits[i]};`]),
