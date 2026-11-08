@@ -1,13 +1,13 @@
 # SQL Academy — актуальное состояние и передача разработки
 
-Последнее обновление: 2026-11-09 00:32 Europe/Helsinki (UTC+02:00).
+Последнее обновление: 2026-11-09 00:34 Europe/Helsinki (UTC+02:00).
 
 ## 1. Репозиторий и текущий HEAD
 
 - Репозиторий: https://github.com/vladsimbro/SQL
 - GitHub Pages: https://vladsimbro.github.io/SQL/
 - Основная ветка: main.
-- Последний HEAD main: 53b1d573849d76a459a3fddf0d34a24027cf5ab4.
+- Последний HEAD main: 350661089489ab8536e3f5ca22210277afa4031b.
 - Последний application build: 20261109-105.
 - Последний application commit с изменением runtime-кода: c24bba10d9515fd8837714632d7c412928cacb04.
 - Последняя версия URL-навигации, проверенная полным CI: a045602546da7e8bec12fcaff25626fee208aadf.
@@ -133,7 +133,7 @@ Workflow .github/workflows/pages.yml выполняет:
 
 - Репозиторий: vladsimbro/SQL.
 - Основная и единственная ветка: main.
-- Текущий HEAD: 53b1d573849d76a459a3fddf0d34a24027cf5ab4.
+- Текущий HEAD: 350661089489ab8536e3f5ca22210277afa4031b.
 - Последний runtime build: 20261109-105.
 - Workflow 42525067404 опубликовал runtime build 20261109-105, но browser-smoke завершился failure из-за синтаксической ошибки тестового файла. Исправление теста находится в HEAD 6c715e7; новый workflow 42525207352 ожидает выполнения.
 - URL-навигация опубликована и проверена в workflow 42524697272.
@@ -162,13 +162,13 @@ Workflow .github/workflows/pages.yml выполняет:
 - Негативные browser-smoke сценарии backup import добавлены в ef37fc2; первый browser-smoke выявил синтаксическую ошибку в тестовом списке checks. Исправление отправлено в 6c715e77d21758226bba4491ef5164c8d9e49327; новый CI ожидает результата.
 
 Следующая конкретная задача:
-- Проверить новый workflow после commit 53b1d573849d76a459a3fddf0d34a24027cf5ab4 и результат browser-smoke job.
+- Проверить завершение workflow 42525653191 на тестовом commit 53b1d573849d76a459a3fddf0d34a24027cf5ab4. Если browser-smoke зелёный, зафиксировать backup negative scenarios как DEPLOYED_VERIFIED. Если красный, разобрать точную причину по job logs и исправить.
 - Если success: перевести отрицательные сценарии импорта backup в DEPLOYED_VERIFIED и зафиксировать итоговый commit/Pages.
 - Если failure: получить job logs, определить, упал ли тестовый сценарий или реальная логика приложения, исправить минимально необходимое и повторить CI.
 - После этого провести следующий содержательный аудит качества учебного SQL-маршрута и практики: начать с JOIN/fan-out, зерна данных, COUNT DISTINCT, LEFT JOIN + WHERE и проверок корректности метрик. Не переписывать уроки без конкретных дефектов.
 
 Последний проверенный commit SHA:
-- Текущий HEAD main: 53b1d573849d76a459a3fddf0d34a24027cf5ab4.
+- Текущий HEAD main: 350661089489ab8536e3f5ca22210277afa4031b.
 - Последний commit с полностью зелёными validate/deploy/browser-smoke: a045602546da7e8bec12fcaff25626fee208aadf.
 
 Последний результат тестирования:
