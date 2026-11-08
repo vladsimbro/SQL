@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { PGlite } from '@electric-sql/pglite';
 import { modules, learningTracks, exercises, schema, seedSQL, glossary, reference } from '../curriculum.js';
+import { migrateProgress, getTrackProgress, findNextLesson } from '../progress-utils.js';
 import { sandboxTaskTopics, sandboxTaskCount } from '../sandbox-tasks.js';
 
 const curriculumSource = await readFile(new URL('../curriculum.js', import.meta.url), 'utf8');
@@ -11,9 +12,36 @@ const htmlSource = await readFile(new URL('../index.html', import.meta.url), 'ut
 const cssSource = await readFile(new URL('../styles.css', import.meta.url), 'utf8');
 const buildVersion = JSON.parse(await readFile(new URL('../version.json', import.meta.url), 'utf8')).build;
 const importedAssetVersions = [...appSource.matchAll(/from\s+['"]\.\/[^'"]+\.js\?v=([^'"]+)['"]/g)].map(match => match[1]);
-assert.equal(importedAssetVersions.length, 3, 'Application must import all three local modules with cache versions');
+assert.equal(importedAssetVersions.length, 4, 'Application must import all four local modules with cache versions');
 assert.ok(importedAssetVersions.every(version => version === buildVersion), 'Local JavaScript imports must use the current release build to avoid stale cached curriculum and SQL utilities');
-assert.ok(curriculumSource.includes('export const exercises = ['), 'Practice exercises must be exported as a named dataset');
+
+
+const coreLessonIds = modules.filter(module => module.track === 'core').flatMap(module => module.lessons.map(lesson => lesson.id));
+const optionalLessonIds = modules.filter(module => module.track === 'postgresql').flatMap(module => module.lessons.map(lesson => lesson.id));
+assert.deepEqual(getTrackProgress(modules, new Set(), 'core'), { completed: 0, total: 112, percent: 0 }, 'An empty core route must start at 0% of its own 112 lessons');
+assert.deepEqual(getTrackProgress(modules, new Set(optionalLessonIds), 'core'), { completed: 0, total: 112, percent: 0 }, 'Completing optional PostgreSQL lessons must not change core-route progress');
+assert.deepEqual(getTrackProgress(modules, new Set(coreLessonIds), 'core'), { completed: 112, total: 112, percent: 100 }, 'Completing the core route must reach 100% independently of PostgreSQL');
+const nextAfterCore = findNextLesson(modules, new Set(coreLessonIds));
+assert.equal(nextAfterCore.module.track, 'postgresql', 'The next lesson after the core route must belong to the optional PostgreSQL route');
+assert.equal(nextAfterCore.index, 0, 'The next lesson resolver must select the first incomplete PostgreSQL lesson');
+assert.equal(findNextLesson(modules, new Set([...coreLessonIds, ...optionalLessonIds])), null, 'The next lesson resolver must return null after both routes are complete');
+assert.equal(appSource.split('findNextLesson(modules,state.completedLessons)').length - 1, 2, 'Dashboard preview and continue handler must share the same next-lesson resolver');
+
+const selectModuleForMigration = modules.find(module => module.id === 'select');
+const legacyProgress = migrateProgress({
+  lessons: ['select:0', 'select:0', 'missing:999'],
+  exercises: ['e1', 'e1', null],
+  quizAnswers: { 'select:0:1': 2 },
+  exerciseQuizAnswers: { e1: 3 },
+  assessmentResults: { select: { attempts: 1, bestScore: 3, passed: true } }
+}, modules);
+assert.deepEqual(legacyProgress.progress.lessons, [selectModuleForMigration.lessons[0].id], 'Legacy positional lesson IDs must migrate to stable IDs and remove duplicates or unknown lessons');
+assert.deepEqual(legacyProgress.progress.quizAnswers, { [selectModuleForMigration.lessons[0].id + ':1']: 2 }, 'Legacy lesson quiz keys must migrate with their stable lesson ID');
+assert.deepEqual(legacyProgress.progress.exercises, ['e1'], 'Duplicate and malformed exercise progress entries must be normalized');
+assert.deepEqual(legacyProgress.progress.exerciseQuizAnswers, { e1: 3 }, 'Exercise quiz answers must survive progress migration');
+assert.deepEqual(legacyProgress.progress.assessmentResults, { select: { attempts: 1, bestScore: 3, passed: true } }, 'Assessment results must survive progress migration');
+assert.equal(legacyProgress.changed, true, 'Legacy progress must be marked for one-time persistence');
+assert.equal(migrateProgress(legacyProgress.progress, modules).changed, false, 'Stable progress must not be rewritten on every page load');assert.ok(curriculumSource.includes('export const exercises = ['), 'Practice exercises must be exported as a named dataset');
 assert.ok(curriculumSource.includes('export const learningTracks = [') && curriculumSource.includes('export const exercises = ['), 'Learning routes and practice arrays must be exported separately');
 assert.ok(Array.isArray(glossary) && glossary.length >= 30, 'Glossary must contain at least 30 usable terms');
 assert.ok(Array.isArray(reference) && reference.length >= 8, 'SQL quick reference must contain usable topic groups');

@@ -1,6 +1,7 @@
-import { modules, learningTracks, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261107-73';
-import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261107-73';
-import { firstSqlKeyword, explainStatementKeyword, explainStatementBody, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261107-73';
+import { modules, learningTracks, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261108-74';
+import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261108-74';
+import { firstSqlKeyword, explainStatementKeyword, explainStatementBody, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261108-74';
+import { migrateProgress, getTrackProgress, findNextLesson } from './progress-utils.js?v=20261108-74';
 
 const $ = (s, root=document) => root.querySelector(s);
 const $$ = (s, root=document) => [...root.querySelectorAll(s)];
@@ -21,37 +22,27 @@ const label = {dashboard:'Главная',roadmap:'Дорожная карта',
 const loadProgress = () => {
   try {
     const saved=JSON.parse(localStorage.getItem(STORE_KEY)||'{}');
-    const stableIds=new Set(modules.flatMap(module=>module.lessons.map(lesson=>lesson.id)));
-    const legacyIds=new Map(modules.flatMap(module=>module.lessons.map((lesson,index)=>[module.id+':'+index,lesson.id])));
-    const migrateLessonId=value=>stableIds.has(value)?value:legacyIds.get(value);
-    const lessons=(saved.lessons||[]).map(migrateLessonId).filter(Boolean);
-    state.completedLessons=new Set(lessons);
-    state.completedExercises=new Set(saved.exercises||[]);
-    const quizAnswers={};
-    for(const [key,value] of Object.entries(saved.quizAnswers||{})){
-      const parts=key.split(':');
-      if(parts.length===3){
-        const stableId=legacyIds.get(parts[0]+':'+parts[1]);
-        quizAnswers[stableId?stableId+':'+parts[2]:key]=value;
-      }else quizAnswers[key]=value;
-    }
-    state.quizAnswers=quizAnswers;
-    state.exerciseQuizAnswers=saved.exerciseQuizAnswers||{};
-    state.assessmentResults=saved.assessmentResults&&typeof saved.assessmentResults==='object'?saved.assessmentResults:{};
-    if(JSON.stringify(saved.lessons||[])!==JSON.stringify(lessons)||JSON.stringify(saved.quizAnswers||{})!==JSON.stringify(quizAnswers)){
-      localStorage.setItem(STORE_KEY,JSON.stringify({lessons,exercises:[...state.completedExercises],quizAnswers,exerciseQuizAnswers:state.exerciseQuizAnswers,assessmentResults:state.assessmentResults}));
-    }
-  } catch {}
+    const migrated=migrateProgress(saved,modules);
+    const progress=migrated.progress;
+    state.completedLessons=new Set(progress.lessons);
+    state.completedExercises=new Set(progress.exercises);
+    state.quizAnswers=progress.quizAnswers;
+    state.exerciseQuizAnswers=progress.exerciseQuizAnswers;
+    state.assessmentResults=progress.assessmentResults;
+    if(migrated.changed)localStorage.setItem(STORE_KEY,JSON.stringify(progress));
+  } catch (error) {
+    console.warn('Could not restore SQL Academy progress:',error);
+  }
 };
 const saveProgress = () => {
   localStorage.setItem(STORE_KEY,JSON.stringify({lessons:[...state.completedLessons],exercises:[...state.completedExercises],quizAnswers:state.quizAnswers,exerciseQuizAnswers:state.exerciseQuizAnswers,assessmentResults:state.assessmentResults}));
   updateProgress();
 };
 const updateProgress = () => {
-  const pct=Math.round(state.completedLessons.size/lessonTotal*100);
-  $('#side-progress-label').textContent=pct+'%';
-  $('#side-progress-bar').style.width=pct+'%';
-  $('#side-progress-detail').textContent=state.completedLessons.size+' из '+lessonTotal+' уроков';
+  const {completed,total,percent}=getTrackProgress(modules,state.completedLessons,'core');
+  $('#side-progress-label').textContent=percent+'%';
+  $('#side-progress-bar').style.width=percent+'%';
+  $('#side-progress-detail').textContent=completed+' из '+total+' уроков основного маршрута';
   $('#exercise-count').textContent=exercises.length;
 };
 const toast = message => {
@@ -94,21 +85,20 @@ function moduleRow(m,index) {
   return `<div class="module-row" data-module="${m.id}"><div class="module-number">${String(index+1).padStart(2,'0')}</div><div class="module-info"><strong>${esc(m.title)}</strong><small>${esc(m.desc)}</small></div><div class="module-meta">${done}/${m.lessons.length} · ${pct}%</div><i class="module-status ${pct===100?'done':''}"></i></div>`;
 }
 function renderDashboard() {
-  const totalDone=state.completedLessons.size;
-  const core=moduleLessons('core'),extra=moduleLessons('postgresql');
-  const sequence=[...core,...extra];
-  const next=sequence.flatMap(m=>m.lessons.map((l,i)=>({m,l,i}))).find(x=>!state.completedLessons.has(lessonKey(x.m.id,x.i))) || {m:core.at(-1),l:core.at(-1).lessons.at(-1),i:core.at(-1).lessons.length-1};
+  const core=moduleLessons('core');
+  const coreProgress=getTrackProgress(modules,state.completedLessons,'core');
+  const next=findNextLesson(modules,state.completedLessons);
   const recent=core.slice(0,5);
   return `
     <section class="hero"><div class="eyebrow">ОСНОВНОЙ МАРШРУТ · JUNIOR DATA ANALYST</div><h1>SQL — не набор команд.<br>Это способ думать о данных.</h1><p>Основной курс ведёт от реляционной модели к самостоятельной аналитике. Отдельный маршрут помогает глубже изучить PostgreSQL без обязательной задержки на администрировании.</p><div class="hero-actions"><button class="btn primary" data-action="continue">Продолжить обучение →</button><button class="btn ghost" data-nav="roadmap">Открыть roadmap</button></div></section>
     <div class="stats-grid">
       <div class="stat-card"><span class="stat-label">Уроков в программе</span><strong>${lessonTotal}</strong><small>Основной и дополнительный маршруты</small></div>
       <div class="stat-card"><span class="stat-label">Практических задач</span><strong>${exercises.length}</strong><small>С реальной проверкой SQL</small></div>
-      <div class="stat-card"><span class="stat-label">Пройдено уроков</span><strong>${totalDone}</strong><small>Из ${lessonTotal} во всей программе</small></div>
+      <div class="stat-card"><span class="stat-label">Пройдено в основном маршруте</span><strong>${coreProgress.completed}</strong><small>Из ${coreProgress.total} уроков Junior Data Analyst</small></div>
       <div class="stat-card"><span class="stat-label">Решено задач</span><strong>${state.completedExercises.size}</strong><small>Из ${exercises.length} практических</small></div>
     </div>
     <div class="grid-2">
-      <div class="card"><div class="eyebrow">СЛЕДУЮЩИЙ ШАГ</div><div class="continue-card" style="margin-top:12px"><div class="continue-icon">↗</div><div><h3>${esc(next.l.title)}</h3><p>${esc(next.m.title)} · урок ${next.i+1} из ${next.m.lessons.length}</p><button class="btn primary small" data-action="open-next">Открыть урок</button></div></div></div>
+      <div class="card"><div class="eyebrow">СЛЕДУЮЩИЙ ШАГ</div><div class="continue-card" style="margin-top:12px"><div class="continue-icon">↗</div><div><h3>${next?esc(next.lesson.title):'Все уроки пройдены'}</h3><p>${next?`${esc(next.module.title)} · урок ${next.index+1} из ${next.module.lessons.length}`:'Основной и дополнительный маршруты завершены.'}</p>${next?'<button class="btn primary small" data-action="open-next">Открыть урок</button>':'<button class="btn small" data-nav="roadmap">Открыть программу</button>'}</div></div></div>
       <div class="card"><div class="eyebrow">ОБУЧЕНИЕ В БРАУЗЕРЕ</div><h3 style="margin:8px 0 5px;font-size:15px">Настоящий PostgreSQL, а не имитация</h3><p style="color:var(--muted);font-size:11px;margin:0">Запросы исполняются локально через WebAssembly. Учебная схема уже заполнена данными, а прогресс сохраняется в браузере.</p></div>
     </div>
     <div class="section-row"><h2>Основной маршрут</h2><button class="btn small" data-nav="roadmap">Вся программа →</button></div>
@@ -442,7 +432,12 @@ function handleAction(action) {
     state.assessmentResults[assessment.id]={attempts:previous.attempts+1,bestScore:Math.max(previous.bestScore,score),passed:previous.passed||score>=Math.ceil(bank.length*0.75)};
     state.assessmentSubmitted=true;saveProgress();render();return;
   }
-  if(action==='continue'||action==='open-next'){const core=moduleLessons('core');const next=core.flatMap(module=>module.lessons.map((lesson,index)=>({module,index}))).find(item=>!state.completedLessons.has(lessonKey(item.module.id,item.index)))||{module:core.at(-1),index:core.at(-1).lessons.length-1};state.moduleId=next.module.id;state.lessonIndex=next.index;go('study');}
+  if(action==='continue'||action==='open-next'){
+    const next=findNextLesson(modules,state.completedLessons);
+    if(next){state.moduleId=next.module.id;state.lessonIndex=next.index;go('study');}
+    else{state.roadmapTrack='core';go('roadmap');}
+    return;
+  }
   if(action==='complete-lesson'){const key=lessonKey(state.moduleId,state.lessonIndex);if(state.completedLessons.has(key))state.completedLessons.delete(key);else state.completedLessons.add(key);saveProgress();render();}
   if(action==='prev-lesson'){if(state.lessonIndex>0)state.lessonIndex--;else if(trackIndex>0){state.moduleId=trackModules[trackIndex-1].id;state.lessonIndex=trackModules[trackIndex-1].lessons.length-1;}render();}
   if(action==='next-lesson'){if(state.lessonIndex<m.lessons.length-1)state.lessonIndex++;else if(trackIndex<trackModules.length-1){state.moduleId=trackModules[trackIndex+1].id;state.lessonIndex=0;}render();}
