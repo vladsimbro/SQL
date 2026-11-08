@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { mkdir, readFile } from 'node:fs/promises';
 import { chromium } from 'playwright';
 import { projects } from '../projects.js';
 
@@ -10,6 +10,8 @@ if (!/^https:\/\//i.test(baseURL)) {
 
 const browser = await chromium.launch({ headless: true });
 const page = await browser.newPage({ viewport: { width: 1440, height: 960 } });
+await mkdir('ux-audit-screenshots', { recursive: true });
+const captureUxScreen = name => page.screenshot({ path: `ux-audit-screenshots/${name}.png`, fullPage: true, animations: 'disabled' });
 const pageErrors = [];
 const consoleErrors = [];
 const failedRequests = [];
@@ -76,6 +78,7 @@ try {
   await page.goto(baseURL, { waitUntil: 'domcontentloaded', timeout: 90_000 });
   try {
     await page.locator('#app-content .hero').waitFor({ state: 'visible', timeout: 45_000 });
+    await captureUxScreen('01-dashboard-desktop-dark');
   } catch (error) {
     const diagnostic = await page.evaluate(async () => {
       const response = await fetch('./version.json?browser-diagnostic=' + Date.now(), { cache: 'no-store' }).catch(fetchError => null);
@@ -126,17 +129,20 @@ try {
   const courseCards = page.locator('#app-content .course-card');
   assert.equal(await courseCards.count(), 2, 'The catalog must show only the two implemented courses');
   assert.deepEqual(await courseCards.locator('h2').allTextContents(), ['SQL для аналитика данных','PostgreSQL']);
+  await captureUxScreen('02-course-catalog-desktop');
   await page.locator('[data-open-course="core"]').click();
   await page.locator('[data-module="foundations"]').click();
   assert.equal(await page.locator('.lesson-track-group h3').textContent(), 'SQL для аналитика данных');
   assert.equal(await page.locator('.lesson-track-group').count(), 1, 'A lesson must show only its own course in the sidebar');
   assert.match(await page.locator('#side-progress-detail').textContent(), /112 уроков · SQL для аналитика данных/, 'Sidebar progress must follow the selected SQL course');
+  await captureUxScreen('03-sql-lesson-desktop');
   await page.locator('#sidebar [data-nav="courses"]').click();
   await page.locator('[data-open-course="postgresql"]').click();
   await page.locator('[data-module="ddl"]').click();
   assert.equal(await page.locator('.lesson-track-group h3').textContent(), 'PostgreSQL');
   assert.equal(await page.locator('.lesson-track-group').count(), 1, 'The PostgreSQL lesson must not show the SQL course in its sidebar');
   assert.match(await page.locator('#side-progress-detail').textContent(), /61 уроков · PostgreSQL/, 'Sidebar progress must follow the selected PostgreSQL course');
+  await captureUxScreen('04-postgresql-lesson-desktop');
 
   await page.locator('#sidebar [data-nav="playground"]').click();
   const editor = page.locator('#playground-editor');
@@ -157,6 +163,7 @@ try {
   await page.locator('#playground-results .result-table').waitFor({ state: 'visible', timeout: 30_000 });
   const queryHeaders = await page.locator('#playground-results .result-table thead th').allTextContents();
   assert.deepEqual(queryHeaders, ['status', 'orders_count'], 'The playground must execute a real query against the seeded PostgreSQL database');
+  await captureUxScreen('05-playground-desktop-dark');
 
   const resetStartedAt = Date.now();
   await page.locator('[data-action="reset-db"]').click();
@@ -173,12 +180,15 @@ try {
   assert.equal(await page.locator('[data-practice-track="postgresql"]').getAttribute('aria-pressed'), 'true');
   assert.match(await page.locator('.task-meta').textContent(), /^ЗАДАНИЕ 1 ИЗ \d+/, 'Switching practice courses must start at the first task of the selected course');
   assert.match(await page.locator('#side-progress-detail').textContent(), /61 уроков · PostgreSQL/, 'Practice progress must follow the selected course');
+  await captureUxScreen('06-practice-desktop');
   await page.locator('[data-action="next-exercise"]').click();
   assert.match(await page.locator('.task-meta').textContent(), /^ЗАДАНИЕ 2 ИЗ \d+/, 'Previous/next practice navigation must stay within the selected course');
 
   await page.locator('#sidebar [data-nav="projects"]').click();
   assert.equal(await page.locator('#app-content .project-card').count(), 3, 'The catalog must show E-commerce, delivery, and Product Analytics projects');
+  await captureUxScreen('07-project-catalog-desktop');
   await page.locator('[data-open-project="product"]').click();
+  await captureUxScreen('08-product-project-desktop');
   const productProject=projects.find(project=>project.id==='product');
   const firstProjectTask=productProject.tasks[0];
   assert.equal(await page.locator('#app-content .project-task-nav').count(), 3, 'Each project must expose its three ordered tasks');
@@ -265,6 +275,7 @@ try {
   await page.setViewportSize({width:390,height:844});
 
   await page.setViewportSize({ width: 390, height: 844 });
+  await captureUxScreen('09-project-mobile-390');
   const menuButton = page.locator('#mobile-menu');
   assert.equal(await menuButton.getAttribute('aria-expanded'), 'false');
   await menuButton.click();
@@ -280,9 +291,16 @@ try {
   await page.locator('#app-content .exercise-layout').waitFor({ state: 'visible' });
   assert.equal(await menuButton.getAttribute('aria-expanded'), 'false', 'Following a mobile navigation link must close the menu');
   assert.equal(await page.evaluate(() => document.activeElement?.id), 'mobile-menu', 'Navigation must return focus to the mobile menu trigger');
+  await captureUxScreen('10-practice-mobile-390');
+
+  await menuButton.click();
+  await page.locator('#sidebar [data-nav="dashboard"]').click();
+  await page.locator('#app-content .hero').waitFor({ state: 'visible' });
+  await captureUxScreen('11-dashboard-mobile-390');
 
   await page.setViewportSize({ width: 320, height: 740 });
   await assertNoHorizontalOverflow(320);
+  await captureUxScreen('12-dashboard-mobile-320');
   await menuButton.click();
   await page.locator('#sidebar .nav-item[data-nav="dashboard"]').click();
   await page.locator('#app-content .hero').waitFor({ state: 'visible' });
@@ -291,6 +309,7 @@ try {
   await page.locator('#sidebar .nav-item[data-nav="playground"]').click();
   await page.locator('#playground-editor').waitFor({ state: 'attached' });
   await assertNoHorizontalOverflow(320);
+  await captureUxScreen('13-playground-mobile-320');
   assert.equal(await readEditor(page.locator('#playground-editor')), draft, 'Navigation must not discard the saved SQL draft');
 
   await page.setViewportSize({ width: 1440, height: 960 });
