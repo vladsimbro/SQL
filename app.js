@@ -1,9 +1,9 @@
-import { modules, learningTracks, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261109-105';
-import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261109-105';
-import { firstSqlKeyword, explainStatementKeyword, explainStatementBody, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261109-105';
-import { migrateProgress, getTrackProgress, findNextLesson } from './progress-utils.js?v=20261109-105';
-import { projects, projectTaskCount } from './projects.js?v=20261109-105';
-import { createBackup, parseBackup, restoreBackup } from './backup-utils.js?v=20261109-105';
+import { modules, learningTracks, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261109-106';
+import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261109-106';
+import { firstSqlKeyword, explainStatementKeyword, explainStatementBody, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261109-106';
+import { migrateProgress, getTrackProgress, findNextLesson } from './progress-utils.js?v=20261109-106';
+import { projects, projectTaskCount } from './projects.js?v=20261109-106';
+import { createBackup, parseBackup, restoreBackup } from './backup-utils.js?v=20261109-106';
 
 const $ = (s, root=document) => root.querySelector(s);
 const $$ = (s, root=document) => [...root.querySelectorAll(s)];
