@@ -91,12 +91,16 @@ assert.ok(curriculumSource.includes('export const learningTracks = [') && curric
 assert.ok(Array.isArray(glossary) && glossary.length >= 30, 'Glossary must contain at least 30 usable terms');
 assert.ok(Array.isArray(reference) && reference.length >= 8, 'SQL quick reference must contain usable topic groups');
 assert.ok(exercises.every(exercise => ['select','explain','mutation','transaction'].includes(exercise.mode)), 'Every exercise must have a supported explicit mode');
-assert.equal(exercises.filter(exercise => exercise.mode === 'select').length, 88, 'Expected 88 SELECT exercises');
+assert.equal(exercises.filter(exercise => exercise.mode === 'select').length, 89, 'Expected 89 SELECT exercises');
 assert.equal(exercises.filter(exercise => exercise.mode === 'explain').length, 3, 'Expected three EXPLAIN exercises');
 assert.equal(exercises.filter(exercise => exercise.mode === 'mutation').length, 8, 'Expected eight mutation exercises');
 assert.equal(exercises.filter(exercise => exercise.mode === 'transaction').length, 3, 'Expected three transaction exercises');
-assert.equal(exercises.length, 102, 'Expected 102 total practice exercises');
+assert.equal(exercises.length, 103, 'Expected 103 total practice exercises');
 assert.ok(exercises.every(exercise => modules.some(module => module.id === exercise.m)), 'Every exercise must belong to a real module');
+const fanoutLesson = modules.find(module => module.id === 'joins')?.lessons.find(lesson => lesson.id === 'joins.fan-out-pochemu-join-umnozhaet-stroki');
+const safeGrainLesson = modules.find(module => module.id === 'aggregates')?.lessons.find(lesson => lesson.id === 'aggregates.zerno-dannykh-i-bezopasnaya-agregatsiya');
+assert.ok(fanoutLesson?.practiceIds.includes('e103') && safeGrainLesson?.practiceIds.includes('e103'), 'Fan-out and safe pre-aggregation lessons must link the dedicated practice exercise');
+assert.ok(exercises.some(exercise => exercise.id === 'e103' && exercise.m === 'joins'), 'Fan-out practice must be registered in the JOIN exercise bank');
 assert.ok(appSource.includes("from './sql-utils.js?v="), 'Application must use the shared SQL parser module');
 assert.ok(appSource.includes("render();\ninitDatabase();"), 'The application shell must render before PostgreSQL initialization begins');
 assert.ok(appSource.includes("state.engineLoading=true") && appSource.includes("state.engineError="), 'Database startup must expose loading and recoverable error states');
