@@ -541,6 +541,42 @@ try {
 
   await page.setViewportSize({ width: 1440, height: 960 });
   await page.locator('#sidebar .nav-item[data-nav="dashboard"]').click();
+  await page.locator('#theme-toggle').click();
+  assert.equal(await page.locator('html').evaluate(element => element.classList.contains('light')), true, 'Desktop light-theme walkthrough must start in light mode');
+  const visitDesktopLightView = async (nav, name) => {
+    const item = page.locator('#sidebar .nav-item[data-nav="'+nav+'"]');
+    await item.click();
+    await assert.equal(await item.evaluate(element => element.classList.contains('active')), true, nav+' must become active in desktop light theme');
+    await page.locator('#app-content h1, #app-content h2').first().waitFor({ state: 'visible' });
+    await assertNoHorizontalOverflow(1440);
+    await captureUxScreen(name);
+  };
+  await visitDesktopLightView('courses', '47-course-catalog-desktop-light');
+  await page.locator('[data-open-course="core"]').click();
+  await page.locator('[data-module="foundations"]').click();
+  await page.locator('.lesson-track-group').waitFor({ state: 'visible' });
+  await assertNoHorizontalOverflow(1440);
+  await captureUxScreen('48-sql-lesson-desktop-light');
+  await visitDesktopLightView('courses', '49-course-catalog-postgresql-desktop-light');
+  await page.locator('[data-open-course="postgresql"]').click();
+  await page.locator('[data-module="ddl"]').click();
+  await page.locator('.lesson-track-group').waitFor({ state: 'visible' });
+  await assertNoHorizontalOverflow(1440);
+  await captureUxScreen('50-postgresql-lesson-desktop-light');
+  await visitDesktopLightView('practice', '51-practice-desktop-light');
+  await visitDesktopLightView('projects', '52-project-catalog-desktop-light');
+  await page.locator('[data-open-project="ecommerce"]').click();
+  await page.locator('.project-task-content h2').waitFor({ state: 'visible' });
+  await assertNoHorizontalOverflow(1440);
+  await captureUxScreen('53-ecommerce-project-desktop-light');
+  await visitDesktopLightView('assessment', '54-assessment-desktop-light');
+  await visitDesktopLightView('playground', '55-playground-desktop-light');
+  await visitDesktopLightView('schema', '56-schema-desktop-light');
+  await visitDesktopLightView('reference', '57-reference-desktop-light');
+  await visitDesktopLightView('glossary', '58-glossary-desktop-light');
+  await page.locator('#theme-toggle').click();
+  assert.equal(await page.locator('html').evaluate(element => element.classList.contains('light')), false, 'Desktop light-theme walkthrough must restore dark mode');
+  await page.locator('#sidebar .nav-item[data-nav="dashboard"]').click();
   await page.evaluate(() => localStorage.setItem('sql-academy-progress-v1', JSON.stringify({
     lessons: ['foundations:0'], exercises: [], quizAnswers: {}, exerciseQuizAnswers: {}, assessmentResults: {}
   })));
