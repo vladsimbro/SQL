@@ -663,15 +663,23 @@ try {
   assert.ok(employeeSchema.rows.some(row => row.column_name === 'employee_id'), 'The generic public dataset must use employee_id');
 
   const historicalProductSevenBefore = await db.query("SELECT COUNT(*)::int AS count FROM analytics_order_items WHERE product_id = 7");
+  const productEventSevenBefore = await db.query("SELECT COUNT(*)::int AS count FROM product_events WHERE product_id = 7");
   assert.ok(historicalProductSevenBefore.rows[0].count > 0, 'Historical order items must retain product 7 snapshot references');
+  assert.ok(productEventSevenBefore.rows[0].count > 0, 'Historical product events must retain product 7 snapshot references');
   await db.exec('BEGIN;');
   try {
     await db.exec("DELETE FROM products WHERE product_id = 7;");
     const historicalProductSevenAfter = await db.query("SELECT COUNT(*)::int AS count FROM analytics_order_items WHERE product_id = 7");
+    const productEventSevenAfter = await db.query("SELECT COUNT(*)::int AS count FROM product_events WHERE product_id = 7");
     assert.equal(
       historicalProductSevenAfter.rows[0].count,
       historicalProductSevenBefore.rows[0].count,
       'Deleting a starter catalog product must not remove or block historical order-item facts'
+    );
+    assert.equal(
+      productEventSevenAfter.rows[0].count,
+      productEventSevenBefore.rows[0].count,
+      'Deleting a starter catalog product must not remove or block historical product event facts'
     );
   } finally {
     await db.exec('ROLLBACK;');
