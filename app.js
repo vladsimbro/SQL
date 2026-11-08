@@ -1,7 +1,7 @@
-import { modules, learningTracks, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261108-84';
-import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261108-84';
-import { firstSqlKeyword, explainStatementKeyword, explainStatementBody, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261108-84';
-import { migrateProgress, getTrackProgress, findNextLesson } from './progress-utils.js?v=20261108-84';
+import { modules, learningTracks, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261108-85';
+import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261108-85';
+import { firstSqlKeyword, explainStatementKeyword, explainStatementBody, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261108-85';
+import { migrateProgress, getTrackProgress, findNextLesson } from './progress-utils.js?v=20261108-85';
 
 const $ = (s, root=document) => root.querySelector(s);
 const $$ = (s, root=document) => [...root.querySelectorAll(s)];
@@ -382,12 +382,23 @@ function renderPlayground() {
     <div id="playground-results"></div>`;
 }
 function renderSchema() {
+  const starterSchema=schema.filter(table=>table.dataset!=='analytics');
+  const analyticsSchema=schema.filter(table=>table.dataset==='analytics');
+  const renderCards=tables=>tables.map(t=>`<div class="schema-card"><div class="schema-card-head"><strong>${esc(t.name)}</strong><small>${t.columns.length} поля</small></div><p>${esc(t.grain)}</p><div class="schema-cols">${t.columns.map(c=>`<div class="schema-col"><strong>${esc(c[0])}</strong><span>${esc(c[1])}</span><em>${esc(c[2])}</em></div>`).join('')}</div></div>`).join('');
   return `
-    ${pageHead('DATASET · УЧЕБНАЯ МОДЕЛЬ','Учебная база данных','Учебная система интернет-магазина с заказами, магазинами, сотрудниками, клиентами, товарами и событиями заказов. Схема специально содержит NULL, магазин без заказов, клиентов без покупок и связь один-ко-многим.')}
-    <div class="callout" style="margin-bottom:16px"><strong>Важное зерно:</strong> orders — одна строка на заказ; order_items — одна строка на товарную позицию; payments — одна строка на операцию оплаты; order_events — одна строка на событие. При JOIN этих таблиц строки могут размножаться.</div>
-    <div class="schema-grid">${schema.map(t=>`<div class="schema-card"><div class="schema-card-head"><strong>${esc(t.name)}</strong><small>${t.columns.length} поля</small></div><p>${esc(t.grain)}</p><div class="schema-cols">${t.columns.map(c=>`<div class="schema-col"><strong>${esc(c[0])}</strong><span>${esc(c[1])}</span><em>${esc(c[2])}</em></div>`).join('')}</div></div>`).join('')}</div>
+    ${pageHead('DATASET · УЧЕБНАЯ МОДЕЛЬ','Учебная база данных','Два связанных набора: компактная стартовая схема для первых запросов и отдельная историческая модель для аналитики клиентов, заказов, возвратов и событий.')}
+    <div class="callout" style="margin-bottom:16px"><strong>Стартовый набор:</strong> 9 таблиц с небольшим числом записей. Здесь удобно изучать связи, NULL, JOIN и зерно без сотен строк на экране.</div>
+    <div class="schema-grid">${renderCards(starterSchema)}</div>
+    <div class="section-row"><h2>Исторический аналитический набор</h2><span>4 таблицы · 36 месяцев · повторные покупки</span></div>
+    <div class="callout" style="margin-bottom:16px"><strong>Отдельное зерно:</strong> analytics_orders — одна строка на заказ; analytics_order_items — одна строка на товарную позицию; analytics_order_events — одна строка на событие. Поле refund_amount позволяет считать чистую выручку, не приравнивая сумму заказа к полученным деньгам.</div>
+    <div class="schema-grid">${renderCards(analyticsSchema)}</div>
     <div class="section-row"><h2>Быстрые исследовательские запросы</h2><span>Откроются в песочнице</span></div>
-    <div class="module-list"><div class="module-row" data-sample="SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name;"><div class="module-number">01</div><div class="module-info"><strong>Посмотреть таблицы</strong><small>information_schema.tables</small></div><span>→</span></div><div class="module-row" data-sample="SELECT o.order_id, s.store_name, c.employee_name, o.status, o.total_amount FROM orders o JOIN stores s ON s.store_id = o.store_id LEFT JOIN employees c ON c.employee_id = o.employee_id ORDER BY o.order_id;"><div class="module-number">02</div><div class="module-info"><strong>Заказы с магазинами и сотрудниками</strong><small>INNER JOIN + LEFT JOIN</small></div><span>→</span></div><div class="module-row" data-sample="SELECT o.order_id, o.total_amount, SUM(oi.quantity * oi.unit_price) AS items_amount FROM orders o JOIN order_items oi ON oi.order_id = o.order_id GROUP BY o.order_id, o.total_amount ORDER BY o.order_id;"><div class="module-number">03</div><div class="module-info"><strong>Сравнить сумму заказа и товарные позиции</strong><small>Опасность двойного счёта</small></div><span>→</span></div></div>`;
+    <div class="module-list">
+      <div class="module-row" data-sample="SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name;"><div class="module-number">01</div><div class="module-info"><strong>Посмотреть таблицы</strong><small>information_schema.tables</small></div><span>→</span></div>
+      <div class="module-row" data-sample="SELECT o.order_id, s.store_name, c.employee_name, o.status, o.total_amount FROM orders o JOIN stores s ON s.store_id = o.store_id LEFT JOIN employees c ON c.employee_id = o.employee_id ORDER BY o.order_id;"><div class="module-number">02</div><div class="module-info"><strong>Заказы стартового набора</strong><small>INNER JOIN + LEFT JOIN</small></div><span>→</span></div>
+      <div class="module-row" data-sample="SELECT DATE_TRUNC('month', created_at)::date AS month, COUNT(*) AS orders, SUM(total_amount - refund_amount) AS net_revenue FROM analytics_orders WHERE status IN ('delivered','shipped','refunded') GROUP BY 1 ORDER BY 1;"><div class="module-number">03</div><div class="module-info"><strong>Чистая выручка по месяцам</strong><small>Отмены и неоплаченные заказы исключены, возвраты вычтены</small></div><span>→</span></div>
+      <div class="module-row" data-sample="SELECT customer_id, COUNT(*) AS orders_count, MIN(created_at)::date AS first_order, MAX(created_at)::date AS last_order FROM analytics_orders GROUP BY customer_id HAVING COUNT(*) > 1 ORDER BY orders_count DESC, customer_id LIMIT 20;"><div class="module-number">04</div><div class="module-info"><strong>Повторные покупки клиентов</strong><small>GROUP BY + HAVING + ORDER BY</small></div><span>→</span></div>
+    </div>`;
 }
 function renderReference() {
   return `

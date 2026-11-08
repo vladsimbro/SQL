@@ -515,6 +515,49 @@ try {
   assert.equal(resultMatches(normalize(itemRevenue),normalize(distinctItemRevenue)),false,'SUM(DISTINCT price) must not be accepted as equivalent to summing every order item');
   const tables = await db.query("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_type = 'BASE TABLE'");
   assert.equal(tables.rows.length, schema.length, 'Seed database table count must match the schema catalog');
+  assert.equal(schema.filter(table => table.dataset !== 'analytics').length, 9, 'The compact beginner dataset must remain a separate nine-table schema');
+  assert.equal(schema.filter(table => table.dataset === 'analytics').length, 4, 'The historical analytics dataset must contain four explicitly grouped tables');
+  const starterOrderCount = await db.query("SELECT COUNT(*)::int AS count FROM orders");
+  assert.equal(starterOrderCount.rows[0].count, 12, 'The beginner orders fixture must remain unchanged when historical data is added');
+  const analyticsCustomers = await db.query("SELECT COUNT(*)::int AS customers FROM analytics_customers");
+  assert.equal(analyticsCustomers.rows[0].customers, 48, 'Historical analytics seed must contain 48 deterministic customers');
+  const analyticsStats = await db.query(`SELECT COUNT(*)::int AS orders,
+    COUNT(DISTINCT customer_id)::int AS purchasing_customers,
+    COUNT(DISTINCT DATE_TRUNC('month', created_at))::int AS active_months,
+    MIN(created_at)::date::text AS first_order,
+    MAX(created_at)::date::text AS last_order,
+    COUNT(*) FILTER (WHERE status = 'cancelled')::int AS cancelled_orders,
+    COUNT(*) FILTER (WHERE status = 'refunded')::int AS refunded_orders,
+    COUNT(*) FILTER (WHERE refund_amount > 0 AND refund_amount < total_amount)::int AS partial_refunds
+    FROM analytics_orders`);
+  const analytics = analyticsStats.rows[0];
+  assert.ok(analytics.orders >= 700, 'Historical analytics seed must contain enough orders for repeat-purchase analysis');
+  assert.equal(analytics.purchasing_customers, 48, 'Every seeded analytics customer must have at least one order');
+  assert.equal(analytics.active_months, 36, 'Historical analytics orders must cover all 36 months from 2023 through 2025');
+  assert.ok(analytics.first_order.startsWith('2023-01') && analytics.last_order.startsWith('2025-12'), 'Historical analytics orders must span January 2023 through December 2025');
+  assert.ok(analytics.cancelled_orders > 0 && analytics.refunded_orders > 0 && analytics.partial_refunds > 0, 'Historical data must include cancelled orders, full refunds and partial refunds');
+  const repeatBuyers = await db.query("SELECT COUNT(*)::int AS customers FROM (SELECT customer_id FROM analytics_orders GROUP BY customer_id HAVING COUNT(*) > 1) repeated");
+  assert.equal(repeatBuyers.rows[0].customers, 48, 'The historical dataset must support repeat-purchase analysis for every customer');
+  const itemConsistency = await db.query(`SELECT COUNT(*) FILTER (WHERE ABS(o.total_amount - COALESCE(i.item_total,0)) > 0.01)::int AS mismatches
+    FROM analytics_orders o
+    LEFT JOIN (SELECT order_id, SUM(quantity * unit_price) AS item_total FROM analytics_order_items GROUP BY order_id) i USING (order_id)`);
+  assert.equal(itemConsistency.rows[0].mismatches, 0, 'Historical order totals must equal their item-level totals before refunds');
+  const eventCoverage = await db.query("SELECT COUNT(DISTINCT event_type)::int AS event_types, COUNT(DISTINCT order_id)::int AS orders_with_events FROM analytics_order_events");
+  assert.ok(eventCoverage.rows[0].event_types >= 5 && eventCoverage.rows[0].orders_with_events === analytics.orders, 'Every historical order must have a lifecycle event and the event log must include at least five event types');
+  const monthlyRevenue = await db.query("SELECT DATE_TRUNC('month', created_at)::date AS month, COUNT(*)::int AS order_count, SUM(total_amount - refund_amount)::numeric AS net_revenue FROM analytics_orders WHERE status IN ('delivered','shipped','refunded') GROUP BY 1 ORDER BY 1");
+  assert.equal(monthlyRevenue.rows.length, 36, 'Historical monthly revenue query must return all 36 calendar months');
+  const customerCohorts = await db.query("SELECT DATE_TRUNC('month', first_order)::date AS cohort_month, COUNT(*)::int AS cohort_size FROM (SELECT customer_id, MIN(created_at) AS first_order FROM analytics_orders GROUP BY customer_id) cohorts GROUP BY 1 ORDER BY 1");
+  assert.ok(customerCohorts.rows.length >= 10, 'Historical customer activity must span enough acquisition cohorts');
+  const deliveryDurations = await db.query(`WITH milestones AS (
+    SELECT order_id,
+      MIN(event_at) FILTER (WHERE event_type = 'created') AS created_at,
+      MIN(event_at) FILTER (WHERE event_type = 'delivered') AS delivered_at
+    FROM analytics_order_events GROUP BY order_id
+  )
+  SELECT COUNT(*)::int AS delivered_orders,
+    ROUND(AVG(EXTRACT(EPOCH FROM delivered_at - created_at) / 3600.0)::numeric,2) AS avg_delivery_hours
+  FROM milestones WHERE delivered_at IS NOT NULL AND created_at IS NOT NULL`);
+  assert.ok(deliveryDurations.rows[0].delivered_orders > 0 && Number(deliveryDurations.rows[0].avg_delivery_hours) > 0, 'Historical lifecycle events must support delivery-time metrics');
 
   const employeeSchema = await db.query("SELECT column_name FROM information_schema.columns WHERE table_name = 'orders' ORDER BY ordinal_position");
   assert.ok(employeeSchema.rows.some(row => row.column_name === 'employee_id'), 'The generic public dataset must use employee_id');
