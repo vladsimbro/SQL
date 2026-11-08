@@ -43,7 +43,7 @@ for (const project of projects) {
   assert.ok(project.context && project.objective && project.dataset && project.audience, `Project ${project.id} must explain context, goal, audience, and data`);
   for (const task of project.tasks) {
     assert.ok(task.id && task.title && task.brief && task.conditions && task.expected && task.solution, `Project task ${task.id} must include a brief, conditions, expected output, and a hidden reference solution`);
-    assert.match(task.solution.trim(), /^(WITH|SELECT)\\b/i, `Project task ${task.id} must use SELECT or WITH ... SELECT`);
+    assert.match(task.solution.trim(), /^(WITH|SELECT)\b/i, `Project task ${task.id} must use SELECT or WITH ... SELECT`);
   }
 }
 assert.ok(appSource.includes('sql-academy-project-progress-v1') && appSource.includes('sql-academy-project-drafts-v1'), 'Project completion and drafts must persist separately from course progress');
