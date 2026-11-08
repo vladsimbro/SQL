@@ -2900,7 +2900,7 @@ export const modules = [
         "simple": "Перед расчётом выясни зерно каждой таблицы и зерно результата после JOIN. Метрика должна считаться на своём уровне.",
         "example": "SELECT order_id,\n       SUM(quantity * unit_price)::int AS items_total\nFROM order_items\nGROUP BY order_id\nORDER BY order_id;",
         "note": "Сначала сформулируй зерно метрики, затем агрегируй каждый источник до этого уровня.",
-        "practiceIds": ["e103"],
+        "practiceIds": [],
         "outcomes": [
           "Определять зерно таблиц и результата",
           "выбирать безопасный уровень агрегации для метрики."
