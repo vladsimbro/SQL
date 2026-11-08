@@ -1,13 +1,13 @@
 # SQL Academy — актуальное состояние и передача разработки
 
-Последнее обновление: 2026-11-09 00:35 Europe/Helsinki (UTC+02:00).
+Последнее обновление: 2026-11-09 00:36 Europe/Helsinki (UTC+02:00).
 
 ## 1. Репозиторий и текущий HEAD
 
 - Репозиторий: https://github.com/vladsimbro/SQL
 - GitHub Pages: https://vladsimbro.github.io/SQL/
 - Основная ветка: main.
-- Последний HEAD main: be8196d6fde6eead6614a681358ad5dde8ac3332.
+- Последний HEAD main: ec67608d0e38747f98b8f4f0fc418fd6f82d472b.
 - Последний application build: 20261109-105.
 - Последний application commit с изменением runtime-кода: c24bba10d9515fd8837714632d7c412928cacb04.
 - Последняя версия URL-навигации, проверенная полным CI: a045602546da7e8bec12fcaff25626fee208aadf.
@@ -109,10 +109,11 @@ SQL Academy — статическая интерактивная платфор
 - browser-smoke: выполняется на момент последнего опроса; job устанавливал Chromium, сам тест ещё не завершился.
 - Следовательно, тесты нельзя считать пройденными до завершения browser-smoke.
 
-Критерий завершения:
-- Все четыре негативных сценария проходят в реальном браузере.
+Критерий завершения выполнен:
+- Все четыре негативных сценария прошли в реальном Chromium browser-smoke.
 - При ошибке или отказе localStorage не изменяется, страница не перезагружается.
-- Успешный backup round-trip и остальные browser-smoke сценарии остаются зелёными.
+- Успешный backup round-trip и остальные browser-smoke сценарии зелёные.
+- Подтверждение: workflow 42525873380, commit be8196d, все три jobs success.
 
 ## 8. Проверки и CI
 
@@ -124,7 +125,7 @@ Workflow .github/workflows/pages.yml выполняет:
 
 Подтверждённые результаты:
 - Workflow 42524697272 на a045602: validate success, deploy success, browser-smoke success.
-- Workflow 42525067404 на ef37fc2: validate success, deploy success; browser-smoke был in_progress на момент последней проверки.
+- Workflow 42525873380 на be8196d: validate success, deploy success, browser-smoke success.
 - Ранее workflow 42522635871 на commit 4629cb7 прошёл все три jobs.
 - Ранее выявленный сбой validate на cdea1c4 был вызван устаревшими cache keys и исправлен в c24bba1.
 - Старые промежуточные красные/отменённые workflow не считать актуальным состоянием, если более поздний полный запуск на соответствующем коде завершился success.
@@ -168,8 +169,8 @@ Workflow .github/workflows/pages.yml выполняет:
 - После этого провести следующий содержательный аудит качества учебного SQL-маршрута и практики: начать с JOIN/fan-out, зерна данных, COUNT DISTINCT, LEFT JOIN + WHERE и проверок корректности метрик. Не переписывать уроки без конкретных дефектов.
 
 Последний проверенный commit SHA:
-- Текущий HEAD main: be8196d6fde6eead6614a681358ad5dde8ac3332.
-- Последний commit с полностью зелёными validate/deploy/browser-smoke: a045602546da7e8bec12fcaff25626fee208aadf.
+- Текущий HEAD main на момент этой записи: ec67608d0e38747f98b8f4f0fc418fd6f82d472b (этот commit — актуализация PROJECT_STATUS.md после завершения теста).
+- Последний code commit с полностью зелёными validate/deploy/browser-smoke: be8196d6fde6eead6614a681358ad5dde8ac3332.
 
 Последний результат тестирования:
 - Workflow 42524697272: все три jobs success.
