@@ -449,7 +449,7 @@ const lessonIds=modules.flatMap(module=>module.lessons.map(lesson=>lesson.id));
 assert.equal(new Set(lessonIds).size,173,'Every lesson must have a unique stable ID');
 assert.ok(lessonIds.every(id=>typeof id==='string'&&id.length>4),'Every lesson ID must be stable and non-empty');
 assert.ok(appSource.includes('migrateProgress(saved,modules)')&&appSource.includes('state.completedLessons=new Set(progress.lessons)'), 'Application must restore normalized stable-ID progress before rendering');
-assert.ok(appSource.includes('data-track=')&&appSource.includes('state.roadmapTrack'),'Roadmap must allow switching between core and optional routes');
+assert.ok(appSource.includes('data-open-course=')&&appSource.includes('state.roadmapTrack=track.id'),'The course catalog must open a selected course program without mixing routes');
 assert.ok(modules.findIndex(module => module.id === 'select') < modules.findIndex(module => module.id === 'ddl'), 'Read-query fundamentals must be taught before schema modification');
 assert.ok(modules.findIndex(module=>module.id==='workflow')<modules.findIndex(module=>module.id==='ddl'),'The optional PostgreSQL route must follow the complete analyst route');
 assert.ok(modules.findIndex(module => module.id === 'analytics') === modules.findIndex(module => module.id === 'windows') + 1, 'Professional analytics must follow window functions directly');
