@@ -5670,8 +5670,8 @@ export const modules = [
       },
       {
         "title": "Когортный анализ",
-        "body": "Когортный анализ объединяет пользователей в группы по общему признаку начала: дата первой покупки, неделя регистрации или месяц первого визита. Затем для каждой когорты измеряют поведение в последующие периоды.\n\nКлючевой шаг — корректно определить дату попадания пользователя в когорту. Обычно это MIN(event_time) для события, которое задаёт начало жизненного цикла. Затем события пользователя сопоставляются с периодами относительно cohort_month.\n\nКогортная таблица показывает не просто календарные продажи, а динамику групп с одинаковым возрастом. Сравнивай когорты по одинаковым периодам жизни, иначе новая когорта будет выглядеть слабее только потому, что у неё меньше времени наблюдения.\n\nВ этом уроке мы формируем когорты и считаем их исходный размер. Сам по себе этот запрос ещё не показывает удержание: он отвечает только на вопрос, сколько пользователей впервые попало в каждую когорту. Возвраты по месяцам и долю активных пользователей разбираем в следующем уроке. В примере используется небольшая демонстрационная таблица событий с несколькими месяцами, чтобы когорты не сливались в один период.",
-        "example": "WITH sample_orders (customer_id, created_at) AS (\n  VALUES\n    (1, DATE '2026-01-05'),\n    (1, DATE '2026-02-05'),\n    (1, DATE '2026-03-07'),\n    (2, DATE '2026-01-12'),\n    (2, DATE '2026-02-20'),\n    (3, DATE '2026-01-20'),\n    (3, DATE '2026-03-02'),\n    (4, DATE '2026-02-03'),\n    (4, DATE '2026-03-09'),\n    (5, DATE '2026-02-15')\n), first_purchase AS (\n  SELECT customer_id,\n         DATE_TRUNC('month', MIN(created_at))::date AS cohort_month\n  FROM sample_orders\n  GROUP BY customer_id\n)\nSELECT cohort_month::text AS cohort_month,\n       COUNT(*)::int AS cohort_size\nFROM first_purchase\nGROUP BY cohort_month\nORDER BY cohort_month;",
+        "body": "Когорта объединяет клиентов по месяцу первой состоявшейся покупки. В историческом наборе один клиент может оформить много заказов, поэтому сначала для каждого клиента нужно определить один самый ранний месяц, а уже потом считать размер каждой группы.\n\nЗдесь покупкой считаются заказы со статусом delivered или shipped. Новые и отменённые заказы не подтверждают покупку; полностью возвращённые заказы тоже не включаем в определение первой покупки. Это бизнес-правило выбранного отчёта, а не универсальное правило для любой компании.\n\nКогортный месяц и месяц очередной активности — разные временные оси. Размер когорты фиксируется по первому событию и не должен увеличиваться из-за повторных заказов. Для сравнения ниже оставлены первые три месяца набора, чтобы было видно, как клиенты распределяются по когортам.",
+        "example": "WITH qualifying_orders AS (\n  SELECT customer_id, created_at\n  FROM analytics_orders\n  WHERE status IN ('delivered', 'shipped')\n),\nfirst_purchase AS (\n  SELECT customer_id,\n         DATE_TRUNC('month', MIN(created_at))::date AS cohort_month\n  FROM qualifying_orders\n  GROUP BY customer_id\n)\nSELECT cohort_month::text AS cohort_month,\n       COUNT(*)::int AS cohort_size\nFROM first_purchase\nWHERE cohort_month < DATE '2023-04-01'\nGROUP BY cohort_month\nORDER BY cohort_month;",
         "note": "Не смешивай календарный месяц события с возрастом когорты. Это разные оси анализа.",
         "simple": "Когорта — группа пользователей с общим моментом начала. Период 0 — период вступления, период 1 — следующий.",
         "practiceIds": [
@@ -5696,21 +5696,25 @@ export const modules = [
         ],
         "id": "analytics.kogortnyy-analiz",
         "exampleResult": {
-          "columns": [
-            "cohort_month",
-            "cohort_size"
-          ],
-          "rows": [
-            [
-              "2026-01-01",
-              3
+            "columns": [
+              "cohort_month",
+              "cohort_size"
             ],
-            [
-              "2026-02-01",
-              2
+            "rows": [
+              [
+                "2023-01-01",
+                7
+              ],
+              [
+                "2023-02-01",
+                8
+              ],
+              [
+                "2023-03-01",
+                5
+              ]
             ]
-          ]
-        }
+          }
       },
       {
         "title": "Дедупликация и выбор последней записи",
@@ -5906,9 +5910,9 @@ export const modules = [
       },
       {
         "title": "Retention: когортное удержание",
-        "body": "Retention показывает, какая доля пользователей возвращается или совершает целевое действие после периода вступления. Сначала формируют когорты по дате первого события, затем считают активность в периодах 0, 1, 2 и далее.\n\nВ знаменателе обычно размер исходной когорты. В числителе — число уникальных пользователей этой когорты, активных в конкретном периоде. Важно выбрать определение активности: вход в приложение, покупка, любое событие или другое действие.\n\nRetention можно считать по календарным месяцам или по полным интервалам от даты регистрации. Эти определения дают разные результаты. В отчёте явно указывай, какой вариант используешь.\n\nДля каждой когорты месяц 0 — месяц первого события. В следующих месяцах числитель показывает число уникальных пользователей исходной когорты, у которых было хотя бы одно событие в этом месяце; знаменатель остаётся равным размеру исходной когорты. Поэтому retention может снижаться, но не должен превышать 100%, если каждый пользователь считается один раз. В примере ниже используются те же демонстрационные события, что и в уроке о формировании когорт.",
+        "body": "Retention показывает, какая доля исходной когорты совершила целевое действие в последующем периоде. Сначала для каждого клиента определяется месяц первой состоявшейся покупки, затем фиксируется размер этой когорты.\n\nВ этом отчёте активность — хотя бы один заказ со статусом delivered или shipped в календарном месяце. Повторные заказы одного клиента в одном месяце не увеличивают числитель: клиент учитывается один раз. Знаменатель всегда равен исходному размеру когорты, а не числу активных клиентов предыдущего месяца.\n\nМесяц 0 — месяц первой покупки, месяц 1 — следующий календарный месяц, месяц 2 — ещё через месяц. Мы показываем первые три месяца жизни когорт, сформированных в первом квартале 2023 года. У более новых когорт нет полного окна наблюдения, поэтому их нельзя сравнивать с ранними на одинаковом горизонте.",
         "simple": "Retention — доля исходной когорты, которая активна в последующем периоде.",
-        "example": "WITH sample_orders (customer_id, created_at) AS (\n  VALUES\n    (1, DATE '2026-01-05'),\n    (1, DATE '2026-02-05'),\n    (1, DATE '2026-03-07'),\n    (2, DATE '2026-01-12'),\n    (2, DATE '2026-02-20'),\n    (3, DATE '2026-01-20'),\n    (3, DATE '2026-03-02'),\n    (4, DATE '2026-02-03'),\n    (4, DATE '2026-03-09'),\n    (5, DATE '2026-02-15')\n), cohort AS (\n  SELECT customer_id,\n         DATE_TRUNC('month', MIN(created_at))::date AS cohort_month\n  FROM sample_orders\n  GROUP BY customer_id\n), activity AS (\n  SELECT DISTINCT s.customer_id,\n         c.cohort_month,\n         DATE_TRUNC('month', s.created_at)::date AS activity_month\n  FROM sample_orders AS s\n  JOIN cohort AS c USING (customer_id)\n), cohort_sizes AS (\n  SELECT cohort_month, COUNT(*)::int AS cohort_size\n  FROM cohort\n  GROUP BY cohort_month\n)\nSELECT a.cohort_month::text AS cohort_month,\n       ((EXTRACT(YEAR FROM age(a.activity_month, a.cohort_month)) * 12\n        + EXTRACT(MONTH FROM age(a.activity_month, a.cohort_month)))::int) AS month_number,\n       cs.cohort_size,\n       COUNT(DISTINCT a.customer_id)::int AS active_customers,\n       ROUND(100.0 * COUNT(DISTINCT a.customer_id) / cs.cohort_size, 2)::numeric(5,2)::text AS retention_pct\nFROM activity AS a\nJOIN cohort_sizes AS cs USING (cohort_month)\nGROUP BY a.cohort_month, a.activity_month, cs.cohort_size\nORDER BY a.cohort_month, month_number;",
+        "example": "WITH qualifying_orders AS (\n  SELECT customer_id, created_at\n  FROM analytics_orders\n  WHERE status IN ('delivered', 'shipped')\n),\ncohorts AS (\n  SELECT customer_id,\n         DATE_TRUNC('month', MIN(created_at))::date AS cohort_month\n  FROM qualifying_orders\n  GROUP BY customer_id\n),\nactivity AS (\n  SELECT DISTINCT q.customer_id,\n         c.cohort_month,\n         DATE_TRUNC('month', q.created_at)::date AS activity_month\n  FROM qualifying_orders AS q\n  JOIN cohorts AS c USING (customer_id)\n  WHERE DATE_TRUNC('month', q.created_at)::date\n        < c.cohort_month + INTERVAL '3 months'\n),\ncohort_sizes AS (\n  SELECT cohort_month, COUNT(*)::int AS cohort_size\n  FROM cohorts\n  GROUP BY cohort_month\n)\nSELECT a.cohort_month::text AS cohort_month,\n       ((EXTRACT(YEAR FROM a.activity_month) - EXTRACT(YEAR FROM a.cohort_month)) * 12\n        + EXTRACT(MONTH FROM a.activity_month) - EXTRACT(MONTH FROM a.cohort_month))::int AS month_number,\n       cs.cohort_size,\n       COUNT(DISTINCT a.customer_id)::int AS active_customers,\n       ROUND(100.0 * COUNT(DISTINCT a.customer_id) / cs.cohort_size, 2)::numeric(5,2)::text AS retention_pct\nFROM activity AS a\nJOIN cohort_sizes AS cs USING (cohort_month)\nWHERE a.cohort_month < DATE '2023-04-01'\nGROUP BY a.cohort_month, a.activity_month, cs.cohort_size\nORDER BY a.cohort_month, month_number;",
         "note": "Не меняй определение активности между когортами. Знаменатель и календарь должны быть одинаковыми.",
         "practiceIds": [
           "e86"
@@ -5932,57 +5936,85 @@ export const modules = [
         ],
         "id": "analytics.retention-kogortnoe-uderzhanie",
         "exampleResult": {
-          "columns": [
-            "cohort_month",
-            "month_number",
-            "cohort_size",
-            "active_customers",
-            "retention_pct"
-          ],
-          "rows": [
-            [
-              "2026-01-01",
-              0,
-              3,
-              3,
-              "100.00"
+            "columns": [
+              "cohort_month",
+              "month_number",
+              "cohort_size",
+              "active_customers",
+              "retention_pct"
             ],
-            [
-              "2026-01-01",
-              1,
-              3,
-              2,
-              "66.67"
-            ],
-            [
-              "2026-01-01",
-              2,
-              3,
-              2,
-              "66.67"
-            ],
-            [
-              "2026-02-01",
-              0,
-              2,
-              2,
-              "100.00"
-            ],
-            [
-              "2026-02-01",
-              1,
-              2,
-              1,
-              "50.00"
+            "rows": [
+              [
+                "2023-01-01",
+                0,
+                7,
+                7,
+                "100.00"
+              ],
+              [
+                "2023-01-01",
+                1,
+                7,
+                4,
+                "57.14"
+              ],
+              [
+                "2023-01-01",
+                2,
+                7,
+                4,
+                "57.14"
+              ],
+              [
+                "2023-02-01",
+                0,
+                8,
+                8,
+                "100.00"
+              ],
+              [
+                "2023-02-01",
+                1,
+                8,
+                5,
+                "62.50"
+              ],
+              [
+                "2023-02-01",
+                2,
+                8,
+                4,
+                "50.00"
+              ],
+              [
+                "2023-03-01",
+                0,
+                5,
+                5,
+                "100.00"
+              ],
+              [
+                "2023-03-01",
+                1,
+                5,
+                4,
+                "80.00"
+              ],
+              [
+                "2023-03-01",
+                2,
+                5,
+                2,
+                "40.00"
+              ]
             ]
-          ]
-        }
+          }
       },
       {
         "title": "Медиана и перцентили",
-        "body": "Медиана делит упорядоченный набор пополам: половина значений не больше неё, половина не меньше. В отличие от среднего, медиана менее чувствительна к очень большим или малым выбросам.\n\nВ PostgreSQL percentile_cont(0.5) вычисляет непрерывный перцентиль и может интерполировать значение между наблюдениями. percentile_disc(0.5) выбирает фактическое значение из набора. Для распределения времени доставки или чека эти функции могут дать немного разные результаты.\n\nПерцентили показывают хвосты распределения: P90 — значение, ниже которого лежит примерно 90% наблюдений. Для SLA часто важнее P90 или P95, чем среднее, потому что они показывают опыт пользователей в худшей части распределения.\n\nСначала собери по одному времени начала и завершения на заказ. Если напрямую соединить все события created со всеми delivered по order_id, несколько событий каждого типа дадут fan-out и одна доставка попадёт в расчёт несколько раз. Здесь выбирается первое created и последнее delivered событие; если бизнес-правило другое, поменяй MIN/MAX осознанно.",
+        "body": "Для оценки доставки недостаточно знать только время создания и завершения заказа. Раздели путь на этапы: от создания до отправки и от отправки до доставки. Это помогает понять, где именно возникает задержка.\n\nИсточник — журнал событий: в нём несколько строк на заказ, по одной на каждое событие жизненного цикла. Сначала сверни его до одной строки на заказ и выбери время каждого этапа. Только после этого считай длительности. Прямое соединение нескольких событий между собой может умножить строки и исказить среднее и перцентили.\n\nВ наборе timestamps сформированы детерминированно, но с разной длительностью этапов. Среднее показывает общую нагрузку, медиана — типичный заказ, а P90 — границу, быстрее которой завершились примерно 90% доставок. В расчёт попадают только заказы, у которых записаны все три этапа; отменённые и ещё не доставленные заказы исключаются.",
         "simple": "Медиана — P50. P90 показывает границу, ниже которой находится около 90% значений.",
-        "example": "WITH event_times AS (\n  SELECT order_id,\n         MIN(event_at) FILTER (WHERE event_type = 'created') AS created_at,\n         MAX(event_at) FILTER (WHERE event_type = 'delivered') AS delivered_at\n  FROM order_events\n  GROUP BY order_id\n), delivery_times AS (\n  SELECT EXTRACT(EPOCH FROM delivered_at - created_at) / 60.0 AS delivery_minutes\n  FROM event_times\n  WHERE created_at IS NOT NULL\n    AND delivered_at IS NOT NULL\n)\nSELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY delivery_minutes) AS median_minutes,\n       percentile_cont(0.9) WITHIN GROUP (ORDER BY delivery_minutes) AS p90_minutes\nFROM delivery_times;",
+        "example": "WITH event_times AS (\n  SELECT order_id,\n         MIN(event_at) FILTER (WHERE event_type = 'created') AS created_at,\n         MIN(event_at) FILTER (WHERE event_type = 'shipped') AS shipped_at,\n         MIN(event_at) FILTER (WHERE event_type = 'delivered') AS delivered_at\n  FROM analytics_order_events\n  GROUP BY order_id\n),\ndelivery_times AS (\n  SELECT\n    EXTRACT(EPOCH FROM shipped_at - created_at) / 3600.0 AS create_to_ship_hours,\n    EXTRACT(EPOCH FROM delivered_at - shipped_at) / 3600.0 AS ship_to_delivery_hours,\n    EXTRACT(EPOCH FROM delivered_at - created_at) / 3600.0 AS total_delivery_hours\n  FROM event_times\n  WHERE created_at IS NOT NULL\n    AND shipped_at IS NOT NULL\n    AND delivered_at IS NOT NULL\n)\nSELECT COUNT(*)::int AS delivered_orders,\n       ROUND(AVG(create_to_ship_hours)::numeric, 2)::text AS avg_create_to_ship_hours,\n       ROUND(AVG(ship_to_delivery_hours)::numeric, 2)::text AS avg_ship_to_delivery_hours,\n       percentile_cont(0.5) WITHIN GROUP (ORDER BY total_delivery_hours)::numeric(10,2)::text AS median_total_hours,\n       percentile_cont(0.9) WITHIN GROUP (ORDER BY total_delivery_hours)::numeric(10,2)::text AS p90_total_hours\nFROM delivery_times;",
         "note": "Уточняй, нужен интерполированный percentile_cont или фактическое наблюдение percentile_disc.",
         "practiceIds": [
           "e87"
@@ -6018,17 +6050,23 @@ export const modules = [
         },
         "id": "analytics.mediana-i-pertsentili",
         "exampleResult": {
-          "columns": [
-            "median_minutes",
-            "p90_minutes"
-          ],
-          "rows": [
-            [
-              300,
-              444
+            "columns": [
+              "delivered_orders",
+              "avg_create_to_ship_hours",
+              "avg_ship_to_delivery_hours",
+              "median_total_hours",
+              "p90_total_hours"
+            ],
+            "rows": [
+              [
+                874,
+                "47.89",
+                "97.26",
+                "144.00",
+                "192.00"
+              ]
             ]
-          ]
-        }
+          }
       },
       {
         "title": "Скользящие метрики по времени",
@@ -6166,9 +6204,9 @@ export const modules = [
       },
       {
         "title": "Сравнение периодов: MoM, WoW и YoY",
-        "body": "Сравнение периодов показывает, как метрика изменилась относительно предыдущего месяца (MoM), недели (WoW) или года (YoY). Сначала нужно привести события к одному уровню периода: одна строка на месяц, неделю или год. Затем LAG получает значение предыдущего периода.\n\nПроцентное изменение рассчитывается относительно предыдущего значения: (текущий показатель - предыдущий) / предыдущий * 100. Знаменатель нужно защищать через NULLIF, потому что предыдущая выручка может быть нулевой. Для первого периода предыдущего значения нет, поэтому NULL здесь честнее нуля.\n\nВажная ловушка: LAG сравнивает с предыдущей существующей строкой, а не с предыдущим календарным периодом. Если февраль отсутствует, март сравнит с январём. Для строгого MoM/WoW/YoY сначала создай непрерывный календарь периодов и присоедини агрегаты, подставив ноль только если отсутствие факта действительно означает нулевую метрику.",
+        "body": "Сравнение MoM начинается с одной строки на календарный месяц. Здесь мы считаем чистую выручку: складываем сумму заказов и вычитаем возвраты. В отчёт входят delivered, shipped и refunded: последние нужны, чтобы полный возврат уменьшил выручку до нуля, а частичный возврат уменьшил её на возвращённую сумму. Статусы new и cancelled исключены.\n\nLAG берёт значение предыдущей строки, а не создаёт предыдущий календарный месяц. В историческом наборе все 36 месяцев представлены заказами, поэтому после агрегации каждая строка соответствует соседнему календарному месяцу. Оконную функцию считаем до фильтрации последнего квартала 2025 года: поэтому октябрь сравнивается с сентябрём, который не показываем в итоговой выдаче.\n\nПроцентное изменение рассчитывается относительно предыдущей чистой выручки. NULLIF защищает деление на ноль; для первого доступного месяца NULL был бы честнее выдуманного процента.",
         "simple": "Сначала агрегируй до месяца/недели/года, затем LAG сравнит текущую строку с предыдущей. Для календарно точного сравнения заполни пропущенные периоды.",
-        "example": "WITH months AS (\n  SELECT generate_series(DATE '2026-01-01', DATE '2026-03-01', INTERVAL '1 month')::date AS month_start\n), monthly AS (\n  SELECT DATE_TRUNC('month', created_at)::date AS month_start,\n         SUM(total_amount)::int AS revenue\n  FROM orders\n  GROUP BY 1\n), filled AS (\n  SELECT m.month_start, COALESCE(r.revenue, 0)::int AS revenue\n  FROM months m LEFT JOIN monthly r USING (month_start)\n), compared AS (\n  SELECT *, (LAG(revenue) OVER (ORDER BY month_start))::int AS previous_revenue\n  FROM filled\n)\nSELECT month_start::text AS month_start, revenue, previous_revenue,\n       ROUND(100.0 * (revenue - previous_revenue) / NULLIF(previous_revenue, 0), 2)::float8 AS mom_pct\nFROM compared\nORDER BY month_start;",
+        "example": "WITH monthly_revenue AS (\n  SELECT DATE_TRUNC('month', created_at)::date AS month,\n         SUM(total_amount - refund_amount)::numeric(12,2) AS net_revenue\n  FROM analytics_orders\n  WHERE status IN ('delivered', 'shipped', 'refunded')\n  GROUP BY 1\n),\nwith_previous AS (\n  SELECT month,\n         net_revenue,\n         LAG(net_revenue) OVER (ORDER BY month) AS previous_month_revenue\n  FROM monthly_revenue\n)\nSELECT month::text AS month,\n       net_revenue::text AS net_revenue,\n       previous_month_revenue::text AS previous_month_revenue,\n       ROUND(\n         100.0 * (net_revenue - previous_month_revenue)\n         / NULLIF(previous_month_revenue, 0),\n         2\n       )::numeric(8,2)::text AS mom_change_pct\nFROM with_previous\nWHERE month >= DATE '2025-10-01'\nORDER BY month;",
         "note": "LAG сравнивает соседние строки, а не гарантированно соседние календарные периоды. Не называй показатель MoM, пока не проверил пропуски месяцев.",
         "outcomes": [
           "Рассчитывать абсолютное и процентное изменение периода",
@@ -6204,33 +6242,33 @@ export const modules = [
         },
         "id": "analytics.sravnenie-periodov-mom-wow-i-yoy",
         "exampleResult": {
-          "columns": [
-            "month_start",
-            "revenue",
-            "previous_revenue",
-            "mom_pct"
-          ],
-          "rows": [
-            [
-              "2026-01-01",
-              21390,
-              null,
-              null
+            "columns": [
+              "month",
+              "net_revenue",
+              "previous_month_revenue",
+              "mom_change_pct"
             ],
-            [
-              "2026-02-01",
-              0,
-              21390,
-              -100
-            ],
-            [
-              "2026-03-01",
-              0,
-              0,
-              null
+            "rows": [
+              [
+                "2025-10-01",
+                "57920.00",
+                "67180.00",
+                "-13.78"
+              ],
+              [
+                "2025-11-01",
+                "64240.00",
+                "57920.00",
+                "10.91"
+              ],
+              [
+                "2025-12-01",
+                "70100.00",
+                "64240.00",
+                "9.12"
+              ]
             ]
-          ]
-        }
+          }
       },
       {
         "title": "Конверсия и правильный знаменатель",
@@ -10149,8 +10187,8 @@ export const exercises = [
     "mode": "select",
     "m": "analytics",
     "title": "Построй базовую таблицу когорт",
-    "task": "Определи месяц первого заказа каждого клиента и посчитай, сколько клиентов вошло в каждую месячную когорту.",
-    "solution": "WITH first_orders AS (SELECT customer_id, MIN(DATE_TRUNC('month', created_at::timestamp)) AS cohort_month FROM orders GROUP BY customer_id) SELECT cohort_month, COUNT(*) AS customers_in_cohort FROM first_orders GROUP BY cohort_month ORDER BY cohort_month;",
+    "task": "Определи месяц первой состоявшейся покупки каждого клиента и размер месячных когорт за первый квартал 2023 года. Новые, отменённые и полностью возвращённые заказы не считай покупкой.",
+    "solution": "WITH qualifying_orders AS (\n  SELECT customer_id, created_at\n  FROM analytics_orders\n  WHERE status IN ('delivered', 'shipped')\n),\nfirst_purchase AS (\n  SELECT customer_id,\n         DATE_TRUNC('month', MIN(created_at))::date AS cohort_month\n  FROM qualifying_orders\n  GROUP BY customer_id\n)\nSELECT cohort_month,\n       COUNT(*)::int AS customers_in_cohort\nFROM first_purchase\nWHERE cohort_month < DATE '2023-04-01'\nGROUP BY cohort_month\nORDER BY cohort_month;",
     "quiz": {
       "question": "Почему для определения когорты используется MIN по дате первого заказа?",
       "options": [
@@ -10162,9 +10200,9 @@ export const exercises = [
       "answer": 0,
       "explanation": "Клиент относится к когорте по периоду первого целевого события, а не по каждому последующему заказу."
     },
-    "hint": "Когорта определяется самым ранним месяцем целевого события для каждого клиента. Используй MIN после группировки.",
-    "hint2": "Сначала сведи заказы к одной строке на клиента, выбрав самый ранний месяц. Затем посчитай клиентов уже по месяцу когорты.",
-    "hint3": "Используй два уровня агрегации: MIN(DATE_TRUNC('month', created_at)) по customer_id, затем COUNT(*) по cohort_month."
+    "hint": "Клиент должен попасть ровно в одну когорту — по месяцу первой состоявшейся покупки.",
+    "hint2": "Исключи заказы, которые ещё не стали покупкой или были отменены/полностью возвращены. Затем выбери самое раннее событие на клиента.",
+    "hint3": "Сначала агрегируй qualifying orders по customer_id с MIN(DATE_TRUNC('month', created_at)), затем считай клиентов по cohort_month."
   },
   {
     "id": "e84",
@@ -10215,8 +10253,8 @@ export const exercises = [
     "mode": "select",
     "m": "analytics",
     "title": "Рассчитай когортный retention",
-    "task": "На встроенном наборе событий рассчитай для каждой когорты долю пользователей, активных в период 0, 1 и далее месяцев после первого события.",
-    "solution": "WITH events(user_id, event_month) AS (VALUES (1, DATE '2026-01-01'), (1, DATE '2026-02-01'), (2, DATE '2026-01-01'), (2, DATE '2026-03-01'), (3, DATE '2026-02-01'), (3, DATE '2026-03-01')), cohorts AS (SELECT user_id, MIN(event_month) AS cohort_month FROM events GROUP BY user_id), activity AS (SELECT DISTINCT user_id, event_month FROM events), cohort_activity AS (SELECT c.cohort_month, ((EXTRACT(YEAR FROM a.event_month) - EXTRACT(YEAR FROM c.cohort_month)) * 12 + EXTRACT(MONTH FROM a.event_month) - EXTRACT(MONTH FROM c.cohort_month))::int AS period_number, a.user_id FROM cohorts c JOIN activity a ON a.user_id = c.user_id AND a.event_month >= c.cohort_month), cohort_sizes AS (SELECT cohort_month, COUNT(*) AS cohort_size FROM cohorts GROUP BY cohort_month) SELECT ca.cohort_month, ca.period_number, COUNT(DISTINCT ca.user_id) AS active_users, cs.cohort_size, ROUND(100.0 * COUNT(DISTINCT ca.user_id) / cs.cohort_size, 2) AS retention_pct FROM cohort_activity ca JOIN cohort_sizes cs USING (cohort_month) GROUP BY ca.cohort_month, ca.period_number, cs.cohort_size ORDER BY ca.cohort_month, ca.period_number;",
+    "task": "Для когорт, сформированных в январе, феврале и марте 2023 года, рассчитай долю клиентов с покупкой в периоды 0, 1 и 2 месяца после первой покупки. Используй один и тот же исходный размер когорты в знаменателе.",
+    "solution": "WITH qualifying_orders AS (\n  SELECT customer_id, created_at\n  FROM analytics_orders\n  WHERE status IN ('delivered', 'shipped')\n),\ncohorts AS (\n  SELECT customer_id,\n         DATE_TRUNC('month', MIN(created_at))::date AS cohort_month\n  FROM qualifying_orders\n  GROUP BY customer_id\n),\nactivity AS (\n  SELECT DISTINCT q.customer_id,\n         c.cohort_month,\n         DATE_TRUNC('month', q.created_at)::date AS activity_month\n  FROM qualifying_orders AS q\n  JOIN cohorts AS c USING (customer_id)\n  WHERE DATE_TRUNC('month', q.created_at)::date\n        < c.cohort_month + INTERVAL '3 months'\n),\ncohort_sizes AS (\n  SELECT cohort_month, COUNT(*)::int AS cohort_size\n  FROM cohorts\n  GROUP BY cohort_month\n)\nSELECT a.cohort_month::text AS cohort_month,\n       ((EXTRACT(YEAR FROM a.activity_month) - EXTRACT(YEAR FROM a.cohort_month)) * 12\n        + EXTRACT(MONTH FROM a.activity_month) - EXTRACT(MONTH FROM a.cohort_month))::int AS month_number,\n       cs.cohort_size,\n       COUNT(DISTINCT a.customer_id)::int AS active_customers,\n       ROUND(100.0 * COUNT(DISTINCT a.customer_id) / cs.cohort_size, 2)::numeric(5,2)::text AS retention_pct\nFROM activity AS a\nJOIN cohort_sizes AS cs USING (cohort_month)\nWHERE a.cohort_month < DATE '2023-04-01'\nGROUP BY a.cohort_month, a.activity_month, cs.cohort_size\nORDER BY a.cohort_month, month_number;",
     "quiz": {
       "question": "Что является знаменателем retention для каждой когорты?",
       "options": [
@@ -10228,17 +10266,17 @@ export const exercises = [
       "answer": 0,
       "explanation": "Retention показывает долю активных пользователей от исходного размера когорты."
     },
-    "hint": "Сначала вычисли месяц первого события пользователя, затем номер месяца активности относительно этой даты и размер исходной когорты.",
-    "hint2": "Нужно получить два уровня: месяц первой активности пользователя и каждый месяц его активности с номером периода относительно когорты. Размер когорты нельзя пересчитывать от периода к периоду.",
-    "hint3": "Сделай CTE first_activity, затем activity с номером месяца, после чего считай COUNT(DISTINCT user_id) по cohort_month и period_month и дели на фиксированный размер когорты."
+    "hint": "Retention сравнивает активных клиентов с размером исходной когорты, а не с количеством активных в прошлом месяце.",
+    "hint2": "Один клиент может купить несколько раз за месяц, но в числителе периода он должен учитываться один раз.",
+    "hint3": "Определи первый месяц qualifying purchase, сформируй DISTINCT customer_id/cohort_month/activity_month и посчитай процент через COUNT(DISTINCT customer_id) / cohort_size."
   },
   {
     "id": "e87",
     "mode": "select",
     "m": "analytics",
-    "title": "Сравни медиану и P90 суммы заказа",
-    "task": "Для каждого статуса заказа рассчитай медианную сумму и 90-й перцентиль суммы. Используй непрерывный перцентиль.",
-    "solution": "SELECT status, percentile_cont(0.5) WITHIN GROUP (ORDER BY total_amount) AS median_amount, percentile_cont(0.9) WITHIN GROUP (ORDER BY total_amount) AS p90_amount FROM orders GROUP BY status ORDER BY status;",
+    "title": "Сравни длительность этапов доставки",
+    "task": "Для каждого магазина оцени типичную и длительную доставку по заказам, где зафиксированы создание, отправка и доставка. Покажи медиану и P90 отдельно для времени до отправки и от отправки до доставки.",
+    "solution": "WITH event_times AS (\n  SELECT order_id,\n         MIN(event_at) FILTER (WHERE event_type = 'created') AS created_at,\n         MIN(event_at) FILTER (WHERE event_type = 'shipped') AS shipped_at,\n         MIN(event_at) FILTER (WHERE event_type = 'delivered') AS delivered_at\n  FROM analytics_order_events\n  GROUP BY order_id\n),\norder_durations AS (\n  SELECT o.store_id,\n         EXTRACT(EPOCH FROM e.shipped_at - e.created_at) / 3600.0 AS create_to_ship_hours,\n         EXTRACT(EPOCH FROM e.delivered_at - e.shipped_at) / 3600.0 AS ship_to_delivery_hours\n  FROM analytics_orders AS o\n  JOIN event_times AS e USING (order_id)\n  WHERE e.created_at IS NOT NULL\n    AND e.shipped_at IS NOT NULL\n    AND e.delivered_at IS NOT NULL\n)\nSELECT s.store_name,\n       percentile_cont(0.5) WITHIN GROUP (ORDER BY d.create_to_ship_hours) AS median_create_to_ship_hours,\n       percentile_cont(0.9) WITHIN GROUP (ORDER BY d.create_to_ship_hours) AS p90_create_to_ship_hours,\n       percentile_cont(0.5) WITHIN GROUP (ORDER BY d.ship_to_delivery_hours) AS median_ship_to_delivery_hours,\n       percentile_cont(0.9) WITHIN GROUP (ORDER BY d.ship_to_delivery_hours) AS p90_ship_to_delivery_hours\nFROM order_durations AS d\nJOIN stores AS s USING (store_id)\nGROUP BY s.store_id, s.store_name\nORDER BY s.store_name;",
     "quiz": {
       "question": "Чем percentile_cont отличается от percentile_disc?",
       "options": [
@@ -10250,9 +10288,9 @@ export const exercises = [
       "answer": 0,
       "explanation": "Непрерывный перцентиль может вернуть интерполированное значение между наблюдениями."
     },
-    "hint": "percentile_cont(0.5) даёт медиану, а percentile_cont(0.9) — P90. Обе функции сортируют значения внутри WITHIN GROUP.",
-    "hint2": "Сначала раздели заказы по статусу. Для каждого статуса рассчитай два непрерывных перцентиля по total_amount.",
-    "hint3": "В агрегатах используй percentile_cont(0.5) WITHIN GROUP (ORDER BY total_amount) и аналогичное выражение с 0.9."
+    "hint": "Не соединяй сырые события создания, отправки и доставки напрямую: сначала сведи их к одной строке на заказ.",
+    "hint2": "Для каждого заказа должны получиться две независимые длительности. После этого сравнивай их по магазинам.",
+    "hint3": "Используй percentile_cont(0.5) и percentile_cont(0.9) с WITHIN GROUP отдельно для каждого из двух интервалов."
   },
   {
     "id": "e88",
@@ -10434,12 +10472,12 @@ export const exercises = [
     "id": "e96",
     "mode": "select",
     "m": "analytics",
-    "title": "Рассчитай MoM с календарём без пропущенных месяцев",
-    "task": "Рассчитай выручку по календарным месяцам с января по март 2026 года. Добавь месяцы без заказов с нулевой выручкой и покажи выручку предыдущего месяца и процентное изменение.",
-    "solution": "WITH months AS (SELECT generate_series(DATE '2026-01-01', DATE '2026-03-01', INTERVAL '1 month')::date AS month_start), monthly AS (SELECT DATE_TRUNC('month', created_at)::date AS month_start, SUM(total_amount) AS revenue FROM orders GROUP BY 1), filled AS (SELECT m.month_start, COALESCE(r.revenue, 0) AS revenue FROM months m LEFT JOIN monthly r USING (month_start)), compared AS (SELECT month_start, revenue, LAG(revenue) OVER (ORDER BY month_start) AS previous_revenue FROM filled) SELECT month_start, revenue, previous_revenue, ROUND(100.0 * (revenue - previous_revenue) / NULLIF(previous_revenue, 0), 2) AS mom_pct FROM compared ORDER BY month_start;",
-    "hint": "Создай календарь через generate_series, агрегируй заказы до месяца и присоедини агрегат к календарю. Только после заполнения пропусков используй LAG.",
-    "hint2": "Сначала построй календарь из трёх месяцев и отдельно агрегируй фактическую выручку. После LEFT JOIN замени отсутствие суммы на ноль и только потом считай LAG.",
-    "hint3": "Используй CTE months, monthly, filled. В filled получи COALESCE(revenue, 0), а в следующем уровне применяй LAG по month_start.",
+    "title": "Рассчитай MoM чистой выручки",
+    "task": "Рассчитай чистую выручку за октябрь, ноябрь и декабрь 2025 года и её изменение к предыдущему календарному месяцу. Учитывай delivered, shipped и refunded; исключи new и cancelled; вычти полные и частичные возвраты.",
+    "solution": "WITH monthly_revenue AS (\n  SELECT DATE_TRUNC('month', created_at)::date AS month,\n         SUM(total_amount - refund_amount)::numeric(12,2) AS net_revenue\n  FROM analytics_orders\n  WHERE status IN ('delivered', 'shipped', 'refunded')\n  GROUP BY 1\n),\nwith_previous AS (\n  SELECT month,\n         net_revenue,\n         LAG(net_revenue) OVER (ORDER BY month) AS previous_month_revenue\n  FROM monthly_revenue\n)\nSELECT month::text AS month,\n       net_revenue::text AS net_revenue,\n       previous_month_revenue::text AS previous_month_revenue,\n       ROUND(\n         100.0 * (net_revenue - previous_month_revenue)\n         / NULLIF(previous_month_revenue, 0),\n         2\n       )::numeric(8,2)::text AS mom_change_pct\nFROM with_previous\nWHERE month >= DATE '2025-10-01'\nORDER BY month;",
+    "hint": "Чистая выручка учитывает возвраты, а отменённые и ещё не завершённые заказы не должны попадать в этот отчёт.",
+    "hint2": "Сначала получи чистую выручку на каждый месяц за весь доступный диапазон, затем вычисли предыдущее значение и только после этого оставь последний квартал 2025 года.",
+    "hint3": "Сгруппируй сумму total_amount - refund_amount по DATE_TRUNC('month', created_at), примени LAG, затем используй NULLIF для знаменателя процента.",
     "quiz": {
       "question": "Почему перед LAG в MoM-отчёте нужен календарь?",
       "options": [
@@ -11640,4 +11678,4 @@ export const schema = [
   }
 ];
 
-export const seedSQL = "\nCREATE TABLE stores(store_id BIGINT PRIMARY KEY, store_name TEXT NOT NULL, city TEXT NOT NULL);\nCREATE TABLE employees(employee_id BIGINT PRIMARY KEY, employee_name TEXT NOT NULL, hired_at DATE NOT NULL);\nCREATE TABLE customers(customer_id BIGINT PRIMARY KEY, customer_name TEXT NOT NULL, city TEXT NOT NULL, registered_at DATE NOT NULL);\nCREATE TABLE products(product_id BIGINT PRIMARY KEY, product_name TEXT NOT NULL, category TEXT NOT NULL, price NUMERIC(10,2) NOT NULL);\nCREATE TABLE orders(order_id BIGINT PRIMARY KEY, store_id BIGINT NOT NULL REFERENCES stores, employee_id BIGINT REFERENCES employees, customer_id BIGINT NOT NULL REFERENCES customers, status TEXT NOT NULL, total_amount NUMERIC(12,2) NOT NULL, created_at DATE NOT NULL);\nCREATE TABLE order_items(item_id BIGINT PRIMARY KEY, order_id BIGINT NOT NULL REFERENCES orders, product_id BIGINT NOT NULL REFERENCES products, quantity INTEGER NOT NULL CHECK(quantity > 0), unit_price NUMERIC(10,2) NOT NULL);\nCREATE TABLE payments(payment_id BIGINT PRIMARY KEY, order_id BIGINT NOT NULL REFERENCES orders, amount NUMERIC(12,2) NOT NULL, payment_status TEXT NOT NULL);\nCREATE TABLE order_events(event_id BIGINT PRIMARY KEY, order_id BIGINT NOT NULL REFERENCES orders, event_type TEXT NOT NULL, event_at TIMESTAMP NOT NULL);\nCREATE TABLE customer_profiles(customer_id BIGINT PRIMARY KEY REFERENCES customers, attributes JSONB NOT NULL, tags TEXT[] NOT NULL);\nINSERT INTO stores VALUES\n(1,'Центральный','Москва'),(2,'Северный','Санкт-Петербург'),(3,'Волжский','Казань'),(4,'Уральский','Пермь'),(5,'Запасной','Омск');\nINSERT INTO employees VALUES\n(1,'Иван','2023-04-10'),(2,'Анна','2022-09-15'),(3,'Пётр','2024-01-20'),(4,'Мария','2023-11-03'),(5,'Олег','2025-02-01');\nINSERT INTO customers VALUES\n(1,'Алексей','Москва','2024-01-10'),(2,'Мария','Казань','2024-02-12'),(3,'Ирина','Пермь','2024-03-18'),(4,'Дмитрий','Санкт-Петербург','2024-04-01'),(5,'Ольга','Москва','2024-04-22'),(6,'Сергей','Тверь','2024-05-06'),(7,'Наталья','Казань','2024-06-12'),(8,'Андрей','Пермь','2024-07-03'),(9,'Екатерина','Омск','2024-08-15');\nINSERT INTO products VALUES\n(1,'Кофемашина','Техника',2500),(2,'Фильтр','Аксессуары',500),(3,'Чайник','Техника',1500),(4,'Кружка','Посуда',300),(5,'Термос','Посуда',900),(6,'Кофе','Продукты',400),(7,'Подарочный набор','Подарки',1200);\nINSERT INTO orders VALUES\n(101,1,1,1,'delivered',1250,'2026-01-10'),(102,1,2,2,'delivered',890,'2026-01-10'),(103,2,1,3,'shipped',2400,'2026-01-11'),(104,2,NULL,4,'new',560,'2026-01-11'),(105,3,3,1,'delivered',1800,'2026-01-12'),(106,3,2,2,'cancelled',3200,'2026-01-12'),(107,4,4,3,'delivered',1500,'2026-01-13'),(108,4,NULL,2,'new',750,'2026-01-13'),(109,1,1,4,'delivered',4200,'2026-01-14'),(110,2,2,1,'shipped',990,'2026-01-14'),(111,3,3,2,'delivered',1100,'2026-01-15'),(112,4,4,3,'shipped',2750,'2026-01-15');\nINSERT INTO order_items VALUES\n(1,101,2,1,500),(2,101,6,1,400),(3,101,4,1,300),(4,102,6,1,400),(5,102,4,1,300),(6,103,1,1,2500),(7,104,2,1,500),(8,105,3,1,1500),(9,105,4,1,300),(10,106,1,1,2500),(11,107,3,1,1500),(12,108,5,1,900),(13,109,1,1,2500),(14,109,5,1,900),(15,110,6,2,400),(16,111,2,1,500),(17,111,6,1,400),(18,112,1,1,2500),(19,112,4,1,300);\nINSERT INTO payments VALUES\n(1,101,1250,'paid'),(2,102,890,'paid'),(3,103,2400,'paid'),(4,105,1800,'paid'),(5,106,3200,'refunded'),(6,107,1500,'paid'),(7,109,4200,'paid'),(8,110,990,'paid'),(9,111,1100,'paid'),(10,112,2750,'paid');\nINSERT INTO order_events VALUES\n(1,101,'created','2026-01-10 09:00'),(2,101,'delivered','2026-01-10 13:00'),(3,102,'created','2026-01-10 10:00'),(4,102,'delivered','2026-01-10 15:00'),(5,103,'created','2026-01-11 08:30'),(6,103,'shipped','2026-01-11 12:00'),(7,105,'created','2026-01-12 09:00'),(8,105,'delivered','2026-01-12 17:00');\nINSERT INTO customer_profiles VALUES\n(1,'{\"segment\":\"vip\",\"source\":\"web\"}'::jsonb,ARRAY['regular','coffee']),\n(2,'{\"segment\":\"new\",\"source\":\"mobile\"}'::jsonb,ARRAY['tea']),\n(3,'{\"segment\":\"regular\",\"source\":\"web\"}'::jsonb,ARRAY['coffee','accessories']),\n(4,'{\"segment\":\"vip\",\"source\":\"referral\"}'::jsonb,ARRAY['equipment']),\n(5,'{\"segment\":\"new\",\"source\":\"mobile\"}'::jsonb,ARRAY['tea']),\n(6,'{\"segment\":\"regular\",\"source\":\"web\"}'::jsonb,ARRAY['coffee']),\n(7,'{\"segment\":\"regular\",\"source\":\"referral\"}'::jsonb,ARRAY['accessories']),\n(8,'{\"segment\":\"new\",\"source\":\"web\"}'::jsonb,ARRAY['equipment']),\n(9,'{\"segment\":\"new\",\"source\":\"mobile\"}'::jsonb,ARRAY['tea']);\nCREATE INDEX idx_orders_customer ON orders(customer_id);\nCREATE INDEX idx_orders_store_date ON orders(store_id, created_at);\n\n-- Historical analytics dataset, isolated from the compact beginner fixture.\nCREATE TABLE analytics_customers(\n customer_id BIGINT PRIMARY KEY, registered_at DATE NOT NULL,\n city TEXT NOT NULL, segment TEXT NOT NULL, acquisition_channel TEXT NOT NULL\n);\nCREATE TABLE analytics_orders(\n order_id BIGINT PRIMARY KEY,\n customer_id BIGINT NOT NULL REFERENCES analytics_customers(customer_id),\n store_id BIGINT NOT NULL REFERENCES stores(store_id),\n status TEXT NOT NULL CHECK(status IN ('delivered','shipped','new','cancelled','refunded')),\n total_amount NUMERIC(12,2) NOT NULL DEFAULT 0,\n refund_amount NUMERIC(12,2) NOT NULL DEFAULT 0,\n created_at TIMESTAMP NOT NULL, sales_channel TEXT NOT NULL, payment_method TEXT NOT NULL\n);\nCREATE TABLE analytics_order_items(\n item_id BIGINT PRIMARY KEY, order_id BIGINT NOT NULL REFERENCES analytics_orders(order_id),\n product_id BIGINT NOT NULL,\n quantity INTEGER NOT NULL CHECK(quantity > 0), unit_price NUMERIC(10,2) NOT NULL\n);\nCREATE TABLE analytics_order_events(\n event_id BIGINT PRIMARY KEY, order_id BIGINT NOT NULL REFERENCES analytics_orders(order_id),\n event_type TEXT NOT NULL, event_at TIMESTAMP NOT NULL\n);\nINSERT INTO analytics_customers(customer_id,registered_at,city,segment,acquisition_channel)\nSELECT 1000+n, DATE '2022-10-01'+(n-1)*9,\n (ARRAY['Москва','Санкт-Петербург','Казань','Пермь','Омск','Тверь'])[((n*7)%6)+1],\n CASE WHEN n%11=0 THEN 'vip' WHEN n%3=0 THEN 'regular' ELSE 'new' END,\n (ARRAY['organic','search','referral','social'])[((n*5)%4)+1]\nFROM generate_series(1,48) AS numbers(n);\nWITH months AS (\n SELECT month_start::date AS month_start,\n        (ROW_NUMBER() OVER(ORDER BY month_start)-1)::int AS month_index\n FROM generate_series(DATE '2023-01-01',DATE '2025-12-01',INTERVAL '1 month') AS calendar(month_start)\n),\neligible AS (\n SELECT c.customer_id,c.registered_at,m.month_start,m.month_index,\n        CASE WHEN (c.customer_id*3+m.month_index*5)%13=0 THEN 2 ELSE 1 END AS purchase_count\n FROM analytics_customers c CROSS JOIN months m\n WHERE m.month_start>=DATE_TRUNC('month',c.registered_at)::date\n   AND (c.customer_id*7+m.month_index*3)%10<7\n),\nexpanded AS (\n SELECT e.*,p.purchase_no FROM eligible e\n CROSS JOIN LATERAL generate_series(1,e.purchase_count) AS p(purchase_no)\n),\nnumbered AS (\n SELECT ROW_NUMBER() OVER(ORDER BY month_start,customer_id,purchase_no) AS sequence_no,\n        customer_id,month_index,month_start,purchase_no FROM expanded\n)\nINSERT INTO analytics_orders(order_id,customer_id,store_id,status,total_amount,refund_amount,created_at,sales_channel,payment_method)\nSELECT 100000+sequence_no, customer_id, ((customer_id+month_index+purchase_no)%5)+1,\n CASE\n  WHEN (customer_id+month_index*7+purchase_no*11)%31=0 THEN 'refunded'\n  WHEN (customer_id+month_index*5+purchase_no*3)%19=0 THEN 'cancelled'\n  WHEN (customer_id+month_index*3+purchase_no*5)%7=0 THEN 'shipped'\n  WHEN (customer_id+month_index*11+purchase_no)%13=0 THEN 'new'\n  ELSE 'delivered' END,\n 0,0,\n month_start::timestamp+(((customer_id*3+month_index*5+purchase_no*7)%25)*INTERVAL '1 day')\n   +(((customer_id+purchase_no)%9)*INTERVAL '1 hour'),\n (ARRAY['web','mobile','store'])[((customer_id+month_index+purchase_no)%3)+1],\n (ARRAY['card','cash','bank_transfer','wallet'])[((customer_id*2+month_index+purchase_no)%4)+1]\nFROM numbered;\nINSERT INTO analytics_order_items(item_id,order_id,product_id,quantity,unit_price)\nSELECT o.order_id*10+l.line_no,o.order_id,p.product_id,\n ((o.order_id+o.customer_id+l.line_no)%3+1)::int,p.price\nFROM analytics_orders o\nCROSS JOIN LATERAL generate_series(1,((o.order_id+o.customer_id)%3+1)::int) AS l(line_no)\nJOIN products p ON p.product_id=((o.order_id/3+o.customer_id+l.line_no)%7)+1;\nUPDATE analytics_orders o\nSET total_amount=t.order_total,\n    refund_amount=CASE\n      WHEN o.status='refunded' THEN t.order_total\n      WHEN o.status='delivered' AND o.order_id%17=0 THEN ROUND(t.order_total*0.20,2)\n      ELSE 0 END\nFROM (SELECT order_id,SUM(quantity*unit_price)::numeric(12,2) AS order_total\n      FROM analytics_order_items GROUP BY order_id) t\nWHERE t.order_id=o.order_id;\nINSERT INTO analytics_order_events(event_id,order_id,event_type,event_at)\nSELECT order_id*10+1,order_id,'created',created_at FROM analytics_orders\nUNION ALL\nSELECT order_id*10+2,order_id,'paid',created_at+INTERVAL '1 hour' FROM analytics_orders\nWHERE status IN ('shipped','delivered','refunded')\nUNION ALL\nSELECT order_id*10+3,order_id,'shipped',created_at+INTERVAL '1 day' FROM analytics_orders\nWHERE status IN ('shipped','delivered','refunded')\nUNION ALL\nSELECT order_id*10+4,order_id,'delivered',created_at+INTERVAL '3 days' FROM analytics_orders\nWHERE status IN ('delivered','refunded')\nUNION ALL\nSELECT order_id*10+5,order_id,'cancelled',created_at+INTERVAL '2 hours' FROM analytics_orders\nWHERE status='cancelled'\nUNION ALL\nSELECT order_id*10+6,order_id,'refunded',created_at+INTERVAL '5 days' FROM analytics_orders\nWHERE refund_amount>0;\nCREATE INDEX idx_analytics_orders_customer_date ON analytics_orders(customer_id,created_at);\nCREATE INDEX idx_analytics_orders_store_date ON analytics_orders(store_id,created_at);\nCREATE INDEX idx_analytics_items_order ON analytics_order_items(order_id);\nCREATE INDEX idx_analytics_events_order_time ON analytics_order_events(order_id,event_at);\n";
+export const seedSQL = "\nCREATE TABLE stores(store_id BIGINT PRIMARY KEY, store_name TEXT NOT NULL, city TEXT NOT NULL);\nCREATE TABLE employees(employee_id BIGINT PRIMARY KEY, employee_name TEXT NOT NULL, hired_at DATE NOT NULL);\nCREATE TABLE customers(customer_id BIGINT PRIMARY KEY, customer_name TEXT NOT NULL, city TEXT NOT NULL, registered_at DATE NOT NULL);\nCREATE TABLE products(product_id BIGINT PRIMARY KEY, product_name TEXT NOT NULL, category TEXT NOT NULL, price NUMERIC(10,2) NOT NULL);\nCREATE TABLE orders(order_id BIGINT PRIMARY KEY, store_id BIGINT NOT NULL REFERENCES stores, employee_id BIGINT REFERENCES employees, customer_id BIGINT NOT NULL REFERENCES customers, status TEXT NOT NULL, total_amount NUMERIC(12,2) NOT NULL, created_at DATE NOT NULL);\nCREATE TABLE order_items(item_id BIGINT PRIMARY KEY, order_id BIGINT NOT NULL REFERENCES orders, product_id BIGINT NOT NULL REFERENCES products, quantity INTEGER NOT NULL CHECK(quantity > 0), unit_price NUMERIC(10,2) NOT NULL);\nCREATE TABLE payments(payment_id BIGINT PRIMARY KEY, order_id BIGINT NOT NULL REFERENCES orders, amount NUMERIC(12,2) NOT NULL, payment_status TEXT NOT NULL);\nCREATE TABLE order_events(event_id BIGINT PRIMARY KEY, order_id BIGINT NOT NULL REFERENCES orders, event_type TEXT NOT NULL, event_at TIMESTAMP NOT NULL);\nCREATE TABLE customer_profiles(customer_id BIGINT PRIMARY KEY REFERENCES customers, attributes JSONB NOT NULL, tags TEXT[] NOT NULL);\nINSERT INTO stores VALUES\n(1,'Центральный','Москва'),(2,'Северный','Санкт-Петербург'),(3,'Волжский','Казань'),(4,'Уральский','Пермь'),(5,'Запасной','Омск');\nINSERT INTO employees VALUES\n(1,'Иван','2023-04-10'),(2,'Анна','2022-09-15'),(3,'Пётр','2024-01-20'),(4,'Мария','2023-11-03'),(5,'Олег','2025-02-01');\nINSERT INTO customers VALUES\n(1,'Алексей','Москва','2024-01-10'),(2,'Мария','Казань','2024-02-12'),(3,'Ирина','Пермь','2024-03-18'),(4,'Дмитрий','Санкт-Петербург','2024-04-01'),(5,'Ольга','Москва','2024-04-22'),(6,'Сергей','Тверь','2024-05-06'),(7,'Наталья','Казань','2024-06-12'),(8,'Андрей','Пермь','2024-07-03'),(9,'Екатерина','Омск','2024-08-15');\nINSERT INTO products VALUES\n(1,'Кофемашина','Техника',2500),(2,'Фильтр','Аксессуары',500),(3,'Чайник','Техника',1500),(4,'Кружка','Посуда',300),(5,'Термос','Посуда',900),(6,'Кофе','Продукты',400),(7,'Подарочный набор','Подарки',1200);\nINSERT INTO orders VALUES\n(101,1,1,1,'delivered',1250,'2026-01-10'),(102,1,2,2,'delivered',890,'2026-01-10'),(103,2,1,3,'shipped',2400,'2026-01-11'),(104,2,NULL,4,'new',560,'2026-01-11'),(105,3,3,1,'delivered',1800,'2026-01-12'),(106,3,2,2,'cancelled',3200,'2026-01-12'),(107,4,4,3,'delivered',1500,'2026-01-13'),(108,4,NULL,2,'new',750,'2026-01-13'),(109,1,1,4,'delivered',4200,'2026-01-14'),(110,2,2,1,'shipped',990,'2026-01-14'),(111,3,3,2,'delivered',1100,'2026-01-15'),(112,4,4,3,'shipped',2750,'2026-01-15');\nINSERT INTO order_items VALUES\n(1,101,2,1,500),(2,101,6,1,400),(3,101,4,1,300),(4,102,6,1,400),(5,102,4,1,300),(6,103,1,1,2500),(7,104,2,1,500),(8,105,3,1,1500),(9,105,4,1,300),(10,106,1,1,2500),(11,107,3,1,1500),(12,108,5,1,900),(13,109,1,1,2500),(14,109,5,1,900),(15,110,6,2,400),(16,111,2,1,500),(17,111,6,1,400),(18,112,1,1,2500),(19,112,4,1,300);\nINSERT INTO payments VALUES\n(1,101,1250,'paid'),(2,102,890,'paid'),(3,103,2400,'paid'),(4,105,1800,'paid'),(5,106,3200,'refunded'),(6,107,1500,'paid'),(7,109,4200,'paid'),(8,110,990,'paid'),(9,111,1100,'paid'),(10,112,2750,'paid');\nINSERT INTO order_events VALUES\n(1,101,'created','2026-01-10 09:00'),(2,101,'delivered','2026-01-10 13:00'),(3,102,'created','2026-01-10 10:00'),(4,102,'delivered','2026-01-10 15:00'),(5,103,'created','2026-01-11 08:30'),(6,103,'shipped','2026-01-11 12:00'),(7,105,'created','2026-01-12 09:00'),(8,105,'delivered','2026-01-12 17:00');\nINSERT INTO customer_profiles VALUES\n(1,'{\"segment\":\"vip\",\"source\":\"web\"}'::jsonb,ARRAY['regular','coffee']),\n(2,'{\"segment\":\"new\",\"source\":\"mobile\"}'::jsonb,ARRAY['tea']),\n(3,'{\"segment\":\"regular\",\"source\":\"web\"}'::jsonb,ARRAY['coffee','accessories']),\n(4,'{\"segment\":\"vip\",\"source\":\"referral\"}'::jsonb,ARRAY['equipment']),\n(5,'{\"segment\":\"new\",\"source\":\"mobile\"}'::jsonb,ARRAY['tea']),\n(6,'{\"segment\":\"regular\",\"source\":\"web\"}'::jsonb,ARRAY['coffee']),\n(7,'{\"segment\":\"regular\",\"source\":\"referral\"}'::jsonb,ARRAY['accessories']),\n(8,'{\"segment\":\"new\",\"source\":\"web\"}'::jsonb,ARRAY['equipment']),\n(9,'{\"segment\":\"new\",\"source\":\"mobile\"}'::jsonb,ARRAY['tea']);\nCREATE INDEX idx_orders_customer ON orders(customer_id);\nCREATE INDEX idx_orders_store_date ON orders(store_id, created_at);\n\n-- Historical analytics dataset, isolated from the compact beginner fixture.\nCREATE TABLE analytics_customers(\n customer_id BIGINT PRIMARY KEY, registered_at DATE NOT NULL,\n city TEXT NOT NULL, segment TEXT NOT NULL, acquisition_channel TEXT NOT NULL\n);\nCREATE TABLE analytics_orders(\n order_id BIGINT PRIMARY KEY,\n customer_id BIGINT NOT NULL REFERENCES analytics_customers(customer_id),\n store_id BIGINT NOT NULL REFERENCES stores(store_id),\n status TEXT NOT NULL CHECK(status IN ('delivered','shipped','new','cancelled','refunded')),\n total_amount NUMERIC(12,2) NOT NULL DEFAULT 0,\n refund_amount NUMERIC(12,2) NOT NULL DEFAULT 0,\n created_at TIMESTAMP NOT NULL, sales_channel TEXT NOT NULL, payment_method TEXT NOT NULL\n);\nCREATE TABLE analytics_order_items(\n item_id BIGINT PRIMARY KEY, order_id BIGINT NOT NULL REFERENCES analytics_orders(order_id),\n product_id BIGINT NOT NULL,\n quantity INTEGER NOT NULL CHECK(quantity > 0), unit_price NUMERIC(10,2) NOT NULL\n);\nCREATE TABLE analytics_order_events(\n event_id BIGINT PRIMARY KEY, order_id BIGINT NOT NULL REFERENCES analytics_orders(order_id),\n event_type TEXT NOT NULL, event_at TIMESTAMP NOT NULL\n);\nINSERT INTO analytics_customers(customer_id,registered_at,city,segment,acquisition_channel)\nSELECT 1000+n, DATE '2022-10-01'+(n-1)*9,\n (ARRAY['Москва','Санкт-Петербург','Казань','Пермь','Омск','Тверь'])[((n*7)%6)+1],\n CASE WHEN n%11=0 THEN 'vip' WHEN n%3=0 THEN 'regular' ELSE 'new' END,\n (ARRAY['organic','search','referral','social'])[((n*5)%4)+1]\nFROM generate_series(1,48) AS numbers(n);\nWITH months AS (\n SELECT month_start::date AS month_start,\n        (ROW_NUMBER() OVER(ORDER BY month_start)-1)::int AS month_index\n FROM generate_series(DATE '2023-01-01',DATE '2025-12-01',INTERVAL '1 month') AS calendar(month_start)\n),\neligible AS (\n SELECT c.customer_id,c.registered_at,m.month_start,m.month_index,\n        CASE WHEN (c.customer_id*3+m.month_index*5)%13=0 THEN 2 ELSE 1 END AS purchase_count\n FROM analytics_customers c CROSS JOIN months m\n WHERE m.month_start>=DATE_TRUNC('month',c.registered_at)::date\n   AND (c.customer_id*7+m.month_index*3)%10<7\n),\nexpanded AS (\n SELECT e.*,p.purchase_no FROM eligible e\n CROSS JOIN LATERAL generate_series(1,e.purchase_count) AS p(purchase_no)\n),\nnumbered AS (\n SELECT ROW_NUMBER() OVER(ORDER BY month_start,customer_id,purchase_no) AS sequence_no,\n        customer_id,month_index,month_start,purchase_no FROM expanded\n)\nINSERT INTO analytics_orders(order_id,customer_id,store_id,status,total_amount,refund_amount,created_at,sales_channel,payment_method)\nSELECT 100000+sequence_no, customer_id, ((customer_id+month_index+purchase_no)%5)+1,\n CASE\n  WHEN (customer_id+month_index*7+purchase_no*11)%31=0 THEN 'refunded'\n  WHEN (customer_id+month_index*5+purchase_no*3)%19=0 THEN 'cancelled'\n  WHEN (customer_id+month_index*3+purchase_no*5)%7=0 THEN 'shipped'\n  WHEN (customer_id+month_index*11+purchase_no)%13=0 THEN 'new'\n  ELSE 'delivered' END,\n 0,0,\n month_start::timestamp+(((customer_id*3+month_index*5+purchase_no*7)%25)*INTERVAL '1 day')\n   +(((customer_id+purchase_no)%9)*INTERVAL '1 hour'),\n (ARRAY['web','mobile','store'])[((customer_id+month_index+purchase_no)%3)+1],\n (ARRAY['card','cash','bank_transfer','wallet'])[((customer_id*2+month_index+purchase_no)%4)+1]\nFROM numbered;\nINSERT INTO analytics_order_items(item_id,order_id,product_id,quantity,unit_price)\nSELECT o.order_id*10+l.line_no,o.order_id,p.product_id,\n ((o.order_id+o.customer_id+l.line_no)%3+1)::int,p.price\nFROM analytics_orders o\nCROSS JOIN LATERAL generate_series(1,((o.order_id+o.customer_id)%3+1)::int) AS l(line_no)\nJOIN products p ON p.product_id=((o.order_id/3+o.customer_id+l.line_no)%7)+1;\nUPDATE analytics_orders o\nSET total_amount=t.order_total,\n    refund_amount=CASE\n      WHEN o.status='refunded' THEN t.order_total\n      WHEN o.status='delivered' AND o.order_id%17=0 THEN ROUND(t.order_total*0.20,2)\n      ELSE 0 END\nFROM (SELECT order_id,SUM(quantity*unit_price)::numeric(12,2) AS order_total\n      FROM analytics_order_items GROUP BY order_id) t\nWHERE t.order_id=o.order_id;\nINSERT INTO analytics_order_events(event_id,order_id,event_type,event_at)\nSELECT order_id*10+1,order_id,'created',created_at FROM analytics_orders\nUNION ALL\nSELECT order_id*10+2,order_id,'paid',created_at+INTERVAL '1 hour' FROM analytics_orders\nWHERE status IN ('shipped','delivered','refunded')\nUNION ALL\nSELECT order_id*10+3,order_id,'shipped',created_at+(((order_id%3)::int+1)*INTERVAL '1 day') FROM analytics_orders\nWHERE status IN ('shipped','delivered','refunded')\nUNION ALL\nSELECT order_id*10+4,order_id,'delivered',created_at+(((order_id%5)::int+4)*INTERVAL '1 day') FROM analytics_orders\nWHERE status IN ('delivered','refunded')\nUNION ALL\nSELECT order_id*10+5,order_id,'cancelled',created_at+INTERVAL '2 hours' FROM analytics_orders\nWHERE status='cancelled'\nUNION ALL\nSELECT order_id*10+6,order_id,'refunded',created_at+(((order_id%5)::int+10)*INTERVAL '1 day') FROM analytics_orders\nWHERE refund_amount>0;\nCREATE INDEX idx_analytics_orders_customer_date ON analytics_orders(customer_id,created_at);\nCREATE INDEX idx_analytics_orders_store_date ON analytics_orders(store_id,created_at);\nCREATE INDEX idx_analytics_items_order ON analytics_order_items(order_id);\nCREATE INDEX idx_analytics_events_order_time ON analytics_order_events(order_id,event_at);\n";

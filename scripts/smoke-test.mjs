@@ -551,13 +551,28 @@ try {
   const deliveryDurations = await db.query(`WITH milestones AS (
     SELECT order_id,
       MIN(event_at) FILTER (WHERE event_type = 'created') AS created_at,
+      MIN(event_at) FILTER (WHERE event_type = 'shipped') AS shipped_at,
       MIN(event_at) FILTER (WHERE event_type = 'delivered') AS delivered_at
     FROM analytics_order_events GROUP BY order_id
   )
   SELECT COUNT(*)::int AS delivered_orders,
-    ROUND(AVG(EXTRACT(EPOCH FROM delivered_at - created_at) / 3600.0)::numeric,2) AS avg_delivery_hours
-  FROM milestones WHERE delivered_at IS NOT NULL AND created_at IS NOT NULL`);
-  assert.ok(deliveryDurations.rows[0].delivered_orders > 0 && Number(deliveryDurations.rows[0].avg_delivery_hours) > 0, 'Historical lifecycle events must support delivery-time metrics');
+    COUNT(*) FILTER (WHERE created_at < shipped_at AND shipped_at < delivered_at)::int AS ordered_transitions,
+    COUNT(DISTINCT EXTRACT(EPOCH FROM shipped_at - created_at))::int AS distinct_ship_delays,
+    COUNT(DISTINCT EXTRACT(EPOCH FROM delivered_at - shipped_at))::int AS distinct_delivery_delays,
+    ROUND(AVG(EXTRACT(EPOCH FROM shipped_at - created_at) / 3600.0)::numeric,2)::text AS avg_create_to_ship_hours,
+    ROUND(AVG(EXTRACT(EPOCH FROM delivered_at - shipped_at) / 3600.0)::numeric,2)::text AS avg_ship_to_delivery_hours,
+    percentile_cont(0.5) WITHIN GROUP (ORDER BY EXTRACT(EPOCH FROM delivered_at - created_at) / 3600.0)::numeric(10,2)::text AS median_total_hours,
+    percentile_cont(0.9) WITHIN GROUP (ORDER BY EXTRACT(EPOCH FROM delivered_at - created_at) / 3600.0)::numeric(10,2)::text AS p90_total_hours
+  FROM milestones
+  WHERE created_at IS NOT NULL AND shipped_at IS NOT NULL AND delivered_at IS NOT NULL`);
+  const delivery = deliveryDurations.rows[0];
+  assert.equal(delivery.delivered_orders, 874, 'Historical lifecycle fixture must contain 874 fully delivered orders');
+  assert.equal(delivery.ordered_transitions, delivery.delivered_orders, 'Every delivered order must follow created → shipped → delivered chronology');
+  assert.ok(delivery.distinct_ship_delays > 1 && delivery.distinct_delivery_delays > 1, 'Historical stage durations must vary instead of collapsing to a single artificial value');
+  assert.equal(delivery.avg_create_to_ship_hours, '47.89', 'Average create-to-ship time must match the deterministic historical fixture');
+  assert.equal(delivery.avg_ship_to_delivery_hours, '97.26', 'Average ship-to-delivery time must match the deterministic historical fixture');
+  assert.equal(delivery.median_total_hours, '144.00', 'Median total delivery time must match the deterministic historical fixture');
+  assert.equal(delivery.p90_total_hours, '192.00', 'P90 total delivery time must match the deterministic historical fixture');
 
   const employeeSchema = await db.query("SELECT column_name FROM information_schema.columns WHERE table_name = 'orders' ORDER BY ordinal_position");
   assert.ok(employeeSchema.rows.some(row => row.column_name === 'employee_id'), 'The generic public dataset must use employee_id');
