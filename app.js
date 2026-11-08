@@ -1,10 +1,10 @@
-import { modules, learningTracks, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261109-113';
-import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261109-113';
-import { firstSqlKeyword, explainStatementKeyword, explainStatementBody, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261109-113';
-import { migrateProgress, getTrackProgress, findNextLesson } from './progress-utils.js?v=20261109-113';
-import { projects, projectTaskCount } from './projects.js?v=20261109-113';
-import { createBackup, parseBackup, restoreBackup } from './backup-utils.js?v=20261109-113';
-import { buildQuizOptionOrders, quizOptionKey } from './quiz-options.js?v=20261109-113';
+import { modules, learningTracks, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261109-114';
+import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261109-114';
+import { firstSqlKeyword, explainStatementKeyword, explainStatementBody, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261109-114';
+import { migrateProgress, getTrackProgress, findNextLesson } from './progress-utils.js?v=20261109-114';
+import { projects, projectTaskCount } from './projects.js?v=20261109-114';
+import { createBackup, parseBackup, restoreBackup } from './backup-utils.js?v=20261109-114';
+import { buildQuizOptionOrders, quizOptionKey } from './quiz-options.js?v=20261109-114';
 
 const $ = (s, root=document) => root.querySelector(s);
 const $$ = (s, root=document) => [...root.querySelectorAll(s)];
