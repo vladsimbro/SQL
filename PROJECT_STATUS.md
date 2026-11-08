@@ -1,6 +1,6 @@
 # SQL Academy — актуальное состояние и передача разработки
 
-Последнее обновление: 2026-11-09 00:20 Europe/Helsinki (UTC+02:00).
+Последнее обновление: 2026-11-09 00:27 Europe/Helsinki (UTC+02:00).
 
 ## 1. Общая информация
 
@@ -9,12 +9,12 @@
 - GitHub Pages: https://vladsimbro.github.io/SQL/
 - Основная ветка: main.
 - Последний проверенный commit приложения: 4629cb7ad5c16d752dac51e5c5bca20a58a9af29 (последний полностью зелёный baseline).
-- Текущий HEAD main: cdea1c4af82b503e702cfbd3161aac0fdf071dd8; изменения URL-навигации отправлены, CI ещё выполняется.
+- Текущий application commit: c24bba10d9515fd8837714632d7c412928cacb04; URL-навигация и исправление cache keys отправлены в main.
 - Build приложения: 20261109-105 (публикация ожидает завершения CI).
 - Состояние Git: изменения этой рабочей сессии отправлялись непосредственно в GitHub через API. Локальный clone и локальный git status в этой сессии не использовались; незакоммиченные локальные файлы не создавались.
 - Ветки: GitHub API на момент проверки показывает только main.
 - Открытые Pull Requests: 0. Открытые Issues: 0.
-- Последняя подтверждённая публикация до текущих изменений: commit 4629cb7, validate/deploy/browser-smoke success. Для текущего HEAD cdea1c4 workflow 42524528866 и Pages workflow 42524529045 были pending/in progress при последней проверке; новую публикацию пока не подтверждать.
+- Последняя подтверждённая публикация до текущих изменений: commit 4629cb7, validate/deploy/browser-smoke success. Для текущего application commit c24bba1 workflow 42524592778: validate success, deploy success, browser-smoke выполнялся при последней проверке. Публикация прошла, но финальный E2E ещё не завершён.
 - Для актуального HEAD всегда сверяться с GitHub API. Этот документ обновляется отдельным документационным commit, который сам изменяет HEAD; указанный выше SHA — последний проверенный commit приложения, не SHA будущего commit этого документа.
 
 ## 2. Текущее состояние проекта
@@ -126,7 +126,7 @@ SQL Academy — статическая интерактивная образов
 ## 5. Что сейчас в работе
 
 - Резервное копирование и восстановление: DEPLOYED_VERIFIED.
-- URL-навигация и история браузера: IMPLEMENTED, ожидает CI и browser-smoke на commit cdea1c4. Реализованы hash-маршруты для основных экранов, курса/модуля/урока, практики/задания, проекта/задачи и контрольной работы; добавлено восстановление маршрута при прямом hash URL, reload, popstate и hashchange. Добавлены browser-smoke проверки прямого открытия, Back/Forward и reload.
+- URL-навигация и история браузера: IMPLEMENTED; validate/deploy на commit c24bba1 завершились success, browser-smoke ещё выполняется. Реализованы hash-маршруты для основных экранов, курса/модуля/урока, практики/задания, проекта/задачи и контрольной работы; добавлено восстановление маршрута при прямом hash URL, reload, popstate и hashchange. Добавлены browser-smoke проверки прямого открытия, Back/Forward и reload.
 - Документ состояния: IN_PROGRESS до отправки актуализации после завершения проверки.
 
 ## 6. Следующие задачи
@@ -141,7 +141,9 @@ SQL Academy — статическая интерактивная образов
 - Добавлены прямое открытие, синхронизация внутренних переходов, reload, Back/Forward, popstate и hashchange.
 - Сохранены стабильные IDs и существующая внутренняя навигация; неизвестный module/lesson/project обрабатывается безопасным возвратом в допустимый раздел.
 - В Playwright добавлены проверки прямого открытия курса/модуля, Back/Forward и reload.
-- Осталось: дождаться validate/deploy/browser-smoke; при необходимости исправить найденные тестом ошибки и добавить дополнительные сценарии неизвестного ID и конкретного lesson ID.
+- Исправлен cache key mismatch: после смены build старые query-параметры импортов app.js ломали smoke-test; все локальные импорты синхронизированы с 20261109-105.
+- Validate и deploy прошли на c24bba1; browser-smoke ещё выполнялся.
+- Осталось: дождаться browser-smoke; при необходимости исправить ошибки и расширить сценарии неизвестного ID и конкретного lesson ID.
 
 Критерий завершения: любой реализованный поддерживаемый маршрут открывается по прямому URL; reload восстанавливает тот же раздел; Back/Forward возвращают предыдущий/следующий экран; неизвестный ID обрабатывается безопасно; старые сценарии курса, практики и проектов остаются зелёными.
 
@@ -195,8 +197,9 @@ Excel/Google Sheets, Power BI, Статистику проектировать �
 
 ### Текущая проверка URL-навигации
 
-- Изменения app.js, scripts/browser-smoke.mjs и version.json отправлены в main; текущий HEAD cdea1c4af82b503e702cfbd3161aac0fdf071dd8, build 20261109-105.
-- Workflow 42524528866 (validate/deploy/browser-smoke) и Pages workflow 42524529045 при последней проверке выполнялись. Результат ещё не получен; тесты для текущего кода не объявлять пройденными.
+- Изменения app.js, scripts/browser-smoke.mjs и version.json отправлены в main; application commit c24bba10d9515fd8837714632d7c412928cacb04, build 20261109-105.
+- Первый validate на cdea1c4 завершился failure из-за устаревших ?v=20261108-104 у импортов app.js; причина исправлена, повторный validate на c24bba1 success.
+- Workflow 42524592778: validate success, deploy success, browser-smoke выполнялся на момент записи.
 - Локальный clone и локальные тесты не запускались.
 Workflow: https://github.com/vladsimbro/SQL/actions/runs/42522635871 — success.
 Jobs:
@@ -226,12 +229,12 @@ Jobs:
 - Репозиторий: vladsimbro/SQL.
 - Основная и единственная существующая ветка: main.
 - Последний полностью проверенный application commit: 4629cb7ad5c16d752dac51e5c5bca20a58a9af29.
-- Текущий HEAD main: cdea1c4af82b503e702cfbd3161aac0fdf071dd8 (URL routing, CI ожидается).
+- Текущий application commit: c24bba10d9515fd8837714632d7c412928cacb04 (URL routing; validate/deploy success, browser-smoke running).
 - Application build: 20261109-105.
 - На момент последней проверки: 0 открытых PR, 0 открытых Issues, GitHub branches API возвращает только main.
 - Все изменения резервного копирования, тестов и документации README отправлены в main.
 - Последний подтверждённый зелёный workflow до изменений: 42522635871.
-- Для текущего HEAD workflow 42524528866 и GitHub Pages workflow 42524529045 ожидали завершения на момент обновления.
+- Для c24bba1 workflow 42524592778: validate success, deploy success, browser-smoke running. Отдельный Pages workflow для этого commit также был запущен; публикация подтверждена deploy job основного workflow.
 - В deploy job получено Reported success; итоговый URL: https://vladsimbro.github.io/SQL/.
 - Отдельный commit с этим обновлением PROJECT_STATUS.md будет только документационным. Custom workflow исключает PROJECT_STATUS.md через paths-ignore; при этом GitHub-managed Pages workflow может отдельно запуститься для такого commit. Не утверждать, что приложение было повторно собрано из-за изменения только этого файла.
 - Рабочие ветки не создавались. Ранее проведён семантический аудит 29 не-main refs; после проверки полезных изменений оставлена только main. AUDIT.md удалён из main commit 8cdf766e, результаты аудита веток сохранены в истории этого документа.
@@ -256,7 +259,7 @@ Jobs:
 Состояние:
 - Два курса SQL/PostgreSQL и три проекта существуют и опубликованы.
 - Backup/restore реализован, протестирован unit/smoke проверками и полным browser round-trip.
-- URL/hash-навигация добавлена в HEAD cdea1c4af82b503e702cfbd3161aac0fdf071dd8; build 20261109-105; CI ещё не подтверждён.
+- URL/hash-навигация добавлена в application commit c24bba10d9515fd8837714632d7c412928cacb04; build 20261109-105; validate/deploy success, browser-smoke выполнялся.
 - Последний полностью проверенный кодовый baseline: 4629cb7ad5c16d752dac51e5c5bca20a58a9af29; workflow 42522635871 success.
 - Других веток кроме main нет. Не повторять аудит 29 удалённых refs и не создавать новый проект.
 
@@ -264,7 +267,7 @@ Jobs:
 - JSON export/import прогресса, включая сохранение/восстановление выполненных уроков, курсовой практики, проектов, заметок, review ответов, черновика Playground и темы оформления; E2E подтвердил round-trip и миграцию legacy lesson ID.
 
 Текущая незавершённая задача:
-- URL/hash-навигация: код реализован и отправлен, но CI/browser-smoke для cdea1c4 ещё не завершился. Статус IMPLEMENTED, не TESTED.
+- URL/hash-навигация: код реализован и отправлен в c24bba10d9515fd8837714632d7c412928cacb04. Validate и deploy прошли; browser-smoke 42524592778 ещё выполнялся. До его успеха статус IMPLEMENTED, не DEPLOYED_VERIFIED.
 
 Следующая конкретная задача после зелёного CI:
 - Завершить отрицательные UI-сценарии импорта резервной копии: неверный JSON, неподдерживаемая версия, файл более 5 МБ, отказ от подтверждения; проверить, что существующий localStorage не изменяется.
@@ -275,11 +278,12 @@ Jobs:
 
 Последний результат тестирования:
 - 4629cb7: validate, deploy и browser-smoke success.
-- cdea1c4: workflow 42524528866 и Pages 42524529045 выполнялись; результат pending на момент записи.
+- cdea1c4: validate failure из-за устаревших cache keys; исправлено в c24bba1.
+- c24bba1: validate success, deploy success, browser-smoke in progress (workflow 42524592778).
 
 Состояние GitHub Pages:
 - Последняя подтверждённая версия до текущего изменения: build 20261108-104.
-- Build 20261109-105 должен быть опубликован после успешного CI; публикация и smoke для него пока не подтверждены.
+- Build 20261109-105 опубликован через deploy job workflow 42524592778; browser-smoke ещё выполнялся на момент обновления.
 
 Файлы для начала:
 - PROJECT_STATUS.md — текущая точка передачи;
