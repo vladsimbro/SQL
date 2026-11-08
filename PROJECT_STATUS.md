@@ -4,16 +4,16 @@ Last verified: 2026-11-08
 
 ## CURRENT
 
-- **Stage:** 7 — Полная проверка, документация и выпуск.
-- **Main task:** завершить единственную оставшуюся операцию сопровождения репозитория — заполнить GitHub About (description, homepage, topics). Учебная программа, практика, интерфейс, README, очистка веток и опубликованный сайт проверены; не начинать этапы 0–6 заново.
-- **Last completed:** обновлены GitHub Actions до актуальных major-версий с Node.js 24 runtime; права Pages deployment сужены до deploy job; status-only commits пропускают custom validate/deploy/browser-smoke. Все 29 не-main веток семантически проверены и впоследствии удалены. Повторная проверка GitHub API подтверждает, что осталась только `main`. По запросу удалён архивный AUDIT.md; итоговый branch review и handoff сохранены в этом документе.
+- **Release baseline:** этапы 0–6 завершены; Stage 7 (About metadata) остаётся с одной ручной операцией, но это не блокирует развитие платформы.
+- **Current development:** расширение платформы по модели самостоятельных курсов и отдельного раздела проектов. Не начинать повторно аудит, базовые уроки SQL или Stage 3.
+- **Last completed:** реализован каталог двух самостоятельных курсов — «SQL для аналитика данных» и «PostgreSQL». Программы, уроки, индикатор прогресса и списки практики переключаются по текущему курсу; боковая панель урока показывает только активный курс. Существующие lesson/exercise IDs и localStorage progress сохранены. Пустые курсы Excel, Power BI и Statistics не отображаются. Все 29 не-main refs удалены, в GitHub API осталась только `main`; архивный AUDIT.md удалён, итоговый review сохранён здесь.
 - **Current main SHA:** проверять непосредственно в GitHub при каждой передаче контекста. Не фиксировать SHA текущего HEAD в handoff: обновление этого файла само создаёт новый commit.
-- **Last app/course code HEAD:** d26c32f6dfb6cbc498b8d73997b64235f8588d2d (последующие коммиты меняют только статус и CI workflow).
-- **App build:** 20261108-95.
-- **Latest validation + deploy:** workflow 42508601118 — success for 8cdf766e; validate job 128816556670, deploy job 128816623899, browser-smoke job 128816705064 — all success.
-- **Latest confirmed Pages build/deployment:** workflow 42511827869 — success for status-only commit 4f7160fa276ad8f9567c50ca7085af0b8b4a8e0c; build job 128826351249, deploy job 128826448066, report-build-status job 128826448074 — all success.
+- **App build:** 20261108-98.
+- **Latest full validation + deployment:** workflow 42514802784 — success for code snapshot at commit 1cee484. Validate job 128835360043, deploy job 128835428724 and browser-smoke job 128835530690 — all success.
+- **Curriculum verification:** 25 modules, 173 lessons, 100 knowledge checks, 72 glossary terms, 13 reference groups, 102 exercises, 350 random tasks across 14 topics; 114 read-only lesson examples executed and 81 expected-result tables checked. Existing lesson IDs and progress migration tests remain in place.
+- **Live browser verification:** course catalog shows exactly two implemented courses; opening SQL and PostgreSQL lessons isolates the sidebar to the active course; practice tabs filter tasks and keep previous/next within the selected course; the progress indicator follows the selected course. Existing PGlite retry, editor persistence, real SQL execution, mobile navigation and 320/390 px checks passed.
 - **Latest live browser smoke:** shell 480 ms; recovery after failed PGlite import 6900 ms; database reset 5864 ms; SQL execution, editor persistence, mobile menu, focus restoration, 390 px and 320 px layouts all passed. Timings are environment-dependent diagnostics, not performance guarantees.
-- **Remaining in Stage 7:** GitHub About is still empty (description=null, homepage=null, topics=[]). All 29 non-main branch refs have since been deleted. The live branches endpoint and `git/matching-refs/heads/` both return only `main`; no further branch cleanup or merge is needed. The current GitHub integration does not expose repository-metadata write operations, so About remains the sole external blocker. Keep PROJECT_STATUS.md as the permanent handoff.
+- **Remaining external setting:** GitHub About is still empty (description=null, homepage=null, topics=[]). The connected GitHub actions do not expose repository-metadata write operations. This is a manual repository Settings item, not a blocker for course/project development. All 29 non-main refs are deleted; live branches API returns only `main`.
 - **Handoff update:** a status-only change skips the custom validate/deploy/browser-smoke workflow. GitHub Pages may still run its separate managed Jekyll build/deploy; this happened for handoff commit 8a14e19f and succeeded (run 42506417303).
 
 ## STAGES
@@ -22,12 +22,12 @@ Last verified: 2026-11-08
 |---|---|---|
 | 0. Сверка состояния и сохранение прогресса | DONE | Проверены main, HEAD, структура, Actions, Pages и список веток. PROJECT_STATUS.md используется как handoff; перед продолжением факты повторно сверяются с GitHub. |
 | 1. Надёжность основного функционала | DONE | Исправлены знаменатель основного прогресса и переход core → PostgreSQL; проверки 0/112, 112/112, независимости optional route и миграции прогресса. UI end-to-end проверка относится к этапу 6/7. |
-| 2. Структура и логика учебной программы | DONE | 25 модулей: 17 модулей / 112 уроков core и 8 / 61 PostgreSQL. Разделение и порядок маршрутов подтверждаются smoke-test. |
+| 2. Структура и логика учебной программы | DONE | 25 модулей: 17 модулей / 112 уроков SQL для аналитика данных и 8 / 61 PostgreSQL. Каталог показывает их как два самостоятельных курса с описанием аудитории, уровня и предварительных знаний; прогресс и программа изолированы по курсу. |
 | 3. Качество и содержание уроков | DONE | Все 173 урока имеют обязательные материалы; 42 уникальных пошаговых сценария, включая NULL и fan-out. Исправлены SQL-подсказки для aliased UPDATE и EXPLAIN ANALYZE. CI проверяет 114 исполняемых read-only примеров и 81 таблицу ожидаемых результатов. |
-| 4. Практика, валидатор и контроль знаний | DONE | 102 обычных задания, 350 случайных задач в 14 темах, 100 модульных вопросов. Comparator сохраняет типы значений, набор столбцов, кратность строк и заданный условием порядок; допускает перестановку столбцов и строк, когда это несущественно. Execution-based PGlite-проверки покрывают SELECT/CTE, JOIN/pre-aggregation, correlated subquery/LEFT JOIN, IN/EXISTS, NOT IN с NULL, EXCEPT/INTERSECT, UNION/UNION ALL, FILTER/CASE, GROUPING SETS/UNION ALL, оконные CTE, ROWS/RANGE и другие зафиксированные эквивалентности. Отдельно проверяются отрицательные случаи, где запросы неэквивалентны. 95 random tasks и 12 обычных упражнений явно order-sensitive. 100 вопросов контрольных работ сбалансированы 25/25/25/25. |
+| 4. Практика, валидатор и контроль знаний | DONE | 102 обычных задания (списки и навигация разделены по курсам, IDs и общий механизм проверки сохранены), 350 случайных задач в 14 темах, 100 модульных вопросов. Comparator сохраняет типы значений, набор столбцов, кратность строк и заданный условием порядок; допускает перестановку столбцов и строк, когда это несущественно. Execution-based PGlite-проверки покрывают SELECT/CTE, JOIN/pre-aggregation, correlated subquery/LEFT JOIN, IN/EXISTS, NOT IN с NULL, EXCEPT/INTERSECT, UNION/UNION ALL, FILTER/CASE, GROUPING SETS/UNION ALL, оконные CTE, ROWS/RANGE и другие зафиксированные эквивалентности. Отдельно проверяются отрицательные случаи, где запросы неэквивалентны. 95 random tasks и 12 обычных упражнений явно order-sensitive. 100 вопросов контрольных работ сбалансированы 25/25/25/25. |
 | 5. Учебные данные и аналитические сценарии | DONE | Добавлены 4 отдельные аналитические таблицы: `analytics_customers`, `analytics_orders`, `analytics_order_items`, `analytics_order_events`; 48 клиентов, 1 158 заказов за 36 месяцев (2023–2025), повторные покупки, статусы, отмены, полные/частичные возвраты и журнал событий. Стартовый набор из 9 таблиц и 12 исходных заказов сохранён отдельно. Связь исторического `product_id` больше не блокирует удаление товара из beginner-каталога. Четыре аналитических урока и существующие упражнения e83/e86/e87/e96 используют исторический набор: когорты, retention, чистая выручка MoM и время этапов доставки. События имеют разные детерминированные интервалы и строгий порядок created → shipped → delivered. PGlite smoke-test подтверждает cohort/retention, выручку, item totals, возвраты, 874 завершённые доставки, средние и перцентили. Workflow `42488705350` — validation и deploy success; Pages workflow `42488705054` — success. |
 | 6. Интерфейс, мобильная версия и производительность | DONE | Помимо ранней отрисовки, блокировок до engineReady, reset/retry, сохранения черновика и доступной мобильной навигации добавлены синтаксическая проверка JS и live Playwright Chromium smoke test опубликованного Pages. Последние проверки: workflow 42506177510 и Pages workflow 42506177411 — success. Browser smoke подтвердил запуск shell до готовности БД, retry импорта PGlite, сохранение SQL-черновика, реальное выполнение PostgreSQL-запроса, мобильное меню/Escape/возврат фокуса и отсутствие overflow на 390 и 320 px. В ходе первоначальной проверки исправлены синтаксическая ошибка renderPractice() и retry-загрузка PGlite через новый URL. |
-| 7. Полная проверка, документация и выпуск | IN PROGRESS | README и live browser E2E завершены. CI hardening прошёл успешно. Все 29 не-main refs удалены; повторная проверка GitHub API подтверждает, что существует только `main`. Открытых PR нет. Актуальная проверка `validate`, `deploy`, `browser-smoke` и отдельная публикация Pages прошли успешно. Осталась только настройка GitHub About (description, homepage, topics); текущая интеграция не предоставляет операцию записи repository metadata. |
+| 7. Полная проверка, документация и выпуск | IN PROGRESS | CI hardening, очистка 29 не-main refs, каталог курсов и live browser E2E завершены. Текущий workflow 42514802784: validate, deploy и browser-smoke — success. Осталась ручная настройка GitHub About (description, homepage, topics); автоматическая запись repository metadata недоступна в подключении. |
 
 ## BRANCH AUDIT
 
@@ -107,7 +107,7 @@ work/sql-academy-stage3-batch6-2026-11-07b is the only branch proven to have no 
 ## DONE — проверяемые ограничения и результаты
 
 - Основная ветка: `main`; default branch — `main`.
-- Основной маршрут Junior Data Analyst: 112 уроков; дополнительный PostgreSQL: 61 урок.
+- Самостоятельный курс SQL для аналитика данных: 17 модулей / 112 уроков. Самостоятельный курс PostgreSQL: 8 модулей / 61 урок. Курсы связаны рекомендуемыми знаниями, но не объединены в одну программу.
 - Проверенный учебный объём: 25 модулей, 173 урока, 100 module knowledge checks, 72 термина глоссария, 13 групп справочника, 102 обычных задания, 350 случайных задач и 14 тем случайной практики.
 - Beginner schema остаётся отдельным компактным набором из 9 таблиц; исторический аналитический набор состоит из 4 таблиц. Не сливать эти два набора и не менять результаты базовых новичковых упражнений без отдельного регрессионного доказательства.
 - Comparator проверяет имена столбцов независимо от порядка колонок; значения сопоставляются по именам столбцов. Сравнение сохраняет кратность одинаковых строк. Порядок строк учитывается только для заданий, где он явно требуется.
@@ -124,6 +124,8 @@ work/sql-academy-stage3-batch6-2026-11-07b is the only branch proven to have no 
 - **Homepage:** https://vladsimbro.github.io/SQL/
 - **Suggested topics:** sql, postgresql, data-analytics, sql-learning, education, pglite, github-pages.
 - **Branch cleanup:** complete. GitHub currently exposes only `main`; all 29 non-main refs are absent. No merge/cherry-pick was necessary.
+- **Course catalog:** complete for the two currently implemented courses. New courses must be complete standalone programs before appearing in the catalog; do not add Excel/Sheets, Power BI or Statistics placeholders.
+- **Course-specific learning UI:** catalog, program, lesson sidebar, progress label and practice list are course-aware. SQL/PostgreSQL exercise IDs and progress storage are unchanged.
 - **GitHub About write:** apply the prepared description/homepage/topics through repository Settings when UI or an authorized metadata-write integration is available.
 - Local clone/test run was not used in this session; executable checks and live browser E2E were run in GitHub Actions.
 
@@ -133,10 +135,9 @@ work/sql-academy-stage3-batch6-2026-11-07b is the only branch proven to have no 
 - Pages: https://vladsimbro.github.io/SQL/
 - Branch: main
 - Current main SHA must be read from the live GitHub main ref; do not rely on a fixed SHA stored in this self-updating handoff.
-- Last application/course code HEAD: d26c32f6dfb6cbc498b8d73997b64235f8588d2d (no app/course code changed during cleanup).
-- App build: 20261108-95
-- Latest full validation + deploy workflow: 42508601118 — success for commit 8cdf766e. Validate job 128816556670, deploy job 128816623899 and browser-smoke job 128816705064 all succeeded.
-- Latest confirmed successful separate Pages build/deployment: workflow 42511827869 for commit 4f7160fa276ad8f9567c50ca7085af0b8b4a8e0c. Build job 128826351249, deploy job 128826448066 and report-build-status job 128826448074 all succeeded. Subsequent handoff-only commits may trigger another managed Pages run; they do not change application/course files.
+- Latest app build: 20261108-98.
+- Latest full validate/deploy/browser-smoke workflow: 42514802784 — success. Jobs: validate 128835360043, deploy 128835428724, browser-smoke 128835530690.
+- Tested code snapshot: commit 1cee484 (workflow concurrency recovery; application sources in the same main head). Live browser test confirms the course catalog and course-specific study/practice flows. Subsequent handoff-only commits may trigger another managed Pages run; they do not change application/course files.
 - The browser smoke reran in the latest full validation and passed. Its detailed timings are retained above only as diagnostics from the previous recorded run.
 - No Node.js 20 deprecation warning appeared in the latest browser job logs.
 - Workflow hardening commits: 81121d2c (Action major upgrades + least-privilege deploy permissions), dccb274e (ignore status-only pushes/PRs).
@@ -147,10 +148,11 @@ work/sql-academy-stage3-batch6-2026-11-07b is the only branch proven to have no 
 - Branches: only `main` currently exists. The 29 non-main refs listed in the historical audit were removed after semantic review; no unique functional content required merging.
 - GitHub About fields: description null, homepage null, topics empty. Repository lookup confirms the values; current integration has no write operation.
 - The connected GitHub integration has no delete-ref operation, but cleanup is already complete: live API responses list only `main`; no non-main refs remain.
-- README is up to date: 42 step-by-step scenarios and a separate «Контрольные работы» section.
+- README is up to date: 42 step-by-step scenarios and a separate «Контрольные работы» section. It now describes SQL and PostgreSQL as two standalone courses.
+- Current app architecture: `learningTracks` contains only the two implemented courses. `app.js` includes a `courses` view, course-specific program/lesson sidebar/progress, and course-filtered practice. `index.html` navigation exposes «Курсы» rather than the old combined roadmap/lesson list.
 - Stage 6 browser timings vary by runner/load; values above are from the latest successful run, not stable performance guarantees.
 - This handoff update changes only PROJECT_STATUS.md; paths-ignore prevents the custom validation/deploy/browser-smoke cycle, but does not suppress the separate GitHub-managed Pages build/deploy.
 
 ## NEXT ACTION
 
-Продолжать Stage 7 без повторного прохождения этапов 0–6. Очистка веток подтверждена: единственный refs/heads/main остался в репозитории. Проверки validate/deploy/browser-smoke и отдельная публикация Pages после удаления AUDIT.md прошли успешно. Единственное оставшееся действие — заполнить GitHub About: description, homepage и topics. Текущая интеграция не поддерживает запись repository metadata, поэтому не заявлять About настроенным. PROJECT_STATUS.md сохранить как основной handoff. Не менять содержание курсов без конкретного дефекта.
+Продолжать развитие платформы по новому плану, не повторяя этапы 0–6 и уже выполненное разделение SQL/PostgreSQL. Следующий приоритет — самостоятельный раздел «Проекты»: отдельные практические кейсы, не уроки внутри SQL/PostgreSQL. Начать с E-commerce аналитики и аналитики доставки на уже существующих данных; для Product Analytics сначала подготовить полноценную событийную модель, затем публиковать кейс. В заданиях оставлять бизнес-цель, ограничения и ожидаемый результат, но не выдавать таблицы/столбцы и SQL-решение заранее. Не показывать пустые будущие курсы Excel/Sheets, Power BI и Statistics. GitHub About остаётся ручной настройкой; не тратить на это разработческий цикл. Сохранять PROJECT_STATUS.md как handoff и вести дальнейшую работу в main.
