@@ -1,14 +1,15 @@
 # SQL Academy — актуальное состояние и передача разработки
 
-Последнее обновление: 2026-11-09, Europe/Helsinki (UTC+02:00); синхронизировано после полного CI workflow 42526644205.
+Последнее обновление: 2026-11-09, Europe/Helsinki (UTC+02:00); после добавления независимых JOIN regression checks.
 
 ## 1. Репозиторий и текущий HEAD
 
 - Репозиторий: https://github.com/vladsimbro/SQL
 - GitHub Pages: https://vladsimbro.github.io/SQL/
 - Основная ветка: main.
-- HEAD main перед этой docs-only актуализацией: df4cb056309aa7251d92da905792aa3a4e2c07c0.
+- HEAD main перед этой docs-only актуализацией: 7831f40557d7e8e5edbd118e68a42762f1665ad5.
 - Последний полностью проверенный code/test commit: 10f0f560f60b7e1ab6a5b3a9b14332a7e1fa923b; workflow 42526644205 завершился success по validate, deploy и browser-smoke.
+- Новый test commit 7831f40557d7e8e5edbd118e68a42762f1665ad5 добавил независимые oracle-проверки 25 random JOIN вариантов; CI для него ещё не подтверждён.
 - Последний application build: 20261109-106.
 - Последний curriculum/runtime feature commit для e103: 4c11353646d9ddf9bb0caca5a48a7d8444625df5; последующие commits согласовали cache keys, уникальную связь практики, счётчики и PGlite expected-result tests.
 - URL/hash-навигация проверена workflow 42524697272; backup negative cases — workflow 42525873380.
@@ -159,6 +160,20 @@ SQL Academy — статическая интерактивная платфор
 
 Ограничение тестового покрытия, записанное на будущее: общий random smoke исполняет все 25 JOIN решений, но не сравнивает каждое из них с отдельным независимо рассчитанным expected result. Следующая полезная задача — добавить такие проверки по пяти шаблонам, не раздувая курс.
 
+## 7.1 Независимые regression checks для random JOIN
+
+Статус: IN_PROGRESS; тестовый код добавлен и отправлен в main, выполнение CI ещё не подтверждено.
+
+- Commit: 7831f40557d7e8e5edbd118e68a42762f1665ad5.
+- Файл: scripts/smoke-test.mjs.
+- Для всех 25 вариантов из пяти семейств добавлено сравнение результата эталонного решения с независимым oracle-запросом на PGlite.
+- Oracle использует коррелированные подзапросы вместо тех же JOIN/агрегационных конструкций, что и решения заданий.
+- Проверяются ожидаемое число строк для каждого варианта и корректность сохранения сортировки там, где она требуется условием.
+- Дополнительные инварианты: магазин без заказов остаётся с нулём; сотрудники без заказов нужного статуса остаются с нулём; COUNT(DISTINCT order_id) отличается от SUM(quantity) (4 заказа и 5 единиц для категории «Продукты»); отсутствующая успешная оплата и refunded-платёж дают ноль.
+- Сами условия, подсказки, решения и ID случайных заданий не менялись.
+- Локальные npm/PGlite тесты не запускались: пакет @electric-sql/pglite отсутствует в локальном окружении, а сетевой доступ контейнера отключён.
+- GitHub combined status для commit 7831f405… пока вернул пустой список; это не подтверждает ни запуск, ни успешное завершение Actions. Требуется проверить фактический workflow перед переводом задачи в TESTED.
+
 ## 8. Проверки и CI
 
 Workflow .github/workflows/pages.yml выполняет:
@@ -167,7 +182,7 @@ Workflow .github/workflows/pages.yml выполняет:
 3. Публикацию на GitHub Pages после успешной валидации.
 4. Playwright browser-smoke опубликованного сайта после deploy.
 
-Последняя полная проверка текущей версии:
+Последняя подтверждённая полная проверка предыдущей версии:
 - Workflow: 42526644205.
 - Commit: 10f0f560f60b7e1ab6a5b3a9b14332a7e1fa923b.
 - validate: success; выполнены JS syntax checks и curriculum smoke с PGlite expected-result проверками e103.
@@ -191,7 +206,8 @@ Workflow .github/workflows/pages.yml выполняет:
 - Ранее workflow 42522635871 на 4629cb7 прошёл все три jobs.
 
 Ограничения:
-- Локальный clone и локальные node/npm/Playwright команды в этой сессии не запускались; сетевой доступ к github.com из локального контейнера недоступен.
+- Локальный clone и локальные node/npm/Playwright команды в этой сессии не запускались; пакет PGlite отсутствует в локальном окружении, сетевой доступ контейнера отключён.
+- Для нового test commit 7831f40557d7e8e5edbd118e68a42762f1665ad5 результат GitHub Actions ещё не подтверждён: API combined status вернул пустой список, а доступный метод получения workflow runs не возвращает push-triggered runs.
 - Один browser-smoke запуск на commit 10f0f56 упал при внешней загрузке PGlite с CDN; повтор этого же job прошёл без изменения кода. PGlite остаётся CDN-зависимостью, поэтому при повторении такого сбоя сначала проверять внешнюю загрузку модуля.
 - Ручное тестирование на реальных iOS/Android устройствах и других browser engines не выполнялось.
 
@@ -199,9 +215,10 @@ Workflow .github/workflows/pages.yml выполняет:
 
 - Репозиторий: vladsimbro/SQL.
 - Основная и единственная ветка: main.
-- На момент этой актуализации HEAD main: df4cb056309aa7251d92da905792aa3a4e2c07c0.
+- На момент этой актуализации HEAD main перед docs-only status commit: 7831f40557d7e8e5edbd118e68a42762f1665ad5.
 - Открытых PR и Issues нет.
-- Последний проверенный code/test commit: 10f0f560f60b7e1ab6a5b3a9b14332a7e1fa923b.
+- Последний полностью проверенный code/test commit: 10f0f560f60b7e1ab6a5b3a9b14332a7e1fa923b.
+- Новый test commit 7831f40557d7e8e5edbd118e68a42762f1665ad5 находится в main; проверки для него ожидают подтверждения.
 - Полный workflow 42526644205 завершился success после повторного выполнения только browser-smoke; validate, deploy и browser-smoke — все success.
 - Pages workflow 42526643918 для SHA 10f0f56: build, report-build-status, deploy — success.
 - Runtime build: 20261109-106.
@@ -335,17 +352,16 @@ Workflow .github/workflows/pages.yml выполняет:
 - Backup negative scenarios: workflow 42525873380 success.
 
 Текущая незавершённая задача:
-- Незавершённых изменений в коде нет. Следующая работа описана ниже и ещё не начата.
+- Независимые expected-result regression checks для 25 random JOIN tasks: тесты добавлены в scripts/smoke-test.mjs и отправлены в main (commit 7831f40557d7e8e5edbd118e68a42762f1665ad5), но ещё не получили подтверждённый результат CI. Статус IN_PROGRESS.
 
 Следующая конкретная задача:
-- Добавить независимые expected-result regression tests для пяти шаблонов random JOIN tasks (25 вариантов): заказы/клиенты, магазины/заказы, сотрудники/статусные заказы, товары/позиции, заказы/оплаты.
-- Сейчас curriculum smoke исполняет все 350 random решений на PGlite и проверяет read-only SELECT/CTE и наличие rows; для всех 25 JOIN вариантов нет отдельного независимого сравнения с эталонным ожидаемым результатом.
-- Для пяти семейств задать независимые SQL/агрегатные ожидания: уникальность зерна, корректное количество, COUNT DISTINCT против SUM(quantity), сохранение нулевых групп, ноль вместо NULL для отсутствующих платежей.
-- Не переписывать существующие random шаблоны без найденной ошибки; не выводить готовые алгоритмы в формулировках задач.
-- Критерий завершения: все 25 вариантов сверены по результатам/инвариантам, curriculum smoke и полный GitHub Actions проходят.
+- Получить и проверить результат GitHub Actions для commit 7831f40557d7e8e5edbd118e68a42762f1665ad5. Если validate падает, исправить тесты и повторить; если проходит, зафиксировать фактические результаты всех 25 oracle-сверок и полного workflow.
+- Критерий завершения текущей задачи: все 25 вариантов сверены с независимыми oracle-запросами, инварианты по нулевым группам, COUNT DISTINCT/SUM(quantity) и успешным оплатам проходят, полный GitHub Actions завершается success.
+- После закрытия проверки начать UX/UI-аудит текущей платформы по плану раздела 11, не меняя интерфейс до фиксации подтверждённых проблем.
 
 Последний проверенный commit SHA:
 - Последний полностью проверенный code/test commit: 10f0f560f60b7e1ab6a5b3a9b14332a7e1fa923b.
+- Последний отправленный test commit (CI pending/unverified): 7831f40557d7e8e5edbd118e68a42762f1665ad5.
 - Workflow 42526644205: completed/success после rerun browser-smoke; все 3 jobs success.
 - Pages workflow 42526643918: success для того же SHA.
 - Application build: 20261109-106.
@@ -360,7 +376,8 @@ Workflow .github/workflows/pages.yml выполняет:
 
 Состояние GitHub Pages:
 - URL: https://vladsimbro.github.io/SQL/
-- Published application build: 20261109-106.
+- Последняя подтверждённая публикация: application build 20261109-106 на проверенном commit 10f0f560f60b7e1ab6a5b3a9b14332a7e1fa923b.
+- Для нового test commit 7831f40557d7e8e5edbd118e68a42762f1665ad5 публикация не подтверждена.
 - Pages deployment workflow 42526643918: success.
 - Custom validate/deploy/browser-smoke workflow 42526644205: all success.
 
