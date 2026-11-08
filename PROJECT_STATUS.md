@@ -186,16 +186,16 @@ Workflow .github/workflows/pages.yml выполняет JS syntax checks, npm ru
 - Workflow: 42529611099.
 - Commit: 5fd2f24cee76a3c2ea05253a83537527c138fb05.
 - validate, deploy, browser-smoke: success.
-- Browser-smoke проверил 24 screenshot captures; artifact sql-academy-ux-audit-screenshots создан (artifact ID 13636399706).
 
-Последние runtime changes:
-- Commit 615d457462e07d7b886818e455ce88b40b2a7b26 содержит build 20261109-107, light-theme contrast tokens, глобальный focus-visible, prefers-reduced-motion, instant navigation scroll при системной настройке reduce и 1-column practice list при ширине <=360 px.
-- Commit 8bd962da7de1110f16573f7c0aeabda98f50ea1a: validate и deploy success, browser-smoke failure на negative backup import test. Предыдущие keyboard focus, light contrast >=4.5:1, reduced-motion и layout assertions прошли; до ошибки были созданы 25 screenshots.
-- Причина browser-smoke failure: тест не обнаружил ожидаемый toast после импорта malformed JSON; ошибка возникла в scripts/browser-smoke.mjs:438 в assertImportError, а не в runtime assertions доступности.
-- Commit 4b36299f494c6abc30429fba70e407bcc4afbfea расширил мобильный аудит, validate/deploy завершились success, browser-smoke был отменён после следующего push (concurrency cancel-in-progress).
-- Commit e1c582e27e99c19ae845df2e7b2d67ddc62af296 изменил подачу backup fixtures на File + DataTransfer + change event; run был отменён следующим push.
-- Текущий HEAD 3578f7ccdec0c8ba119a1a8e3a30041b3ea28753 содержит дополнительное сокращение передачи oversized fixture: браузер создаёт файл по длине без многомегабайтного base64 payload.
-- Workflow 42530661372 для текущего HEAD queued; Pages workflow 42530661649 queued на момент обновления.
+Последние runtime/accessibility changes:
+- Commit 615d457462e07d7b886818e455ce88b40b2a7b26: build 20261109-107, light-theme contrast tokens, глобальный focus-visible, prefers-reduced-motion, instant navigation scroll при системной настройке reduce и 1-column practice list при ширине <=360 px.
+- Commit 8bd962da7de1110f16573f7c0aeabda98f50ea1a: validate/deploy success; browser-smoke failure на malformed backup import assertion. До ошибки focus-visible, contrast >=4.5:1, reduced-motion и layout assertions прошли.
+- Commit 3578f7ccdec0c8ba119a1a8e3a30041b3ea28753: validate/deploy success; browser-smoke дошёл до landscape mobile walkthrough и выявил, что нижние пункты sidebar нельзя нажать в коротком viewport.
+- Failure screenshot показал, что при 667x375 мобильная боковая панель обрезает нижние пункты навигации и блок прогресса накладывается на список. Это реальный UX-дефект landscape, а не только ошибка тестового селектора.
+- Commit 03275982ca989ad384ea904fa43e1b5c4e6e446c: добавлен short-landscape режим sidebar с обычным вертикальным overflow, overscroll containment и уменьшенными вертикальными отступами; sidebar в этом режиме отображается как прокручиваемый поток.
+- Build version повышен до 20261109-108. Первоначальная validate для 02e95b9 выявила, что app.js import cache keys остались на 107; исправлено синхронизацией всех 6 внутренних импортов в commit 7a87253ed86195e21680087cd4f0b6582afa6a71.
+- Текущий workflow 42530979109 для 7a87253: validate success, deploy success; browser-smoke in_progress (Chromium install на момент последней проверки).
+- Pages workflow 42530979366 для 7a87253 queued на момент последней проверки.
 
 Новые browser-smoke assertions:
 - Keyboard navigation активирует :focus-visible с видимой outline.
@@ -203,9 +203,11 @@ Workflow .github/workflows/pages.yml выполняет JS syntax checks, npm ru
 - prefers-reduced-motion выключает smooth scrolling и сокращает CSS transitions.
 - При 320 px список задач практики перестраивается в одну колонку.
 - Mobile walkthrough: assessment/schema/reference/glossary на 390 px, 320 px и 667x375 landscape; для каждого сценария проверяются видимый заголовок и отсутствие horizontal overflow.
-- Screenshot matrix покрывает dashboard, каталог, уроки обоих курсов, практику, проекты, assessment, Playground, schema, reference, glossary, light/dark и mobile.
+- Для landscape ниже 520 px проверяется, что sidebar действительно scrollable, полный список навигации доступен и выбранный пункт становится active.
+- Negative backup import fixtures подаются через File + DataTransfer + change event; oversized fixture создаётся в браузере по длине, без передачи многомегабайтного base64 payload.
+- Screenshot matrix охватывает dashboard, каталог, уроки обоих курсов, практику, проекты, assessment, Playground, schema, reference, glossary, light/dark и mobile.
 
-Содержимое curriculum smoke (подтверждено предыдущими validate runs):
+Содержимое curriculum smoke (подтверждено validate на текущем runtime build):
 - 25 модулей, 173 урока, 100 knowledge checks, 72 термина, 13 групп справочника.
 - 103 обычных запускаемых задания, включая 89 SELECT, 350 random sandbox tasks, 14 seed tables.
 - 81 таблица ожидаемых результатов и 114 read-only SQL-примеров проверялись предыдущим полным baseline.
@@ -226,21 +228,19 @@ Workflow .github/workflows/pages.yml выполняет JS syntax checks, npm ru
 
 - Репозиторий: vladsimbro/SQL.
 - Основная и единственная ветка: main.
-- Текущий HEAD main: 3578f7ccdec0c8ba119a1a8e3a30041b3ea28753.
+- Текущий HEAD main: 7a87253ed86195e21680087cd4f0b6582afa6a71.
 - Последний полностью успешный end-to-end commit: 5fd2f24cee76a3c2ea05253a83537527c138fb05.
-- Последний code/test commit до текущей серии тестовых изменений: 8bd962da7de1110f16573f7c0aeabda98f50ea1a.
 - Открытых PR и Issues нет.
 - Workflow 42529995249 на 8bd962d: validate/deploy success, browser-smoke failure на malformed backup import.
-- Workflow 42530544076 на 4b36299: validate/deploy success; browser-smoke cancelled следующим push.
-- Workflow 42530661372 на HEAD 3578f7c: queued.
+- Workflow 42530661372 на 3578f7c: validate/deploy success, browser-smoke failure на доступности нижних пунктов sidebar в landscape 667x375.
+- Workflow 42530937551 на 02e95b9: validate failure из-за несинхронизированных внутренних import cache keys; исправлено в 7a87253.
+- Workflow 42530979109 на HEAD 7a87253: validate success, deploy success, browser-smoke in_progress.
 - Pages workflow 42529994915 на 8bd962d: success.
-- Pages workflow 42530543687 на 4b36299: success.
-- Pages workflow 42530661649 на HEAD 3578f7c: queued.
-- Runtime build: 20261109-107.
+- Pages workflow 42530661649 на 3578f7c: success.
+- Pages workflow 42530979366 на HEAD 7a87253: queued.
+- Runtime build: 20261109-108.
 - GitHub Pages: https://vladsimbro.github.io/SQL/
-- Последняя подтверждённая публикация runtime build: commit 8bd962da7de1110f16573f7c0aeabda98f50ea1a; Pages workflow 42529994915 success.
-- Изменения последних commits касаются только browser smoke script и не требуют смены version.json.
-- URL-навигация опубликована и проверена в workflow 42524697272.
+- Последняя подтверждённая публикация runtime build 20261109-108 ожидает завершения Pages workflow 42530979366; runtime build 20261109-107 был ранее опубликован успешно.
 - Удаление 29 устаревших refs выполнено ранее после проверки; аудит повторно запускать только при появлении новых веток.
 - AUDIT.md удалён ранее; полезные сведения об аудите сохранены в истории документа.
 - Автоматический Pages deployment может конфликтовать с custom deploy workflow, если два Pages deploy запускаются параллельно.
@@ -390,46 +390,44 @@ Workflow .github/workflows/pages.yml выполняет JS syntax checks, npm ru
 - SQL: 17 модулей, 112 уроков. PostgreSQL: 8 модулей, 61 урок. Всего 25 модулей и 173 урока.
 - 103 обычных задания, 350 random tasks по 14 темам, 100 контрольных вопросов, 72 термина глоссария, 13 групп SQL-справочника, 14 таблиц в суммарной учебной схеме/наборах данных.
 - 3 проекта: E-commerce, аналитика доставки, Product Analytics; по 3 SQL-задачи в каждом.
-- Runtime build: 20261109-107; последняя подтверждённая runtime публикация — Pages workflow 42529994915 для SHA 8bd962d.
-- 24 screenshots предыдущего полного browser smoke получены и просмотрены. В следующем smoke добавлены 12 новых мобильных кадров.
+- Runtime build: 20261109-108; validate и deploy workflow 42530979109 success, browser-smoke in_progress.
+- Визуально просмотрены 24 базовых screenshots и 25 кадров предыдущего browser smoke. На 320 px практика читаема и список задач перестроен в одну колонку.
 - 25 независимых JOIN oracle regression checks ранее прошли validate на commit 0ff7123.
 
 Последняя завершённая задача:
-- Первичный визуальный UX/UI-аудит по 24 screenshots и source review.
-- Внедрены light-theme contrast tokens, общий keyboard focus-visible, prefers-reduced-motion для CSS и навигационного scroll, одноколоночный список практики на <=360 px.
-- Обновлён runtime build до 20261109-107 и синхронизированы шесть app.js import cache keys.
-- Расширен browser smoke: mobile walkthrough для assessment/schema/reference/glossary в portrait 390/320 px и landscape 667x375.
-- Негативные backup import fixtures переведены на явный File + DataTransfer + change event; oversized fixture создаётся в браузере по длине без передачи base64.
+- Первичный визуальный UX/UI-аудит по скриншотам и source review.
+- Внедрены light-theme contrast tokens, общий keyboard focus-visible, prefers-reduced-motion, instant navigation scroll при reduce и одноколоночный список практики на <=360 px.
+- Выявлен и исправлен реальный дефект: sidebar на коротком landscape viewport обрезал нижние навигационные пункты и накладывал блок прогресса на список. Для short landscape добавлен scrollable sidebar.
+- Runtime build повышен до 20261109-108; шесть app.js import cache keys синхронизированы с версией.
 
 Текущая незавершённая задача:
-- Завершить browser-smoke для текущего HEAD 3578f7ccdec0c8ba119a1a8e3a30041b3ea28753.
-- Предыдущий browser-smoke workflow 42529995249 завершился failure на malformed backup import test: toast не был обнаружен. Runtime accessibility assertions до этого участка прошли.
-- Тестовый run 42530544076 на commit 4b36299 был отменён следующим push во время browser-smoke.
-- Последний workflow 42530661372 queued; Pages workflow 42530661649 queued.
+- Финально проверить browser-smoke workflow 42530979109 на HEAD 7a87253.
+- Validate и deploy уже success; browser-smoke ещё выполняется после установки Chromium.
+- Smoke должен проверить исправление landscape sidebar, 12 новых mobile screenshots для assessment/schema/reference/glossary, а также negative backup import сценарии.
+- Статус Pages workflow 42530979366: queued на момент последней проверки.
 
 Следующая конкретная задача:
-- Проверить validate, deploy и browser-smoke workflow 42530661372, а также Pages workflow 42530661649.
-- Если backup negative-test снова падает, изучить фактический текст toast и жизненный цикл input после restore reload; не ослаблять проверки сохранности localStorage.
-- Если smoke проходит, скачать новый artifact sql-academy-ux-audit-screenshots и визуально изучить новые кадры assessment/schema/reference/glossary в portrait 390/320 px и landscape 667x375.
-- Проверить реальное отсутствие overflow и читаемость длинных таблиц/списков; отдельно оценить dashboard metric 173 lessons, которая визуально воспринимается как общий объём одного курса, хотя подпись сообщает о двух самостоятельных курсах.
-- После полного mobile walkthrough определить P0/P1/P2. Физические iOS/Android устройства пока не проверялись.
+- Дождаться завершения browser-smoke workflow 42530979109 и Pages workflow 42530979366.
+- Если browser-smoke проходит, скачать screenshot artifact и визуально проверить кадры assessment/schema/reference/glossary в portrait 390/320 px и landscape 667x375; проверить реальную читаемость длинных таблиц/списков.
+- Если browser-smoke падает, исправлять конкретный подтверждённый дефект без ослабления assertions.
+- После успешного mobile walkthrough определить оставшиеся P0/P1/P2. Отдельно оценить dashboard metric 173 урока: на 320 px она визуально доминирует, хотя подпись сообщает о двух самостоятельных курсах; проверить, стоит ли показывать 112 SQL + 61 PostgreSQL отдельно.
+- Физические iOS/Android устройства пока не проверялись.
 - Не переписывать CSS целиком и не менять стабильные IDs, URL, прогресс, черновики, backup/restore или поведение PGlite/CodeMirror.
 
-Последний полностью проверенный code/test commit SHA:
-- 8bd962da7de1110f16573f7c0aeabda98f50ea1a.
-Текущий HEAD main, ожидающий CI:
-- 3578f7ccdec0c8ba119a1a8e3a30041b3ea28753.
+Последний проверенный code/test commit SHA:
+- 7a87253ed86195e21680087cd4f0b6582afa6a71.
+Последний полностью успешный end-to-end commit SHA:
+- 5fd2f24cee76a3c2ea05253a83537527c138fb05.
 
 Последний результат тестирования:
-- Полностью успешный workflow: 42529611099 на 5fd2f24, validate/deploy/browser-smoke success.
-- Для code/test commit 8bd962d: validate/deploy success, browser-smoke failure на malformed backup import.
-- Для commit 4b36299: validate/deploy success, browser-smoke cancelled следующим push.
-- Для текущего HEAD 3578f7c: workflow 42530661372 queued; Pages workflow 42530661649 queued.
+- Workflow 42529611099 на 5fd2f24: validate/deploy/browser-smoke success.
+- Workflow 42529995249 на 8bd962d: validate/deploy success, browser-smoke failure на malformed backup import.
+- Workflow 42530661372 на 3578f7c: validate/deploy success, browser-smoke failure на landscape sidebar navigation.
+- Workflow 42530937551 на 02e95b9: validate failure из-за import cache mismatch.
+- Workflow 42530979109 на 7a87253: validate success, deploy success; browser-smoke in_progress.
 - Локальные npm/Playwright команды в этой сессии не запускались.
 
 Состояние GitHub Pages:
 - URL: https://vladsimbro.github.io/SQL/
-- Последняя подтверждённая runtime публикация: commit 8bd962da7de1110f16573f7c0aeabda98f50ea1a; Pages workflow 42529994915 success.
-- Pages workflow 42530543687 для commit 4b36299 завершился success; изменения касались только browser test script.
-- Публикация для HEAD 3578f7c: Pages workflow 42530661649 queued.
-- Runtime build: 20261109-107.
+- Runtime build 20261109-108: validate/deploy success в workflow 42530979109; Pages workflow 42530979366 queued на момент записи.
+- Runtime build 20261109-107 был опубликован ранее.
