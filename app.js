@@ -642,7 +642,7 @@ function handleAction(action) {
   if(action==='reset-db')resetDatabase();
   if(action==='insert-sample'){const sample='SELECT o.order_id, s.store_name, c.employee_name, o.total_amount\\nFROM orders o\\nJOIN stores s ON s.store_id = o.store_id\\nLEFT JOIN employees c ON c.employee_id = o.employee_id\\nORDER BY o.order_id;';setEditorValue('playground-editor',sample);localStorage.setItem(EDITOR_KEY,sample);}
 }
-async async function checkProjectTask(){
+async function checkProjectTask(){
   const project=projects.find(item=>item.id===state.projectId);
   const task=project?.tasks.find(item=>item.id===state.projectTaskId);
   const feedback=$('#project-feedback');
