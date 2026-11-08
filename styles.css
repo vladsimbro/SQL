@@ -262,3 +262,19 @@
 .assessment-hint{font-size:12px;color:var(--muted)}
 .assessment-actions button:disabled{opacity:.45;cursor:not-allowed}
 @media(max-width:700px){.assessment-grid{grid-template-columns:1fr}.assessment-module{padding:15px}.assessment-test{padding:15px}.assessment-question{padding:17px 0}.assessment-actions{align-items:stretch}.assessment-actions button{width:100%}}
+
+.course-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:stretch}
+.course-card{display:flex;flex-direction:column;gap:14px;min-width:0;border:1px solid var(--line);border-radius:16px;background:var(--panel);padding:21px}
+.course-card-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.course-level{font-size:10px;color:var(--muted);border:1px solid var(--line);border-radius:20px;padding:4px 9px;white-space:nowrap}
+.course-card h2{font-size:22px;line-height:1.25;margin:0;letter-spacing:-.6px}
+.course-goal{font-size:13px;color:var(--soft);line-height:1.75;margin:0;min-height:68px}
+.course-facts{display:grid;gap:11px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:13px 0}
+.course-facts strong{font-size:10px;color:var(--muted)}
+.course-facts p{font-size:11px;line-height:1.6;color:var(--soft);margin:4px 0 0}
+.course-metrics{display:flex;gap:16px;color:var(--muted);font-size:11px}
+.course-progress{margin-top:auto}
+.course-progress>div:first-child{display:flex;justify-content:space-between;gap:10px;color:var(--muted);font-size:10px}
+.course-progress strong{color:var(--text);font-weight:600}
+.course-card>.btn{align-self:flex-start}
+@media(max-width:760px){.course-grid{grid-template-columns:1fr}.course-goal{min-height:0}.course-card{padding:18px}}
