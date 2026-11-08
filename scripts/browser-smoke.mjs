@@ -188,7 +188,7 @@ try {
     const rgb = value => {
       const hex = value.trim();
       if (hex.startsWith('#')) return [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16));
-      return (hex.match(/\\d+/g) || []).slice(0, 3).map(Number);
+      return (hex.match(/\d+/g) || []).slice(0, 3).map(Number);
     };
     const luminance = value => rgb(value).map(channel => channel / 255).map(channel => channel <= .04045 ? channel / 12.92 : ((channel + .055) / 1.055) ** 2.4).reduce((sum, channel, index) => sum + channel * [.2126, .7152, .0722][index], 0);
     const ratio = (foreground, background) => { const values = [luminance(foreground), luminance(background)].sort((a, b) => b - a); return (values[0] + .05) / (values[1] + .05); };
