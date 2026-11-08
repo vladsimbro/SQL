@@ -1,7 +1,7 @@
-import { modules, learningTracks, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261108-76';
-import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261108-76';
-import { firstSqlKeyword, explainStatementKeyword, explainStatementBody, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261108-76';
-import { migrateProgress, getTrackProgress, findNextLesson } from './progress-utils.js?v=20261108-76';
+import { modules, learningTracks, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261108-77';
+import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261108-77';
+import { firstSqlKeyword, explainStatementKeyword, explainStatementBody, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261108-77';
+import { migrateProgress, getTrackProgress, findNextLesson } from './progress-utils.js?v=20261108-77';
 
 const $ = (s, root=document) => root.querySelector(s);
 const $$ = (s, root=document) => [...root.querySelectorAll(s)];
@@ -472,7 +472,7 @@ async function checkRandomTask(){
   if(parts.length!==1)throw new Error('Для случайного задания используй один SELECT-запрос.');
   if(readOnlyQueryKeyword(parts[0])!=='SELECT')throw new Error('Проверка случайных заданий принимает только SELECT или WITH ... SELECT. Изменяющие запросы остаются доступны через обычный запуск песочницы.');
   const [actual,expected]=await Promise.all([state.db.query(parts[0]),state.db.query(task.solution)]);
-  const passed=JSON.stringify(normalizeResult(actual))===JSON.stringify(normalizeResult(expected));
+  const passed=resultMatches(normalizeResult(actual),normalizeResult(expected));
   feedback.innerHTML=passed?'<div class="feedback success"><strong>Верно!</strong> Результат совпадает с эталоном.</div>':'<div class="feedback fail"><strong>Пока не совпало.</strong> Запрос выполнился, но набор столбцов, значения или порядок строк отличаются. Проверь зерно результата и условия задачи.</div>';
  }catch(error){feedback.innerHTML='<div class="feedback fail"><strong>Ошибка:</strong> '+esc(error.message)+'</div>';}
 }
@@ -515,7 +515,7 @@ async function checkExercise() {
           result={rows:[],fields:[]};
         }
         observed=await isolatedDb.query(ex.checkQuery);
-        passed=JSON.stringify(normalizeResult(observed,ex.orderMatters))===JSON.stringify(expected);
+        passed=resultMatches(normalizeResult(observed,ex.orderMatters),expected,ex.orderMatters);
       } finally {
         await isolatedDb.close();
       }
@@ -523,7 +523,7 @@ async function checkExercise() {
       if(readOnlyQueryKeyword(parts[0])!=='SELECT') throw new Error('Это задание ожидает SELECT или WITH ... SELECT. Комментарии перед запросом разрешены; изменяющие команды внутри CTE не допускаются.');
       result=await state.db.query(parts[0]);
       observed=result;
-      passed=JSON.stringify(normalizeResult(observed,ex.orderMatters))===JSON.stringify(expected);
+      passed=resultMatches(normalizeResult(observed,ex.orderMatters),expected,ex.orderMatters);
     }
     const elapsed=Math.round(performance.now()-started);
     results.innerHTML=renderResult(result,elapsed)+((ex.mode==='mutation'||ex.mode==='transaction')?renderResult(observed,elapsed):'');
@@ -532,10 +532,32 @@ async function checkExercise() {
   }catch(err){feedback.innerHTML='<div class="feedback fail"><strong>Ошибка SQL:</strong> '+esc(err.message)+'</div>';results.innerHTML='';}
 }
 function normalizeResult(result,preserveOrder=false) {
-  const rows=(result.rows||[]).map(row=>Object.fromEntries(Object.entries(row).map(([k,v])=>[k,v instanceof Date?v.toISOString():typeof v==='bigint'?String(v):v])));
-  const columns=rows.length?Object.keys(rows[0]):(result.fields||[]).map(f=>f.name);
+  const normalizeValue=value=>value instanceof Date?value.toISOString():typeof value==='bigint'?String(value):value;
+  const rows=(result.rows||[]).map(row=>Object.fromEntries(Object.entries(row).map(([key,value])=>[key,normalizeValue(value)])));
+  const columns=(result.fields||[]).map(field=>field.name);
+  if(!columns.length&&rows.length)columns=Object.keys(rows[0]);
   if(!preserveOrder)rows.sort((a,b)=>JSON.stringify(a).localeCompare(JSON.stringify(b)));
   return {columns,rows};
+}
+function resultMatches(actual,expected,preserveOrder=false) {
+  const actualColumns=actual?.columns||[];
+  const expectedColumns=expected?.columns||[];
+  if(actualColumns.length!==expectedColumns.length)return false;
+  if(new Set(actualColumns).size!==actualColumns.length||new Set(expectedColumns).size!==expectedColumns.length)return false;
+  const columns=[...actualColumns].sort();
+  if(JSON.stringify(columns)!==JSON.stringify([...expectedColumns].sort()))return false;
+  const canonicalValue=value=>{
+    if(value instanceof Date)return value.toISOString();
+    if(typeof value==='bigint')return String(value);
+    if(Array.isArray(value))return value.map(canonicalValue);
+    if(value&&typeof value==='object')return Object.fromEntries(Object.keys(value).sort().map(key=>[key,canonicalValue(value[key])]));
+    return value;
+  };
+  const rowSignatures=result=>(result.rows||[]).map(row=>JSON.stringify(columns.map(column=>Object.prototype.hasOwnProperty.call(row,column)?canonicalValue(row[column]):{__missingColumn:true})));
+  const actualRows=rowSignatures(actual),expectedRows=rowSignatures(expected);
+  if(actualRows.length!==expectedRows.length)return false;
+  if(!preserveOrder){actualRows.sort();expectedRows.sort();}
+  return JSON.stringify(actualRows)===JSON.stringify(expectedRows);
 }
 async function runEditorQuery(sql,target) {
   const host=$('#'+target);if(!host)return;if(!state.db){host.innerHTML='<div class="feedback fail">PostgreSQL ещё загружается.</div>';return;}
