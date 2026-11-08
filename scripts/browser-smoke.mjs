@@ -40,11 +40,13 @@ await page.route(
   }
 );
 
-const readEditor = locator => locator.evaluate(element =>
-  element.CodeMirror ? element.CodeMirror.getValue() : element.value
-);
+const readEditor = locator => locator.evaluate(element => {
+  const instance = element.parentElement.querySelector('.CodeMirror')?.CodeMirror;
+  return instance ? instance.getValue() : element.value;
+});
 const writeEditor = (locator, value) => locator.evaluate((element, nextValue) => {
-  if (element.CodeMirror) element.CodeMirror.setValue(nextValue);
+  const instance = element.parentElement.querySelector('.CodeMirror')?.CodeMirror;
+  if (instance) instance.setValue(nextValue);
   else {
     element.value = nextValue;
     element.dispatchEvent(new Event('input', { bubbles: true }));
@@ -67,7 +69,6 @@ const assertNoHorizontalOverflow = async width => {
   );
 };
 
-let screenshotTaken = false;
 try {
   const navigationStartedAt = Date.now();
   await page.goto(baseURL, { waitUntil: 'domcontentloaded', timeout: 90_000 });
