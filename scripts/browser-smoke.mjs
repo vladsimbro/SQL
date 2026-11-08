@@ -105,6 +105,7 @@ try {
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.locator('#app-content .lesson-track-group').waitFor({ state: 'visible' });
   assert.match(await page.locator('.lesson-track-group h3').textContent(), /SQL для аналитика данных/);
+  blockFirstPGliteRequest = true;
   await page.goto(baseURL, { waitUntil: 'domcontentloaded' });
   await page.locator('#app-content .hero').waitFor({ state: 'visible' });
   assert.ok(shellReadyMs < 30_000, `The initial learning interface took too long to render: ${shellReadyMs}ms`);
