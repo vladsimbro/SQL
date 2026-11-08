@@ -1,17 +1,17 @@
 # SQL Academy — актуальное состояние и передача разработки
 
-Последнее обновление: 2026-11-09 00:28 Europe/Helsinki (UTC+02:00).
+Последнее обновление: 2026-11-09 00:30 Europe/Helsinki (UTC+02:00).
 
 ## 1. Репозиторий и текущий HEAD
 
 - Репозиторий: https://github.com/vladsimbro/SQL
 - GitHub Pages: https://vladsimbro.github.io/SQL/
 - Основная ветка: main.
-- Последний HEAD main: 60ca01bc11c515d60129d4039b2c5ddf4255b97b.
+- Последний HEAD main: a57580af3977857b846b3bb7d01347fc11db9cd7.
 - Последний application build: 20261109-105.
 - Последний application commit с изменением runtime-кода: c24bba10d9515fd8837714632d7c412928cacb04.
 - Последняя версия URL-навигации, проверенная полным CI: a045602546da7e8bec12fcaff25626fee208aadf.
-- Последние commits добавили негативные browser-smoke сценарии backup, исправили синтаксис списка checks и последовательность ожидания confirm dialog; runtime-код приложения не менялся, version.json не менялся.
+- Последние commits добавили негативные browser-smoke сценарии backup, исправили синтаксис списка checks и обработку confirm dialog; runtime-код приложения не менялся, version.json не менялся.
 - GitHub API подтверждает только одну ветку: main. Других активных веток и незавершённых переносов не обнаружено.
 - Изменения выполняются через GitHub API. Локальный clone и локальный git status в этой сессии не использовались.
 
@@ -133,7 +133,7 @@ Workflow .github/workflows/pages.yml выполняет:
 
 - Репозиторий: vladsimbro/SQL.
 - Основная и единственная ветка: main.
-- Текущий HEAD: 60ca01bc11c515d60129d4039b2c5ddf4255b97b.
+- Текущий HEAD: a57580af3977857b846b3bb7d01347fc11db9cd7.
 - Последний runtime build: 20261109-105.
 - Workflow 42525067404 опубликовал runtime build 20261109-105, но browser-smoke завершился failure из-за синтаксической ошибки тестового файла. Исправление теста находится в HEAD 6c715e7; новый workflow 42525207352 ожидает выполнения.
 - URL-навигация опубликована и проверена в workflow 42524697272.
@@ -162,18 +162,18 @@ Workflow .github/workflows/pages.yml выполняет:
 - Негативные browser-smoke сценарии backup import добавлены в ef37fc2; первый browser-smoke выявил синтаксическую ошибку в тестовом списке checks. Исправление отправлено в 6c715e77d21758226bba4491ef5164c8d9e49327; новый CI ожидает результата.
 
 Следующая конкретная задача:
-- Проверить новый workflow после commit 60ca01bc11c515d60129d4039b2c5ddf4255b97b и результат browser-smoke job.
+- Проверить workflow 42525470460 на commit a57580af и результат browser-smoke job.
 - Если success: перевести отрицательные сценарии импорта backup в DEPLOYED_VERIFIED и зафиксировать итоговый commit/Pages.
 - Если failure: получить job logs, определить, упал ли тестовый сценарий или реальная логика приложения, исправить минимально необходимое и повторить CI.
 - После этого провести следующий содержательный аудит качества учебного SQL-маршрута и практики: начать с JOIN/fan-out, зерна данных, COUNT DISTINCT, LEFT JOIN + WHERE и проверок корректности метрик. Не переписывать уроки без конкретных дефектов.
 
 Последний проверенный commit SHA:
-- Текущий HEAD main: 60ca01bc11c515d60129d4039b2c5ddf4255b97b.
+- Текущий HEAD main: a57580af3977857b846b3bb7d01347fc11db9cd7.
 - Последний commit с полностью зелёными validate/deploy/browser-smoke: a045602546da7e8bec12fcaff25626fee208aadf.
 
 Последний результат тестирования:
 - Workflow 42524697272: все три jobs success.
-- Workflow 42525067404: validate success, deploy success, browser-smoke failure (синтаксическая ошибка теста).\n- Workflow 42525207352: validate success, deploy success; негативные тесты JSON/version/size прошли, тест отказа подтверждения timeout из-за порядка ожидания dialog.\n- Commit 60ca01b исправил порядок ожидания; следующий workflow ожидает выполнения.
+- Workflow 42525067404: validate success, deploy success, browser-smoke failure (синтаксическая ошибка теста).\n- Workflow 42525207352: validate success, deploy success; негативные тесты JSON/version/size прошли, тест отказа подтверждения timeout из-за порядка ожидания dialog.\n- Commit a57580af заменил ожидание Promise.all на немедленный dismiss dialog из обработчика; workflow 42525470460 ожидает выполнения.
 
 Состояние GitHub Pages:
 - Build приложения: 20261109-105.
