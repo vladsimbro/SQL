@@ -1,6 +1,6 @@
 # SQL Academy — актуальное состояние и передача разработки
 
-Последнее обновление: 2026-11-09 00:31 Europe/Helsinki (UTC+02:00).
+Последнее обновление: 2026-11-09 00:34 Europe/Helsinki (UTC+02:00).
 
 ## 1. Общая информация
 
@@ -9,8 +9,8 @@
 - GitHub Pages: https://vladsimbro.github.io/SQL/
 - Основная ветка: main.
 - Последний проверенный commit приложения: 4629cb7ad5c16d752dac51e5c5bca20a58a9af29 (последний полностью зелёный baseline).
-- Текущий application commit: c24bba10d9515fd8837714632d7c412928cacb04; текущий HEAD main: a045602546da7e8bec12fcaff25626fee208aadf (дополнительно изолирован browser-smoke сценарий).
-- Build приложения: 20261109-105 (публикация ожидает завершения CI).
+- Текущий application commit: c24bba10d9515fd8837714632d7c412928cacb04; текущий HEAD main: 5ce31ac0e738e453bc642c48d2aaefbcaddfab43 (последний commit обновляет этот документ после фикса browser-smoke).
+- Build приложения: 20261109-105 (deploy success на application commit c24bba1).
 - Состояние Git: изменения этой рабочей сессии отправлялись непосредственно в GitHub через API. Локальный clone и локальный git status в этой сессии не использовались; незакоммиченные локальные файлы не создавались.
 - Ветки: GitHub API на момент проверки показывает только main.
 - Открытые Pull Requests: 0. Открытые Issues: 0.
@@ -263,8 +263,8 @@ Jobs:
 Состояние:
 - Два курса SQL/PostgreSQL и три проекта существуют и опубликованы.
 - Backup/restore реализован, протестирован unit/smoke проверками и полным browser round-trip.
-- URL/hash-навигация добавлена в application commit c24bba10d9515fd8837714632d7c412928cacb04; build 20261109-105; validate/deploy success. Последняя корректировка browser-smoke в HEAD a045602 ожидает CI.
-- Последний полностью проверенный кодовый baseline: 4629cb7ad5c16d752dac51e5c5bca20a58a9af29; workflow 42522635871 success.
+- URL/hash-навигация добавлена в application commit c24bba10d9515fd8837714632d7c412928cacb04; build 20261109-105; validate/deploy success. Последняя корректировка browser-smoke в commit a045602; новый workflow 42524697272 ожидает завершения.
+- Последний полностью проверенный кодовый baseline до текущей задачи: 4629cb7ad5c16d752dac51e5c5bca20a58a9af29; workflow 42522635871 success.
 - Других веток кроме main нет. Не повторять аудит 29 удалённых refs и не создавать новый проект.
 
 Последняя завершённая задача:
@@ -278,7 +278,7 @@ Jobs:
 
 Последний проверенный commit SHA:
 - Полностью проверенный кодовый baseline: 4629cb7ad5c16d752dac51e5c5bca20a58a9af29.
-- Текущий HEAD main: cdea1c4af82b503e702cfbd3161aac0fdf071dd8, ещё не подтверждён тестами.
+- Текущий HEAD main на момент передачи: 5ce31ac0e738e453bc642c48d2aaefbcaddfab43 (документационный commit; application code c24bba1, browser test fix a045602).
 
 Последний результат тестирования:
 - 4629cb7: validate, deploy и browser-smoke success.
@@ -287,8 +287,7 @@ Jobs:
 - a045602: workflow 42524697272 ожидает завершения после фикса тестовой фикстуры.
 
 Состояние GitHub Pages:
-- Последняя подтверждённая версия до текущего изменения: build 20261108-104.
-- Build 20261109-105 опубликован через deploy job workflow 42524592778.
+- Последняя подтверждённая опубликованная версия: build 20261109-105, commit c24bba10d9515fd8837714632d7c412928cacb04, deploy job workflow 42524592778 success.
 - Browser-smoke для последней версии тестового сценария ожидает результата workflow 42524697272.
 
 Файлы для начала:
@@ -311,7 +310,7 @@ Jobs:
 
 Не забыть:
 - Сверить live main SHA и workflow перед работой, потому что этот документ обновляется отдельными commits.
-- Не считать предыдущий build 20261108-103 актуальным: текущий build 20261108-104.
+- Не считать build 20261108-104 актуальным: application build 20261109-105 опубликован.
 - Не считать промежуточные красные Actions финальным состоянием: есть полный успешный run 42522635871.
 - Не менять стабильные ID и ключи localStorage без совместимой миграции.
 - Не менять рабочую PGlite/CodeMirror и curriculum-архитектуру ради косметического рефакторинга.
