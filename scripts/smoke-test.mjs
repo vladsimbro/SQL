@@ -467,6 +467,31 @@ try {
   const windowDirect = await db.query("SELECT order_id, ROW_NUMBER() OVER (ORDER BY created_at DESC, order_id DESC)::int AS position FROM orders ORDER BY position");
   const windowCte = await db.query("WITH ranked_orders AS (SELECT order_id, created_at, ROW_NUMBER() OVER (ORDER BY created_at DESC, order_id DESC)::int AS position FROM orders) SELECT position, order_id FROM ranked_orders ORDER BY position");
   assert.equal(resultMatches(normalize(windowDirect,true),normalize(windowCte,true),true),true,'Equivalent window calculations through a CTE must match with an explicit output order');
+  const customersWithDeliveredIn = await db.query("SELECT c.customer_id FROM customers c WHERE c.customer_id IN (SELECT o.customer_id FROM orders o WHERE o.status = 'delivered') ORDER BY c.customer_id");
+  const customersWithDeliveredExists = await db.query("SELECT c.customer_id FROM customers c WHERE EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.customer_id AND o.status = 'delivered') ORDER BY c.customer_id");
+  assert.equal(resultMatches(normalize(customersWithDeliveredIn),normalize(customersWithDeliveredExists),true),true,'IN and EXISTS must match even when the subquery contains duplicate customer IDs');
+
+  const employeesNotInNullableSet = await db.query("SELECT employee_id FROM employees WHERE employee_id NOT IN (SELECT employee_id FROM orders) ORDER BY employee_id");
+  const employeesNotExists = await db.query("SELECT e.employee_id FROM employees e WHERE NOT EXISTS (SELECT 1 FROM orders o WHERE o.employee_id = e.employee_id) ORDER BY e.employee_id");
+  assert.equal(employeesNotInNullableSet.rows.length,0,'NOT IN must expose the UNKNOWN trap when its subquery contains NULL');
+  assert.equal(employeesNotExists.rows.length,1,'NOT EXISTS must still find employees with no orders');
+  assert.equal(resultMatches(normalize(employeesNotInNullableSet),normalize(employeesNotExists),true),false,'NOT IN with a nullable subquery must not be treated as equivalent to NOT EXISTS');
+  const employeesNotInNullSafe = await db.query("SELECT employee_id FROM employees WHERE employee_id NOT IN (SELECT employee_id FROM orders WHERE employee_id IS NOT NULL) ORDER BY employee_id");
+  assert.equal(resultMatches(normalize(employeesNotInNullSafe),normalize(employeesNotExists),true),true,'Filtering NULL from the NOT IN subquery must restore equivalence with NOT EXISTS');
+
+  const deliveredOrShipped = await db.query("SELECT order_id FROM orders WHERE status = 'delivered' OR status = 'shipped' ORDER BY order_id");
+  const deliveredUnionShipped = await db.query("SELECT order_id FROM orders WHERE status = 'delivered' UNION SELECT order_id FROM orders WHERE status = 'shipped' ORDER BY order_id");
+  assert.equal(resultMatches(normalize(deliveredOrShipped),normalize(deliveredUnionShipped),true),true,'OR and UNION must match for disjoint order-level predicates');
+  const customerUnion = await db.query("SELECT customer_id FROM orders WHERE status = 'delivered' UNION SELECT customer_id FROM orders WHERE status = 'shipped' ORDER BY customer_id");
+  const customerUnionAll = await db.query("SELECT customer_id FROM orders WHERE status = 'delivered' UNION ALL SELECT customer_id FROM orders WHERE status = 'shipped' ORDER BY customer_id");
+  assert.equal(resultMatches(normalize(customerUnion),normalize(customerUnionAll),true),false,'UNION and UNION ALL must remain different when customers have multiple matching orders');
+
+  const storeMetricsJoined = await db.query("SELECT s.store_id, COUNT(o.order_id)::int AS order_count, COALESCE(SUM(o.total_amount),0)::numeric AS revenue FROM stores s LEFT JOIN orders o ON o.store_id = s.store_id GROUP BY s.store_id ORDER BY s.store_id");
+  const storeMetricsPreAggregated = await db.query("WITH order_metrics AS (SELECT store_id, COUNT(*)::int AS order_count, SUM(total_amount) AS revenue FROM orders GROUP BY store_id) SELECT s.store_id, COALESCE(m.order_count,0)::int AS order_count, COALESCE(m.revenue,0)::numeric AS revenue FROM stores s LEFT JOIN order_metrics m ON m.store_id = s.store_id ORDER BY s.store_id");
+  assert.equal(resultMatches(normalize(storeMetricsJoined,true),normalize(storeMetricsPreAggregated,true),true),true,'LEFT JOIN aggregation and pre-aggregation must match at store grain, including stores without orders');
+  const itemRevenue = await db.query("SELECT SUM(unit_price) AS revenue FROM order_items");
+  const distinctItemRevenue = await db.query("SELECT SUM(DISTINCT unit_price) AS revenue FROM order_items");
+  assert.equal(resultMatches(normalize(itemRevenue),normalize(distinctItemRevenue)),false,'SUM(DISTINCT price) must not be accepted as equivalent to summing every order item');
   const tables = await db.query("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_type = 'BASE TABLE'");
   assert.equal(tables.rows.length, schema.length, 'Seed database table count must match the schema catalog');
 
