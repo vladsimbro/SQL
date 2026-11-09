@@ -980,7 +980,7 @@ try {
           assert.ok(new RegExp(pattern, 'i').test(exercise.solution), `Transaction exercise ${exercise.id} is missing a required transaction command`);
         }
         if (exercise.id === 'e69') {
-          assert.equal((exercise.solution.match(/\\bUPDATE\\b/gi) || []).length, 2, 'Money transfer must contain both debit and credit updates');
+          assert.equal((exercise.solution.match(/\bUPDATE\b/gi) || []).length, 2, 'Money transfer must contain both debit and credit updates');
         } else if (exercise.id === 'e114') {
           assert.ok(exercise.solution.indexOf('INSERT INTO practice_child') < exercise.solution.indexOf('INSERT INTO practice_parent'), 'Deferred foreign-key task must insert the child before its parent');
         }
