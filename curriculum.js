@@ -8625,7 +8625,7 @@ export const modules = [
       {
         "title": "Полнотекстовый поиск",
         "body": "Полнотекстовый поиск предназначен для поиска слов и лексем в больших текстах с учётом языковых правил. В PostgreSQL текст преобразуется в tsvector, а поисковая фраза — в tsquery. @@ проверяет совпадение документа и запроса.\n\nВ отличие от LIKE '%слово%', полнотекстовый поиск может учитывать нормализацию слов и индексироваться через GIN. Это полезно для описаний, статей и комментариев, где нужно искать по смыслу словоформ, а не по точной подстроке.\n\nДля ранжирования результатов применяют ts_rank или ts_rank_cd. Конфигурация языка влияет на разбор слов и стемминг, поэтому выбирай её осознанно.",
-        "example": "SELECT product_id, product_name,\n       ts_rank(to_tsvector('simple', product_name), plainto_tsquery('simple', 'coffee')) AS rank\nFROM products\nWHERE to_tsvector('simple', product_name) @@ plainto_tsquery('simple', 'coffee')\nORDER BY rank DESC;",
+        "example": "CREATE INDEX IF NOT EXISTS idx_products_fulltext_demo\nON products USING GIN (to_tsvector('simple', product_name));\n\nSELECT product_id, product_name,\n       ts_rank(to_tsvector('simple', product_name), plainto_tsquery('simple', 'coffee')) AS rank\nFROM products\nWHERE to_tsvector('simple', product_name) @@ plainto_tsquery('simple', 'coffee')\nORDER BY rank DESC;",
         "note": "Для частых запросов создай GIN индекс по tsvector и проверь план.",
         "simple": "Полнотекстовый поиск сравнивает нормализованные лексемы, а не просто подстроки.",
         "practiceIds": [],
@@ -8651,8 +8651,8 @@ export const modules = [
       {
         "title": "Партиционирование",
         "body": "Партиционирование делит одну логическую таблицу на физические части по ключу, например дате или региону. PostgreSQL поддерживает range, list и hash partitioning. Запрос может читать только нужные разделы, если условие позволяет partition pruning.\n\nПартиционирование помогает управлять очень большими таблицами: старые периоды можно архивировать или удалять целыми разделами. Но оно усложняет уникальные ограничения, индексы и обслуживание схемы. Для маленькой таблицы оно обычно не нужно.\n\nКлюч партиционирования выбирают под реальные запросы и жизненный цикл данных. Если отчёты почти всегда фильтруют created_at по месяцу, range partitioning по дате может быть разумным. Но само наличие партиций не гарантирует ускорения всех запросов.",
-        "example": "CREATE TABLE events (\n  event_id BIGINT NOT NULL,\n  occurred_at DATE NOT NULL,\n  payload JSONB\n) PARTITION BY RANGE (occurred_at);",
-        "note": "Не партиционируй маленькие таблицы без причины. Учитывай ограничения уникальности и эксплуатационную сложность.",
+        "example": "DROP TABLE IF EXISTS events_demo CASCADE;\nCREATE TABLE events_demo (\n  event_id BIGINT NOT NULL,\n  occurred_at DATE NOT NULL,\n  payload JSONB\n) PARTITION BY RANGE (occurred_at);\n\nCREATE TABLE events_demo_2026_01 PARTITION OF events_demo\nFOR VALUES FROM ('2026-01-01') TO ('2026-02-01');\nCREATE TABLE events_demo_2026_02 PARTITION OF events_demo\nFOR VALUES FROM ('2026-02-01') TO ('2026-03-01');\n\nINSERT INTO events_demo VALUES\n  (1, DATE '2026-01-15', '{\"source\":\"web\"}'),\n  (2, DATE '2026-02-15', '{\"source\":\"mobile\"}');\n\nSELECT event_id, tableoid::regclass AS partition_name\nFROM events_demo\nORDER BY event_id;",
+        "note": "Не партиционируй маленькие таблицы без причины. Уникальное ограничение или PRIMARY KEY на partitioned table должен включать все столбцы ключа партиционирования; также учитывай эксплуатационную сложность.",
         "simple": "Партиционирование делит большую таблицу на разделы, которые PostgreSQL может исключать из чтения.",
         "practiceIds": [],
         "outcomes": [
@@ -8729,8 +8729,8 @@ export const modules = [
       {
         "title": "Операторы JSONB: проверка и индексация",
         "body": "Для JSONB доступны операторы проверки содержимого и извлечения значений. @> проверяет, содержит ли документ заданный JSON-фрагмент. ? проверяет наличие ключа верхнего уровня, а -> и ->> извлекают значение.\n\nGIN индекс может ускорить containment-запросы по JSONB. Но важно выбрать операторный класс: jsonb_ops поддерживает более широкий набор операций, jsonb_path_ops оптимизирован для определённых containment-поисков.\n\nНе индексируй JSONB автоматически целиком, если запросы используют только одно поле. Для часто фильтруемого ключа иногда лучше expression index по конкретному выражению или вынесение значения в обычный столбец.",
-        "example": "SELECT customer_id, attributes\nFROM customer_profiles\nWHERE attributes @> '{\"segment\":\"vip\"}'::jsonb;",
-        "note": "Операторный класс определяет поддерживаемые операции. Проверь, совпадает ли он с реальными условиями WHERE.",
+        "example": "CREATE INDEX IF NOT EXISTS idx_customer_profiles_attributes_demo\nON customer_profiles USING GIN (attributes jsonb_path_ops);\n\nSELECT customer_id, attributes\nFROM customer_profiles\nWHERE attributes @> '{\"segment\":\"vip\"}'::jsonb;",
+        "note": "jsonb_path_ops хорошо подходит для containment-оператора @>, но не заменяет jsonb_ops для всех возможных операций. Выбирай операторный класс под реальные условия WHERE.",
         "simple": "@> проверяет включение JSON-структуры, ? — наличие ключа, GIN ускоряет подходящие поиски.",
         "practiceIds": [
           "e55"
@@ -8758,8 +8758,8 @@ export const modules = [
         "title": "Временные и UNLOGGED-таблицы",
         "body": "TEMPORARY TABLE существует в пределах сессии или транзакции в зависимости от ON COMMIT. Она полезна для промежуточных результатов, которые нужно использовать в нескольких командах.\n\nUNLOGGED TABLE не записывает обычные изменения в WAL так же, как logged-таблица, поэтому может быть быстрее для временных или восстанавливаемых данных. Но после аварийного завершения сервера содержимое unlogged-таблицы очищается, а репликация не переносит её содержимое как обычные logged-таблицы.\n\nВыбирай временную таблицу, если данные нужны только текущей сессии. UNLOGGED подходит для данных, которые можно восстановить и которые не должны быть гарантированно сохранены после сбоя.",
         "simple": "TEMP TABLE ограничивает время жизни объекта. UNLOGGED TABLE снижает требования к журналированию, но теряет содержимое после аварии.",
-        "example": "CREATE TEMP TABLE selected_orders AS\nSELECT * FROM orders WHERE status = 'open';\n\nCREATE UNLOGGED TABLE staging_events (\n  event_id BIGINT,\n  payload JSONB\n);",
-        "note": "Не храни единственную копию важных данных в UNLOGGED TABLE.",
+        "example": "CREATE TEMP TABLE IF NOT EXISTS selected_orders_demo AS\nSELECT * FROM orders WHERE false;\nTRUNCATE selected_orders_demo;\nINSERT INTO selected_orders_demo SELECT * FROM orders WHERE status = 'open';\n\nCREATE UNLOGGED TABLE IF NOT EXISTS staging_events_demo (\n  event_id BIGINT,\n  payload JSONB\n);",
+        "note": "UNLOGGED TABLE не обеспечивает обычную WAL-защиту и после аварийного восстановления может быть очищена. PGlite не воспроизводит полностью серверное поведение WAL и crash recovery; проверяй эти свойства на настоящем PostgreSQL.",
         "practiceIds": [],
         "outcomes": [
           "Различать TEMP и UNLOGGED",
