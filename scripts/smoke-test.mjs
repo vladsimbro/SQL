@@ -112,9 +112,9 @@ assert.ok(Array.isArray(reference) && reference.length >= 8, 'SQL quick referenc
 assert.ok(exercises.every(exercise => ['select','explain','mutation','transaction'].includes(exercise.mode)), 'Every exercise must have a supported explicit mode');
 assert.equal(exercises.filter(exercise => exercise.mode === 'select').length, 89, 'Expected 89 SELECT exercises');
 assert.equal(exercises.filter(exercise => exercise.mode === 'explain').length, 3, 'Expected three EXPLAIN exercises');
-assert.equal(exercises.filter(exercise => exercise.mode === 'mutation').length, 18, 'Expected eighteen mutation exercises');
-assert.equal(exercises.filter(exercise => exercise.mode === 'transaction').length, 3, 'Expected three transaction exercises');
-assert.equal(exercises.length, 113, 'Expected 113 total practice exercises');
+assert.equal(exercises.filter(exercise => exercise.mode === 'mutation').length, 19, 'Expected nineteen mutation exercises');
+assert.equal(exercises.filter(exercise => exercise.mode === 'transaction').length, 4, 'Expected four transaction exercises');
+assert.equal(exercises.length, 115, 'Expected 115 total practice exercises');
 assert.ok(exercises.every(exercise => modules.some(module => module.id === exercise.m)), 'Every exercise must belong to a real module');
 const fanoutLesson = modules.find(module => module.id === 'joins')?.lessons.find(lesson => lesson.id === 'joins.fan-out-pochemu-join-umnozhaet-stroki');
 assert.deepEqual(fanoutLesson?.practiceIds, ['e103'], 'The fan-out lesson must link its dedicated practice exercise exactly once');
@@ -422,6 +422,9 @@ assert.ok(ddlQualityModule.lessons.find(lesson => lesson.title === 'PostgreSQL: 
 const transactionQualityModule = modules.find(module => module.id === 'constraints');
 assert.ok(transactionQualityModule.lessons.find(lesson => lesson.title === 'ACID').example.includes('ON COMMIT DROP'), 'ACID example must clean up its temporary teaching table');
 assert.ok(transactionQualityModule.lessons.find(lesson => lesson.title === 'SAVEPOINT и частичный откат').example.includes('ROLLBACK TO SAVEPOINT'), 'Savepoint example must demonstrate a partial rollback');
+assert.ok(transactionQualityModule.lessons.find(lesson => lesson.title === 'ACID').example.includes('acid_accounts'), 'ACID example must use its own temporary table name');
+assert.ok(transactionQualityModule.lessons.find(lesson => lesson.title === 'Действия внешних ключей и отложенные ограничения').example.includes('fk_action_order_items_demo'), 'Foreign-key example must not collide with the seeded order_items table');
+assert.deepEqual(transactionQualityModule.lessons.find(lesson => lesson.title === 'Действия внешних ключей и отложенные ограничения').practiceIds, ['e114','e115'], 'Foreign-key lesson must link deferred and cascading constraint practice');
 const aggregateModule = modules.find(module => module.id === 'aggregates');
 assert.deepEqual(aggregateModule.lessons.find(lesson => lesson.title === 'DISTINCT внутри агрегатов').exampleResult.rows, [[3,4000,3000]], 'SUM(DISTINCT amount) must demonstrate lost revenue when two orders share an amount');
 assert.ok(aggregateModule.lessons.find(lesson => lesson.title === 'DISTINCT внутри агрегатов').body.includes('дедуплицируй по order_id'), 'Aggregate DISTINCT lesson must direct entity deduplication to the business key');
@@ -960,6 +963,8 @@ try {
           assert.deepEqual(observed.rows, [{customer_id:9,customer_name:'Екатерина',city:'Krakow'}], 'RETURNING task must leave only the selected customer updated');
         } else if (exercise.id === 'e113') {
           assert.deepEqual(observed.rows, [{product_id:1,product_name:'Coffee beans',quantity:12},{product_id:2,product_name:'Tea',quantity:20},{product_id:3,product_name:'Mug',quantity:5}], 'MERGE task must update the matching row, preserve unmatched target rows and insert the new source row');
+        } else if (exercise.id === 'e115') {
+          assert.deepEqual(observed.rows, [{task_id:201,project_id:2}], 'ON DELETE CASCADE must remove only children of the deleted parent');
         } else if (exercise.id === 'e68') {
           assert.equal(observed.rows.length, 1, 'Index task must create the requested index');
           assert.match(observed.rows[0].indexdef, /\(status\)/i, 'Index task must index the status column');
@@ -973,6 +978,11 @@ try {
         await isolated.exec(seedSQL);
         for (const pattern of exercise.requiredPatterns || []) {
           assert.ok(new RegExp(pattern, 'i').test(exercise.solution), `Transaction exercise ${exercise.id} is missing a required transaction command`);
+        }
+        if (exercise.id === 'e69') {
+          assert.equal((exercise.solution.match(/\\bUPDATE\\b/gi) || []).length, 2, 'Money transfer must contain both debit and credit updates');
+        } else if (exercise.id === 'e114') {
+          assert.ok(exercise.solution.indexOf('INSERT INTO practice_child') < exercise.solution.indexOf('INSERT INTO practice_parent'), 'Deferred foreign-key task must insert the child before its parent');
         }
         await isolated.exec(exercise.solution);
         const observed = await isolated.query(exercise.checkQuery);
