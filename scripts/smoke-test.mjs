@@ -951,6 +951,181 @@ try {
     }
     checked++;
   }
+
+  // Analytical exercises must return the intended metrics, not merely execute.
+  const runSelectExercise = async id => {
+    const task = exercises.find(item => item.id === id);
+    assert.ok(task && task.mode === 'select', `Analytical exercise ${id} must exist as a SELECT task`);
+    return db.query(task.solution);
+  };
+
+  const e89Result = await runSelectExercise('e89');
+  const e89Oracle = await db.query(`
+    WITH store_revenue AS (
+      SELECT s.store_id, s.store_name, s.city,
+             (SELECT SUM(o.total_amount) FROM orders o WHERE o.store_id = s.store_id) AS revenue
+      FROM stores s
+      WHERE EXISTS (SELECT 1 FROM orders o WHERE o.store_id = s.store_id)
+    )
+    SELECT store_name, city, revenue,
+           ROUND(100.0 * revenue / NULLIF((
+             SELECT SUM(o.total_amount)
+             FROM stores city_store
+             JOIN orders o ON o.store_id = city_store.store_id
+             WHERE city_store.city = store_revenue.city
+           ), 0), 2) AS city_share_pct,
+           ROUND(100.0 * revenue / NULLIF((SELECT SUM(total_amount) FROM orders), 0), 2) AS total_share_pct
+    FROM store_revenue
+    ORDER BY city, store_name
+  `);
+  assert.deepEqual(e89Result.rows, e89Oracle.rows, 'e89 city and global revenue shares must match independent correlated totals');
+
+  const e90Result = await runSelectExercise('e90');
+  assert.deepEqual(
+    e90Result.rows.map(row => [
+      String(row.month_start),
+      Number(row.revenue),
+      row.previous_revenue === null ? null : Number(row.previous_revenue),
+      row.growth_pct === null ? null : Number(row.growth_pct)
+    ]),
+    [
+      ['2026-01-01', 1000, null, null],
+      ['2026-02-01', 1250, 1000, 25],
+      ['2026-03-01', 1000, 1250, -20]
+    ],
+    'e90 must compare each month with the preceding month and leave the first comparison undefined'
+  );
+
+  const e92Result = await runSelectExercise('e92');
+  assert.deepEqual(
+    e92Result.rows.map(row => [row.stage, Number(row.users_count)]),
+    [['view', 4], ['cart_after_view', 2], ['purchase_after_cart', 1]],
+    'e92 must reject missing and out-of-order funnel events'
+  );
+
+  const e96Result = await runSelectExercise('e96');
+  assert.deepEqual(
+    e96Result.rows.map(row => [row.month, row.net_revenue, row.previous_month_revenue, row.mom_change_pct]),
+    [
+      ['2025-10-01', '136440.00', '139720.00', '-2.35'],
+      ['2025-11-01', '123040.00', '136440.00', '-9.82'],
+      ['2025-12-01', '125300.00', '123040.00', '1.84']
+    ],
+    'e96 must calculate Q4 net revenue with calendar-correct month comparisons'
+  );
+
+  await db.exec('BEGIN;');
+  try {
+    const removedNovemberFacts = await db.query(`
+      UPDATE analytics_orders
+      SET status = 'new'
+      WHERE created_at >= TIMESTAMP '2025-11-01'
+        AND created_at < TIMESTAMP '2025-12-01'
+        AND status IN ('delivered', 'shipped', 'refunded')
+      RETURNING order_id
+    `);
+    assert.ok(removedNovemberFacts.rows.length > 0, 'The e96 gap regression must remove all qualifying November revenue from the fixture');
+    const gapRows = (await runSelectExercise('e96')).rows;
+    const october = gapRows.find(row => row.month === '2025-10-01');
+    const november = gapRows.find(row => row.month === '2025-11-01');
+    const december = gapRows.find(row => row.month === '2025-12-01');
+    assert.ok(october && november && december, 'e96 calendar must retain every reporting month when November has no qualifying orders');
+    assert.equal(Number(november.net_revenue), 0, 'An empty qualifying month must be represented by zero net revenue');
+    assert.equal(Number(november.previous_month_revenue), Number(october.net_revenue), 'November must compare with October');
+    assert.equal(Number(november.mom_change_pct), -100, 'A month falling from positive revenue to zero must show -100%');
+    assert.equal(Number(december.previous_month_revenue), 0, 'December must compare with zero-filled November, not skip back to October');
+    assert.equal(december.mom_change_pct, null, 'MoM change from a zero previous-month denominator must remain NULL');
+  } finally {
+    await db.exec('ROLLBACK;');
+  }
+
+  const e97Result = await runSelectExercise('e97');
+  const e97Oracle = await db.query(`
+    WITH first_created AS (
+      SELECT order_id, MIN(event_at) AS created_at
+      FROM order_events
+      WHERE event_type = 'created'
+      GROUP BY order_id
+    )
+    SELECT 'created' AS stage, COUNT(*)::int AS orders_count
+    FROM first_created
+    UNION ALL
+    SELECT 'shipped_after_created', COUNT(*)::int
+    FROM first_created c
+    WHERE EXISTS (
+      SELECT 1 FROM order_events shipped
+      WHERE shipped.order_id = c.order_id
+        AND shipped.event_type = 'shipped'
+        AND shipped.event_at > c.created_at
+    )
+    UNION ALL
+    SELECT 'delivered_after_shipped', COUNT(*)::int
+    FROM first_created c
+    WHERE EXISTS (
+      SELECT 1
+      FROM order_events shipped
+      JOIN order_events delivered
+        ON delivered.order_id = shipped.order_id
+       AND delivered.event_type = 'delivered'
+       AND delivered.event_at > shipped.event_at
+      WHERE shipped.order_id = c.order_id
+        AND shipped.event_type = 'shipped'
+        AND shipped.event_at > c.created_at
+    )
+  `);
+  assert.deepEqual(e97Result.rows, e97Oracle.rows, 'e97 ordered funnel counts must match an independent EXISTS-based oracle');
+
+  const e98Result = await runSelectExercise('e98');
+  const e98Oracle = await db.query(`
+    WITH metrics AS (
+      SELECT s.store_id, s.store_name,
+             (SELECT COUNT(*) FROM orders o WHERE o.store_id = s.store_id) AS all_orders,
+             (SELECT COUNT(*) FROM orders o WHERE o.store_id = s.store_id AND o.status = 'delivered') AS delivered_orders
+      FROM stores s
+    )
+    SELECT store_id, store_name, all_orders, delivered_orders,
+           ROUND(100.0 * delivered_orders / NULLIF(all_orders, 0), 2) AS delivered_pct
+    FROM metrics
+    ORDER BY delivered_pct DESC NULLS LAST, store_id
+  `);
+  assert.deepEqual(e98Result.rows, e98Oracle.rows, 'e98 must preserve stores without orders and calculate delivery conversion correctly');
+
+  const e99Result = await runSelectExercise('e99');
+  const e99Oracle = await db.query(`
+    WITH customer_city AS (
+      SELECT s.city, c.customer_id, c.customer_name,
+             COUNT(*) AS orders_count, SUM(o.total_amount) AS revenue
+      FROM orders o
+      JOIN customers c ON c.customer_id = o.customer_id
+      JOIN stores s ON s.store_id = o.store_id
+      WHERE o.status <> 'cancelled'
+      GROUP BY s.city, c.customer_id, c.customer_name
+    ),
+    ranked AS (
+      SELECT current_row.*,
+             (SELECT SUM(other_row.revenue)
+              FROM customer_city other_row
+              WHERE other_row.city = current_row.city) AS city_revenue,
+             1 + (SELECT COUNT(*)
+                  FROM customer_city other_row
+                  WHERE other_row.city = current_row.city
+                    AND (
+                      other_row.revenue > current_row.revenue
+                      OR (
+                        other_row.revenue = current_row.revenue
+                        AND other_row.customer_id < current_row.customer_id
+                      )
+                    )) AS position
+      FROM customer_city current_row
+    )
+    SELECT city, customer_name, orders_count, revenue,
+           ROUND(100.0 * revenue / NULLIF(city_revenue, 0), 2) AS city_share_pct
+    FROM ranked
+    WHERE position <= 2
+    ORDER BY city, position
+  `);
+  assert.deepEqual(e99Result.rows, e99Oracle.rows, 'e99 top-two customers and city shares must match independent correlated ranking');
+
   await db.exec("INSERT INTO orders VALUES (113, 1, NULL, 1, 'new', 0, '2026-01-16');");
   const fanOutWithEmptyOrder = await db.query(fanOutExercise.solution);
   assert.equal(fanOutWithEmptyOrder.rows.length, 13, 'Fan-out solution must retain an order with no item lines and no events');
