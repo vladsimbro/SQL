@@ -4832,7 +4832,7 @@ export const modules = [
         "title": "Временные метрики: длительность и SLA",
         "body": "В аналитике логистики и поддержки часто измеряют время между событиями: создание заказа, начало сборки, передача курьеру, доставка. Сначала нужно определить точные точки старта и финиша, единицу измерения, часовой пояс и правила для незавершённых процессов.\n\nРазность двух TIMESTAMPTZ даёт интервал между моментами. Для длительности в секундах можно использовать EXTRACT(EPOCH FROM finished_at - started_at). Если завершения ещё нет, результат будет NULL; не подменяй его нулём без бизнес-правила. Ноль означает мгновенное завершение, а NULL может означать, что событие ещё не произошло или данные отсутствуют.\n\nСреднее время часто скрывает длинный хвост распределения. Для SLA полезно смотреть медиану, 90-й или 95-й перцентиль, долю заказов в пределах целевого времени и отдельно незавершённые случаи. Также проверь отрицательные длительности: они могут указывать на ошибку порядка событий, неверный часовой пояс или некорректные исходные данные.\n\nЕсли в таблице событий может быть несколько записей одного типа на заказ, не соединяй created и delivered напрямую: несколько совпадений дадут fan-out. Сначала выбери по одному времени старта и завершения на заказ. В примере берётся первое событие created и последнее delivered; это правило нужно согласовать с бизнес-смыслом процесса.",
         "example": "WITH event_times AS (\n  SELECT order_id,\n         MIN(event_at) FILTER (WHERE event_type = 'created') AS started_at,\n         MAX(event_at) FILTER (WHERE event_type = 'delivered') AS finished_at\n  FROM order_events\n  GROUP BY order_id\n)\nSELECT order_id,\n       CASE WHEN finished_at IS NULL THEN NULL\n            ELSE ROUND(EXTRACT(EPOCH FROM finished_at - started_at) / 60.0, 2)::numeric(10,2)::text\n       END AS minutes_to_deliver,\n       CASE WHEN finished_at IS NULL THEN 'in_progress'\n            WHEN finished_at - started_at <= INTERVAL '6 hours' THEN 'within_sla'\n            ELSE 'breached'\n       END AS sla_status\nFROM event_times\nWHERE started_at IS NOT NULL\nORDER BY order_id;",
-        "note": "Фильтр delivered_at IS NOT NULL исключает незавершённые заказы из расчёта завершённой длительности. Их нужно считать отдельно, если метрика должна учитывать текущий backlog.",
+        "note": "Фильтр finished_at IS NOT NULL исключает незавершённые заказы из расчёта завершённой длительности. В примере незавершённые заказы сохранены со статусом in_progress; считай их отдельно, если метрика должна учитывать текущий backlog.",
         "simple": "Временная метрика начинается с точного определения событий и правил для незавершённых случаев.",
         "outcomes": [
           "Рассчитывать длительность между событиями",
@@ -9962,7 +9962,7 @@ export const exercises = [
     },
     "hint": "Для трёх календарных дней используй нижнюю включённую и верхнюю исключённую границы даты.",
     "hint2": "Определи тип временного значения и границы периода. Для timestamp обычно используй интервал [начало, конец), не BETWEEN.",
-    "hint3": "Каркас: WHERE ts >= TIMESTAMP '2026-01-01' AND ts < TIMESTAMP '2026-02-01';"
+    "hint3": "Каркас: WHERE created_at >= DATE '2026-01-11' AND created_at < DATE '2026-01-14' ORDER BY created_at, order_id;"
   },
   {
     "id": "e73",
@@ -9984,8 +9984,8 @@ export const exercises = [
       "explanation": "Номер месяца повторяется каждый год. DATE_TRUNC сохраняет и год, и месяц."
     },
     "hint": "DATE_TRUNC приводит каждую дату к началу месяца. После этого группируй по полученному значению.",
-    "hint2": "Сначала определи зерно результата: одна строка должна описывать именно ту группу, по которой выполняется агрегирование.",
-    "hint3": "Каркас: WHERE ts >= TIMESTAMP '2026-01-01' AND ts < TIMESTAMP '2026-02-01';"
+    "hint2": "Одна строка результата должна соответствовать календарному месяцу. DATE_TRUNC сохраняет год и месяц, поэтому одинаковые месяцы разных лет не сольются.",
+    "hint3": "Каркас: SELECT DATE_TRUNC('month', created_at::timestamp) AS month_start, SUM(total_amount) AS revenue FROM orders GROUP BY DATE_TRUNC('month', created_at::timestamp) ORDER BY month_start;"
   },
   {
     "id": "e74",
@@ -10007,8 +10007,8 @@ export const exercises = [
       "explanation": "ISODOW использует ISO-нумерацию: понедельник 1, воскресенье 7."
     },
     "hint": "EXTRACT(ISODOW ...) вернёт номер дня недели. Сгруппируй по этому номеру и посчитай заказы.",
-    "hint2": "Сначала определи зерно результата: одна строка должна описывать именно ту группу, по которой выполняется агрегирование.",
-    "hint3": "Каркас: WHERE ts >= TIMESTAMP '2026-01-01' AND ts < TIMESTAMP '2026-02-01';"
+    "hint2": "Зерно — один номер дня недели по ISO. Сгруппируй заказы по EXTRACT(ISODOW FROM created_at), затем посчитай строки.",
+    "hint3": "Каркас: SELECT EXTRACT(ISODOW FROM created_at) AS iso_day, COUNT(*) AS orders_count FROM orders GROUP BY EXTRACT(ISODOW FROM created_at) ORDER BY iso_day;"
   },
   {
     "id": "e75",
@@ -10030,16 +10030,16 @@ export const exercises = [
       "explanation": "GROUP BY не создаёт группы для отсутствующих дат. Календарная сетка создаёт ожидаемые периоды."
     },
     "hint": "Календарная сетка должна быть источником строк, а агрегат заказов присоединяется через LEFT JOIN.",
-    "hint2": "Сначала определи зерно результата: одна строка должна описывать именно ту группу, по которой выполняется агрегирование.",
-    "hint3": "Каркас: WHERE ts >= TIMESTAMP '2026-01-01' AND ts < TIMESTAMP '2026-02-01';"
+    "hint2": "Календарь должен задавать полный список дат. Сначала посчитай заказы по дням, затем присоедини этот набор к календарю через LEFT JOIN и замени отсутствие заказов на 0.",
+    "hint3": "Каркас: WITH calendar AS (SELECT generate_series(DATE '2026-01-10', DATE '2026-01-17', INTERVAL '1 day')::date AS day), daily AS (SELECT created_at, COUNT(*) AS orders_count FROM orders GROUP BY created_at) SELECT c.day, COALESCE(d.orders_count, 0) AS orders_count FROM calendar c LEFT JOIN daily d ON d.created_at = c.day ORDER BY c.day;"
   },
   {
     "id": "e76",
     "mode": "select",
     "m": "datetime",
     "title": "Время от создания до доставки",
-    "task": "Для заказов, у которых есть события создания и доставки, рассчитай длительность между этими событиями в часах.",
-    "solution": "SELECT created.order_id, EXTRACT(EPOCH FROM (delivered.event_at - created.event_at)) / 3600.0 AS delivery_hours FROM order_events created JOIN order_events delivered ON delivered.order_id = created.order_id WHERE created.event_type = 'created' AND delivered.event_type = 'delivered' ORDER BY created.order_id;",
+    "task": "Для каждого заказа, у которого есть оба типа событий, возьми самое раннее событие created и самое позднее delivered. Рассчитай длительность между ними в часах.",
+    "solution": "WITH event_times AS (SELECT order_id, MIN(event_at) FILTER (WHERE event_type = 'created') AS started_at, MAX(event_at) FILTER (WHERE event_type = 'delivered') AS finished_at FROM order_events GROUP BY order_id) SELECT order_id, EXTRACT(EPOCH FROM (finished_at - started_at)) / 3600.0 AS delivery_hours FROM event_times WHERE started_at IS NOT NULL AND finished_at IS NOT NULL ORDER BY order_id;",
     "orderMatters": false,
     "quiz": {
       "question": "Что возвращает EXTRACT(EPOCH FROM delivered_at - created_at)?",
@@ -10052,9 +10052,9 @@ export const exercises = [
       "answer": 1,
       "explanation": "Разность временных меток даёт интервал, а EPOCH переводит его длительность в секунды."
     },
-    "hint": "Найди временные метки нужных событий на уровне заказа, затем вычти время создания из времени доставки.",
-    "hint2": "Перед соединением проверь ключ и кардинальность связи: несколько совпадений справа могут размножить строки слева.",
-    "hint3": "Каркас: WHERE ts >= TIMESTAMP '2026-01-01' AND ts < TIMESTAMP '2026-02-01';"
+    "hint": "Сначала найди времена событий создания и доставки, затем вычти первое из второго и переведи секунды в часы.",
+    "hint2": "В order_events может быть несколько событий одного типа. Сначала сверни их по order_id: MIN(event_at) для created и MAX(event_at) для delivered. Не соединяй сырые события напрямую.",
+    "hint3": "Каркас: WITH event_times AS (SELECT order_id, MIN(event_at) FILTER (WHERE event_type = 'created') AS started_at, MAX(event_at) FILTER (WHERE event_type = 'delivered') AS finished_at FROM order_events GROUP BY order_id) SELECT order_id, EXTRACT(EPOCH FROM (finished_at - started_at)) / 3600.0 AS delivery_hours FROM event_times WHERE started_at IS NOT NULL AND finished_at IS NOT NULL ORDER BY order_id;"
   },
   {
     "id": "e77",
@@ -10077,7 +10077,7 @@ export const exercises = [
     },
     "hint": "AT TIME ZONE зависит от исходного типа: для timestamp без зоны задаётся интерпретация, для timestamptz выполняется отображение в зону.",
     "hint2": "Различай локальное время и конкретный момент времени. Часовой пояс влияет на преобразование, а не просто меняет подпись даты.",
-    "hint3": "Каркас: WHERE ts >= TIMESTAMP '2026-01-01' AND ts < TIMESTAMP '2026-02-01';"
+    "hint3": "Каркас: SELECT event_id, order_id, event_at AT TIME ZONE 'Europe/Warsaw' AS warsaw_time FROM order_events ORDER BY event_at, event_id;"
   },
   {
     "id": "e78",
@@ -10098,15 +10098,15 @@ export const exercises = [
       "explanation": "TIMESTAMPTZ представляет однозначный момент. TIMESTAMP WITHOUT TIME ZONE не содержит информации о часовом поясе."
     },
     "hint": "Различай DATE, TIMESTAMP и TIMESTAMPTZ: у них разный смысл и поведение при преобразованиях.",
-    "hint2": "Обе части операции должны возвращать одинаковое число столбцов с совместимыми типами. Помни, что UNION убирает дубликаты, а UNION ALL сохраняет.",
-    "hint3": "Каркас: WHERE ts >= TIMESTAMP '2026-01-01' AND ts < TIMESTAMP '2026-02-01';"
+    "hint2": "Каждый SELECT должен вернуть две текстовые колонки: имя выражения и тип, полученный через pg_typeof(... )::text. Объедини три строки через UNION ALL.",
+    "hint3": "Каркас: SELECT 'calendar_date' AS value_kind, pg_typeof(DATE '2026-11-07')::text AS data_type UNION ALL SELECT 'local_timestamp', pg_typeof(TIMESTAMP '2026-11-07 10:00:00')::text UNION ALL SELECT 'zoned_timestamp', pg_typeof(TIMESTAMPTZ '2026-11-07 10:00:00+00')::text;"
   },
   {
     "id": "e79",
     "mode": "select",
     "m": "datetime",
     "title": "Календарный сдвиг и длительность",
-    "task": "Рассчитай два значения от одной даты: дату через один календарный месяц и дату через 30 дней. Выведи оба результата и объясни разницу по значениям.",
+    "task": "Рассчитай два значения от одной даты: дату через один календарный месяц и дату через 30 дней. Выведи оба результата.",
     "solution": "SELECT DATE '2026-01-31' + INTERVAL '1 month' AS one_calendar_month, DATE '2026-01-31' + INTERVAL '30 days' AS thirty_days;",
     "quiz": {
       "question": "Почему INTERVAL '1 month' и INTERVAL '30 days' могут дать разные результаты?",
@@ -10120,8 +10120,8 @@ export const exercises = [
       "explanation": "Календарные месяцы имеют разную длину. Поэтому месяц нельзя считать фиксированными 30 днями."
     },
     "hint": "Интервал обозначает длительность, а не фиксированное число секунд. Сравни календарное смещение с разницей двух timestamp.",
-    "hint2": "Определи тип временного значения и границы периода. Для timestamp обычно используй интервал [начало, конец), не BETWEEN.",
-    "hint3": "Каркас: WHERE ts >= TIMESTAMP '2026-01-01' AND ts < TIMESTAMP '2026-02-01';"
+    "hint2": "Сравни календарное смещение INTERVAL '1 month' с фиксированным INTERVAL '30 days'. Для даты в конце месяца результаты могут разойтись.",
+    "hint3": "Каркас: SELECT DATE '2026-01-31' + INTERVAL '1 month' AS one_calendar_month, DATE '2026-01-31' + INTERVAL '30 days' AS thirty_days;"
   },
   {
     "id": "e80",
