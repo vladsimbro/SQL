@@ -9282,8 +9282,8 @@ export const exercises = [
     "task": "Верни одно число с общим количеством строк в orders. Назови столбец orders_count.",
     "solution": "SELECT COUNT(*) AS orders_count FROM orders;",
     "hint": "COUNT(*) считает строки таблицы. Здесь каждая строка orders соответствует одному заказу.",
-    "hint2": "Уточни, что именно считаешь: COUNT(*) считает строки, COUNT(столбец) игнорирует NULL, а COUNT(DISTINCT ...) считает уникальные ненулевые значения.",
-    "hint3": "Каркас: SELECT ключ, агрегат(значение) FROM таблица GROUP BY ключ HAVING условие;"
+    "hint2": "В условии требуется количество строк, а не количество заполненных значений отдельного столбца. Поэтому NULL в других полях не должен уменьшать результат.",
+    "hint3": "Каркас: SELECT COUNT(*) AS orders_count FROM orders;"
   },
   {
     "id": "e17",
@@ -9293,8 +9293,8 @@ export const exercises = [
     "task": "Посчитай общую сумму только доставленных заказов. Назови столбец delivered_revenue.",
     "solution": "SELECT SUM(total_amount) AS delivered_revenue FROM orders WHERE status = 'delivered';",
     "hint": "Отбери доставленные заказы до суммирования, чтобы в итог не попали другие статусы.",
-    "hint2": "Агрегат считает значения в текущем наборе строк. Проверь, не размножило ли JOIN исходные записи до вычисления суммы или среднего.",
-    "hint3": "Каркас: SELECT ключ, агрегат(значение) FROM таблица GROUP BY ключ HAVING условие;"
+    "hint2": "Сначала отфильтруй строки по статусу, затем суммируй оставшиеся суммы заказов. В этом задании JOIN не требуется.",
+    "hint3": "Каркас: SELECT SUM(total_amount) AS delivered_revenue FROM orders WHERE status = 'delivered';"
   },
   {
     "id": "e18",
@@ -9304,8 +9304,8 @@ export const exercises = [
     "task": "Найди среднюю сумму заказа по всем заказам. Назови поле average_order_amount.",
     "solution": "SELECT AVG(total_amount) AS average_order_amount FROM orders;",
     "hint": "Средний чек считается как AVG по сумме заказа, а не как сумма, делённая на число произвольных строк после JOIN.",
-    "hint2": "Агрегат считает значения в текущем наборе строк. Проверь, не размножило ли JOIN исходные записи до вычисления суммы или среднего.",
-    "hint3": "Каркас: SELECT ключ, агрегат(значение) FROM таблица GROUP BY ключ HAVING условие;"
+    "hint2": "AVG вычисляет среднее по непустым значениям total_amount. Не нужно отдельно делить SUM на COUNT и не нужно группировать все заказы в одну группу.",
+    "hint3": "Каркас: SELECT AVG(total_amount) AS average_order_amount FROM orders;"
   },
   {
     "id": "e19",
@@ -9315,8 +9315,8 @@ export const exercises = [
     "task": "Для каждого статуса посчитай число заказов. Выведи status и orders_count.",
     "solution": "SELECT status, COUNT(*) AS orders_count FROM orders GROUP BY status;",
     "hint": "Одна строка результата должна соответствовать одному статусу. Это зерно задаёт GROUP BY.",
-    "hint2": "Сначала определи зерно результата: одна строка должна описывать именно ту группу, по которой выполняется агрегирование.",
-    "hint3": "Каркас: SELECT ключ, агрегат(значение) FROM таблица GROUP BY ключ HAVING условие;"
+    "hint2": "В результате должны остаться два элемента: значение status как ключ группы и агрегат, который считает строки внутри каждой такой группы.",
+    "hint3": "Каркас: SELECT status, COUNT(*) AS orders_count FROM orders GROUP BY status;"
   },
   {
     "id": "e20",
@@ -9326,8 +9326,8 @@ export const exercises = [
     "task": "Посчитай количество заказов по статусам, но оставь только группы, в которых больше двух заказов.",
     "solution": "SELECT status, COUNT(*) AS orders_count FROM orders GROUP BY status HAVING COUNT(*) > 2;",
     "hint": "HAVING фильтрует группы после COUNT. Условие на число заказов не помещается в WHERE.",
-    "hint2": "Сначала определи зерно результата: одна строка должна описывать именно ту группу, по которой выполняется агрегирование.",
-    "hint3": "Каркас: SELECT ключ, агрегат(значение) FROM таблица GROUP BY ключ HAVING условие;"
+    "hint2": "Раздели два условия: статус или другая характеристика отдельного заказа фильтруется через WHERE, а число заказов внутри готовой группы — через HAVING.",
+    "hint3": "Каркас: SELECT status, COUNT(*) AS orders_count FROM orders GROUP BY status HAVING COUNT(*) > 2;"
   },
   {
     "id": "e21",
@@ -9338,7 +9338,7 @@ export const exercises = [
     "solution": "SELECT COUNT(*) AS total_orders, COUNT(*) FILTER (WHERE status = 'delivered') AS delivered_orders FROM orders;",
     "hint": "Обе метрики должны считаться на одном уровне группировки. Проверь, что агрегаты не соединяются с деталями.",
     "hint2": "FILTER ограничивает строки только для конкретного агрегата. Другие агрегаты в том же SELECT продолжают видеть общий набор.",
-    "hint3": "Каркас: SELECT ключ, агрегат(значение) FROM таблица GROUP BY ключ HAVING условие;"
+    "hint3": "Каркас: COUNT(*) AS total_orders, COUNT(*) FILTER (WHERE status = 'delivered') AS delivered_orders"
   },
   {
     "id": "e22",
