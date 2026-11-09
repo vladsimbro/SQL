@@ -110,11 +110,11 @@ assert.ok(curriculumSource.includes('export const learningTracks = [') && curric
 assert.ok(Array.isArray(glossary) && glossary.length >= 30, 'Glossary must contain at least 30 usable terms');
 assert.ok(Array.isArray(reference) && reference.length >= 8, 'SQL quick reference must contain usable topic groups');
 assert.ok(exercises.every(exercise => ['select','explain','mutation','transaction'].includes(exercise.mode)), 'Every exercise must have a supported explicit mode');
-assert.equal(exercises.filter(exercise => exercise.mode === 'select').length, 89, 'Expected 89 SELECT exercises');
+assert.equal(exercises.filter(exercise => exercise.mode === 'select').length, 90, 'Expected 90 SELECT exercises');
 assert.equal(exercises.filter(exercise => exercise.mode === 'explain').length, 4, 'Expected four EXPLAIN exercises');
-assert.equal(exercises.filter(exercise => exercise.mode === 'mutation').length, 28, 'Expected twenty-eight mutation exercises');
+assert.equal(exercises.filter(exercise => exercise.mode === 'mutation').length, 30, 'Expected thirty mutation exercises');
 assert.equal(exercises.filter(exercise => exercise.mode === 'transaction').length, 4, 'Expected four transaction exercises');
-assert.equal(exercises.length, 125, 'Expected 125 total practice exercises');
+assert.equal(exercises.length, 128, 'Expected 128 total practice exercises');
 assert.ok(exercises.every(exercise => modules.some(module => module.id === exercise.m)), 'Every exercise must belong to a real module');
 const fanoutLesson = modules.find(module => module.id === 'joins')?.lessons.find(lesson => lesson.id === 'joins.fan-out-pochemu-join-umnozhaet-stroki');
 assert.deepEqual(fanoutLesson?.practiceIds, ['e103'], 'The fan-out lesson must link its dedicated practice exercise exactly once');
@@ -444,6 +444,14 @@ assert.deepEqual(performanceQualityModule.lessons.find(lesson => lesson.title ==
 assert.ok(performanceQualityModule.lessons.find(lesson => lesson.title === 'Параметры запроса и prepared statements').example.includes('DEALLOCATE orders_by_customer_demo'), 'Prepared-statement example must clean up its statement');
 assert.ok(performanceQualityModule.lessons.find(lesson => lesson.title === 'Статистика, ANALYZE и VACUUM').note.includes('нельзя выполнять внутри транзакционного блока'), 'VACUUM note must explain the transaction-block restriction');
 assert.ok(exercises.find(exercise => exercise.id === 'e101').solution.includes('GROUP BY customer_id'), 'Plan-reading exercise must include an aggregate node');
+const advancedQualityModule = modules.find(module => module.id === 'advanced');
+assert.deepEqual(advancedQualityModule.lessons.find(lesson => lesson.title === 'Полнотекстовый поиск').practiceIds, ['e127'], 'Full-text lesson must link its search task');
+assert.deepEqual(advancedQualityModule.lessons.find(lesson => lesson.title === 'Партиционирование').practiceIds, ['e126'], 'Partitioning lesson must link its range-partition task');
+assert.deepEqual(advancedQualityModule.lessons.find(lesson => lesson.title === 'Системные каталоги и information_schema').practiceIds, ['e128'], 'Metadata lesson must link its schema-inspection task');
+assert.ok(advancedQualityModule.lessons.find(lesson => lesson.title === 'Полнотекстовый поиск').example.includes('USING GIN'), 'Full-text example must show a GIN index');
+assert.ok(advancedQualityModule.lessons.find(lesson => lesson.title === 'Партиционирование').example.includes('PARTITION OF'), 'Partitioning example must create actual child partitions');
+assert.ok(advancedQualityModule.lessons.find(lesson => lesson.title === 'Временные и UNLOGGED-таблицы').note.includes('PGlite'), 'UNLOGGED note must distinguish server WAL behavior from the browser sandbox');
+
 
 const aggregateModule = modules.find(module => module.id === 'aggregates');
 assert.deepEqual(aggregateModule.lessons.find(lesson => lesson.title === 'DISTINCT внутри агрегатов').exampleResult.rows, [[3,4000,3000]], 'SUM(DISTINCT amount) must demonstrate lost revenue when two orders share an amount');
@@ -1003,6 +1011,10 @@ try {
           assert.deepEqual(observed.rows, [{predicate_ok:true}], 'Partial index must preserve the requested WHERE predicate');
         } else if (exercise.id === 'e124') {
           assert.deepEqual(observed.rows, [{stats_count:1}], 'CREATE STATISTICS must register the extended statistics object');
+        } else if (exercise.id === 'e126') {
+          assert.deepEqual(observed.rows, [{event_id:1,partition_name:'practice_events_2026_01'},{event_id:2,partition_name:'practice_events_2026_02'}], 'Range partitioning must route each event into the matching month partition');
+        } else if (exercise.id === 'e127') {
+          assert.deepEqual(observed.rows, [{match_count:2,first_id:1,last_id:3,index_count:1}], 'Full-text search must find only matching documents and create the GIN index');
         } else if (exercise.id === 'e68') {
           assert.equal(observed.rows.length, 1, 'Index task must create the requested index');
           assert.match(observed.rows[0].indexdef, /\(status\)/i, 'Index task must index the status column');
@@ -1037,6 +1049,11 @@ try {
     }
     checked++;
   }
+
+  const e128Task = exercises.find(exercise => exercise.id === 'e128');
+  assert.ok(e128Task && e128Task.mode === 'select', 'Schema-inspection task must be a read-only SELECT');
+  const e128Result = await db.query(e128Task.solution);
+  assert.deepEqual(e128Result.rows.map(row => [row.column_name, row.data_type]), [['order_id','bigint'],['store_id','bigint'],['employee_id','bigint'],['customer_id','bigint'],['status','text'],['total_amount','numeric'],['created_at','date']], 'information_schema task must return the real orders column names and types in ordinal order');
 
   // Analytical exercises must return the intended metrics, not merely execute.
   const runSelectExercise = async id => {
