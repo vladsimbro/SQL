@@ -7,7 +7,7 @@
 - Репозиторий: https://github.com/vladsimbro/SQL
 - GitHub Pages: https://vladsimbro.github.io/SQL/
 - Основная ветка: `main`; на момент последней проверки других веток нет.
-- Последний commit в `main`: `f07a31feba39b6d3af7136cc45ff2ce0c2addc7e` (squash merge PR #31).
+- HEAD `main`: `ee64284764aafa7539141e6b97c07e62d1d7d95e` (последнее обновление пользовательского журнала); последний commit с изменениями кода — `f07a31feba39b6d3af7136cc45ff2ce0c2addc7e` (squash merge PR #31).
 - Build в `version.json`: `20261110-132`.
 - Предыдущий build `20261110-129` на code HEAD `67c9dfd1b660b4cb5b3dd2f0a52352993f325bdc` полностью подтверждён: validate, deploy, browser-smoke и Pages build SUCCESS (workflow `42717849478`, Pages `42717848933`).
 - Последний commit с содержательными изменениями учебного модуля INSERT: `f07a31feba39b6d3af7136cc45ff2ce0c2addc7e`.
