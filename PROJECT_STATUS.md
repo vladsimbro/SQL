@@ -1,17 +1,17 @@
 # SQL Academy — актуальное состояние и передача разработки
 
-Последнее обновление: 2026-11-09; аудит подзапросов e27–e30/e58 завершён и опубликован в build 119; начат аудит CTE, build 20261109-120 ожидает CI.
+Последнее обновление: 2026-11-09; CTE-аудит и исправления e32/e59 прошли build 120; начат аудит set operations, build 20261109-121 ожидает CI.
 
 ## 1. Репозиторий и проверенные ревизии
 
 - Репозиторий: https://github.com/vladsimbro/SQL
 - GitHub Pages: https://vladsimbro.github.io/SQL/
 - Основная ветка: main; GitHub API подтверждает единственную ветку main.
-- Последний code commit перед текущим обновлением статуса: `026186eb0905525d73fec09f7cd1a8a07b42abb8`.
-- Build приложения: `20261109-120`.
-- Workflow `42541167269` на 026186e: QUEUED; Pages workflow `42541168371`: QUEUED.
-- Последний полностью проверенный build: `20261109-119`. Workflow `42540934525` на acd48f6: validate, deploy и browser-smoke — SUCCESS. Pages workflow `42540969904` на status commit a86af49: build, report-build-status и deploy — SUCCESS.
-- Build 119 опубликован и проверен. Browser-smoke: shellReadyMs=1257, recoveryMs=6926, resetReadyMs=6176; ширины 390 и 320 px; PGlite retry, выполнение SQL, сохранение черновика, reset базы, мобильная навигация, backup validation и отказ от восстановления проверены.
+- Последний code commit перед текущим обновлением статуса: `a5280f0963e70ceead3fbefe55501bce289857eb`.
+- Build приложения: `20261109-121`.
+- Workflow `42541362927` на a5280f0: IN_PROGRESS; Pages workflow `42541363654`: IN_PROGRESS.
+- Последний полностью проверенный build: `20261109-120`. Workflow `42541167269` на 026186e: validate, deploy и browser-smoke — SUCCESS. Pages workflow `42541213394` на status commit 0a4b121: build, report-build-status и deploy — SUCCESS.
+- Build 120 опубликован и проверен. Browser-smoke: shellReadyMs=640, recoveryMs=6078, resetReadyMs=4981; ширины 390 и 320 px; PGlite retry, выполнение SQL, сохранение черновика, reset базы, мобильная навигация, backup validation и отказ от восстановления проверены. Artifact `sql-academy-ux-audit-screenshots`, ID `13641970046`.
 - Открытых Pull Requests нет. Ветка только main; незавершённых переносов между ветками не обнаружено.
 - Изменения выполнялись через GitHub API; локальный clone и локальный git status не использовались.
 - Предыдущие SHA/build/workflow в исторических разделах ниже относятся к прежним состояниям. Для текущего состояния использовать этот раздел и финальную передачу в конце документа.
@@ -861,3 +861,45 @@ e31 оставлен без изменений: его подсказки кор
 - Последний результат тестирования: build 119 / workflow `42540934525` — validate, deploy и browser-smoke SUCCESS; build 120 пока не проверен.
 - Состояние GitHub: изменения в main; новые ветки и PR не создавались.
 - Состояние GitHub Pages: build 119 опубликован и проверен; build 120 ожидает workflow `42541168371`.
+
+## 21. Сессия разработки — set operations
+
+### Выполненная работа
+
+Статус: IMPLEMENTED; build 121 ожидает CI.
+
+Проверены четыре урока модуля setops: UNION/UNION ALL, INTERSECT, EXCEPT, скобки и порядок операций. Теория корректно объясняет сравнение полных строк, совместимость столбцов по позициям, кратность, направленность EXCEPT и общий ORDER BY.
+
+В e33/e34 подсказки были слишком общими и в e34 продолжали описывать UNION вместо EXCEPT. Исправлено:
+- e33: hint2 объясняет, что UNION удаляет повторы всей строки результата; поскольку выбран один customer_id, повторные ID остаются по одному разу. hint3 соответствует реальной задаче UNION.
+- e34: hint2 подчёркивает направленность EXCEPT и порядок множеств; hint3 показывает EXCEPT вместо UNION.
+
+Отдельные задания для INTERSECT и комбинированных операций не добавлялись: соответствующие темы покрыты примерами и контрольными вопросами, а увеличение банка заданий без явной учебной необходимости не требуется.
+
+Изменения:
+- Commit `c4287a83484fe66e6505174370b2df45d5500f53`: подсказки e33/e34.
+- Commit `f433a568238edac3d8be720136f6434e9f858a4b`: version 20261109-121.
+- Commit `a5280f0963e70ceead3fbefe55501bce289857eb`: cache-busting imports для build 121; текущий code HEAD перед обновлением этого документа.
+
+### Проверка предыдущего блока CTE
+
+- Build 120 / workflow `42541167269`: JS syntax, `npm run test:curriculum`, deploy и browser-smoke — SUCCESS.
+- Проверка curriculum smoke: 81 таблица ожидаемых результатов уроков, 114 исполняемых SQL-примеров, 103 практических задания, 350 случайных задач, 14 таблиц seed DB.
+- Browser-smoke подтвердил build 20261109-120, shellReadyMs=640, recoveryMs=6078, resetReadyMs=4981, ширины 390 и 320 px, PGlite retry, выполнение SQL, сохранение черновика, reset базы, мобильную навигацию и backup validation.
+- Pages workflow `42541213394` на status commit 0a4b121: build/deploy SUCCESS.
+
+### Тестирование и публикация
+
+- Build 121: workflow `42541362927` и Pages workflow `42541363654` — IN_PROGRESS на момент обновления документа.
+- Последний полностью подтверждённый build — 120.
+- Локальные тесты не запускались.
+
+### Последние контрольные пункты
+
+- Последняя завершённая задача: CTE-аудит и исправление подсказок e32/e59 — DEPLOYED_VERIFIED в build 120.
+- Текущая незавершённая задача: аудит set operations и проверка build 121 — IN_PROGRESS; подсказки e33/e34 исправлены.
+- Следующая конкретная задача: дождаться CI build 121, проверить e33/e34, затем перейти к модулю «Дата, время и временная аналитика» и заданиям e72–e79.
+- Последний code commit SHA перед статусным commit: `a5280f0963e70ceead3fbefe55501bce289857eb`.
+- Последний результат тестирования: build 120 / workflow `42541167269` — validate, deploy и browser-smoke SUCCESS; build 121 ещё проверяется.
+- Состояние GitHub: изменения в main; новые ветки и PR не создавались.
+- Состояние GitHub Pages: build 120 опубликован и проверен; build 121 ожидает workflow `42541363654`.
