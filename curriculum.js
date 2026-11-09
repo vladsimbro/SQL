@@ -8226,7 +8226,9 @@ export const modules = [
         "example": "CREATE INDEX IF NOT EXISTS idx_customers_lower_name\nON customers (lower(customer_name));\n\nCREATE INDEX IF NOT EXISTS idx_orders_open\nON orders (created_at)\nWHERE status = 'open';",
         "note": "Expression index полезен только при совпадающем выражении запроса и подходящем операторном классе.",
         "simple": "B-tree не единственный вариант. GIN, GiST и BRIN решают другие классы задач.",
-        "practiceIds": [],
+        "practiceIds": [
+          "e123"
+        ],
         "outcomes": [
           "Различать expression, partial, GIN, GiST и BRIN",
           "выбирать индекс под оператор и данные."
@@ -8306,7 +8308,9 @@ export const modules = [
         "simple": "В составном индексе ведущие столбцы задают доступный путь поиска. Порядок проектируется под запросы.",
         "example": "CREATE INDEX IF NOT EXISTS idx_orders_status_date\nON orders (status, created_at DESC);",
         "note": "Не существует универсального правила «самый селективный столбец всегда первый». Учитывай паттерны запросов и сортировку.",
-        "practiceIds": [],
+        "practiceIds": [
+          "e122"
+        ],
         "outcomes": [
           "Подбирать порядок столбцов индекса по шаблонам фильтрации и сортировки.",
           "Объяснить, почему индекс с другим ведущим столбцом может не подойти запросу."
@@ -8412,7 +8416,9 @@ export const modules = [
         "example": "-- Менее удачный для обычного индекса по created_at вариант\nSELECT order_id\nFROM orders\nWHERE created_at::date = DATE '2026-01-15';\n\n-- Диапазон по исходному столбцу\nSELECT order_id\nFROM orders\nWHERE created_at >= TIMESTAMP '2026-01-15 00:00:00'\n  AND created_at <  TIMESTAMP '2026-01-16 00:00:00';",
         "note": "Не объявляй функцию или CAST проблемой автоматически: expression index, типы операторов и оценки планировщика могут изменить результат. Проверяй план.",
         "simple": "Чем ближе условие к диапазону или сравнению самого индексированного значения, тем проще B-tree применить его напрямую.",
-        "practiceIds": [],
+        "practiceIds": [
+          "e125"
+        ],
         "outcomes": [
           "Переписывать фильтр по дате в полуоткрытый диапазон",
           "понимать, когда нужен expression index и почему ведущий wildcard мешает обычному B-tree."
@@ -8450,7 +8456,9 @@ export const modules = [
         "example": "CREATE STATISTICS IF NOT EXISTS orders_status_customer_stats\n  (dependencies, ndistinct, mcv)\nON status, customer_id\nFROM orders;\n\nANALYZE orders;\n\nEXPLAIN (ANALYZE, BUFFERS)\nSELECT *\nFROM orders\nWHERE status = 'delivered'\n  AND customer_id = 1;",
         "note": "CREATE STATISTICS описывает совместное распределение столбцов одной таблицы. Не путай её с индексом: она помогает оценкам, но сама не ускоряет поиск строк.",
         "simple": "Если PostgreSQL ошибается в числе ожидаемых строк из-за связи между столбцами, расширенная статистика может улучшить оценку.",
-        "practiceIds": [],
+        "practiceIds": [
+          "e124"
+        ],
         "outcomes": [
           "Объяснить, почему независимые оценки фильтров могут ошибаться",
           "различать CREATE STATISTICS и CREATE INDEX."
