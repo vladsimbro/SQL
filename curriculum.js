@@ -9456,9 +9456,9 @@ export const exercises = [
     "title": "Выручка по статусу через два этапа",
     "task": "Сначала посчитай количество и сумму заказов по каждому статусу в CTE status_stats, затем выведи только группы с выручкой выше 3 000.",
     "solution": "WITH status_stats AS (SELECT status, COUNT(*) AS orders_count, SUM(total_amount) AS revenue FROM orders GROUP BY status) SELECT status, orders_count, revenue FROM status_stats WHERE revenue > 3000;",
-    "hint": "Первый этап сформируй на исходных заказах, второй агрегируй результат. Не смешивай промежуточное и итоговое зерно.",
-    "hint2": "Сначала определи зерно результата: одна строка должна описывать именно ту группу, по которой выполняется агрегирование.",
-    "hint3": "Каркас: WITH подготовка AS (SELECT ...) SELECT ... FROM подготовка;"
+    "hint": "Внутри CTE сгруппируй заказы по status и рассчитай обе метрики. Внешний SELECT уже фильтрует готовые группы по revenue.",
+    "hint2": "Зерно CTE — один статус на строку. После GROUP BY статус уже агрегирован, поэтому порог revenue > 3000 проверяй во внешнем запросе.",
+    "hint3": "Каркас: WITH status_stats AS (SELECT status, COUNT(*) AS orders_count, SUM(total_amount) AS revenue FROM orders GROUP BY status) SELECT status, orders_count, revenue FROM status_stats WHERE revenue > 3000;"
   },
   {
     "id": "e33",
@@ -9768,7 +9768,7 @@ export const exercises = [
     "solution": "WITH RECURSIVE numbers(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM numbers WHERE n < 10) SELECT n FROM numbers ORDER BY n;",
     "hint": "Рекурсивный CTE состоит из стартовой строки и шага, который ссылается на предыдущее поколение.",
     "hint2": "Обе части операции должны возвращать одинаковое число столбцов с совместимыми типами. Помни, что UNION убирает дубликаты, а UNION ALL сохраняет.",
-    "hint3": "Каркас: WITH подготовка AS (SELECT ...) SELECT ... FROM подготовка;"
+    "hint3": "Каркас: WITH RECURSIVE numbers(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM numbers WHERE n < 10) SELECT n FROM numbers ORDER BY n;"
   },
   {
     "id": "e60",
