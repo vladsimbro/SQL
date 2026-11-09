@@ -10202,6 +10202,41 @@ export const exercises = [
     "hint3": "Каркас: WHERE created_at >= TIMESTAMP 'начало' AND created_at < TIMESTAMP 'следующий день';"
   },
   {
+    "id": "e126",
+    "m": "advanced",
+    "title": "Распредели события по партициям",
+    "task": "Создай таблицу practice_events с партиционированием RANGE по occurred_at и две месячные партиции: январь и февраль 2026 года. Добавь по одному событию в каждый месяц и проверь, в какой физической партиции оказалась каждая строка.",
+    "solution": "CREATE TABLE practice_events (event_id INTEGER NOT NULL, occurred_at DATE NOT NULL, payload TEXT) PARTITION BY RANGE (occurred_at);\nCREATE TABLE practice_events_2026_01 PARTITION OF practice_events FOR VALUES FROM ('2026-01-01') TO ('2026-02-01');\nCREATE TABLE practice_events_2026_02 PARTITION OF practice_events FOR VALUES FROM ('2026-02-01') TO ('2026-03-01');\nINSERT INTO practice_events VALUES (1, DATE '2026-01-15', 'January'), (2, DATE '2026-02-15', 'February');",
+    "mode": "mutation",
+    "checkQuery": "SELECT event_id, tableoid::regclass::text AS partition_name FROM practice_events ORDER BY event_id;",
+    "hint": "RANGE-партиционирование распределяет строки по полуоткрытым диапазонам ключа: нижняя граница включается, верхняя исключается.",
+    "hint2": "Сначала создай родительскую таблицу с PARTITION BY RANGE, затем отдельные таблицы PARTITION OF с непересекающимися границами.",
+    "hint3": "Каркас: CREATE TABLE ... PARTITION BY RANGE (дата); CREATE TABLE ... PARTITION OF ... FOR VALUES FROM (...) TO (...);"
+  },
+  {
+    "id": "e127",
+    "m": "advanced",
+    "title": "Найди документы полнотекстовым поиском",
+    "task": "Создай временную таблицу practice_documents с текстом документов. Добавь два документа со словом coffee и один без него. Создай GIN-индекс по to_tsvector('simple', body), найди совпадения через @@ и проверь количество найденных документов и наличие индекса.",
+    "solution": "CREATE TEMP TABLE practice_documents (doc_id INTEGER PRIMARY KEY, body TEXT NOT NULL);\nINSERT INTO practice_documents VALUES (1, 'Coffee beans and espresso'), (2, 'Black tea leaves'), (3, 'Coffee grinder');\nCREATE INDEX practice_documents_search_idx ON practice_documents USING GIN (to_tsvector('simple', body));",
+    "mode": "mutation",
+    "checkQuery": "SELECT COUNT(*)::int AS match_count, MIN(doc_id)::int AS first_id, MAX(doc_id)::int AS last_id, (SELECT COUNT(*)::int FROM pg_indexes WHERE indexname = 'practice_documents_search_idx') AS index_count FROM practice_documents WHERE to_tsvector('simple', body) @@ plainto_tsquery('simple', 'coffee');",
+    "hint": "Полнотекстовый поиск сравнивает нормализованные лексемы, а не просто подстроки исходного текста.",
+    "hint2": "Построй одинаковый to_tsvector для индексируемого столбца и условия поиска, затем используй оператор @@.",
+    "hint3": "Каркас: CREATE INDEX ... USING GIN (to_tsvector('simple', body)); затем WHERE to_tsvector(...) @@ plainto_tsquery(...);"
+  },
+  {
+    "id": "e128",
+    "mode": "select",
+    "m": "advanced",
+    "title": "Изучи фактическую структуру orders",
+    "task": "Через information_schema.columns выведи названия столбцов и типы данных таблицы orders в физическом порядке. Не угадывай схему по памяти — используй метаданные базы.",
+    "solution": "SELECT column_name, data_type\nFROM information_schema.columns\nWHERE table_schema = 'public' AND table_name = 'orders'\nORDER BY ordinal_position;",
+    "hint": "information_schema.columns хранит по одной строке на каждый столбец доступной таблицы.",
+    "hint2": "Ограничь метаданные схемой public и таблицей orders, а порядок задай через ordinal_position.",
+    "hint3": "Каркас: SELECT column_name, data_type FROM information_schema.columns WHERE table_schema = ... AND table_name = ... ORDER BY ordinal_position;"
+  },
+  {
     "id": "e72",
     "mode": "select",
     "m": "datetime",
