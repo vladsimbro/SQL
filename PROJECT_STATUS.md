@@ -1,13 +1,13 @@
 # SQL Academy — актуальное состояние и передача разработки
 
-Последнее обновление: 2026-11-09; исправлены несоответствия подсказок SELECT-практики e03–e15, build 20261109-114 прошёл validate/deploy; browser-smoke ожидает завершения.
+Последнее обновление: 2026-11-09; аудит SELECT-практики e03–e15 завершён, build 20261109-114 прошёл validate, deploy и browser-smoke; публикация проверена.
 
 ## 1. Репозиторий и текущий HEAD
 
 - Репозиторий: https://github.com/vladsimbro/SQL
 - GitHub Pages: https://vladsimbro.github.io/SQL/
 - Основная ветка: main; GitHub API подтверждает единственную ветку main.
-- Текущий HEAD main: 663a8db655daec234296beb9682ecfd645c5ab30 (последний commit обновил PROJECT_STATUS.md; новый статусный commit фиксирует завершение browser-smoke).
+- Последний проверенный статусный commit main: 532f9887f98baed250ccf5976c19abe3654c6b4d; последний code/test commit: 3545fa0307539eaff7a475f66ff23be1f53c244f.
 - Последний проверенный code/test commit: 3545fa0307539eaff7a475f66ff23be1f53c244f.
 - Build приложения: 20261109-114.
 - Workflow 42537758934 на 3545fa0: validate, deploy и browser-smoke — success.
