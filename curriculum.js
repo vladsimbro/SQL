@@ -7208,7 +7208,8 @@ export const modules = [
         "note": "Число, порядок и типы выражений в SELECT должны соответствовать целевому списку столбцов.",
         "simple": "INSERT ... SELECT переносит результат одного запроса в другую таблицу.",
         "practiceIds": [
-          "e67"
+          "e67",
+          "e111"
         ],
         "outcomes": [
           "Вставлять несколько строк и результат SELECT",
@@ -7231,11 +7232,13 @@ export const modules = [
       },
       {
         "title": "DEFAULT, RETURNING и безопасная проверка",
-        "body": "DEFAULT позволяет попросить PostgreSQL применить значение по умолчанию для конкретного столбца. RETURNING возвращает вставленные строки, в том числе сгенерированные ID и значения DEFAULT.\n\nЭто особенно полезно, если ключ генерируется IDENTITY: не нужно отдельным запросом искать последнюю вставленную запись. RETURNING возвращает точный ID той строки, которую создал текущий INSERT.\n\nПроверяй результат вставки до продолжения процесса. Если INSERT выполняется внутри транзакции, можно посмотреть RETURNING и при необходимости откатить операцию. Но RETURNING не заменяет проверки уникальности и бизнес-ограничений.\n\nВ учебной таблице orders обязательны store_id, customer_id, status, total_amount и created_at. Поэтому при INSERT нельзя указывать только customer_id и status: остальные обязательные поля тоже должны получить значение.",
+        "body": "DEFAULT позволяет попросить PostgreSQL применить значение по умолчанию для конкретного столбца. RETURNING возвращает вставленные строки, в том числе сгенерированные ID и значения DEFAULT.\n\nПропустить столбец и явно указать DEFAULT — два способа попросить PostgreSQL применить значение по умолчанию. Явный NULL — переданное значение, а не просьба применить DEFAULT; если столбец имеет ограничение NOT NULL, такая вставка завершится ошибкой.\n\nЭто особенно полезно, если ключ генерируется IDENTITY: не нужно отдельным запросом искать последнюю вставленную запись. RETURNING возвращает точный ID той строки, которую создал текущий INSERT.\n\nПроверяй результат вставки до продолжения процесса. Если INSERT выполняется внутри транзакции, можно посмотреть RETURNING и при необходимости откатить операцию. Но RETURNING не заменяет проверки уникальности и бизнес-ограничений.\n\nВ учебной таблице orders обязательны store_id, customer_id, status, total_amount и created_at. Поэтому при INSERT нельзя указывать только customer_id и status: остальные обязательные поля тоже должны получить значение.",
         "example": "CREATE TEMP TABLE example_orders (\n  order_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,\n  status TEXT NOT NULL DEFAULT 'new',\n  created_at DATE NOT NULL DEFAULT CURRENT_DATE\n);\n\nINSERT INTO example_orders DEFAULT VALUES\nRETURNING order_id, status, created_at;",
         "note": "Не ищи последний ID через MAX(id): при параллельной работе это может вернуть чужую запись.",
         "simple": "DEFAULT использует настройку столбца, RETURNING показывает фактически вставленные значения.",
-        "practiceIds": [],
+        "practiceIds": [
+          "e110"
+        ],
         "outcomes": [
           "Использовать DEFAULT и RETURNING",
           "получать созданный идентификатор безопасным способом."
@@ -7259,7 +7262,7 @@ export const modules = [
         "title": "COPY и импорт CSV",
         "body": "COPY предназначен для массовой загрузки и выгрузки данных. Он обычно эффективнее множества отдельных INSERT, особенно при больших объёмах. PostgreSQL поддерживает COPY FROM и COPY TO, а клиент psql имеет команды \\copy для работы с файлами на машине клиента.\n\nВажно различать COPY и \\copy. Серверный COPY читает или записывает файл с точки зрения сервера и требует соответствующих прав на файловую систему. \\copy выполняется клиентом psql и использует файл на компьютере пользователя.\n\nCSV требует аккуратной обработки разделителей, кавычек, NULL и кодировки. Перед массовым импортом проверь формат, заголовок и типы данных на небольшой тестовой выборке.",
         "example": "\\copy staging_orders (order_id, customer_id, total_amount)\nFROM './orders.csv'\nWITH (FORMAT csv, HEADER true, ENCODING 'UTF8');",
-        "note": "Не путай права PostgreSQL на серверный файл с доступом psql к локальному файлу пользователя.",
+        "note": "Команда \\copy выполняется клиентом psql и не является SQL-запросом: её нельзя запустить в браузерной песочнице PGlite. Не путай доступ psql к локальному файлу с правами серверного COPY.",
         "simple": "COPY оптимизирован для массового обмена данными. \\copy в psql читает файл на стороне клиента.",
         "practiceIds": [],
         "outcomes": [
@@ -9808,14 +9811,14 @@ export const exercises = [
   {
     "id": "e62",
     "m": "inserts",
-    "title": "Добавь новую категорию",
+    "title": "Добавь новый товар",
     "task": "Добавь в таблицу products новый товар с product_id = 99, названием 'Sample item', категорией 'Accessories' и ценой 450. Проверка убедится, что строка действительно появилась.",
     "solution": "INSERT INTO products (product_id, product_name, category, price) VALUES (99, 'Sample item', 'Accessories', 450);",
     "mode": "mutation",
     "checkQuery": "SELECT product_id, product_name, category, price FROM products WHERE product_id = 99;",
-    "hint": "Новая категория должна соответствовать структуре таблицы. После INSERT проверь добавленную строку через RETURNING или SELECT.",
-    "hint2": "При вставке явно сопоставь список целевых столбцов со значениями или столбцами SELECT в том же порядке.",
-    "hint3": "Каркас: INSERT INTO цель (столбцы) VALUES (...); либо INSERT INTO цель (...) SELECT ...;"
+    "hint": "Перед вставкой определи, какие значения должны попасть в новую запись и какие ограничения таблицы нужно соблюсти.",
+    "hint2": "Явно назови целевые столбцы: так значения будут связаны с нужными полями, а не с физическим порядком таблицы.",
+    "hint3": "Используй форму INSERT INTO таблица (столбцы) VALUES (значения); и после вставки проверь созданную запись."
   },
   {
     "id": "e63",
@@ -9873,9 +9876,33 @@ export const exercises = [
     "solution": "CREATE TEMP TABLE practice_products (product_id BIGINT, product_name TEXT, price NUMERIC(10, 2));\nINSERT INTO practice_products (product_id, product_name, price)\nSELECT product_id, product_name, price\nFROM products\nWHERE category = 'Техника';",
     "mode": "mutation",
     "checkQuery": "SELECT product_id, product_name, price FROM practice_products ORDER BY product_id;",
-    "hint": "Здесь нужно сначала сформировать набор SELECT, а затем передать его в INSERT с явным списком целевых столбцов.",
-    "hint2": "При создании таблицы проверь не только типы, но и ограничения целостности: ключи, обязательность и допустимые значения.",
-    "hint3": "Каркас: INSERT INTO цель (столбцы) VALUES (...); либо INSERT INTO цель (...) SELECT ...;"
+    "hint": "Сначала подготовь целевую временную таблицу. Затем отдельно проверь SELECT, который должен стать источником новых строк.",
+    "hint2": "В INSERT ... SELECT количество и порядок выражений источника должны соответствовать целевым столбцам; отфильтруй только нужную категорию.",
+    "hint3": "Каркас: INSERT INTO цель (столбцы) SELECT выражения FROM источник WHERE условие;"
+  },
+  {
+    "id": "e110",
+    "m": "inserts",
+    "title": "Используй DEFAULT и верни созданную запись",
+    "task": "Создай временную таблицу очереди импорта с автоматически генерируемым идентификатором и статусом по умолчанию 'queued'. Добавь запись с источником 'manual', не передавая идентификатор и статус в INSERT. Верни созданные значения через RETURNING.",
+    "solution": "CREATE TEMP TABLE practice_import_queue (\n  import_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,\n  status TEXT NOT NULL DEFAULT 'queued',\n  source TEXT NOT NULL\n);\nINSERT INTO practice_import_queue (source)\nVALUES ('manual')\nRETURNING import_id, status, source;",
+    "mode": "mutation",
+    "checkQuery": "SELECT import_id, status, source FROM practice_import_queue;",
+    "hint": "Не передавай значения, которые PostgreSQL должен сгенерировать или заполнить настройкой DEFAULT.",
+    "hint2": "Сначала создай временную таблицу с IDENTITY и DEFAULT, затем вставь только источник записи.",
+    "hint3": "Каркас: INSERT INTO таблица (обычные_столбцы) VALUES (...) RETURNING созданные_и_заполненные_столбцы;"
+  },
+  {
+    "id": "e111",
+    "m": "inserts",
+    "title": "Добавь несколько строк одной командой",
+    "task": "Создай временную таблицу batch_products с идентификатором, названием, категорией и ценой. Добавь одним INSERT два товара: (201, 'Desk lamp', 'Home', 1200) и (202, 'Notebook', 'Office', 150). Проверь обе записи.",
+    "solution": "CREATE TEMP TABLE batch_products (\n  product_id INTEGER PRIMARY KEY,\n  product_name TEXT NOT NULL,\n  category TEXT NOT NULL,\n  price NUMERIC(10, 2) NOT NULL\n);\nINSERT INTO batch_products (product_id, product_name, category, price)\nVALUES\n  (201, 'Desk lamp', 'Home', 1200),\n  (202, 'Notebook', 'Office', 150);",
+    "mode": "mutation",
+    "checkQuery": "SELECT product_id, product_name, category, price FROM batch_products ORDER BY product_id;",
+    "hint": "Один INSERT может содержать несколько наборов VALUES, разделённых запятыми.",
+    "hint2": "Каждый набор должен содержать столько же значений, сколько указано целевых столбцов, и в том же порядке.",
+    "hint3": "Каркас: INSERT INTO таблица (столбцы) VALUES (...), (...);"
   },
   {
     "id": "e68",
