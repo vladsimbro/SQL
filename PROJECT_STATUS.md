@@ -1,17 +1,17 @@
 # SQL Academy — актуальное состояние и передача разработки
 
-Последнее обновление: 2026-11-09; CTE-аудит и исправления e32/e59 прошли build 120; начат аудит set operations, build 20261109-121 ожидает CI.
+Последнее обновление: 2026-11-09; set operations e33/e34 прошли build 121; исправлен модуль временной аналитики, build 20261109-122 ожидает CI.
 
 ## 1. Репозиторий и проверенные ревизии
 
 - Репозиторий: https://github.com/vladsimbro/SQL
 - GitHub Pages: https://vladsimbro.github.io/SQL/
 - Основная ветка: main; GitHub API подтверждает единственную ветку main.
-- Последний code commit перед текущим обновлением статуса: `a5280f0963e70ceead3fbefe55501bce289857eb`.
-- Build приложения: `20261109-121`.
-- Workflow `42541362927` на a5280f0: IN_PROGRESS; Pages workflow `42541363654`: IN_PROGRESS.
-- Последний полностью проверенный build: `20261109-120`. Workflow `42541167269` на 026186e: validate, deploy и browser-smoke — SUCCESS. Pages workflow `42541213394` на status commit 0a4b121: build, report-build-status и deploy — SUCCESS.
-- Build 120 опубликован и проверен. Browser-smoke: shellReadyMs=640, recoveryMs=6078, resetReadyMs=4981; ширины 390 и 320 px; PGlite retry, выполнение SQL, сохранение черновика, reset базы, мобильная навигация, backup validation и отказ от восстановления проверены. Artifact `sql-academy-ux-audit-screenshots`, ID `13641970046`.
+- Последний code commit перед текущим обновлением статуса: `518501c1e21036aa65c64bb6a2159ad15558689f`.
+- Build приложения: `20261109-122`.
+- Workflow `42541603291` на 518501c: QUEUED; Pages workflow `42541603123`: QUEUED.
+- Последний полностью проверенный build: `20261109-121`. Workflow `42541362927` на a5280f0: validate, deploy и browser-smoke — SUCCESS. Pages workflow `42541422644` на status commit 1ba4a58: build, report-build-status и deploy — SUCCESS.
+- Build 121 опубликован и проверен. Browser-smoke: shellReadyMs=792, recoveryMs=4195, resetReadyMs=3554; ширины 390 и 320 px; PGlite retry, выполнение SQL, сохранение черновика, reset базы, мобильная навигация, backup validation и отказ от восстановления проверены. Artifact `sql-academy-ux-audit-screenshots`, ID `13640999555`.
 - Открытых Pull Requests нет. Ветка только main; незавершённых переносов между ветками не обнаружено.
 - Изменения выполнялись через GitHub API; локальный clone и локальный git status не использовались.
 - Предыдущие SHA/build/workflow в исторических разделах ниже относятся к прежним состояниям. Для текущего состояния использовать этот раздел и финальную передачу в конце документа.
