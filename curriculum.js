@@ -10142,6 +10142,60 @@ export const exercises = [
     "hint3": "Каркас: BEGIN; команда; EXCEPTION WHEN unique_violation THEN обработчик; END;"
   },
   {
+    "id": "e122",
+    "m": "performance",
+    "title": "Построй составной покрывающий индекс",
+    "task": "Создай B-tree индекс idx_practice_orders_customer_date: сначала по customer_id, затем по created_at DESC, а total_amount добавь через INCLUDE. Проверь порядок ключей и включённый столбец в определении индекса.",
+    "solution": "CREATE INDEX idx_practice_orders_customer_date ON orders (customer_id, created_at DESC) INCLUDE (total_amount);",
+    "mode": "mutation",
+    "checkQuery": "SELECT (indexdef LIKE '%(customer_id, created_at DESC)%' AND indexdef LIKE '%INCLUDE (total_amount)%') AS definition_ok FROM pg_indexes WHERE indexname = 'idx_practice_orders_customer_date';",
+    "hint": "Ключевые столбцы задают порядок поиска и сортировки; INCLUDE хранит дополнительное значение, но не добавляет его в ключ.",
+    "hint2": "Для запроса по клиенту и дате ведущим должен быть customer_id, а created_at задаёт нужный порядок внутри клиента.",
+    "hint3": "Каркас: CREATE INDEX имя ON таблица (ключ1, ключ2 DESC) INCLUDE (дополнительный_столбец);"
+  },
+  {
+    "id": "e123",
+    "m": "performance",
+    "title": "Создай частичный индекс для открытых заказов",
+    "task": "Создай частичный индекс idx_practice_orders_open_created по created_at, но включи в него только строки со status = 'open'. Проверь, что предикат сохранён в определении индекса.",
+    "solution": "CREATE INDEX idx_practice_orders_open_created ON orders (created_at) WHERE status = 'open';",
+    "mode": "mutation",
+    "checkQuery": "SELECT (pg_get_expr(i.indpred, i.indrelid) ILIKE '%status%' AND pg_get_expr(i.indpred, i.indrelid) ILIKE '%open%') AS predicate_ok FROM pg_index i JOIN pg_class idx ON idx.oid = i.indexrelid WHERE idx.relname = 'idx_practice_orders_open_created';",
+    "hint": "Частичный индекс содержит не всю таблицу, а только строки, которые проходят условие WHERE в самом индексе.",
+    "hint2": "Условие индекса должно описывать именно те записи, для которых нужен компактный путь поиска.",
+    "hint3": "Каркас: CREATE INDEX имя ON таблица (столбец) WHERE условие;"
+  },
+  {
+    "id": "e124",
+    "m": "performance",
+    "title": "Создай расширенную статистику",
+    "task": "Создай объект расширенной статистики orders_practice_status_customer_stats для совместного распределения status и customer_id с видами dependencies, ndistinct и mcv. Выполни ANALYZE orders и проверь, что объект статистики создан.",
+    "solution": "CREATE STATISTICS orders_practice_status_customer_stats (dependencies, ndistinct, mcv) ON status, customer_id FROM orders;\nANALYZE orders;",
+    "mode": "mutation",
+    "checkQuery": "SELECT COUNT(*)::int AS stats_count FROM pg_statistic_ext WHERE stxname = 'orders_practice_status_customer_stats';",
+    "hint": "CREATE STATISTICS описывает связь значений между столбцами, а не создаёт индекс для чтения строк.",
+    "hint2": "Укажи все три вида статистики в круглых скобках, затем перечисли столбцы одной таблицы после ON.",
+    "hint3": "После создания объекта выполни ANALYZE для той же таблицы, чтобы собрать статистические данные."
+  },
+  {
+    "id": "e125",
+    "m": "performance",
+    "title": "Используй индексируемый диапазон дат",
+    "task": "Построй EXPLAIN для выборки заказов за 15 января 2026 года. Используй полуоткрытый диапазон по created_at: нижняя граница включается, верхняя — нет. Не преобразовывай сам столбец к date.",
+    "solution": "EXPLAIN SELECT order_id FROM orders WHERE created_at >= TIMESTAMP '2026-01-15 00:00:00' AND created_at < TIMESTAMP '2026-01-16 00:00:00';",
+    "mode": "explain",
+    "requiredPatterns": [
+      "\\bEXPLAIN\\s+SELECT\\b",
+      "\\bFROM\\s+orders\\b",
+      "created_at\\s*>=\\s*TIMESTAMP",
+      "created_at\\s*<\\s*TIMESTAMP"
+    ],
+    "requirementsMessage": "Нужен EXPLAIN по orders с нижней и верхней границей created_at, без преобразования столбца к date.",
+    "hint": "Полуоткрытый диапазон включает начало дня и исключает начало следующего дня.",
+    "hint2": "Сравнивай исходный timestamp со значениями границ, а не применяй CAST или функцию к каждой строке столбца.",
+    "hint3": "Каркас: WHERE created_at >= TIMESTAMP 'начало' AND created_at < TIMESTAMP 'следующий день';"
+  },
+  {
     "id": "e72",
     "mode": "select",
     "m": "datetime",
