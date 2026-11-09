@@ -9491,8 +9491,8 @@ export const exercises = [
     "task": "Для каждого заказа выведи order_id, customer_id и порядковый номер заказа клиента по дате. Используй ROW_NUMBER и PARTITION BY.",
     "solution": "SELECT order_id, customer_id, ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY created_at, order_id) AS order_number FROM orders;",
     "hint": "Нумерация должна сбрасываться на каждого клиента, поэтому раздел окна задаётся по customer_id.",
-    "hint2": "Оконное вычисление сохраняет строки исходного набора. Раздел PARTITION BY и порядок ORDER BY определяют, с какими строками сравнивается текущая.",
-    "hint3": "Каркас: функция() OVER (PARTITION BY ключ ORDER BY дата ROWS BETWEEN ... AND ...);"
+    "hint2": "PARTITION BY customer_id начинает нумерацию заново для каждого клиента. ORDER BY created_at, order_id задаёт устойчивый порядок заказов.",
+    "hint3": "Каркас: ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY created_at, order_id) AS order_number"
   },
   {
     "id": "e36",
@@ -9502,8 +9502,8 @@ export const exercises = [
     "task": "Выведи ID и сумму заказа, а также ранг заказа по сумме от самой большой к меньшей. Используй RANK.",
     "solution": "SELECT order_id, total_amount, RANK() OVER (ORDER BY total_amount DESC) AS amount_rank FROM orders;",
     "hint": "RANK сохраняет одинаковый ранг при равных суммах и пропускает следующий номер после ничьей.",
-    "hint2": "Оконное вычисление сохраняет строки исходного набора. Раздел PARTITION BY и порядок ORDER BY определяют, с какими строками сравнивается текущая.",
-    "hint3": "Каркас: функция() OVER (PARTITION BY ключ ORDER BY дата ROWS BETWEEN ... AND ...);"
+    "hint2": "Равные суммы должны получить одинаковый ранг. Без PARTITION BY ранг рассчитывается среди всех заказов, а после ничьей RANK пропускает следующий номер.",
+    "hint3": "Каркас: RANK() OVER (ORDER BY total_amount DESC) AS amount_rank"
   },
   {
     "id": "e37",
@@ -9514,8 +9514,8 @@ export const exercises = [
     "task": "Для каждого заказа покажи сумму предыдущего заказа этого клиента. Используй LAG, сортировку по дате и ID.",
     "solution": "SELECT order_id, customer_id, total_amount, LAG(total_amount) OVER (PARTITION BY customer_id ORDER BY created_at, order_id) AS previous_amount FROM orders;",
     "hint": "LAG берёт значение предыдущего заказа внутри клиента. Без сортировки по дате понятие «предыдущий» теряет смысл.",
-    "hint2": "Оконное вычисление сохраняет строки исходного набора. Раздел PARTITION BY и порядок ORDER BY определяют, с какими строками сравнивается текущая.",
-    "hint3": "Каркас: функция() OVER (PARTITION BY ключ ORDER BY дата ROWS BETWEEN ... AND ...);"
+    "hint2": "LAG ищет предыдущую существующую строку внутри клиента, а не заказ за предыдущий календарный день. Раздели по customer_id и задай порядок по дате и ID.",
+    "hint3": "Каркас: LAG(total_amount) OVER (PARTITION BY customer_id ORDER BY created_at, order_id) AS previous_amount"
   },
   {
     "id": "e38",
@@ -9526,8 +9526,8 @@ export const exercises = [
     "task": "Выведи order_id, дату и сумму заказа, а также накопительную сумму по всем заказам в порядке даты и ID. Явно задай рамку ROWS.",
     "solution": "SELECT order_id, created_at, total_amount, SUM(total_amount) OVER (ORDER BY created_at, order_id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS running_revenue FROM orders ORDER BY created_at, order_id;",
     "hint": "Для накопительной выручки используй SUM как оконную функцию и задай порядок событий внутри раздела.",
-    "hint2": "Оконное вычисление сохраняет строки исходного набора. Раздел PARTITION BY и порядок ORDER BY определяют, с какими строками сравнивается текущая.",
-    "hint3": "Каркас: функция() OVER (PARTITION BY ключ ORDER BY дата ROWS BETWEEN ... AND ...);"
+    "hint2": "Для накопительной суммы используй SUM как оконную функцию. Явная рамка ROWS от UNBOUNDED PRECEDING до CURRENT ROW включает все предыдущие строки и текущую.",
+    "hint3": "Каркас: SUM(total_amount) OVER (ORDER BY created_at, order_id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS running_revenue"
   },
   {
     "id": "e39",
@@ -9537,8 +9537,8 @@ export const exercises = [
     "task": "Найди самый дорогой заказ в каждом магазине. Используй ROW_NUMBER в CTE и оставь rn = 1.",
     "solution": "WITH ranked AS (SELECT order_id, store_id, total_amount, ROW_NUMBER() OVER (PARTITION BY store_id ORDER BY total_amount DESC, order_id) AS rn FROM orders) SELECT order_id, store_id, total_amount FROM ranked WHERE rn = 1;",
     "hint": "Внутренний запрос должен присвоить номер каждому заказу магазина, внешний оставит только первый.",
-    "hint2": "Оконное вычисление сохраняет строки исходного набора. Раздел PARTITION BY и порядок ORDER BY определяют, с какими строками сравнивается текущая.",
-    "hint3": "Каркас: функция() OVER (PARTITION BY ключ ORDER BY дата ROWS BETWEEN ... AND ...);"
+    "hint2": "Результат ROW_NUMBER нельзя отфильтровать в WHERE того же уровня. Сначала присвой номер в CTE отдельно внутри каждого store_id, затем во внешнем запросе оставь rn = 1.",
+    "hint3": "Каркас: WITH ranked AS (SELECT order_id, store_id, total_amount, ROW_NUMBER() OVER (PARTITION BY store_id ORDER BY total_amount DESC, order_id) AS rn FROM orders) SELECT order_id, store_id, total_amount FROM ranked WHERE rn = 1;"
   },
   {
     "id": "e40",
@@ -10142,8 +10142,8 @@ export const exercises = [
       "explanation": "Оконный агрегат вычисляет среднее внутри раздела, но сохраняет строки отдельных заказов."
     },
     "hint": "AVG с OVER(PARTITION BY customer_id) добавит среднее к каждой строке, не сворачивая заказы.",
-    "hint2": "Оконное вычисление сохраняет строки исходного набора. Раздел PARTITION BY и порядок ORDER BY определяют, с какими строками сравнивается текущая.",
-    "hint3": "Каркас: функция() OVER (PARTITION BY ключ ORDER BY дата ROWS BETWEEN ... AND ...);"
+    "hint2": "PARTITION BY customer_id задаёт отдельное среднее для каждого клиента. Поскольку GROUP BY нет, каждая строка заказа останется в результате.",
+    "hint3": "Каркас: AVG(total_amount) OVER (PARTITION BY customer_id) AS customer_avg"
   },
   {
     "id": "e81",
@@ -10436,7 +10436,7 @@ export const exercises = [
     "mode": "select",
     "m": "windows",
     "title": "Распредели заказы по группам и процентилям",
-    "task": "Для каждого заказа рассчитай квартиль по сумме внутри магазина, относительный ранг по сумме внутри магазина и накопленную долю заказов. При равных суммах одинаковые значения распределения должны совпадать.",
+    "task": "Для каждого заказа рассчитай квартиль по сумме внутри магазина, относительный ранг по сумме внутри магазина и накопленную долю заказов. Для PERCENT_RANK и CUME_DIST равные суммы должны получать одинаковые значения.",
     "solution": "SELECT order_id, store_id, total_amount, NTILE(4) OVER (PARTITION BY store_id ORDER BY total_amount, order_id) AS amount_quartile, PERCENT_RANK() OVER (PARTITION BY store_id ORDER BY total_amount) AS relative_rank, CUME_DIST() OVER (PARTITION BY store_id ORDER BY total_amount) AS cumulative_share FROM orders ORDER BY store_id, total_amount, order_id;",
     "hint": "Раздели вычисления на три окна: NTILE распределяет строки, PERCENT_RANK и CUME_DIST оценивают позицию в распределении. Для последних двух не добавляй order_id в ORDER BY, если равные суммы должны оставаться peers.",
     "hint2": "Для квартиля нужна детерминированная нумерация строк. Для процентильных функций равные суммы должны оставаться peers, поэтому порядок у этих выражений отличается.",
