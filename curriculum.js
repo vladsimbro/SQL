@@ -7547,7 +7547,7 @@ export const modules = [
       {
         "title": "Что такое транзакция",
         "body": "Транзакция объединяет несколько операций в одну логическую единицу. BEGIN начинает транзакцию, COMMIT подтверждает изменения, ROLLBACK отменяет изменения текущей транзакции.\n\nЕсли одна операция из нескольких завершается ошибкой, транзакция в PostgreSQL переходит в состояние aborted. До ROLLBACK или отката к savepoint обычные команды в ней не выполняются. Это защищает от ситуации, когда половина связанного набора изменений уже сохранена.\n\nАвтокоммит в клиенте может автоматически фиксировать каждую отдельную команду. Для последовательности связанных изменений явно используй транзакцию и проверь итог перед COMMIT.",
-        "example": "BEGIN;\nCREATE TEMP TABLE accounts (\n  account_id integer PRIMARY KEY,\n  balance numeric(12,2) NOT NULL CHECK (balance >= 0)\n);\nINSERT INTO accounts VALUES (1, 1000), (2, 500);\n\nUPDATE accounts\nSET balance = balance - 100\nWHERE account_id = 1;\n\nUPDATE accounts\nSET balance = balance + 100\nWHERE account_id = 2;\nCOMMIT;\n\nSELECT * FROM accounts ORDER BY account_id;",
+        "example": "BEGIN;\nCREATE TEMP TABLE IF NOT EXISTS transaction_accounts (\n  account_id integer PRIMARY KEY,\n  balance numeric(12,2) NOT NULL CHECK (balance >= 0)\n) ON COMMIT DROP;\nTRUNCATE transaction_accounts;\nINSERT INTO transaction_accounts VALUES (1, 1000), (2, 500);\n\nUPDATE transaction_accounts\nSET balance = balance - 100\nWHERE account_id = 1;\n\nUPDATE transaction_accounts\nSET balance = balance + 100\nWHERE account_id = 2;\nSELECT * FROM transaction_accounts ORDER BY account_id;\nCOMMIT;",
         "note": "Не оставляй транзакции открытыми надолго: они могут удерживать блокировки и мешать очистке старых версий строк.",
         "simple": "Транзакция позволяет подтвердить все связанные изменения вместе или отменить их вместе.",
         "practiceIds": [
@@ -7575,8 +7575,8 @@ export const modules = [
       },
       {
         "title": "ACID",
-        "body": "ACID описывает свойства надёжной транзакционной обработки. Atomicity означает «всё или ничего». Consistency — переход из одного допустимого состояния базы в другое при соблюдении ограничений. Isolation — контроль взаимодействия параллельных транзакций. Durability — сохранность подтверждённых изменений при сбое в рамках гарантий СУБД.\n\nACID не означает, что любая бизнес-логика автоматически корректна. Если запрос неверно посчитал сумму и успешно закоммитился, база надёжно сохранит неправильный результат. Ограничения и проверки приложения должны обеспечивать смысловую корректность.\n\nИзоляция не всегда означает полную последовательность транзакций. Разные уровни изоляции допускают разные эффекты параллельного выполнения.\n\nACID защищает выполнение транзакции, но не проверяет, правильно ли аналитик выбрал строки и формулу. Успешно зафиксированный неверный UPDATE остаётся неверным бизнес-результатом.",
-        "example": "BEGIN;\nCREATE TEMP TABLE accounts (\n  account_id integer PRIMARY KEY,\n  balance numeric(12,2) NOT NULL CHECK (balance >= 0)\n) ON COMMIT DROP;\nINSERT INTO accounts VALUES (1, 1000), (2, 500);\nUPDATE accounts SET balance = balance - 100 WHERE account_id = 1;\nUPDATE accounts SET balance = balance + 100 WHERE account_id = 2;\nSELECT account_id, balance FROM accounts ORDER BY account_id;\nCOMMIT;",
+        "body": "ACID описывает свойства надёжной транзакционной обработки. Atomicity означает «всё или ничего». Consistency — переход из одного допустимого состояния базы в другое при соблюдении ограничений. Isolation — контроль взаимодействия параллельных транзакций. Durability — сохранность подтверждённых изменений при сбое в рамках гарантий СУБД.\n\nACID не означает, что любая бизнес-логика автоматически корректна. Если запрос неверно посчитал сумму и успешно закоммитился, база надёжно сохранит неправильный результат. Ограничения и проверки приложения должны обеспечивать смысловую корректность.\n\nИзоляция не всегда означает полную последовательность транзакций. Разные уровни изоляции допускают разные эффекты параллельного выполнения.",
+        "example": "BEGIN;\nCREATE TEMP TABLE acid_accounts (\n  account_id integer PRIMARY KEY,\n  balance numeric(12,2) NOT NULL CHECK (balance >= 0)\n) ON COMMIT DROP;\nINSERT INTO acid_accounts VALUES (1, 1000), (2, 500);\nUPDATE acid_accounts SET balance = balance - 100 WHERE account_id = 1;\nUPDATE acid_accounts SET balance = balance + 100 WHERE account_id = 2;\nSELECT account_id, balance FROM acid_accounts ORDER BY account_id;\nCOMMIT;",
         "note": "ACID не спасает от логически ошибочного SQL. Проверяй условия и инварианты отдельно.",
         "simple": "ACID описывает надёжность выполнения транзакций, а не правильность бизнес-формулы в запросе.",
         "practiceIds": [],
@@ -7693,11 +7693,14 @@ export const modules = [
       },
       {
         "title": "Действия внешних ключей и отложенные ограничения",
-        "body": "Внешние ключи могут управлять поведением при удалении или изменении родительской строки. RESTRICT и NO ACTION запрещают операцию, если остались ссылки. CASCADE автоматически удаляет или обновляет связанные строки. SET NULL записывает NULL во внешний ключ, SET DEFAULT использует его значение по умолчанию.\n\nВыбор действия зависит от смысла данных. Если удаление клиента не должно удалять историю заказов, CASCADE для orders может быть опасен. Если дочерняя запись не имеет смысла без родителя, каскадное удаление может быть оправдано.\n\nОграничения могут быть DEFERRABLE: проверка откладывается до конца транзакции или до SET CONSTRAINTS. Это помогает при некоторых циклических или пакетных изменениях, но требует внимательного управления моментом проверки.",
-        "example": "CREATE TABLE order_items (\n  order_id BIGINT REFERENCES orders(order_id)\n    ON DELETE CASCADE,\n  product_id BIGINT REFERENCES products(product_id)\n);",
+        "body": "Внешние ключи могут управлять поведением при удалении или изменении родительской строки. RESTRICT сразу запрещает операцию, если остались ссылки. NO ACTION проверяет ссылки в момент проверки ограничения и может быть отложен, если внешний ключ объявлен DEFERRABLE. CASCADE автоматически удаляет или обновляет связанные строки. SET NULL записывает NULL во внешний ключ, SET DEFAULT использует его значение по умолчанию.\n\nВыбор действия зависит от смысла данных. Если удаление клиента не должно удалять историю заказов, CASCADE для orders может быть опасен. Если дочерняя запись не имеет смысла без родителя, каскадное удаление может быть оправдано.\n\nОграничения могут быть DEFERRABLE: проверка откладывается до конца транзакции или до SET CONSTRAINTS. Это помогает при некоторых циклических или пакетных изменениях, но требует внимательного управления моментом проверки.",
+        "example": "CREATE TEMP TABLE IF NOT EXISTS fk_action_order_items_demo (\n  order_id BIGINT REFERENCES orders(order_id)\n    ON DELETE CASCADE,\n  product_id BIGINT REFERENCES products(product_id)\n);",
         "note": "CASCADE может удалить большой объём связанных данных. Перед его использованием проследи всю цепочку внешних ключей.",
         "simple": "ON DELETE задаёт судьбу дочерних строк, когда удаляется родительская запись.",
-        "practiceIds": [],
+        "practiceIds": [
+          "e114",
+          "e115"
+        ],
         "outcomes": [
           "Выбирать действия ON DELETE по смыслу данных",
           "объяснить DEFERRABLE и отложенную проверку."
