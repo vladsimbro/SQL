@@ -8625,10 +8625,12 @@ export const modules = [
       {
         "title": "Полнотекстовый поиск",
         "body": "Полнотекстовый поиск предназначен для поиска слов и лексем в больших текстах с учётом языковых правил. В PostgreSQL текст преобразуется в tsvector, а поисковая фраза — в tsquery. @@ проверяет совпадение документа и запроса.\n\nВ отличие от LIKE '%слово%', полнотекстовый поиск может учитывать нормализацию слов и индексироваться через GIN. Это полезно для описаний, статей и комментариев, где нужно искать по смыслу словоформ, а не по точной подстроке.\n\nДля ранжирования результатов применяют ts_rank или ts_rank_cd. Конфигурация языка влияет на разбор слов и стемминг, поэтому выбирай её осознанно.",
-        "example": "SELECT product_id, product_name,\n       ts_rank(to_tsvector('simple', product_name), plainto_tsquery('simple', 'coffee')) AS rank\nFROM products\nWHERE to_tsvector('simple', product_name) @@ plainto_tsquery('simple', 'coffee')\nORDER BY rank DESC;",
+        "example": "CREATE INDEX IF NOT EXISTS idx_products_fulltext_demo\nON products USING GIN (to_tsvector('simple', product_name));\n\nSELECT product_id, product_name,\n       ts_rank(to_tsvector('simple', product_name), plainto_tsquery('simple', 'coffee')) AS rank\nFROM products\nWHERE to_tsvector('simple', product_name) @@ plainto_tsquery('simple', 'coffee')\nORDER BY rank DESC;",
         "note": "Для частых запросов создай GIN индекс по tsvector и проверь план.",
         "simple": "Полнотекстовый поиск сравнивает нормализованные лексемы, а не просто подстроки.",
-        "practiceIds": [],
+        "practiceIds": [
+          "e127"
+        ],
         "outcomes": [
           "Объяснить tsvector и tsquery",
           "применять @@ и ранжирование результатов."
@@ -8651,10 +8653,12 @@ export const modules = [
       {
         "title": "Партиционирование",
         "body": "Партиционирование делит одну логическую таблицу на физические части по ключу, например дате или региону. PostgreSQL поддерживает range, list и hash partitioning. Запрос может читать только нужные разделы, если условие позволяет partition pruning.\n\nПартиционирование помогает управлять очень большими таблицами: старые периоды можно архивировать или удалять целыми разделами. Но оно усложняет уникальные ограничения, индексы и обслуживание схемы. Для маленькой таблицы оно обычно не нужно.\n\nКлюч партиционирования выбирают под реальные запросы и жизненный цикл данных. Если отчёты почти всегда фильтруют created_at по месяцу, range partitioning по дате может быть разумным. Но само наличие партиций не гарантирует ускорения всех запросов.",
-        "example": "CREATE TABLE events (\n  event_id BIGINT NOT NULL,\n  occurred_at DATE NOT NULL,\n  payload JSONB\n) PARTITION BY RANGE (occurred_at);",
-        "note": "Не партиционируй маленькие таблицы без причины. Учитывай ограничения уникальности и эксплуатационную сложность.",
+        "example": "DROP TABLE IF EXISTS events_demo CASCADE;\nCREATE TABLE events_demo (\n  event_id BIGINT NOT NULL,\n  occurred_at DATE NOT NULL,\n  payload JSONB\n) PARTITION BY RANGE (occurred_at);\n\nCREATE TABLE events_demo_2026_01 PARTITION OF events_demo\nFOR VALUES FROM ('2026-01-01') TO ('2026-02-01');\nCREATE TABLE events_demo_2026_02 PARTITION OF events_demo\nFOR VALUES FROM ('2026-02-01') TO ('2026-03-01');\n\nINSERT INTO events_demo VALUES\n  (1, DATE '2026-01-15', '{\"source\":\"web\"}'),\n  (2, DATE '2026-02-15', '{\"source\":\"mobile\"}');\n\nSELECT event_id, tableoid::regclass AS partition_name\nFROM events_demo\nORDER BY event_id;",
+        "note": "Не партиционируй маленькие таблицы без причины. Уникальное ограничение или PRIMARY KEY на partitioned table должен включать все столбцы ключа партиционирования; также учитывай эксплуатационную сложность.",
         "simple": "Партиционирование делит большую таблицу на разделы, которые PostgreSQL может исключать из чтения.",
-        "practiceIds": [],
+        "practiceIds": [
+          "e126"
+        ],
         "outcomes": [
           "Объяснить partition pruning",
           "выбирать ключ партиционирования по фильтрам и жизненному циклу."
@@ -8706,7 +8710,9 @@ export const modules = [
         "example": "SELECT table_name, column_name, data_type\nFROM information_schema.columns\nWHERE table_schema = 'public'\nORDER BY table_name, ordinal_position;",
         "note": "Не угадывай схему по названию. Проверяй реальные столбцы и ограничения.",
         "simple": "information_schema — переносимый обзор схемы, pg_catalog — подробные внутренние каталоги PostgreSQL.",
-        "practiceIds": [],
+        "practiceIds": [
+          "e128"
+        ],
         "outcomes": [
           "Находить таблицы и столбцы через information_schema",
           "понимать, когда нужен pg_catalog."
@@ -8729,8 +8735,8 @@ export const modules = [
       {
         "title": "Операторы JSONB: проверка и индексация",
         "body": "Для JSONB доступны операторы проверки содержимого и извлечения значений. @> проверяет, содержит ли документ заданный JSON-фрагмент. ? проверяет наличие ключа верхнего уровня, а -> и ->> извлекают значение.\n\nGIN индекс может ускорить containment-запросы по JSONB. Но важно выбрать операторный класс: jsonb_ops поддерживает более широкий набор операций, jsonb_path_ops оптимизирован для определённых containment-поисков.\n\nНе индексируй JSONB автоматически целиком, если запросы используют только одно поле. Для часто фильтруемого ключа иногда лучше expression index по конкретному выражению или вынесение значения в обычный столбец.",
-        "example": "SELECT customer_id, attributes\nFROM customer_profiles\nWHERE attributes @> '{\"segment\":\"vip\"}'::jsonb;",
-        "note": "Операторный класс определяет поддерживаемые операции. Проверь, совпадает ли он с реальными условиями WHERE.",
+        "example": "CREATE INDEX IF NOT EXISTS idx_customer_profiles_attributes_demo\nON customer_profiles USING GIN (attributes jsonb_path_ops);\n\nSELECT customer_id, attributes\nFROM customer_profiles\nWHERE attributes @> '{\"segment\":\"vip\"}'::jsonb;",
+        "note": "jsonb_path_ops хорошо подходит для containment-оператора @>, но не заменяет jsonb_ops для всех возможных операций. Выбирай операторный класс под реальные условия WHERE.",
         "simple": "@> проверяет включение JSON-структуры, ? — наличие ключа, GIN ускоряет подходящие поиски.",
         "practiceIds": [
           "e55"
@@ -8758,8 +8764,8 @@ export const modules = [
         "title": "Временные и UNLOGGED-таблицы",
         "body": "TEMPORARY TABLE существует в пределах сессии или транзакции в зависимости от ON COMMIT. Она полезна для промежуточных результатов, которые нужно использовать в нескольких командах.\n\nUNLOGGED TABLE не записывает обычные изменения в WAL так же, как logged-таблица, поэтому может быть быстрее для временных или восстанавливаемых данных. Но после аварийного завершения сервера содержимое unlogged-таблицы очищается, а репликация не переносит её содержимое как обычные logged-таблицы.\n\nВыбирай временную таблицу, если данные нужны только текущей сессии. UNLOGGED подходит для данных, которые можно восстановить и которые не должны быть гарантированно сохранены после сбоя.",
         "simple": "TEMP TABLE ограничивает время жизни объекта. UNLOGGED TABLE снижает требования к журналированию, но теряет содержимое после аварии.",
-        "example": "CREATE TEMP TABLE selected_orders AS\nSELECT * FROM orders WHERE status = 'open';\n\nCREATE UNLOGGED TABLE staging_events (\n  event_id BIGINT,\n  payload JSONB\n);",
-        "note": "Не храни единственную копию важных данных в UNLOGGED TABLE.",
+        "example": "CREATE TEMP TABLE IF NOT EXISTS selected_orders_demo AS\nSELECT * FROM orders WHERE false;\nTRUNCATE selected_orders_demo;\nINSERT INTO selected_orders_demo SELECT * FROM orders WHERE status = 'open';\n\nCREATE UNLOGGED TABLE IF NOT EXISTS staging_events_demo (\n  event_id BIGINT,\n  payload JSONB\n);",
+        "note": "UNLOGGED TABLE не обеспечивает обычную WAL-защиту и после аварийного восстановления может быть очищена. PGlite не воспроизводит полностью серверное поведение WAL и crash recovery; проверяй эти свойства на настоящем PostgreSQL.",
         "practiceIds": [],
         "outcomes": [
           "Различать TEMP и UNLOGGED",
@@ -10181,19 +10187,54 @@ export const exercises = [
     "id": "e125",
     "m": "performance",
     "title": "Используй индексируемый диапазон дат",
-    "task": "Построй EXPLAIN для выборки заказов за 15 января 2026 года. Используй полуоткрытый диапазон по created_at: нижняя граница включается, верхняя — нет. Не преобразовывай сам столбец к date.",
-    "solution": "EXPLAIN SELECT order_id FROM orders WHERE created_at >= TIMESTAMP '2026-01-15 00:00:00' AND created_at < TIMESTAMP '2026-01-16 00:00:00';",
+    "task": "Построй EXPLAIN для выборки заказов за 15 января 2026 года. В orders.created_at хранится DATE, поэтому используй полуоткрытый диапазон с DATE-границами: начало дня включается, следующий день исключается. Не преобразовывай сам столбец.",
+    "solution": "EXPLAIN SELECT order_id FROM orders WHERE created_at >= DATE '2026-01-15' AND created_at < DATE '2026-01-16';",
     "mode": "explain",
     "requiredPatterns": [
       "\\bEXPLAIN\\s+SELECT\\b",
       "\\bFROM\\s+orders\\b",
-      "created_at\\s*>=\\s*TIMESTAMP",
-      "created_at\\s*<\\s*TIMESTAMP"
+      "created_at\\s*>=\\s*DATE",
+      "created_at\\s*<\\s*DATE"
     ],
-    "requirementsMessage": "Нужен EXPLAIN по orders с нижней и верхней границей created_at, без преобразования столбца к date.",
-    "hint": "Полуоткрытый диапазон включает начало дня и исключает начало следующего дня.",
-    "hint2": "Сравнивай исходный timestamp со значениями границ, а не применяй CAST или функцию к каждой строке столбца.",
-    "hint3": "Каркас: WHERE created_at >= TIMESTAMP 'начало' AND created_at < TIMESTAMP 'следующий день';"
+    "requirementsMessage": "Нужен EXPLAIN по orders с нижней и верхней DATE-границей created_at, без преобразования самого столбца.",
+    "hint": "Полуоткрытый диапазон включает дату 15 января и исключает дату 16 января.",
+    "hint2": "Сравнивай исходный столбец DATE с константами DATE, а не применяй CAST или функцию к каждой строке.",
+    "hint3": "Каркас: WHERE created_at >= DATE 'начало' AND created_at < DATE 'следующий день';"
+  },
+  {
+    "id": "e126",
+    "m": "advanced",
+    "title": "Распредели события по партициям",
+    "task": "Создай таблицу practice_events с партиционированием RANGE по occurred_at и две месячные партиции: январь и февраль 2026 года. Добавь по одному событию в каждый месяц и проверь, в какой физической партиции оказалась каждая строка.",
+    "solution": "CREATE TABLE practice_events (event_id INTEGER NOT NULL, occurred_at DATE NOT NULL, payload TEXT) PARTITION BY RANGE (occurred_at);\nCREATE TABLE practice_events_2026_01 PARTITION OF practice_events FOR VALUES FROM ('2026-01-01') TO ('2026-02-01');\nCREATE TABLE practice_events_2026_02 PARTITION OF practice_events FOR VALUES FROM ('2026-02-01') TO ('2026-03-01');\nINSERT INTO practice_events VALUES (1, DATE '2026-01-15', 'January'), (2, DATE '2026-02-15', 'February');",
+    "mode": "mutation",
+    "checkQuery": "SELECT event_id, tableoid::regclass::text AS partition_name FROM practice_events ORDER BY event_id;",
+    "hint": "RANGE-партиционирование распределяет строки по полуоткрытым диапазонам ключа: нижняя граница включается, верхняя исключается.",
+    "hint2": "Сначала создай родительскую таблицу с PARTITION BY RANGE, затем отдельные таблицы PARTITION OF с непересекающимися границами.",
+    "hint3": "Каркас: CREATE TABLE ... PARTITION BY RANGE (дата); CREATE TABLE ... PARTITION OF ... FOR VALUES FROM (...) TO (...);"
+  },
+  {
+    "id": "e127",
+    "m": "advanced",
+    "title": "Найди документы полнотекстовым поиском",
+    "task": "Создай временную таблицу practice_documents с текстом документов. Добавь два документа со словом coffee и один без него. Создай GIN-индекс по to_tsvector('simple', body), найди совпадения через @@ и проверь количество найденных документов и наличие индекса.",
+    "solution": "CREATE TEMP TABLE practice_documents (doc_id INTEGER PRIMARY KEY, body TEXT NOT NULL);\nINSERT INTO practice_documents VALUES (1, 'Coffee beans and espresso'), (2, 'Black tea leaves'), (3, 'Coffee grinder');\nCREATE INDEX practice_documents_search_idx ON practice_documents USING GIN (to_tsvector('simple', body));",
+    "mode": "mutation",
+    "checkQuery": "SELECT COUNT(*)::int AS match_count, MIN(doc_id)::int AS first_id, MAX(doc_id)::int AS last_id, (SELECT COUNT(*)::int FROM pg_indexes WHERE indexname = 'practice_documents_search_idx') AS index_count FROM practice_documents WHERE to_tsvector('simple', body) @@ plainto_tsquery('simple', 'coffee');",
+    "hint": "Полнотекстовый поиск сравнивает нормализованные лексемы, а не просто подстроки исходного текста.",
+    "hint2": "Построй одинаковый to_tsvector для индексируемого столбца и условия поиска, затем используй оператор @@.",
+    "hint3": "Каркас: CREATE INDEX ... USING GIN (to_tsvector('simple', body)); затем WHERE to_tsvector(...) @@ plainto_tsquery(...);"
+  },
+  {
+    "id": "e128",
+    "mode": "select",
+    "m": "advanced",
+    "title": "Изучи фактическую структуру orders",
+    "task": "Через information_schema.columns выведи названия столбцов и типы данных таблицы orders в физическом порядке. Не угадывай схему по памяти — используй метаданные базы.",
+    "solution": "SELECT column_name, data_type\nFROM information_schema.columns\nWHERE table_schema = 'public' AND table_name = 'orders'\nORDER BY ordinal_position;",
+    "hint": "information_schema.columns хранит по одной строке на каждый столбец доступной таблицы.",
+    "hint2": "Ограничь метаданные схемой public и таблицей orders, а порядок задай через ordinal_position.",
+    "hint3": "Каркас: SELECT column_name, data_type FROM information_schema.columns WHERE table_schema = ... AND table_name = ... ORDER BY ordinal_position;"
   },
   {
     "id": "e72",
