@@ -9304,7 +9304,7 @@ export const exercises = [
     "task": "Найди среднюю сумму заказа по всем заказам. Назови поле average_order_amount.",
     "solution": "SELECT AVG(total_amount) AS average_order_amount FROM orders;",
     "hint": "Средний чек считается как AVG по сумме заказа, а не как сумма, делённая на число произвольных строк после JOIN.",
-    "hint2": "AVG вычисляет среднее по непустым значениям total_amount. Не нужно отдельно делить SUM на COUNT и не нужно группировать все заказы в одну группу.",
+    "hint2": "AVG вычисляет среднее по непустым значениям total_amount. Не нужно отдельно делить SUM на COUNT и добавлять GROUP BY: здесь нужен один общий результат по всей таблице.",
     "hint3": "Каркас: SELECT AVG(total_amount) AS average_order_amount FROM orders;"
   },
   {
