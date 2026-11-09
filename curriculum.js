@@ -7547,7 +7547,7 @@ export const modules = [
       {
         "title": "Что такое транзакция",
         "body": "Транзакция объединяет несколько операций в одну логическую единицу. BEGIN начинает транзакцию, COMMIT подтверждает изменения, ROLLBACK отменяет изменения текущей транзакции.\n\nЕсли одна операция из нескольких завершается ошибкой, транзакция в PostgreSQL переходит в состояние aborted. До ROLLBACK или отката к savepoint обычные команды в ней не выполняются. Это защищает от ситуации, когда половина связанного набора изменений уже сохранена.\n\nАвтокоммит в клиенте может автоматически фиксировать каждую отдельную команду. Для последовательности связанных изменений явно используй транзакцию и проверь итог перед COMMIT.",
-        "example": "BEGIN;\nCREATE TEMP TABLE accounts (\n  account_id integer PRIMARY KEY,\n  balance numeric(12,2) NOT NULL CHECK (balance >= 0)\n);\nINSERT INTO accounts VALUES (1, 1000), (2, 500);\n\nUPDATE accounts\nSET balance = balance - 100\nWHERE account_id = 1;\n\nUPDATE accounts\nSET balance = balance + 100\nWHERE account_id = 2;\nCOMMIT;\n\nSELECT * FROM accounts ORDER BY account_id;",
+        "example": "BEGIN;\nCREATE TEMP TABLE IF NOT EXISTS transaction_accounts (\n  account_id integer PRIMARY KEY,\n  balance numeric(12,2) NOT NULL CHECK (balance >= 0)\n) ON COMMIT DROP;\nTRUNCATE transaction_accounts;\nINSERT INTO transaction_accounts VALUES (1, 1000), (2, 500);\n\nUPDATE transaction_accounts\nSET balance = balance - 100\nWHERE account_id = 1;\n\nUPDATE transaction_accounts\nSET balance = balance + 100\nWHERE account_id = 2;\nSELECT * FROM transaction_accounts ORDER BY account_id;\nCOMMIT;",
         "note": "Не оставляй транзакции открытыми надолго: они могут удерживать блокировки и мешать очистке старых версий строк.",
         "simple": "Транзакция позволяет подтвердить все связанные изменения вместе или отменить их вместе.",
         "practiceIds": [
@@ -7575,8 +7575,8 @@ export const modules = [
       },
       {
         "title": "ACID",
-        "body": "ACID описывает свойства надёжной транзакционной обработки. Atomicity означает «всё или ничего». Consistency — переход из одного допустимого состояния базы в другое при соблюдении ограничений. Isolation — контроль взаимодействия параллельных транзакций. Durability — сохранность подтверждённых изменений при сбое в рамках гарантий СУБД.\n\nACID не означает, что любая бизнес-логика автоматически корректна. Если запрос неверно посчитал сумму и успешно закоммитился, база надёжно сохранит неправильный результат. Ограничения и проверки приложения должны обеспечивать смысловую корректность.\n\nИзоляция не всегда означает полную последовательность транзакций. Разные уровни изоляции допускают разные эффекты параллельного выполнения.\n\nACID защищает выполнение транзакции, но не проверяет, правильно ли аналитик выбрал строки и формулу. Успешно зафиксированный неверный UPDATE остаётся неверным бизнес-результатом.",
-        "example": "BEGIN;\nCREATE TEMP TABLE accounts (\n  account_id integer PRIMARY KEY,\n  balance numeric(12,2) NOT NULL CHECK (balance >= 0)\n) ON COMMIT DROP;\nINSERT INTO accounts VALUES (1, 1000), (2, 500);\nUPDATE accounts SET balance = balance - 100 WHERE account_id = 1;\nUPDATE accounts SET balance = balance + 100 WHERE account_id = 2;\nSELECT account_id, balance FROM accounts ORDER BY account_id;\nCOMMIT;",
+        "body": "ACID описывает свойства надёжной транзакционной обработки. Atomicity означает «всё или ничего». Consistency — переход из одного допустимого состояния базы в другое при соблюдении ограничений. Isolation — контроль взаимодействия параллельных транзакций. Durability — сохранность подтверждённых изменений при сбое в рамках гарантий СУБД.\n\nACID не означает, что любая бизнес-логика автоматически корректна. Если запрос неверно посчитал сумму и успешно закоммитился, база надёжно сохранит неправильный результат. Ограничения и проверки приложения должны обеспечивать смысловую корректность.\n\nИзоляция не всегда означает полную последовательность транзакций. Разные уровни изоляции допускают разные эффекты параллельного выполнения.",
+        "example": "BEGIN;\nCREATE TEMP TABLE acid_accounts (\n  account_id integer PRIMARY KEY,\n  balance numeric(12,2) NOT NULL CHECK (balance >= 0)\n) ON COMMIT DROP;\nINSERT INTO acid_accounts VALUES (1, 1000), (2, 500);\nUPDATE acid_accounts SET balance = balance - 100 WHERE account_id = 1;\nUPDATE acid_accounts SET balance = balance + 100 WHERE account_id = 2;\nSELECT account_id, balance FROM acid_accounts ORDER BY account_id;\nCOMMIT;",
         "note": "ACID не спасает от логически ошибочного SQL. Проверяй условия и инварианты отдельно.",
         "simple": "ACID описывает надёжность выполнения транзакций, а не правильность бизнес-формулы в запросе.",
         "practiceIds": [],
@@ -7693,11 +7693,14 @@ export const modules = [
       },
       {
         "title": "Действия внешних ключей и отложенные ограничения",
-        "body": "Внешние ключи могут управлять поведением при удалении или изменении родительской строки. RESTRICT и NO ACTION запрещают операцию, если остались ссылки. CASCADE автоматически удаляет или обновляет связанные строки. SET NULL записывает NULL во внешний ключ, SET DEFAULT использует его значение по умолчанию.\n\nВыбор действия зависит от смысла данных. Если удаление клиента не должно удалять историю заказов, CASCADE для orders может быть опасен. Если дочерняя запись не имеет смысла без родителя, каскадное удаление может быть оправдано.\n\nОграничения могут быть DEFERRABLE: проверка откладывается до конца транзакции или до SET CONSTRAINTS. Это помогает при некоторых циклических или пакетных изменениях, но требует внимательного управления моментом проверки.",
-        "example": "CREATE TABLE order_items (\n  order_id BIGINT REFERENCES orders(order_id)\n    ON DELETE CASCADE,\n  product_id BIGINT REFERENCES products(product_id)\n);",
+        "body": "Внешние ключи могут управлять поведением при удалении или изменении родительской строки. RESTRICT сразу запрещает операцию, если остались ссылки. NO ACTION проверяет ссылки в момент проверки ограничения и может быть отложен, если внешний ключ объявлен DEFERRABLE. CASCADE автоматически удаляет или обновляет связанные строки. SET NULL записывает NULL во внешний ключ, поэтому столбец должен допускать NULL. SET DEFAULT использует значение по умолчанию, которое тоже должно проходить проверку внешнего ключа.\n\nВыбор действия зависит от смысла данных. Если удаление клиента не должно удалять историю заказов, CASCADE для orders может быть опасен. Если дочерняя запись не имеет смысла без родителя, каскадное удаление может быть оправдано.\n\nОграничения могут быть DEFERRABLE: проверка откладывается до конца транзакции или до SET CONSTRAINTS. Это помогает при некоторых циклических или пакетных изменениях, но требует внимательного управления моментом проверки.",
+        "example": "CREATE TEMP TABLE IF NOT EXISTS fk_action_order_items_demo (\n  order_id BIGINT REFERENCES orders(order_id)\n    ON DELETE CASCADE,\n  product_id BIGINT REFERENCES products(product_id)\n);",
         "note": "CASCADE может удалить большой объём связанных данных. Перед его использованием проследи всю цепочку внешних ключей.",
         "simple": "ON DELETE задаёт судьбу дочерних строк, когда удаляется родительская запись.",
-        "practiceIds": [],
+        "practiceIds": [
+          "e114",
+          "e115"
+        ],
         "outcomes": [
           "Выбирать действия ON DELETE по смыслу данных",
           "объяснить DEFERRABLE и отложенную проверку."
@@ -9947,23 +9950,25 @@ export const exercises = [
   {
     "id": "e69",
     "m": "constraints",
-    "title": "Две операции в одной транзакции",
-    "task": "Открой транзакцию, увеличь цену товара с product_id = 1 на 5%, уменьши цену товара с product_id = 2 на 10% и зафиксируй обе операции одной командой COMMIT. Проверка сравнит итоговые цены.",
-    "solution": "BEGIN;\nUPDATE products SET price = price * 1.05 WHERE product_id = 1;\nUPDATE products SET price = price * 0.90 WHERE product_id = 2;\nCOMMIT;",
+    "title": "Переведи деньги в одной транзакции",
+    "task": "Создай временную таблицу счетов и добавь два счёта с балансами 1000 и 500. Переведи 100 со счёта 1 на счёт 2 в одной транзакции и зафиксируй её. Итоговые балансы должны быть 900 и 600, а общая сумма — остаться 1500.",
+    "solution": "BEGIN;\nCREATE TEMP TABLE transfer_accounts (account_id INTEGER PRIMARY KEY, balance NUMERIC(12,2) NOT NULL CHECK (balance >= 0));\nINSERT INTO transfer_accounts VALUES (1, 1000), (2, 500);\nUPDATE transfer_accounts SET balance = balance - 100 WHERE account_id = 1;\nUPDATE transfer_accounts SET balance = balance + 100 WHERE account_id = 2;\nCOMMIT;",
     "mode": "transaction",
     "requiredPatterns": [
       "\\bBEGIN\\b",
-      "\\bUPDATE\\s+products\\b",
+      "\\bCREATE\\s+TEMP\\s+TABLE\\s+transfer_accounts\\b",
+      "\\bUPDATE\\s+transfer_accounts\\b",
       "\\bCOMMIT\\b"
     ],
-    "checkQuery": "SELECT (SELECT price FROM products WHERE product_id = 1) = 2625::numeric AS product_1_ok, (SELECT price FROM products WHERE product_id = 2) = 450::numeric AS product_2_ok;",
+    "checkQuery": "SELECT (SELECT balance::int FROM transfer_accounts WHERE account_id = 1) AS source_balance, (SELECT balance::int FROM transfer_accounts WHERE account_id = 2) AS destination_balance, (SELECT SUM(balance)::int FROM transfer_accounts) AS total_balance;",
     "expectedCheck": {
-      "product_1_ok": true,
-      "product_2_ok": true
+      "source_balance": 900,
+      "destination_balance": 600,
+      "total_balance": 1500
     },
-    "hint": "Обе операции должны находиться между BEGIN и COMMIT. Ошибка в одной из них должна отменить весь набор изменений.",
-    "hint2": "UPDATE меняет все строки, подходящие под WHERE. Перед выполнением проверь, что фильтр ограничивает изменение нужной записью или группой.",
-    "hint3": "Каркас: PRIMARY KEY (...), UNIQUE (...), NOT NULL, CHECK (условие)."
+    "hint": "Обе части перевода должны быть одной логической операцией: нельзя сохранить списание без зачисления.",
+    "hint2": "Создай границу транзакции до изменений и фиксируй её только после обеих операций.",
+    "hint3": "Каркас: BEGIN; UPDATE ...; UPDATE ...; COMMIT;"
   },
   {
     "id": "e70",
@@ -9981,9 +9986,9 @@ export const exercises = [
     "expectedCheck": {
       "rollback_preserved": true
     },
-    "hint": "ROLLBACK завершает транзакцию и отменяет её изменения. После отката проверь исходное состояние.",
-    "hint2": "DELETE удаляет все строки, удовлетворяющие WHERE. Проверь фильтр до выполнения и учитывай, что транзакция позволяет отменить изменение.",
-    "hint3": "Каркас: PRIMARY KEY (...), UNIQUE (...), NOT NULL, CHECK (условие)."
+    "hint": "ROLLBACK отменяет все изменения, выполненные после BEGIN в этой транзакции.",
+    "hint2": "После отката проверь не результат DELETE, а наличие исходной записи в таблице.",
+    "hint3": "Каркас: BEGIN; DELETE FROM таблица WHERE условие; ROLLBACK;"
   },
   {
     "id": "e71",
@@ -10004,9 +10009,45 @@ export const exercises = [
       "product_1_committed": true,
       "product_2_rolled_back": true
     },
-    "hint": "SAVEPOINT создаёт точку возврата внутри транзакции. ROLLBACK TO отменит только действия после неё.",
-    "hint2": "UPDATE меняет все строки, подходящие под WHERE. Перед выполнением проверь, что фильтр ограничивает изменение нужной записью или группой.",
-    "hint3": "Каркас: PRIMARY KEY (...), UNIQUE (...), NOT NULL, CHECK (условие)."
+    "hint": "Создай SAVEPOINT после первого UPDATE, чтобы сохранить эту операцию как часть транзакции.",
+    "hint2": "Второй UPDATE должен находиться после SAVEPOINT: именно его результат нужно отменить.",
+    "hint3": "Каркас: BEGIN; UPDATE ...; SAVEPOINT имя; UPDATE ...; ROLLBACK TO SAVEPOINT имя; COMMIT;"
+  },
+  {
+    "id": "e114",
+    "m": "constraints",
+    "title": "Отложи проверку внешнего ключа до COMMIT",
+    "task": "Создай временные таблицы родительских и дочерних записей со внешним ключом DEFERRABLE INITIALLY DEFERRED. В одной транзакции сначала добавь дочернюю запись со ссылкой на parent_id = 10, затем родительскую запись с этим ID и зафиксируй транзакцию. Проверь, что обе записи сохранены и осиротевшей ссылки нет.",
+    "solution": "BEGIN;\nCREATE TEMP TABLE practice_parent (parent_id INTEGER PRIMARY KEY);\nCREATE TEMP TABLE practice_child (child_id INTEGER PRIMARY KEY, parent_id INTEGER NOT NULL, CONSTRAINT practice_child_parent_fk FOREIGN KEY (parent_id) REFERENCES practice_parent(parent_id) DEFERRABLE INITIALLY DEFERRED);\nINSERT INTO practice_child VALUES (1, 10);\nINSERT INTO practice_parent VALUES (10);\nCOMMIT;",
+    "mode": "transaction",
+    "requiredPatterns": [
+      "\\bBEGIN\\b",
+      "DEFERRABLE\\s+INITIALLY\\s+DEFERRED",
+      "INSERT\\s+INTO\\s+practice_child",
+      "INSERT\\s+INTO\\s+practice_parent",
+      "\\bCOMMIT\\b"
+    ],
+    "checkQuery": "SELECT (SELECT COUNT(*)::int FROM practice_parent) AS parent_count, (SELECT COUNT(*)::int FROM practice_child) AS child_count, (SELECT COUNT(*)::int FROM practice_child c LEFT JOIN practice_parent p ON p.parent_id = c.parent_id WHERE p.parent_id IS NULL) AS orphan_count;",
+    "expectedCheck": {
+      "parent_count": 1,
+      "child_count": 1,
+      "orphan_count": 0
+    },
+    "hint": "DEFERRABLE INITIALLY DEFERRED переносит проверку внешнего ключа на конец транзакции.",
+    "hint2": "Сначала создай дочернюю запись, затем родительскую. Обе операции должны завершиться до COMMIT.",
+    "hint3": "Каркас: FOREIGN KEY (...) REFERENCES родительская_таблица(...) DEFERRABLE INITIALLY DEFERRED;"
+  },
+  {
+    "id": "e115",
+    "m": "constraints",
+    "title": "Проверь каскадное удаление",
+    "task": "Создай родительскую таблицу projects и дочернюю tasks со связью ON DELETE CASCADE. Добавь проекты 1 и 2 и три задачи: 101 и 102 для проекта 1, 201 для проекта 2. Удали проект 1 и проверь, что его задачи удалились вместе с ним, а задача проекта 2 сохранилась.",
+    "solution": "CREATE TEMP TABLE practice_projects (project_id INTEGER PRIMARY KEY);\nCREATE TEMP TABLE practice_tasks (task_id INTEGER PRIMARY KEY, project_id INTEGER NOT NULL REFERENCES practice_projects(project_id) ON DELETE CASCADE);\nINSERT INTO practice_projects VALUES (1), (2);\nINSERT INTO practice_tasks VALUES (101, 1), (102, 1), (201, 2);\nDELETE FROM practice_projects WHERE project_id = 1;",
+    "mode": "mutation",
+    "checkQuery": "SELECT task_id, project_id FROM practice_tasks ORDER BY task_id;",
+    "hint": "ON DELETE CASCADE задаётся во внешнем ключе дочерней таблицы и управляет удалением связанных строк.",
+    "hint2": "Сначала создай обе таблицы и добавь родительские и дочерние строки, затем удали только родительскую запись с ID 1.",
+    "hint3": "Каркас: FOREIGN KEY (parent_id) REFERENCES parent_table(parent_id) ON DELETE CASCADE;"
   },
   {
     "id": "e72",
