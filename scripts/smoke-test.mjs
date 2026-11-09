@@ -114,7 +114,7 @@ assert.equal(exercises.filter(exercise => exercise.mode === 'select').length, 89
 assert.equal(exercises.filter(exercise => exercise.mode === 'explain').length, 3, 'Expected three EXPLAIN exercises');
 assert.equal(exercises.filter(exercise => exercise.mode === 'mutation').length, 14, 'Expected fourteen mutation exercises');
 assert.equal(exercises.filter(exercise => exercise.mode === 'transaction').length, 3, 'Expected three transaction exercises');
-assert.equal(exercises.length, 109, 'Expected 109 total practice exercises');
+assert.equal(exercises.length, 111, 'Expected 111 total practice exercises');
 assert.ok(exercises.every(exercise => modules.some(module => module.id === exercise.m)), 'Every exercise must belong to a real module');
 const fanoutLesson = modules.find(module => module.id === 'joins')?.lessons.find(lesson => lesson.id === 'joins.fan-out-pochemu-join-umnozhaet-stroki');
 assert.deepEqual(fanoutLesson?.practiceIds, ['e103'], 'The fan-out lesson must link its dedicated practice exercise exactly once');
@@ -407,6 +407,9 @@ assert.deepEqual(workflowQualityModule.lessons.find(lesson => lesson.title === '
 const insertQualityModule = modules.find(module => module.id === 'inserts');
 assert.ok(insertQualityModule.lessons.find(lesson => lesson.title === 'Вставка нескольких строк и INSERT ... SELECT').example.includes('CREATE TEMP TABLE archived_orders'), 'INSERT SELECT example must define its destination before loading');
 assert.ok(insertQualityModule.lessons.find(lesson => lesson.title === 'DEFAULT, RETURNING и безопасная проверка').example.includes('INSERT INTO example_orders DEFAULT VALUES'), 'DEFAULT example must be executable without omitting required columns from the teaching orders table');
+assert.deepEqual(insertQualityModule.lessons.find(lesson => lesson.title === 'Вставка нескольких строк и INSERT ... SELECT').practiceIds, ['e67','e111'], 'The multi-row and INSERT SELECT lesson must link both distinct practice tasks');
+assert.deepEqual(insertQualityModule.lessons.find(lesson => lesson.title === 'DEFAULT, RETURNING и безопасная проверка').practiceIds, ['e110'], 'The DEFAULT and RETURNING lesson must link its dedicated mutation task');
+assert.ok(insertQualityModule.lessons.find(lesson => lesson.title === 'COPY и импорт CSV').note.includes('не является SQL-запросом'), 'The COPY lesson must explain that psql \\copy is not executable in the browser SQL sandbox');
 const dmlQualityModule = modules.find(module => module.id === 'dml');
 assert.ok(dmlQualityModule.lessons.find(lesson => lesson.title === 'UPDATE').example.includes('WHERE product_id = 1'), 'UPDATE example must target a specific existing product');
 assert.ok(dmlQualityModule.lessons.find(lesson => lesson.title === 'DELETE и TRUNCATE').example.includes("DATE '2026-01-13'"), 'DELETE example must target a matching cancelled order in the teaching data');
@@ -944,6 +947,10 @@ try {
           assert.ok(observed.rows.some(row => row.definition.includes('CHECK') && row.definition.includes('>=') && row.definition.includes('<=')), 'CHECK constraint must enforce both range boundaries');
         } else if (exercise.id === 'e67') {
           assert.deepEqual(observed.rows.map(row => [row.product_id, row.product_name, Number(row.price)]), [[1, 'Кофемашина', 2500], [3, 'Чайник', 1500]], 'INSERT ... SELECT task must copy exactly the products in the requested category');
+        } else if (exercise.id === 'e110') {
+          assert.deepEqual(observed.rows, [{import_id:1,status:'queued',source:'manual'}], 'DEFAULT/RETURNING task must verify the generated ID and default status');
+        } else if (exercise.id === 'e111') {
+          assert.deepEqual(observed.rows.map(row => [row.product_id,row.product_name,row.category,Number(row.price)]), [[201,'Desk lamp','Home',1200],[202,'Notebook','Office',150]], 'Multi-row INSERT task must verify both inserted products and all values');
         } else if (exercise.id === 'e68') {
           assert.equal(observed.rows.length, 1, 'Index task must create the requested index');
           assert.match(observed.rows[0].indexdef, /\(status\)/i, 'Index task must index the status column');
