@@ -1,17 +1,17 @@
 # SQL Academy — актуальное состояние и передача разработки
 
-Последнее обновление: 2026-11-09; set operations e33/e34 прошли build 121; исправлен модуль временной аналитики, build 20261109-122 ожидает CI.
+Последнее обновление: 2026-11-09; модуль временной аналитики и практика e72–e79 прошли build 122; начат следующий блок — оконные функции.
 
 ## 1. Репозиторий и проверенные ревизии
 
 - Репозиторий: https://github.com/vladsimbro/SQL
 - GitHub Pages: https://vladsimbro.github.io/SQL/
 - Основная ветка: main; GitHub API подтверждает единственную ветку main.
-- Последний code commit перед текущим обновлением статуса: `518501c1e21036aa65c64bb6a2159ad15558689f`.
+- Последний проверенный code commit: `518501c1e21036aa65c64bb6a2159ad15558689f`.
 - Build приложения: `20261109-122`.
-- Workflow `42541603291` на 518501c: QUEUED; Pages workflow `42541603123`: QUEUED.
-- Последний полностью проверенный build: `20261109-121`. Workflow `42541362927` на a5280f0: validate, deploy и browser-smoke — SUCCESS. Pages workflow `42541422644` на status commit 1ba4a58: build, report-build-status и deploy — SUCCESS.
-- Build 121 опубликован и проверен. Browser-smoke: shellReadyMs=792, recoveryMs=4195, resetReadyMs=3554; ширины 390 и 320 px; PGlite retry, выполнение SQL, сохранение черновика, reset базы, мобильная навигация, backup validation и отказ от восстановления проверены. Artifact `sql-academy-ux-audit-screenshots`, ID `13640999555`.
+- Workflow `42541603291` на 518501c: validate, deploy и browser-smoke — SUCCESS.
+- Pages workflow `42541642903` на status commit e2fd568: build, report-build-status и deploy — SUCCESS.
+- Build 122 опубликован и проверен. Browser-smoke: shellReadyMs=1199, recoveryMs=4159, resetReadyMs=3553; ширины 390 и 320 px; PGlite retry, выполнение SQL, сохранение черновика, reset базы, мобильная навигация, backup validation и отказ от восстановления проверены. Artifact `sql-academy-ux-audit-screenshots`, ID `13640888802`.
 - Открытых Pull Requests нет. Ветка только main; незавершённых переносов между ветками не обнаружено.
 - Изменения выполнялись через GitHub API; локальный clone и локальный git status не использовались.
 - Предыдущие SHA/build/workflow в исторических разделах ниже относятся к прежним состояниям. Для текущего состояния использовать этот раздел и финальную передачу в конце документа.
