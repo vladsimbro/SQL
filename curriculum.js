@@ -9896,7 +9896,7 @@ export const exercises = [
     "id": "e111",
     "m": "inserts",
     "title": "Добавь несколько строк одной командой",
-    "task": "Создай временную таблицу batch_products с идентификатором, названием, категорией и ценой. Добавь в неё два товара одним INSERT и проверь обе записи.",
+    "task": "Создай временную таблицу batch_products с идентификатором, названием, категорией и ценой. Добавь одним INSERT два товара: (201, 'Desk lamp', 'Home', 1200) и (202, 'Notebook', 'Office', 150). Проверь обе записи.",
     "solution": "CREATE TEMP TABLE batch_products (\n  product_id INTEGER PRIMARY KEY,\n  product_name TEXT NOT NULL,\n  category TEXT NOT NULL,\n  price NUMERIC(10, 2) NOT NULL\n);\nINSERT INTO batch_products (product_id, product_name, category, price)\nVALUES\n  (201, 'Desk lamp', 'Home', 1200),\n  (202, 'Notebook', 'Office', 150);",
     "mode": "mutation",
     "checkQuery": "SELECT product_id, product_name, category, price FROM batch_products ORDER BY product_id;",
