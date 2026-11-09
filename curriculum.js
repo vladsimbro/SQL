@@ -8105,7 +8105,7 @@ export const modules = [
       {
         "title": "B-tree и обычный индекс",
         "body": "B-tree — индекс по умолчанию в PostgreSQL и универсальный выбор для равенства, диапазонов и сортировки. Он хранит ключи в упорядоченной структуре, поэтому подходит для условий =, <, BETWEEN и ORDER BY при подходящем порядке столбцов.\n\nИндекс ускоряет поиск ценой дополнительного места и затрат на INSERT, UPDATE и DELETE: при изменении данных нужно обновлять и индекс. Поэтому индекс на каждом столбце не является бесплатным ускорением.\n\nИндекс особенно полезен, когда запрос выбирает небольшую долю строк или использует сортировку, которую можно получить из индекса. Но для маленькой таблицы или широкого результата Seq Scan может быть дешевле.",
-        "example": "CREATE INDEX idx_orders_customer\nON orders (customer_id);\n\nEXPLAIN\nSELECT * FROM orders\nWHERE customer_id = 42;",
+        "example": "CREATE INDEX IF NOT EXISTS idx_orders_customer\nON orders (customer_id);\n\nEXPLAIN\nSELECT * FROM orders\nWHERE customer_id = 42;",
         "note": "Индекс ускоряет некоторые чтения, но замедляет изменения и занимает место. Создавай его под реальные запросы.",
         "simple": "B-tree полезен для равенства, диапазонов и многих вариантов сортировки.",
         "practiceIds": [
@@ -8145,7 +8145,7 @@ export const modules = [
       {
         "title": "Составные, частичные и покрывающие индексы",
         "body": "Составной индекс содержит несколько ключевых столбцов. Для B-tree важен порядок: индекс (customer_id, created_at) хорошо подходит для поиска по customer_id и затем по диапазону created_at. Он не так полезен для запроса только по created_at, потому что ведущий столбец customer_id не ограничен.\n\nЧастичный индекс содержит только строки, удовлетворяющие WHERE в определении индекса. Он может быть меньше и полезнее для запросов по активным или незавершённым записям. Покрывающий индекс с INCLUDE хранит дополнительные значения для возможности index-only scan, хотя видимость строк и другие условия всё равно влияют на результат.\n\nПроектируй составной индекс по реальным фильтрам и сортировке. Не добавляй столбцы «на всякий случай»: каждый ключ влияет на размер и стоимость обновления.",
-        "example": "CREATE INDEX idx_orders_customer_date\nON orders (customer_id, created_at DESC)\nINCLUDE (total_amount);",
+        "example": "CREATE INDEX IF NOT EXISTS idx_orders_customer_date\nON orders (customer_id, created_at DESC)\nINCLUDE (total_amount);",
         "note": "Индекс (a,b) обычно не заменяет индекс только по b для всех запросов. Проверяй план.",
         "simple": "В составном B-tree индексе порядок столбцов важен: сначала выбирай ведущие фильтры и группировки.",
         "practiceIds": [],
@@ -8172,7 +8172,7 @@ export const modules = [
         "title": "Статистика, ANALYZE и VACUUM",
         "body": "PostgreSQL собирает статистику о распределении значений, чтобы оценивать количество строк после фильтров и выбирать план. ANALYZE обновляет статистику, а autovacuum обычно запускает ANALYZE и VACUUM автоматически по порогам.\n\nVACUUM освобождает место, занятое старыми версиями строк, для повторного использования и поддерживает visibility map. В модели MVCC UPDATE и DELETE не всегда удаляют старую версию сразу. Без очистки таблицы могут разрастаться.\n\nVACUUM FULL переписывает таблицу и требует более серьёзной блокировки. Не запускай его как обычную регулярную команду без оценки влияния. Обычно сначала проверяют autovacuum, статистику и признаки bloat.",
         "example": "ANALYZE orders;\nVACUUM (ANALYZE) orders;",
-        "note": "Не путай VACUUM с удалением всех данных и не запускай VACUUM FULL без оценки блокировок.",
+        "note": "VACUUM нельзя выполнять внутри транзакционного блока. Не путай его с удалением данных и не запускай VACUUM FULL без оценки блокировок: он переписывает таблицу и требует более сильной блокировки. Поведение autovacuum в PGlite не заменяет наблюдение за сервером PostgreSQL.",
         "simple": "ANALYZE обновляет статистику для планировщика. VACUUM обслуживает старые версии строк MVCC.",
         "practiceIds": [],
         "outcomes": [
@@ -8223,10 +8223,12 @@ export const modules = [
       {
         "title": "Expression, partial, GIN, GiST и BRIN индексы",
         "body": "Expression index индексирует результат выражения, например lower(email), а не исходное значение email напрямую. Такой индекс помогает, если запрос использует то же выражение.\n\nPartial index содержит только строки, удовлетворяющие условию WHERE, например незавершённые заказы. GIN подходит для поиска внутри составных значений, например JSONB и массивов. GiST — обобщённый тип индекса для диапазонов, геометрии и других операторных классов. BRIN хранит сводную информацию о диапазонах физических блоков и может быть очень компактным для больших таблиц, где значения коррелируют с физическим порядком.\n\nВыбирай тип индекса по операторам запроса и типу данных. Универсального «самого быстрого индекса» не существует.",
-        "example": "CREATE INDEX idx_customers_lower_name\nON customers (lower(customer_name));\n\nCREATE INDEX idx_orders_open\nON orders (created_at)\nWHERE status = 'open';",
+        "example": "CREATE INDEX IF NOT EXISTS idx_customers_lower_name\nON customers (lower(customer_name));\n\nCREATE INDEX IF NOT EXISTS idx_orders_open\nON orders (created_at)\nWHERE status = 'open';",
         "note": "Expression index полезен только при совпадающем выражении запроса и подходящем операторном классе.",
         "simple": "B-tree не единственный вариант. GIN, GiST и BRIN решают другие классы задач.",
-        "practiceIds": [],
+        "practiceIds": [
+          "e123"
+        ],
         "outcomes": [
           "Различать expression, partial, GIN, GiST и BRIN",
           "выбирать индекс под оператор и данные."
@@ -8277,7 +8279,7 @@ export const modules = [
       {
         "title": "Параметры запроса и prepared statements",
         "body": "Prepared statement позволяет подготовить запрос один раз и выполнять его многократно с разными параметрами. Это уменьшает повторный разбор и может использовать план выполнения повторно.\n\nВ PostgreSQL план может быть custom или generic. Custom учитывает конкретные значения параметров, generic использует общий план. Если распределение данных сильно неравномерно, один общий план может оказаться плохим для некоторых параметров.\n\nПараметризованные запросы важны и для безопасности: значения передаются отдельно от текста SQL, что защищает от SQL injection. Но параметр нельзя использовать вместо имени таблицы или столбца обычным способом.",
-        "example": "PREPARE orders_by_customer(BIGINT) AS\nSELECT order_id, total_amount\nFROM orders\nWHERE customer_id = $1;\n\nEXECUTE orders_by_customer(42);",
+        "example": "PREPARE orders_by_customer_demo(BIGINT) AS\nSELECT order_id, total_amount\nFROM orders\nWHERE customer_id = $1;\n\nEXECUTE orders_by_customer_demo(42);\nDEALLOCATE orders_by_customer_demo;",
         "note": "Не склеивай SQL из пользовательских строк. Параметры защищают значения, но не динамические имена объектов.",
         "simple": "Prepared statement отделяет структуру SQL от значений параметров и может повторно использовать подготовленный запрос.",
         "practiceIds": [],
@@ -8304,9 +8306,11 @@ export const modules = [
         "title": "Составной индекс и порядок столбцов",
         "body": "Порядок столбцов составного B-tree индекса определяет, какие запросы смогут эффективно использовать его ведущую часть. Индекс (status, created_at) подходит для status = 'open' и диапазона по created_at внутри этого статуса.\n\nЕсли фильтр использует только created_at, такой индекс обычно менее полезен, потому что сначала идут записи, сгруппированные по status. Поэтому порядок выбирают исходя из реальных WHERE, JOIN и ORDER BY, а не просто из списка столбцов.\n\nСелективность важна, но не является единственным фактором. Индекс может использоваться и для столбца с небольшим числом уникальных значений, если он ведущий в составном индексе и запрос ограничивает комбинацию полей.",
         "simple": "В составном индексе ведущие столбцы задают доступный путь поиска. Порядок проектируется под запросы.",
-        "example": "CREATE INDEX idx_orders_status_date\nON orders (status, created_at DESC);",
+        "example": "CREATE INDEX IF NOT EXISTS idx_orders_status_date\nON orders (status, created_at DESC);",
         "note": "Не существует универсального правила «самый селективный столбец всегда первый». Учитывай паттерны запросов и сортировку.",
-        "practiceIds": [],
+        "practiceIds": [
+          "e122"
+        ],
         "outcomes": [
           "Подбирать порядок столбцов индекса по шаблонам фильтрации и сортировки.",
           "Объяснить, почему индекс с другим ведущим столбцом может не подойти запросу."
@@ -8383,7 +8387,7 @@ export const modules = [
       {
         "title": "Bitmap Scan и Index Only Scan",
         "body": "Index Scan и Bitmap Scan используют индекс по-разному. При обычном Index Scan PostgreSQL находит TID строк в индексе и обращается к соответствующим страницам таблицы. Если подходящих строк много и они разбросаны по таблице, множество отдельных обращений может оказаться дорогим.\n\nBitmap Index Scan собирает адреса подходящих строк в bitmap, а Bitmap Heap Scan читает страницы таблицы более сгруппированно. Несколько индексов могут объединяться узлами BitmapAnd или BitmapOr. При потере точности bitmap возможны lossy pages и дополнительный Recheck Cond.\n\nIndex Only Scan потенциально получает все нужные значения из индекса и не читает таблицу для каждой строки. Но PostgreSQL должен убедиться, что версия строки видима текущей транзакции. Для этого помогает visibility map. Поэтому в плане смотри на Heap Fetches: ноль или малое число означает, что чтение таблицы удалось избежать для большинства строк.",
-        "example": "CREATE INDEX idx_orders_customer_amount\nON orders (customer_id) INCLUDE (total_amount);\n\nEXPLAIN (ANALYZE, BUFFERS)\nSELECT customer_id, total_amount\nFROM orders\nWHERE customer_id = 1;",
+        "example": "CREATE INDEX IF NOT EXISTS idx_orders_customer_amount\nON orders (customer_id) INCLUDE (total_amount);\n\nEXPLAIN (ANALYZE, BUFFERS)\nSELECT customer_id, total_amount\nFROM orders\nWHERE customer_id = 1;",
         "note": "Покрывающий индекс создаёт возможность Index Only Scan, но не гарантирует его: важны visibility map, селективность и стоимость плана.",
         "simple": "Bitmap Scan группирует найденные адреса страниц, а Index Only Scan старается получить результат прямо из индекса.",
         "practiceIds": [],
@@ -8412,7 +8416,9 @@ export const modules = [
         "example": "-- Менее удачный для обычного индекса по created_at вариант\nSELECT order_id\nFROM orders\nWHERE created_at::date = DATE '2026-01-15';\n\n-- Диапазон по исходному столбцу\nSELECT order_id\nFROM orders\nWHERE created_at >= TIMESTAMP '2026-01-15 00:00:00'\n  AND created_at <  TIMESTAMP '2026-01-16 00:00:00';",
         "note": "Не объявляй функцию или CAST проблемой автоматически: expression index, типы операторов и оценки планировщика могут изменить результат. Проверяй план.",
         "simple": "Чем ближе условие к диапазону или сравнению самого индексированного значения, тем проще B-tree применить его напрямую.",
-        "practiceIds": [],
+        "practiceIds": [
+          "e125"
+        ],
         "outcomes": [
           "Переписывать фильтр по дате в полуоткрытый диапазон",
           "понимать, когда нужен expression index и почему ведущий wildcard мешает обычному B-tree."
@@ -8447,10 +8453,12 @@ export const modules = [
       {
         "title": "Расширенная статистика и ошибки оценок",
         "body": "Обычная статистика ANALYZE в основном описывает распределение значений отдельных столбцов. Но реальные данные часто зависимы: например, определённые статусы встречаются преимущественно в одном регионе, а некоторые сочетания категории и бренда почти не встречаются.\n\nЕсли планировщик считает условия независимыми, он может перемножить селективности и сильно ошибиться в оценке числа строк. Это влияет на выбор Scan, порядка JOIN и алгоритма соединения. Сравни estimated rows с actual rows в EXPLAIN ANALYZE, прежде чем менять индексы.\n\nPostgreSQL поддерживает расширенную статистику для нескольких столбцов одной таблицы: dependencies описывает функциональные зависимости, ndistinct помогает оценивать число различных комбинаций, а mcv хранит наиболее частые сочетания значений. Создание объекта статистики само по себе не собирает данные: после CREATE STATISTICS нужно выполнить ANALYZE соответствующей таблицы.\n\nРасширенная статистика не является универсальным лечением плохого плана и не описывает все межтабличные зависимости. Создавай её под конкретный повторяющийся перекос оценок, а затем сравнивай estimated и actual rows.",
-        "example": "CREATE STATISTICS orders_status_customer_stats\n  (dependencies, ndistinct, mcv)\nON status, customer_id\nFROM orders;\n\nANALYZE orders;\n\nEXPLAIN (ANALYZE, BUFFERS)\nSELECT *\nFROM orders\nWHERE status = 'delivered'\n  AND customer_id = 1;",
+        "example": "CREATE STATISTICS IF NOT EXISTS orders_status_customer_stats\n  (dependencies, ndistinct, mcv)\nON status, customer_id\nFROM orders;\n\nANALYZE orders;\n\nEXPLAIN (ANALYZE, BUFFERS)\nSELECT *\nFROM orders\nWHERE status = 'delivered'\n  AND customer_id = 1;",
         "note": "CREATE STATISTICS описывает совместное распределение столбцов одной таблицы. Не путай её с индексом: она помогает оценкам, но сама не ускоряет поиск строк.",
         "simple": "Если PostgreSQL ошибается в числе ожидаемых строк из-за связи между столбцами, расширенная статистика может улучшить оценку.",
-        "practiceIds": [],
+        "practiceIds": [
+          "e124"
+        ],
         "outcomes": [
           "Объяснить, почему независимые оценки фильтров могут ошибаться",
           "различать CREATE STATISTICS и CREATE INDEX."
@@ -9655,7 +9663,7 @@ export const exercises = [
     "requirementsMessage": "Построй план именно для выборки из orders с фильтром customer_id = 1.",
     "hint": "EXPLAIN должен стоять перед SELECT. В плане найди тип сканирования и оценку количества строк.",
     "hint2": "Читай план как дерево операций: сначала найди узлы сканирования, затем соединения и фильтры. Оценка строк не равна фактическому времени.",
-    "hint3": "Каркас: EXPLAIN (ANALYZE, BUFFERS) SELECT ...; Сравни estimated и actual rows."
+    "hint3": "EXPLAIN ANALYZE действительно выполняет запрос. Для SELECT это безопасно, но не запускай его на изменяющей команде без защиты транзакцией."
   },
   {
     "id": "e47",
@@ -9955,9 +9963,9 @@ export const exercises = [
     "solution": "CREATE INDEX idx_practice_orders_status ON orders (status);",
     "mode": "mutation",
     "checkQuery": "SELECT indexname, indexdef FROM pg_indexes WHERE tablename = 'orders' AND indexname = 'idx_practice_orders_status';",
-    "hint": "Индекс должен соответствовать столбцу и условию WHERE. EXPLAIN поможет увидеть, использует ли планировщик индекс.",
-    "hint2": "Индекс должен соответствовать реальному фильтру или ключу соединения. Само наличие индекса не гарантирует, что планировщик его выберет.",
-    "hint3": "Каркас: EXPLAIN (ANALYZE, BUFFERS) SELECT ...; Сравни estimated и actual rows."
+    "hint": "Создай B-tree по столбцу, который используется в условии фильтрации.",
+    "hint2": "На небольшой таблице планировщик может оставить Seq Scan даже при наличии индекса: проверка здесь подтверждает создание структуры, а не гарантирует её выбор.",
+    "hint3": "Каркас: CREATE INDEX имя_индекса ON orders (столбец);"
   },
   {
     "id": "e69",
@@ -10132,6 +10140,60 @@ export const exercises = [
     "hint": "EXCEPTION перехватывает ошибку внутри блока и позволяет выполнить обработчик вместо прерывания всей внешней операции.",
     "hint2": "Укажи конкретное условие unique_violation, а не общий обработчик OTHERS.",
     "hint3": "Каркас: BEGIN; команда; EXCEPTION WHEN unique_violation THEN обработчик; END;"
+  },
+  {
+    "id": "e122",
+    "m": "performance",
+    "title": "Построй составной покрывающий индекс",
+    "task": "Создай B-tree индекс idx_practice_orders_customer_date: сначала по customer_id, затем по created_at DESC, а total_amount добавь через INCLUDE. Проверь порядок ключей и включённый столбец в определении индекса.",
+    "solution": "CREATE INDEX idx_practice_orders_customer_date ON orders (customer_id, created_at DESC) INCLUDE (total_amount);",
+    "mode": "mutation",
+    "checkQuery": "SELECT (indexdef LIKE '%(customer_id, created_at DESC)%' AND indexdef LIKE '%INCLUDE (total_amount)%') AS definition_ok FROM pg_indexes WHERE indexname = 'idx_practice_orders_customer_date';",
+    "hint": "Ключевые столбцы задают порядок поиска и сортировки; INCLUDE хранит дополнительное значение, но не добавляет его в ключ.",
+    "hint2": "Для запроса по клиенту и дате ведущим должен быть customer_id, а created_at задаёт нужный порядок внутри клиента.",
+    "hint3": "Каркас: CREATE INDEX имя ON таблица (ключ1, ключ2 DESC) INCLUDE (дополнительный_столбец);"
+  },
+  {
+    "id": "e123",
+    "m": "performance",
+    "title": "Создай частичный индекс для открытых заказов",
+    "task": "Создай частичный индекс idx_practice_orders_open_created по created_at, но включи в него только строки со status = 'open'. Проверь, что предикат сохранён в определении индекса.",
+    "solution": "CREATE INDEX idx_practice_orders_open_created ON orders (created_at) WHERE status = 'open';",
+    "mode": "mutation",
+    "checkQuery": "SELECT (pg_get_expr(i.indpred, i.indrelid) ILIKE '%status%' AND pg_get_expr(i.indpred, i.indrelid) ILIKE '%open%') AS predicate_ok FROM pg_index i JOIN pg_class idx ON idx.oid = i.indexrelid WHERE idx.relname = 'idx_practice_orders_open_created';",
+    "hint": "Частичный индекс содержит не всю таблицу, а только строки, которые проходят условие WHERE в самом индексе.",
+    "hint2": "Условие индекса должно описывать именно те записи, для которых нужен компактный путь поиска.",
+    "hint3": "Каркас: CREATE INDEX имя ON таблица (столбец) WHERE условие;"
+  },
+  {
+    "id": "e124",
+    "m": "performance",
+    "title": "Создай расширенную статистику",
+    "task": "Создай объект расширенной статистики orders_practice_status_customer_stats для совместного распределения status и customer_id с видами dependencies, ndistinct и mcv. Выполни ANALYZE orders и проверь, что объект статистики создан.",
+    "solution": "CREATE STATISTICS orders_practice_status_customer_stats (dependencies, ndistinct, mcv) ON status, customer_id FROM orders;\nANALYZE orders;",
+    "mode": "mutation",
+    "checkQuery": "SELECT COUNT(*)::int AS stats_count FROM pg_statistic_ext WHERE stxname = 'orders_practice_status_customer_stats';",
+    "hint": "CREATE STATISTICS описывает связь значений между столбцами, а не создаёт индекс для чтения строк.",
+    "hint2": "Укажи все три вида статистики в круглых скобках, затем перечисли столбцы одной таблицы после ON.",
+    "hint3": "После создания объекта выполни ANALYZE для той же таблицы, чтобы собрать статистические данные."
+  },
+  {
+    "id": "e125",
+    "m": "performance",
+    "title": "Используй индексируемый диапазон дат",
+    "task": "Построй EXPLAIN для выборки заказов за 15 января 2026 года. Используй полуоткрытый диапазон по created_at: нижняя граница включается, верхняя — нет. Не преобразовывай сам столбец к date.",
+    "solution": "EXPLAIN SELECT order_id FROM orders WHERE created_at >= TIMESTAMP '2026-01-15 00:00:00' AND created_at < TIMESTAMP '2026-01-16 00:00:00';",
+    "mode": "explain",
+    "requiredPatterns": [
+      "\\bEXPLAIN\\s+SELECT\\b",
+      "\\bFROM\\s+orders\\b",
+      "created_at\\s*>=\\s*TIMESTAMP",
+      "created_at\\s*<\\s*TIMESTAMP"
+    ],
+    "requirementsMessage": "Нужен EXPLAIN по orders с нижней и верхней границей created_at, без преобразования столбца к date.",
+    "hint": "Полуоткрытый диапазон включает начало дня и исключает начало следующего дня.",
+    "hint2": "Сравнивай исходный timestamp со значениями границ, а не применяй CAST или функцию к каждой строке столбца.",
+    "hint3": "Каркас: WHERE created_at >= TIMESTAMP 'начало' AND created_at < TIMESTAMP 'следующий день';"
   },
   {
     "id": "e72",
@@ -10780,20 +10842,22 @@ export const exercises = [
   {
     "id": "e101",
     "m": "performance",
-    "title": "Сравни план фильтра по статусу",
-    "task": "Построй план выполнения запроса, который выбирает order_id и total_amount для доставленных заказов. Изучи тип сканирования и оценку количества строк.",
-    "solution": "EXPLAIN SELECT order_id, total_amount FROM orders WHERE status = 'delivered';",
+    "title": "Прочитай план фильтра и агрегации",
+    "task": "Построй план запроса, который группирует доставленные заказы по customer_id и считает количество заказов и их общую сумму. Найди в плане чтение таблицы, фильтр и операцию агрегации.",
+    "solution": "EXPLAIN SELECT customer_id, COUNT(*) AS orders_count, SUM(total_amount) AS total_amount FROM orders WHERE status = 'delivered' GROUP BY customer_id;",
     "mode": "explain",
     "requiredPatterns": [
-      "\\bSELECT\\b[\\s\\S]*\\border_id\\b",
-      "\\btotal_amount\\b",
+      "\\bSELECT\\b[\\s\\S]*\\bcustomer_id\\b",
+      "\\bCOUNT\\s*\\(",
+      "\\bSUM\\s*\\(\\s*total_amount\\s*\\)",
       "\\bFROM\\s+orders\\b",
-      "\\bWHERE\\s+status\\s*=\\s*'delivered'"
+      "\\bWHERE\\s+status\\s*=\\s*'delivered'",
+      "\\bGROUP\\s+BY\\s+customer_id\\b"
     ],
-    "requirementsMessage": "Для этого плана нужны order_id и total_amount из orders с фильтром status = 'delivered'.",
-    "hint": "Начни с EXPLAIN перед SELECT. Найди узел Scan, estimated rows и условие фильтрации.",
-    "hint2": "Читай план как дерево операций: сначала найди узлы сканирования, затем соединения и фильтры. Оценка строк не равна фактическому времени.",
-    "hint3": "Каркас: EXPLAIN (ANALYZE, BUFFERS) SELECT ...; Сравни estimated и actual rows."
+    "requirementsMessage": "План должен строиться для группировки доставленных заказов по customer_id с COUNT и SUM(total_amount).",
+    "hint": "В плане найди узел Scan и условие Filter, затем посмотри, какой узел выполняет группировку.",
+    "hint2": "Агрегация может отображаться как HashAggregate или GroupAggregate. Это физический способ выполнить GROUP BY, а не другой SQL-синтаксис.",
+    "hint3": "Сравни оценочное число строк до и после агрегации. EXPLAIN ANALYZE покажет фактические значения, но действительно выполнит SELECT."
   },
   {
     "id": "e102",
