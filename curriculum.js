@@ -10062,6 +10062,78 @@ export const exercises = [
     "hint3": "Каркас: FOREIGN KEY (parent_id) REFERENCES parent_table(parent_id) ON DELETE CASCADE;"
   },
   {
+    "id": "e116",
+    "m": "views",
+    "title": "Создай представление для доставленных заказов",
+    "task": "Создай обычное представление practice_delivered_orders, которое показывает идентификатор заказа, клиента и сумму только для заказов со статусом delivered. Проверь, что представление содержит 6 строк, а их общая сумма равна 10740.",
+    "solution": "CREATE OR REPLACE VIEW practice_delivered_orders AS\nSELECT order_id, customer_id, total_amount\nFROM orders\nWHERE status = 'delivered';",
+    "mode": "mutation",
+    "checkQuery": "SELECT COUNT(*)::int AS row_count, SUM(total_amount)::int AS total_amount FROM practice_delivered_orders;",
+    "hint": "VIEW сохраняет определение SELECT, а не копию строк. Сначала сформируй запрос, который отбирает нужный статус.",
+    "hint2": "Укажи только три поля из условия и используй тот же фильтр, что и в запросе для представления.",
+    "hint3": "Каркас: CREATE VIEW имя AS SELECT ... FROM orders WHERE status = ...;"
+  },
+  {
+    "id": "e117",
+    "m": "views",
+    "title": "Обнови материализованное представление",
+    "task": "Создай материализованное представление с общей суммой заказов по каждому статусу. Увеличь сумму заказа 101 на 100, обнови материализованное представление командой REFRESH и проверь новую сумму для статуса delivered: 10840.",
+    "solution": "CREATE MATERIALIZED VIEW practice_status_revenue AS\nSELECT status, SUM(total_amount)::numeric(12,2) AS revenue\nFROM orders\nGROUP BY status;\nUPDATE orders SET total_amount = total_amount + 100 WHERE order_id = 101;\nREFRESH MATERIALIZED VIEW practice_status_revenue;",
+    "mode": "mutation",
+    "checkQuery": "SELECT revenue::int AS delivered_revenue FROM practice_status_revenue WHERE status = 'delivered';",
+    "hint": "В отличие от VIEW, materialized view хранит результат запроса и не меняется автоматически при обновлении исходной таблицы.",
+    "hint2": "После изменения заказа выполни REFRESH MATERIALIZED VIEW для пересчёта сохранённого результата.",
+    "hint3": "Каркас: CREATE MATERIALIZED VIEW имя AS SELECT ...; затем REFRESH MATERIALIZED VIEW имя;"
+  },
+  {
+    "id": "e118",
+    "m": "views",
+    "title": "Создай SQL-функцию для расчёта суммы",
+    "task": "Создай SQL-функцию practice_add_tax, которая принимает исходную сумму и ставку в виде доли (например, 0.20) и возвращает сумму с добавленным процентом. Объяви её IMMUTABLE и проверь результат для 100 и 0.20: должно получиться 120.",
+    "solution": "CREATE OR REPLACE FUNCTION practice_add_tax(amount NUMERIC, rate NUMERIC)\nRETURNS NUMERIC\nLANGUAGE SQL\nIMMUTABLE\nAS $$\n  SELECT amount * (1 + rate);\n$$;",
+    "mode": "mutation",
+    "checkQuery": "SELECT practice_add_tax(100, 0.20)::int AS taxed_amount;",
+    "hint": "SQL-функция может вернуть результат одного выражения SELECT.",
+    "hint2": "Сумма с надбавкой равна исходной сумме, умноженной на единицу плюс ставка.",
+    "hint3": "Каркас: CREATE FUNCTION имя(аргументы) RETURNS NUMERIC LANGUAGE SQL IMMUTABLE AS $$ SELECT выражение; $$;"
+  },
+  {
+    "id": "e119",
+    "m": "views",
+    "title": "Автоматически обновляй время через триггер",
+    "task": "Создай временную таблицу клиентов с полями customer_id, customer_name и updated_at. Напиши триггерную функцию, которая перед UPDATE устанавливает updated_at в TIMESTAMPTZ '2026-01-01 00:00:00+00'. Добавь клиента со старым временем, измени его имя и проверь, что триггер обновил время.",
+    "solution": "CREATE TEMP TABLE practice_trigger_customers (customer_id INTEGER PRIMARY KEY, customer_name TEXT NOT NULL, updated_at TIMESTAMPTZ NOT NULL);\nCREATE OR REPLACE FUNCTION practice_set_updated_at()\nRETURNS trigger\nLANGUAGE plpgsql\nAS $$\nBEGIN\n  NEW.updated_at := TIMESTAMPTZ '2026-01-01 00:00:00+00';\n  RETURN NEW;\nEND;\n$$;\nCREATE TRIGGER practice_set_updated_at_trigger\nBEFORE UPDATE ON practice_trigger_customers\nFOR EACH ROW\nEXECUTE FUNCTION practice_set_updated_at();\nINSERT INTO practice_trigger_customers VALUES (1, 'Old name', TIMESTAMPTZ '2000-01-01 00:00:00+00');\nUPDATE practice_trigger_customers SET customer_name = 'Updated name' WHERE customer_id = 1;",
+    "mode": "mutation",
+    "checkQuery": "SELECT customer_name, updated_at = TIMESTAMPTZ '2026-01-01 00:00:00+00' AS timestamp_updated FROM practice_trigger_customers;",
+    "hint": "Триггер запускается автоматически при указанном событии; в BEFORE UPDATE можно изменить NEW до сохранения строки.",
+    "hint2": "Функция должна вернуть NEW, а сам триггер нужно привязать к UPDATE таблицы на уровне каждой строки.",
+    "hint3": "Каркас: CREATE FUNCTION ... RETURNS trigger ...; CREATE TRIGGER ... BEFORE UPDATE ... FOR EACH ROW EXECUTE FUNCTION ...;"
+  },
+  {
+    "id": "e120",
+    "m": "views",
+    "title": "Используй переменную и IF в PL/pgSQL",
+    "task": "Создай PL/pgSQL-функцию practice_order_label(amount), которая возвращает 'large' для суммы от 10000 включительно и 'regular' для меньшей суммы. Используй переменную и IF/ELSE. Проверь обе ветви.",
+    "solution": "CREATE OR REPLACE FUNCTION practice_order_label(amount NUMERIC)\nRETURNS TEXT\nLANGUAGE plpgsql\nAS $$\nDECLARE\n  result_label TEXT;\nBEGIN\n  IF amount >= 10000 THEN\n    result_label := 'large';\n  ELSE\n    result_label := 'regular';\n  END IF;\n  RETURN result_label;\nEND;\n$$;",
+    "mode": "mutation",
+    "checkQuery": "SELECT practice_order_label(12000) AS large_label, practice_order_label(5000) AS regular_label;",
+    "hint": "Переменные объявляются в DECLARE, а присваивание в PL/pgSQL выполняется через :=.",
+    "hint2": "В IF проверь порог 10000; в каждой ветви присвой переменной нужную метку.",
+    "hint3": "Каркас: DECLARE переменная TEXT; BEGIN IF условие THEN переменная := ...; ELSE переменная := ...; END IF; RETURN переменная; END;"
+  },
+  {
+    "id": "e121",
+    "m": "views",
+    "title": "Обработай ожидаемый конфликт",
+    "task": "Создай временную таблицу с уникальным идентификатором клиента. Добавь клиента с ID 1, затем внутри блока PL/pgSQL попробуй добавить ещё одну запись с тем же ID. Перехвати только unique_violation и проверь, что в таблице осталась исходная запись.",
+    "solution": "CREATE TEMP TABLE practice_unique_customers (customer_id INTEGER PRIMARY KEY, customer_name TEXT NOT NULL);\nINSERT INTO practice_unique_customers VALUES (1, 'Existing');\nDO $$\nBEGIN\n  INSERT INTO practice_unique_customers VALUES (1, 'Duplicate');\nEXCEPTION\n  WHEN unique_violation THEN\n    RAISE NOTICE 'Duplicate customer skipped';\nEND;\n$$;",
+    "mode": "mutation",
+    "checkQuery": "SELECT COUNT(*)::int AS row_count, MIN(customer_name) AS retained_name FROM practice_unique_customers;",
+    "hint": "EXCEPTION перехватывает ошибку внутри блока и позволяет выполнить обработчик вместо прерывания всей внешней операции.",
+    "hint2": "Укажи конкретное условие unique_violation, а не общий обработчик OTHERS.",
+    "hint3": "Каркас: BEGIN; команда; EXCEPTION WHEN unique_violation THEN обработчик; END;"
+  },
+  {
     "id": "e72",
     "mode": "select",
     "m": "datetime",
