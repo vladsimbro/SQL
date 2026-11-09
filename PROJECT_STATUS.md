@@ -9,7 +9,7 @@
 - Основная ветка: main; GitHub API подтверждает единственную ветку main.
 - Последний code commit перед текущим обновлением статуса: `df62967e399520b4bef7ccd170cc207ec07bd036`.
 - Build приложения: `20261109-125`.
-- Workflow `42542386673` на df62967: PENDING; Pages workflow `42542386402`: IN_PROGRESS.
+- Workflow `42542386673` на df62967: PENDING; Pages workflow `42542386402`: SUCCESS; build 125 опубликован.
 - Последний полностью проверенный build: `20261109-123`. Workflow `42541896826` на 7a08ad2: validate, deploy и browser-smoke — SUCCESS. Pages workflow `42541935921` на status commit 72ec937: build, report-build-status и deploy — SUCCESS.
 - Build 123 опубликован и проверен. Browser-smoke: shellReadyMs=1248, recoveryMs=5548, resetReadyMs=4753; ширины 390 и 320 px; PGlite retry, выполнение SQL, сохранение черновика, reset базы, мобильная навигация, backup validation и отказ от восстановления проверены. Artifact `sql-academy-ux-audit-screenshots`, ID `13641317829`.
 - Открытых Pull Requests нет. Ветка только main; незавершённых переносов между ветками не обнаружено.
