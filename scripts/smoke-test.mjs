@@ -983,7 +983,7 @@ try {
   const e90Result = await runSelectExercise('e90');
   assert.deepEqual(
     e90Result.rows.map(row => [
-      String(row.month_start),
+      (row.month_start instanceof Date ? row.month_start.toISOString().slice(0, 10) : String(row.month_start).slice(0, 10)),
       Number(row.revenue),
       row.previous_revenue === null ? null : Number(row.previous_revenue),
       row.growth_pct === null ? null : Number(row.growth_pct)
