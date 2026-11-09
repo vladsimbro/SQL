@@ -1,17 +1,17 @@
 # SQL Academy — актуальное состояние и передача разработки
 
-Последнее обновление: 2026-11-09; JOIN-модуль проверен и опубликован в build 118; начат аудит подзапросов, build 20261109-119 ожидает CI.
+Последнее обновление: 2026-11-09; аудит подзапросов e27–e30/e58 завершён и опубликован в build 119; начат аудит CTE, build 20261109-120 ожидает CI.
 
 ## 1. Репозиторий и проверенные ревизии
 
 - Репозиторий: https://github.com/vladsimbro/SQL
 - GitHub Pages: https://vladsimbro.github.io/SQL/
 - Основная ветка: main; GitHub API подтверждает единственную ветку main.
-- Последний code commit перед текущим обновлением статуса: `acd48f629e6646415c57c5851717db88fc5f5c74`.
-- Build приложения: `20261109-119`.
-- Workflow `42540934525` на acd48f6: QUEUED; Pages workflow `42540934233`: QUEUED.
-- Последний полностью проверенный build: `20261109-118`. Workflow `42540608452` на 6a584b5: validate, deploy и browser-smoke — SUCCESS. Pages workflow `42540643057` на status commit 9343c35: build и deploy — SUCCESS.
-- Build 118 опубликован и проверен. Browser-smoke: shellReadyMs=657, recoveryMs=6776, resetReadyMs=6169; ширины 390 и 320 px; PGlite retry, выполнение SQL, сохранение черновика, reset базы, мобильная навигация, backup validation и отказ от восстановления проверены. Artifact `sql-academy-ux-audit-screenshots`, ID `13640234692`.
+- Последний code commit перед текущим обновлением статуса: `026186eb0905525d73fec09f7cd1a8a07b42abb8`.
+- Build приложения: `20261109-120`.
+- Workflow `42541167269` на 026186e: QUEUED; Pages workflow `42541168371`: QUEUED.
+- Последний полностью проверенный build: `20261109-119`. Workflow `42540934525` на acd48f6: validate, deploy и browser-smoke — SUCCESS. Pages workflow `42540969904` на status commit a86af49: build, report-build-status и deploy — SUCCESS.
+- Build 119 опубликован и проверен. Browser-smoke: shellReadyMs=1257, recoveryMs=6926, resetReadyMs=6176; ширины 390 и 320 px; PGlite retry, выполнение SQL, сохранение черновика, reset базы, мобильная навигация, backup validation и отказ от восстановления проверены.
 - Открытых Pull Requests нет. Ветка только main; незавершённых переносов между ветками не обнаружено.
 - Изменения выполнялись через GitHub API; локальный clone и локальный git status не использовались.
 - Предыдущие SHA/build/workflow в исторических разделах ниже относятся к прежним состояниям. Для текущего состояния использовать этот раздел и финальную передачу в конце документа.
@@ -825,3 +825,39 @@ Browser-smoke assertions:
 - Последний результат тестирования: build 118 / workflow `42540608452` — validate, curriculum smoke, deploy и browser-smoke SUCCESS; build 119 пока не проверен.
 - Состояние GitHub: изменения в main; новые ветки и PR не создавались.
 - Состояние GitHub Pages: build 118 опубликован и проверен; build 119 ожидает workflow `42540934233`.
+
+## 20. Сессия разработки — начало аудита CTE
+
+### Выполненная работа
+
+Статус: IMPLEMENTED; build 120 ожидает CI.
+
+После проверки подзапросов начат аудит модуля CTE. Проверены четыре урока: обычный WITH, цепочка нескольких CTE, материализация/оптимизация и рекурсивный WITH.
+
+В заданиях обнаружены два несоответствия:
+- e32: исходная подсказка говорила сначала сформировать промежуточную выборку, а затем агрегировать её. Но условие и эталон требуют агрегировать заказы по status внутри CTE, а фильтр revenue > 3000 выполнить во внешнем запросе. Подсказки теперь описывают именно эти этапы и зерно «одна строка на статус».
+- e59: hint3 показывал обычный WITH, хотя задание требует WITH RECURSIVE. Подсказка теперь содержит рекурсивный каркас с anchor, UNION ALL, условием остановки и сортировкой.
+
+e31 оставлен без изменений: его подсказки корректно объясняют именованный промежуточный набор. Теоретический урок о MATERIALIZED/NOT MATERIALIZED корректно подчёркивает, что материализация не гарантирует ускорения и должна оцениваться через план выполнения.
+
+Изменения:
+- Commit `b95a09b5acdbd768b061bb6a1a478edc941f3b8d`: подсказки e32 и e59.
+- Commit `95cb3adcdef63dab0d24f384ec55426f12ea827d`: version 20261109-120.
+- Commit `026186eb0905525d73fec09f7cd1a8a07b42abb8`: cache-busting imports для build 120; текущий code HEAD перед обновлением этого документа.
+
+### Тестирование и публикация
+
+- Build 120: workflow `42541167269` и Pages workflow `42541168371` — QUEUED на момент обновления документа.
+- Последняя полностью подтверждённая проверка — build 119: workflow `42540934525` validate, deploy и browser-smoke SUCCESS; Pages workflow `42540969904` build/deploy SUCCESS.
+- Browser-smoke build 119 подтвердил shellReadyMs=1257, recoveryMs=6926, resetReadyMs=6176, ширины 390 и 320 px, PGlite retry, выполнение SQL, сохранение черновика, мобильную навигацию и backup validation.
+- Локальные тесты не запускались.
+
+### Последние контрольные пункты
+
+- Последняя завершённая задача: аудит подзапросов и исправление подсказок e27/e29/e30/e58 — DEPLOYED_VERIFIED в build 119.
+- Текущая незавершённая задача: аудит CTE и проверка build 120 — IN_PROGRESS.
+- Следующая конкретная задача: дождаться CI build 120, проверить e32/e59, затем продолжить модуль set operations и задания e33/e34.
+- Последний code commit SHA перед статусным commit: `026186eb0905525d73fec09f7cd1a8a07b42abb8`.
+- Последний результат тестирования: build 119 / workflow `42540934525` — validate, deploy и browser-smoke SUCCESS; build 120 пока не проверен.
+- Состояние GitHub: изменения в main; новые ветки и PR не создавались.
+- Состояние GitHub Pages: build 119 опубликован и проверен; build 120 ожидает workflow `42541168371`.
