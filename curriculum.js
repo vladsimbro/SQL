@@ -3107,7 +3107,10 @@ export const modules = [
         "note": "Фильтр по правой таблице в WHERE может убрать строки с NULL и разрушить смысл LEFT JOIN.",
         "simple": "INNER оставляет только пары. LEFT сохраняет каждую строку слева, даже если справа ничего не нашлось.",
         "practiceIds": [
-          "e23"
+          "e23",
+          "e24",
+          "e26",
+          "e49"
         ],
         "outcomes": [
           "Различать INNER и LEFT JOIN",
@@ -3213,11 +3216,7 @@ export const modules = [
         "example": "SELECT o.order_id, c.customer_name, s.store_name\nFROM orders AS o\nJOIN customers AS c ON c.customer_id = o.customer_id\nJOIN stores AS s ON s.store_id = o.store_id\nWHERE o.order_id IN (101, 104, 105, 112)\nORDER BY o.order_id;",
         "note": "Не добавляй несколько JOIN одновременно, если ещё не проверил каждую связь отдельно.",
         "simple": "Каждый JOIN должен иметь понятную цель: какие атрибуты добавляет и как меняет число строк.",
-        "practiceIds": [
-          "e24",
-          "e26",
-          "e49"
-        ],
+        "practiceIds": [],
         "outcomes": [
           "Построить цепочку из нескольких JOIN",
           "проверить, как соединения влияют на число строк."
@@ -9349,7 +9348,7 @@ export const exercises = [
     "solution": "SELECT o.order_id, c.employee_name FROM orders o INNER JOIN employees c ON c.employee_id = o.employee_id;",
     "hint": "Сопоставь employee_id в заказе с employee_id сотрудника. Это обычная связь многие-к-одному.",
     "hint2": "Перед соединением проверь ключ и кардинальность связи: несколько совпадений справа могут размножить строки слева.",
-    "hint3": "Каркас: SELECT ... FROM a JOIN b ON b.key = a.foreign_key. Для сохранения строк без пары проверь LEFT JOIN."
+    "hint3": "INNER JOIN оставляет только заказы, для которых найден сотрудник. Свяжи employee_id заказа с первичным ключом employees.employee_id."
   },
   {
     "id": "e23",
@@ -9360,7 +9359,7 @@ export const exercises = [
     "solution": "SELECT o.order_id, c.employee_name FROM orders o LEFT JOIN employees c ON c.employee_id = o.employee_id;",
     "hint": "Используй LEFT JOIN от orders к employees, чтобы заказ без сотрудника не исчез.",
     "hint2": "Левая таблица задаёт строки, которые нужно сохранить. Условия по правой таблице размещай так, чтобы случайно не превратить внешнее соединение во внутреннее.",
-    "hint3": "Каркас: SELECT ... FROM a JOIN b ON b.key = a.foreign_key. Для сохранения строк без пары проверь LEFT JOIN."
+    "hint3": "Каркас: SELECT ... FROM orders o LEFT JOIN employees e ON e.employee_id = o.employee_id;"
   },
   {
     "id": "e24",
@@ -9370,8 +9369,8 @@ export const exercises = [
     "task": "Покажи каждый магазин и количество его заказов. Магазин без заказов тоже должен присутствовать с числом 0.",
     "solution": "SELECT s.store_name, COUNT(o.order_id) AS orders_count FROM stores s LEFT JOIN orders o ON o.store_id = s.store_id GROUP BY s.store_id, s.store_name;",
     "hint": "Начинай со stores и присоединяй orders. Для пустого магазина считай не COUNT(*), а идентификатор заказа.",
-    "hint2": "Сначала определи зерно результата: одна строка должна описывать именно ту группу, по которой выполняется агрегирование.",
-    "hint3": "Каркас: SELECT ... FROM a JOIN b ON b.key = a.foreign_key. Для сохранения строк без пары проверь LEFT JOIN."
+    "hint2": "Для магазина без заказов LEFT JOIN создаёт строку с NULL в полях orders. COUNT(o.order_id) считает только реальные заказы, поэтому даст 0.",
+    "hint3": "Каркас: SELECT s.store_name, COUNT(o.order_id) AS orders_count FROM stores s LEFT JOIN orders o ON o.store_id = s.store_id GROUP BY s.store_id, s.store_name;"
   },
   {
     "id": "e25",
@@ -9381,8 +9380,8 @@ export const exercises = [
     "task": "Для каждого заказа посчитай общее количество единиц товаров по order_items. Выведи order_id и units_count.",
     "solution": "SELECT o.order_id, COALESCE(SUM(oi.quantity), 0) AS units_count FROM orders o LEFT JOIN order_items oi ON oi.order_id = o.order_id GROUP BY o.order_id;",
     "hint": "В order_items одна строка — товарная позиция. Количество единиц хранится в quantity: суммируй количество, а не стоимость позиции.",
-    "hint2": "Сначала определи зерно результата: одна строка должна описывать именно ту группу, по которой выполняется агрегирование.",
-    "hint3": "Каркас: SELECT ... FROM a JOIN b ON b.key = a.foreign_key. Для сохранения строк без пары проверь LEFT JOIN."
+    "hint2": "Нужна одна строка на заказ. Суммируй quantity из order_items; если позиций нет, COALESCE должен показать 0.",
+    "hint3": "Каркас: SELECT o.order_id, COALESCE(SUM(oi.quantity), 0) AS units_count FROM orders o LEFT JOIN order_items oi ON oi.order_id = o.order_id GROUP BY o.order_id;"
   },
   {
     "id": "e26",
@@ -9392,8 +9391,8 @@ export const exercises = [
     "task": "Посчитай сумму заказов по каждому магазину. Выведи название магазина и revenue. Учитывай магазины без заказов.",
     "solution": "SELECT s.store_name, COALESCE(SUM(o.total_amount), 0) AS revenue FROM stores s LEFT JOIN orders o ON o.store_id = s.store_id GROUP BY s.store_id, s.store_name;",
     "hint": "Сначала привяжи заказ к магазину, затем агрегируй сумму на уровне магазина.",
-    "hint2": "Сначала определи зерно результата: одна строка должна описывать именно ту группу, по которой выполняется агрегирование.",
-    "hint3": "Каркас: SELECT ... FROM a JOIN b ON b.key = a.foreign_key. Для сохранения строк без пары проверь LEFT JOIN."
+    "hint2": "Группируй на уровне магазина и складывай total_amount заказов. Для магазина без заказов замени NULL от SUM на 0.",
+    "hint3": "Каркас: SELECT s.store_name, COALESCE(SUM(o.total_amount), 0) AS revenue FROM stores s LEFT JOIN orders o ON o.store_id = s.store_id GROUP BY s.store_id, s.store_name;"
   },
   {
     "id": "e27",
@@ -9654,8 +9653,8 @@ export const exercises = [
     "task": "Посчитай среднюю сумму заказа по городу магазина. Выведи city и average_amount.",
     "solution": "SELECT s.city, AVG(o.total_amount) AS average_amount FROM stores s JOIN orders o ON o.store_id = s.store_id GROUP BY s.city;",
     "hint": "Город магазина берётся через связь orders.store_id → stores.store_id. Средний чек агрегируй уже по городу.",
-    "hint2": "Сначала определи зерно результата: одна строка должна описывать именно ту группу, по которой выполняется агрегирование.",
-    "hint3": "Каркас: SELECT ... FROM a JOIN b ON b.key = a.foreign_key. Для сохранения строк без пары проверь LEFT JOIN."
+    "hint2": "Соедини каждый заказ с его магазином, затем рассчитай AVG по заказам внутри каждого значения city.",
+    "hint3": "Каркас: SELECT s.city, AVG(o.total_amount) AS average_amount FROM stores s JOIN orders o ON o.store_id = s.store_id GROUP BY s.city;"
   },
   {
     "id": "e50",
@@ -9664,9 +9663,9 @@ export const exercises = [
     "title": "Сумма товаров по продуктам",
     "task": "Для каждого продукта покажи общее количество проданных единиц. Продукты без продаж тоже должны быть в результате с нулём.",
     "solution": "SELECT p.product_name, COALESCE(SUM(oi.quantity), 0) AS units_sold FROM products p LEFT JOIN order_items oi ON oi.product_id = p.product_id GROUP BY p.product_id, p.product_name;",
-    "hint": "Сумму товара считай по order_items, используя цену на момент продажи, а не текущую цену в products.",
-    "hint2": "Сначала определи зерно результата: одна строка должна описывать именно ту группу, по которой выполняется агрегирование.",
-    "hint3": "Каркас: SELECT ... FROM a JOIN b ON b.key = a.foreign_key. Для сохранения строк без пары проверь LEFT JOIN."
+    "hint": "Задача про количество проданных единиц, а не выручку: суммируй quantity из order_items, а не цену.",
+    "hint2": "Начни с products, чтобы сохранить товары без продаж. Присоедини order_items по product_id и сложи quantity для каждого товара.",
+    "hint3": "Каркас: SELECT p.product_name, COALESCE(SUM(oi.quantity), 0) AS units_sold FROM products p LEFT JOIN order_items oi ON oi.product_id = p.product_id GROUP BY p.product_id, p.product_name;"
   },
   {
     "id": "e51",
@@ -9687,9 +9686,9 @@ export const exercises = [
     "title": "Последнее событие каждого заказа",
     "task": "Для каждого заказа найди последнее событие заказа. Заказы без событий тоже должны остаться. Используй LATERAL.",
     "solution": "SELECT o.order_id, latest.event_type, latest.event_at FROM orders o LEFT JOIN LATERAL (SELECT event_type, event_at FROM order_events d WHERE d.order_id = o.order_id ORDER BY event_at DESC, event_id DESC LIMIT 1) latest ON true ORDER BY o.order_id;",
-    "hint": "Для последнего события используй ROW_NUMBER по order_id и сортировку event_at DESC с event_id как tie-breaker.",
-    "hint2": "Левая таблица задаёт строки, которые нужно сохранить. Условия по правой таблице размещай так, чтобы случайно не превратить внешнее соединение во внутреннее.",
-    "hint3": "Каркас: SELECT ... FROM a JOIN b ON b.key = a.foreign_key. Для сохранения строк без пары проверь LEFT JOIN."
+    "hint": "Для каждого заказа используй коррелированный подзапрос в FROM через LATERAL: отсортируй события от новых к старым и возьми одну строку.",
+    "hint2": "Именно LEFT JOIN LATERAL сохраняет заказ без событий. При равной event_at выбери последнее событие по event_id DESC.",
+    "hint3": "Каркас: FROM orders o LEFT JOIN LATERAL (SELECT ... FROM order_events d WHERE d.order_id = o.order_id ORDER BY d.event_at DESC, d.event_id DESC LIMIT 1) latest ON TRUE"
   },
   {
     "id": "e53",
