@@ -10282,7 +10282,7 @@ export const exercises = [
     "mode": "select",
     "m": "analytics",
     "title": "Сравни длительность этапов доставки",
-    "task": "Для каждого магазина оцени типичную и длительную доставку по заказам, где зафиксированы создание, отправка и доставка. Покажи медиану и P90 отдельно для времени до отправки и от отправки до доставки.",
+    "task": "Для каждого магазина оцени типичную и длительную доставку по заказам, где зафиксированы создание, отправка и доставка. Используй самое раннее событие каждого типа на заказ. Покажи медиану и P90 отдельно для времени до отправки и от отправки до доставки.",
     "solution": "WITH event_times AS (\n  SELECT order_id,\n         MIN(event_at) FILTER (WHERE event_type = 'created') AS created_at,\n         MIN(event_at) FILTER (WHERE event_type = 'shipped') AS shipped_at,\n         MIN(event_at) FILTER (WHERE event_type = 'delivered') AS delivered_at\n  FROM analytics_order_events\n  GROUP BY order_id\n),\norder_durations AS (\n  SELECT o.store_id,\n         EXTRACT(EPOCH FROM e.shipped_at - e.created_at) / 3600.0 AS create_to_ship_hours,\n         EXTRACT(EPOCH FROM e.delivered_at - e.shipped_at) / 3600.0 AS ship_to_delivery_hours\n  FROM analytics_orders AS o\n  JOIN event_times AS e USING (order_id)\n  WHERE e.created_at IS NOT NULL\n    AND e.shipped_at IS NOT NULL\n    AND e.delivered_at IS NOT NULL\n)\nSELECT s.store_name,\n       percentile_cont(0.5) WITHIN GROUP (ORDER BY d.create_to_ship_hours) AS median_create_to_ship_hours,\n       percentile_cont(0.9) WITHIN GROUP (ORDER BY d.create_to_ship_hours) AS p90_create_to_ship_hours,\n       percentile_cont(0.5) WITHIN GROUP (ORDER BY d.ship_to_delivery_hours) AS median_ship_to_delivery_hours,\n       percentile_cont(0.9) WITHIN GROUP (ORDER BY d.ship_to_delivery_hours) AS p90_ship_to_delivery_hours\nFROM order_durations AS d\nJOIN stores AS s USING (store_id)\nGROUP BY s.store_id, s.store_name\nORDER BY s.store_name;",
     "quiz": {
       "question": "Чем percentile_cont отличается от percentile_disc?",
@@ -10296,7 +10296,7 @@ export const exercises = [
       "explanation": "Непрерывный перцентиль может вернуть интерполированное значение между наблюдениями."
     },
     "hint": "Не соединяй сырые события создания, отправки и доставки напрямую: сначала сведи их к одной строке на заказ.",
-    "hint2": "Для каждого заказа должны получиться две независимые длительности. После этого сравнивай их по магазинам.",
+    "hint2": "Для каждого заказа сначала выбери самое раннее время created, shipped и delivered. Получи две независимые длительности и только после этого сравнивай их по магазинам.",
     "hint3": "Используй percentile_cont(0.5) и percentile_cont(0.9) с WITHIN GROUP отдельно для каждого из двух интервалов."
   },
   {
@@ -10304,8 +10304,8 @@ export const exercises = [
     "mode": "select",
     "m": "analytics",
     "title": "Рассчитай скользящее среднее за три дня",
-    "task": "Построй непрерывный календарь с 10 по 15 января 2026 года, рассчитай число заказов за каждый день и скользящее среднее за текущий и два предыдущих дня. Дни без заказов должны учитываться как нулевые.",
-    "solution": "WITH calendar AS (SELECT generate_series(DATE '2026-01-10', DATE '2026-01-15', INTERVAL '1 day')::date AS day), daily AS (SELECT created_at, COUNT(*) AS orders_count FROM orders GROUP BY created_at), series AS (SELECT c.day, COALESCE(d.orders_count, 0) AS orders_count FROM calendar c LEFT JOIN daily d ON d.created_at = c.day) SELECT day, orders_count, ROUND(AVG(orders_count) OVER (ORDER BY day ROWS BETWEEN 2 PRECEDING AND CURRENT ROW), 2) AS moving_avg_3d FROM series ORDER BY day;",
+    "task": "Построй непрерывный календарь с 8 по 15 января 2026 года, рассчитай число заказов за каждый день и скользящее среднее за текущий и два предыдущих дня. Покажи только дни с 10 по 15 января; дни без заказов должны учитываться как нулевые.",
+    "solution": "WITH calendar AS (SELECT generate_series(DATE '2026-01-08', DATE '2026-01-15', INTERVAL '1 day')::date AS day), daily AS (SELECT created_at, COUNT(*) AS orders_count FROM orders GROUP BY created_at), series AS (SELECT c.day, COALESCE(d.orders_count, 0) AS orders_count FROM calendar c LEFT JOIN daily d ON d.created_at = c.day), calculated AS (SELECT day, orders_count, AVG(orders_count) OVER (ORDER BY day ROWS BETWEEN 2 PRECEDING AND CURRENT ROW) AS moving_avg_3d FROM series) SELECT day, orders_count, ROUND(moving_avg_3d, 2) AS moving_avg_3d FROM calculated WHERE day >= DATE '2026-01-10' ORDER BY day;",
     "quiz": {
       "question": "Почему перед оконным AVG создаётся календарная сетка?",
       "options": [
@@ -10318,8 +10318,8 @@ export const exercises = [
       "explanation": "Без календаря пропущенные дни исчезнут, и три строки могут охватывать больше трёх календарных дней."
     },
     "hint": "Скользящее среднее за три календарных дня требует непрерывной сетки дат, иначе три строки могут охватывать больше трёх дней.",
-    "hint2": "Обычная оконная рамка по строкам не гарантирует три календарных дня, если в данных есть пропуски. Сначала создай календарь и заполни отсутствующие дни нулями.",
-    "hint3": "Раздели запрос на calendar, daily и filled CTE. В финале рассчитай AVG(order_count) OVER (ORDER BY day ROWS BETWEEN 2 PRECEDING AND CURRENT ROW)."
+    "hint2": "Оконная рамка должна видеть два подготовительных дня до первой отображаемой даты. Создай календарь с 8 января, заполни пропуски нулями, рассчитай окно и только затем покажи даты с 10 января.",
+    "hint3": "Раздели запрос на calendar (8–15 января), daily, series с LEFT JOIN и calculated с AVG(...) OVER (ORDER BY day ROWS BETWEEN 2 PRECEDING AND CURRENT ROW). Во внешнем запросе оставь дни начиная с 10 января."
   },
   {
     "id": "e89",
