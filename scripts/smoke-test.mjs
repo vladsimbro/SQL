@@ -415,6 +415,8 @@ assert.ok(dmlQualityModule.lessons.find(lesson => lesson.title === 'UPDATE').exa
 assert.ok(dmlQualityModule.lessons.find(lesson => lesson.title === 'DELETE и TRUNCATE').example.includes("DATE '2026-01-13'"), 'DELETE example must target a matching cancelled order in the teaching data');
 assert.deepEqual(dmlQualityModule.lessons.find(lesson => lesson.title === 'RETURNING').practiceIds, ['e112'], 'RETURNING lesson must link its dedicated mutation exercise');
 assert.deepEqual(dmlQualityModule.lessons.find(lesson => lesson.title === 'MERGE: синхронизация двух наборов').practiceIds, ['e113'], 'MERGE lesson must link its dedicated synchronization exercise');
+assert.ok(dmlQualityModule.lessons.find(lesson => lesson.title === 'UPSERT: ON CONFLICT').body.includes('exclusion constraints не могут быть арбитром для DO UPDATE'), 'UPSERT lesson must distinguish the unique arbiter requirement for DO UPDATE');
+assert.ok(exercises.find(exercise => exercise.id === 'e112').solution.includes('RETURNING'), 'RETURNING practice must execute and expose the changed row in the same statement');
 const ddlQualityModule = modules.find(module => module.id === 'ddl');
 assert.ok(ddlQualityModule.lessons.find(lesson => lesson.title === 'PostgreSQL: ограничения и блокировки при миграциях').example.includes('VALIDATE CONSTRAINT'), 'Migration lesson must demonstrate deferred constraint validation');
 const transactionQualityModule = modules.find(module => module.id === 'constraints');
