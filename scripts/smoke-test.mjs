@@ -112,9 +112,9 @@ assert.ok(Array.isArray(reference) && reference.length >= 8, 'SQL quick referenc
 assert.ok(exercises.every(exercise => ['select','explain','mutation','transaction'].includes(exercise.mode)), 'Every exercise must have a supported explicit mode');
 assert.equal(exercises.filter(exercise => exercise.mode === 'select').length, 89, 'Expected 89 SELECT exercises');
 assert.equal(exercises.filter(exercise => exercise.mode === 'explain').length, 3, 'Expected three EXPLAIN exercises');
-assert.equal(exercises.filter(exercise => exercise.mode === 'mutation').length, 8, 'Expected eight mutation exercises');
+assert.equal(exercises.filter(exercise => exercise.mode === 'mutation').length, 14, 'Expected fourteen mutation exercises');
 assert.equal(exercises.filter(exercise => exercise.mode === 'transaction').length, 3, 'Expected three transaction exercises');
-assert.equal(exercises.length, 103, 'Expected 103 total practice exercises');
+assert.equal(exercises.length, 109, 'Expected 109 total practice exercises');
 assert.ok(exercises.every(exercise => modules.some(module => module.id === exercise.m)), 'Every exercise must belong to a real module');
 const fanoutLesson = modules.find(module => module.id === 'joins')?.lessons.find(lesson => lesson.id === 'joins.fan-out-pochemu-join-umnozhaet-stroki');
 assert.deepEqual(fanoutLesson?.practiceIds, ['e103'], 'The fan-out lesson must link its dedicated practice exercise exactly once');
@@ -270,6 +270,12 @@ const ddlModule = modules.find(module => module.id === 'ddl');
 assert.ok(ddlModule.lessons.some(lesson => lesson.title === 'CHECK: проверка бизнес-правил' && lesson.body.includes('TRUE или NULL')), 'DDL must explain CHECK and UNKNOWN semantics');
 assert.ok(ddlModule.lessons.some(lesson => lesson.title === 'Составные ограничения и составные внешние ключи'), 'DDL must explain composite constraints');
 assert.ok(ddlModule.lessons.some(lesson => lesson.title === 'PostgreSQL: ограничения и блокировки при миграциях' && lesson.body.includes('NOT VALID') && lesson.body.includes('VALIDATE CONSTRAINT')), 'DDL must explain PostgreSQL-specific constraint validation and migration locks');
+assert.equal(ddlModule.lessons.length, 8, 'DDL module must keep its eight focused lessons');
+assert.deepEqual(ddlModule.lessons.flatMap(lesson => lesson.practiceIds || []).sort(), ['e61','e104','e105','e106','e107','e66','e108','e109'].sort(), 'Every DDL lesson must link exactly one dedicated practice task');
+assert.ok(ddlModule.lessons.find(lesson => lesson.title === 'Составные ограничения и составные внешние ключи').example.includes('FOREIGN KEY (tenant_id, order_id)'), 'Composite-key lesson must demonstrate a genuinely composite foreign key');
+assert.ok(ddlModule.lessons.find(lesson => lesson.title === 'PostgreSQL: ограничения и блокировки при миграциях').example.includes('source IS NOT NULL AND source <>'), 'Migration example must reject both NULL and empty source values');
+assert.ok(exercises.filter(exercise => exercise.m === 'ddl').length === 8, 'DDL must have one distinct practical exercise per lesson');
+
 const dateTimeModule = modules.find(module => module.id === 'datetime');
 assert.equal(dateTimeModule.lessons.length, 7, 'Date/time stage must contain seven focused lessons');
 assert.ok(dateTimeModule.lessons.some(lesson => lesson.title === 'Фильтрация по датам: полуоткрытые интервалы' && lesson.body.includes('BETWEEN')), 'Date/time stage must explain half-open timestamp ranges');
@@ -916,6 +922,22 @@ try {
           assert.equal(Number(observed.rows[0].remaining_rows), 0, 'DELETE task must verify that the target row is absent');
         } else if (exercise.id === 'e65') {
           assert.deepEqual(observed.rows.map(row => [row.product_id, row.product_name, row.category, Number(row.price)]), [[1, 'Coffee machine', 'Equipment', 2750]], 'UPSERT task must verify the final row values');
+        } else if (exercise.id === 'e104') {
+          assert.deepEqual(observed.rows.map(row => row.contype).sort(), ['f','p','u'], 'Integrity task must verify primary, unique and foreign-key constraints');
+        } else if (exercise.id === 'e105') {
+          assert.deepEqual(observed.rows.map(row => [row.column_name,row.data_type,row.is_nullable]), [['client_id','integer','NO'],['full_name','text','YES'],['email','text','NO']], 'ALTER TABLE task must verify the final column names and nullability');
+        } else if (exercise.id === 'e106') {
+          assert.deepEqual(observed.rows, [{ticket_id:1,status:'new'},{ticket_id:2,status:'new'}], 'Identity/default task must verify generated IDs and default values');
+        } else if (exercise.id === 'e107') {
+          assert.deepEqual(observed.rows.map(row => [Number(row.base_table_count),Number(row.view_count),Number(row.orders_count),Number(row.total_amount)]), [[1,1,2,300]], 'Schema/view task must verify both objects and the view result');
+        } else if (exercise.id === 'e108') {
+          assert.equal(observed.rows.length,1,'Composite foreign-key task must create one FK');
+          assert.ok(observed.rows[0].definition.includes('FOREIGN KEY (tenant_id, order_id)') && observed.rows[0].definition.includes('REFERENCES practice_order_headers(tenant_id, order_id)'), 'Composite FK must reference the matching parent key pair');
+        } else if (exercise.id === 'e109') {
+          assert.equal(observed.rows.length,1,'Migration task must leave one validated constraint');
+          assert.equal(observed.rows[0].convalidated,true,'Migration task must validate historical rows');
+          assert.equal(Number(observed.rows[0].invalid_rows),0,'Migration task must leave no NULL or empty source values');
+          assert.ok(observed.rows[0].definition.includes('source IS NOT NULL') && observed.rows[0].definition.includes("source <> ''"),'Migration CHECK must reject both NULL and empty values');
         } else if (exercise.id === 'e66') {
           assert.ok(observed.rows.length >= 2, 'Constraint task must create both a primary key and a CHECK constraint');
           assert.ok(observed.rows.some(row => row.definition.includes('PRIMARY KEY')));
