@@ -5670,7 +5670,7 @@ export const modules = [
       {
         "title": "Когортный анализ",
         "body": "Когорта объединяет клиентов по месяцу первой состоявшейся покупки. В историческом наборе один клиент может оформить много заказов, поэтому сначала для каждого клиента нужно определить один самый ранний месяц, а уже потом считать размер каждой группы.\n\nЗдесь покупкой считаются заказы со статусом delivered или shipped. Новые и отменённые заказы не подтверждают покупку; полностью возвращённые заказы тоже не включаем в определение первой покупки. Это бизнес-правило выбранного отчёта, а не универсальное правило для любой компании.\n\nКогортный месяц и месяц очередной активности — разные временные оси. Размер когорты фиксируется по первому событию и не должен увеличиваться из-за повторных заказов. Для сравнения ниже оставлены первые три месяца набора, чтобы было видно, как клиенты распределяются по когортам.",
-        "example": "WITH qualifying_orders AS (\n  SELECT customer_id, created_at\n  FROM analytics_orders\n  WHERE status IN ('delivered', 'shipped')\n),\nfirst_purchase AS (\n  SELECT customer_id,\n         DATE_TRUNC('month', MIN(created_at))::date AS cohort_month\n  FROM qualifying_orders\n  GROUP BY customer_id\n)\nSELECT cohort_month::text AS cohort_month,\n       COUNT(*)::int AS cohort_size\nFROM first_purchase\nWHERE cohort_month < DATE '2023-04-01'\nGROUP BY cohort_month\nORDER BY cohort_month;",
+        "example": "WITH qualifying_orders AS (\n  SELECT customer_id, created_at\n  FROM analytics_orders\n  WHERE status IN ('delivered', 'shipped')\n),\nfirst_purchase AS (\n  SELECT customer_id,\n         DATE_TRUNC('month', MIN(created_at))::date AS cohort_month\n  FROM qualifying_orders\n  GROUP BY customer_id\n)\nSELECT cohort_month::text AS cohort_month,\n       COUNT(*)::int AS cohort_size\nFROM first_purchase\nWHERE cohort_month >= DATE '2023-01-01'\n  AND cohort_month < DATE '2023-04-01'\nGROUP BY cohort_month\nORDER BY cohort_month;",
         "note": "Не смешивай календарный месяц события с возрастом когорты. Это разные оси анализа.",
         "simple": "Когорта — группа пользователей с общим моментом начала. Период 0 — период вступления, период 1 — следующий.",
         "practiceIds": [
@@ -5911,7 +5911,7 @@ export const modules = [
         "title": "Retention: когортное удержание",
         "body": "Retention показывает, какая доля исходной когорты совершила целевое действие в последующем периоде. Сначала для каждого клиента определяется месяц первой состоявшейся покупки, затем фиксируется размер этой когорты.\n\nВ этом отчёте активность — хотя бы один заказ со статусом delivered или shipped в календарном месяце. Повторные заказы одного клиента в одном месяце не увеличивают числитель: клиент учитывается один раз. Знаменатель всегда равен исходному размеру когорты, а не числу активных клиентов предыдущего месяца.\n\nМесяц 0 — месяц первой покупки, месяц 1 — следующий календарный месяц, месяц 2 — ещё через месяц. Мы показываем первые три месяца жизни когорт, сформированных в первом квартале 2023 года. У более новых когорт нет полного окна наблюдения, поэтому их нельзя сравнивать с ранними на одинаковом горизонте.",
         "simple": "Retention — доля исходной когорты, которая активна в последующем периоде.",
-        "example": "WITH qualifying_orders AS (\n  SELECT customer_id, created_at\n  FROM analytics_orders\n  WHERE status IN ('delivered', 'shipped')\n),\ncohorts AS (\n  SELECT customer_id,\n         DATE_TRUNC('month', MIN(created_at))::date AS cohort_month\n  FROM qualifying_orders\n  GROUP BY customer_id\n),\nactivity AS (\n  SELECT DISTINCT q.customer_id,\n         c.cohort_month,\n         DATE_TRUNC('month', q.created_at)::date AS activity_month\n  FROM qualifying_orders AS q\n  JOIN cohorts AS c USING (customer_id)\n  WHERE DATE_TRUNC('month', q.created_at)::date\n        < c.cohort_month + INTERVAL '3 months'\n),\ncohort_sizes AS (\n  SELECT cohort_month, COUNT(*)::int AS cohort_size\n  FROM cohorts\n  GROUP BY cohort_month\n)\nSELECT a.cohort_month::text AS cohort_month,\n       ((EXTRACT(YEAR FROM a.activity_month) - EXTRACT(YEAR FROM a.cohort_month)) * 12\n        + EXTRACT(MONTH FROM a.activity_month) - EXTRACT(MONTH FROM a.cohort_month))::int AS month_number,\n       cs.cohort_size,\n       COUNT(DISTINCT a.customer_id)::int AS active_customers,\n       ROUND(100.0 * COUNT(DISTINCT a.customer_id) / cs.cohort_size, 2)::numeric(5,2)::text AS retention_pct\nFROM activity AS a\nJOIN cohort_sizes AS cs USING (cohort_month)\nWHERE a.cohort_month < DATE '2023-04-01'\nGROUP BY a.cohort_month, a.activity_month, cs.cohort_size\nORDER BY a.cohort_month, month_number;",
+        "example": "WITH qualifying_orders AS (\n  SELECT customer_id, created_at\n  FROM analytics_orders\n  WHERE status IN ('delivered', 'shipped')\n),\ncohorts AS (\n  SELECT customer_id,\n         DATE_TRUNC('month', MIN(created_at))::date AS cohort_month\n  FROM qualifying_orders\n  GROUP BY customer_id\n),\nactivity AS (\n  SELECT DISTINCT q.customer_id,\n         c.cohort_month,\n         DATE_TRUNC('month', q.created_at)::date AS activity_month\n  FROM qualifying_orders AS q\n  JOIN cohorts AS c USING (customer_id)\n  WHERE DATE_TRUNC('month', q.created_at)::date\n        < c.cohort_month + INTERVAL '3 months'\n),\ncohort_sizes AS (\n  SELECT cohort_month, COUNT(*)::int AS cohort_size\n  FROM cohorts\n  GROUP BY cohort_month\n)\nSELECT a.cohort_month::text AS cohort_month,\n       ((EXTRACT(YEAR FROM a.activity_month) - EXTRACT(YEAR FROM a.cohort_month)) * 12\n        + EXTRACT(MONTH FROM a.activity_month) - EXTRACT(MONTH FROM a.cohort_month))::int AS month_number,\n       cs.cohort_size,\n       COUNT(DISTINCT a.customer_id)::int AS active_customers,\n       ROUND(100.0 * COUNT(DISTINCT a.customer_id) / cs.cohort_size, 2)::numeric(5,2)::text AS retention_pct\nFROM activity AS a\nJOIN cohort_sizes AS cs USING (cohort_month)\nWHERE a.cohort_month >= DATE '2023-01-01'\n  AND a.cohort_month < DATE '2023-04-01'\nGROUP BY a.cohort_month, a.activity_month, cs.cohort_size\nORDER BY a.cohort_month, month_number;",
         "note": "Не меняй определение активности между когортами. Знаменатель и календарь должны быть одинаковыми.",
         "practiceIds": [
           "e86"
@@ -6205,7 +6205,7 @@ export const modules = [
         "title": "Сравнение периодов: MoM, WoW и YoY",
         "body": "Сравнение MoM начинается с одной строки на календарный месяц. Здесь мы считаем чистую выручку: складываем сумму заказов и вычитаем возвраты. В отчёт входят delivered, shipped и refunded: последние нужны, чтобы полный возврат уменьшил выручку до нуля, а частичный возврат уменьшил её на возвращённую сумму. Статусы new и cancelled исключены.\n\nLAG берёт значение предыдущей строки, а не создаёт предыдущий календарный месяц. В историческом наборе все 36 месяцев представлены заказами, поэтому после агрегации каждая строка соответствует соседнему календарному месяцу. Оконную функцию считаем до фильтрации последнего квартала 2025 года: поэтому октябрь сравнивается с сентябрём, который не показываем в итоговой выдаче.\n\nПроцентное изменение рассчитывается относительно предыдущей чистой выручки. NULLIF защищает деление на ноль; для первого доступного месяца NULL был бы честнее выдуманного процента.",
         "simple": "Сначала агрегируй до месяца/недели/года, затем LAG сравнит текущую строку с предыдущей. Для календарно точного сравнения заполни пропущенные периоды.",
-        "example": "WITH monthly_revenue AS (\n  SELECT DATE_TRUNC('month', created_at)::date AS month,\n         SUM(total_amount - refund_amount)::numeric(12,2) AS net_revenue\n  FROM analytics_orders\n  WHERE status IN ('delivered', 'shipped', 'refunded')\n  GROUP BY 1\n),\nwith_previous AS (\n  SELECT month,\n         net_revenue,\n         LAG(net_revenue) OVER (ORDER BY month) AS previous_month_revenue\n  FROM monthly_revenue\n)\nSELECT month::text AS month,\n       net_revenue::text AS net_revenue,\n       previous_month_revenue::text AS previous_month_revenue,\n       ROUND(\n         100.0 * (net_revenue - previous_month_revenue)\n         / NULLIF(previous_month_revenue, 0),\n         2\n       )::numeric(8,2)::text AS mom_change_pct\nFROM with_previous\nWHERE month >= DATE '2025-10-01'\nORDER BY month;",
+        "example": "WITH monthly_revenue AS (\n  SELECT DATE_TRUNC('month', created_at)::date AS month,\n         SUM(total_amount - refund_amount)::numeric(12,2) AS net_revenue\n  FROM analytics_orders\n  WHERE status IN ('delivered', 'shipped', 'refunded')\n  GROUP BY 1\n),\nwith_previous AS (\n  SELECT month,\n         net_revenue,\n         LAG(net_revenue) OVER (ORDER BY month) AS previous_month_revenue\n  FROM monthly_revenue\n)\nSELECT month::text AS month,\n       net_revenue::text AS net_revenue,\n       previous_month_revenue::text AS previous_month_revenue,\n       ROUND(\n         100.0 * (net_revenue - previous_month_revenue)\n         / NULLIF(previous_month_revenue, 0),\n         2\n       )::numeric(8,2)::text AS mom_change_pct\nFROM with_previous\nWHERE month >= DATE '2025-10-01'\n  AND month < DATE '2026-01-01'\nORDER BY month;",
         "note": "LAG сравнивает соседние строки, а не гарантированно соседние календарные периоды. Не называй показатель MoM, пока не проверил пропуски месяцев.",
         "outcomes": [
           "Рассчитывать абсолютное и процентное изменение периода",
@@ -9546,10 +9546,10 @@ export const exercises = [
     "m": "analytics",
     "title": "Доля доставленных",
     "task": "Посчитай долю доставленных заказов от общего числа в процентах. Используй FILTER и приведение типа к numeric, чтобы не получить целочисленное деление.",
-    "solution": "SELECT ROUND(100.0 * COUNT(*) FILTER (WHERE status = 'delivered') / NULLIF(COUNT(*), 0), 2) AS delivered_percent FROM orders;",
+    "solution": "SELECT ROUND(100 * COUNT(*) FILTER (WHERE status = 'delivered')::numeric / NULLIF(COUNT(*), 0), 2) AS delivered_percent FROM orders;",
     "hint": "Числитель и знаменатель должны относиться к одной совокупности заказов. Долю считай после определения статуса.",
     "hint2": "FILTER ограничивает строки только для конкретного агрегата. Другие агрегаты в том же SELECT продолжают видеть общий набор.",
-    "hint3": "Каркас: WITH base AS (агрегация до зерна метрики) SELECT ..., функция() OVER (...) FROM base;"
+    "hint3": "Каркас: ROUND(100 * COUNT(*) FILTER (WHERE status = 'delivered')::numeric / NULLIF(COUNT(*), 0), 2)"
   },
   {
     "id": "e41",
@@ -9560,8 +9560,8 @@ export const exercises = [
     "task": "Посчитай сумму заказов по каждому дню. Выведи дату и revenue, отсортируй по дате.",
     "solution": "SELECT created_at::date AS order_day, SUM(total_amount) AS revenue FROM orders GROUP BY created_at::date ORDER BY order_day;",
     "hint": "Сначала сгруппируй заказы по календарному дню, затем вычисли дневную сумму.",
-    "hint2": "Сначала определи зерно результата: одна строка должна описывать именно ту группу, по которой выполняется агрегирование.",
-    "hint3": "Каркас: WITH base AS (агрегация до зерна метрики) SELECT ..., функция() OVER (...) FROM base;"
+    "hint2": "Зерно — один календарный день. Сгруппируй заказы по created_at::date и суммируй total_amount внутри каждого дня.",
+    "hint3": "Каркас: SELECT created_at::date AS order_day, SUM(total_amount) AS revenue FROM orders GROUP BY created_at::date ORDER BY order_day;"
   },
   {
     "id": "e42",
@@ -9571,8 +9571,8 @@ export const exercises = [
     "task": "Для каждого сотрудника посчитай количество назначенных ему заказов и общую сумму этих заказов. Сотрудников без заказов не теряй.",
     "solution": "SELECT c.employee_name, COUNT(o.order_id) AS orders_count, COALESCE(SUM(o.total_amount), 0) AS order_amount FROM employees c LEFT JOIN orders o ON o.employee_id = c.employee_id GROUP BY c.employee_id, c.employee_name;",
     "hint": "Свяжи сотрудников с заказами и сохрани сотрудников без заказов, если они должны присутствовать в отчёте.",
-    "hint2": "Сначала определи зерно результата: одна строка должна описывать именно ту группу, по которой выполняется агрегирование.",
-    "hint3": "Каркас: WITH base AS (агрегация до зерна метрики) SELECT ..., функция() OVER (...) FROM base;"
+    "hint2": "Зерно — один сотрудник. Начни с employees через LEFT JOIN, считай COUNT(o.order_id), а NULL от SUM для сотрудников без заказов замени на 0.",
+    "hint3": "Каркас: SELECT e.employee_name, COUNT(o.order_id) AS orders_count, COALESCE(SUM(o.total_amount), 0) AS order_amount FROM employees e LEFT JOIN orders o ON o.employee_id = e.employee_id GROUP BY e.employee_id, e.employee_name;"
   },
   {
     "id": "e43",
@@ -9582,8 +9582,8 @@ export const exercises = [
     "task": "Сравни для каждого заказа сумму, записанную в orders, с суммой строк заказа quantity * unit_price из order_items. Выведи order_id, total_amount и items_amount.",
     "solution": "SELECT o.order_id, o.total_amount, COALESCE(SUM(oi.quantity * oi.unit_price), 0) AS items_amount FROM orders o LEFT JOIN order_items oi ON oi.order_id = o.order_id GROUP BY o.order_id;",
     "hint": "Перед сверкой агрегируй товарные позиции до одной строки на заказ. Иначе JOIN размножит сумму заказа.",
-    "hint2": "Сначала определи зерно результата: одна строка должна описывать именно ту группу, по которой выполняется агрегирование.",
-    "hint3": "Каркас: WITH base AS (агрегация до зерна метрики) SELECT ..., функция() OVER (...) FROM base;"
+    "hint2": "Сверь суммы на уровне одного заказа. Сначала сложи quantity * unit_price по его позициям; LEFT JOIN сохранит заказ без позиций.",
+    "hint3": "Каркас: SELECT o.order_id, o.total_amount, COALESCE(SUM(oi.quantity * oi.unit_price), 0) AS items_amount FROM orders o LEFT JOIN order_items oi ON oi.order_id = o.order_id GROUP BY o.order_id;"
   },
   {
     "id": "e44",
@@ -9733,8 +9733,8 @@ export const exercises = [
     "task": "Покажи каждый день с 10 по 17 января 2026 года и число заказов в этот день. Дни без заказов должны выводиться с нулём. Выведи дни по возрастанию даты. Используй generate_series и LEFT JOIN.",
     "solution": "WITH days AS (SELECT generate_series(DATE '2026-01-10', DATE '2026-01-17', INTERVAL '1 day')::date AS day), daily AS (SELECT created_at, COUNT(*) AS orders_count FROM orders GROUP BY created_at) SELECT days.day, COALESCE(daily.orders_count, 0) AS orders_count FROM days LEFT JOIN daily ON daily.created_at = days.day ORDER BY days.day;",
     "hint": "Сначала создай календарь всех дней, затем LEFT JOIN дневной агрегат. COALESCE нужен для дней без фактов.",
-    "hint2": "Сначала определи зерно результата: одна строка должна описывать именно ту группу, по которой выполняется агрегирование.",
-    "hint3": "Каркас: WITH base AS (агрегация до зерна метрики) SELECT ..., функция() OVER (...) FROM base;"
+    "hint2": "Календарь задаёт все дни независимо от наличия заказов. Дневной COUNT присоедини через LEFT JOIN, а отсутствующие значения преврати в 0 через COALESCE.",
+    "hint3": "Каркас: WITH days AS (SELECT generate_series(DATE '2026-01-10', DATE '2026-01-17', INTERVAL '1 day')::date AS day), daily AS (SELECT created_at, COUNT(*) AS orders_count FROM orders GROUP BY created_at) SELECT days.day, COALESCE(daily.orders_count, 0) AS orders_count FROM days LEFT JOIN daily ON daily.created_at = days.day ORDER BY days.day;"
   },
   {
     "id": "e57",
@@ -10195,7 +10195,7 @@ export const exercises = [
     "m": "analytics",
     "title": "Построй базовую таблицу когорт",
     "task": "Определи месяц первой состоявшейся покупки каждого клиента и размер месячных когорт за первый квартал 2023 года. Новые, отменённые и полностью возвращённые заказы не считай покупкой.",
-    "solution": "WITH qualifying_orders AS (\n  SELECT customer_id, created_at\n  FROM analytics_orders\n  WHERE status IN ('delivered', 'shipped')\n),\nfirst_purchase AS (\n  SELECT customer_id,\n         DATE_TRUNC('month', MIN(created_at))::date AS cohort_month\n  FROM qualifying_orders\n  GROUP BY customer_id\n)\nSELECT cohort_month,\n       COUNT(*)::int AS customers_in_cohort\nFROM first_purchase\nWHERE cohort_month < DATE '2023-04-01'\nGROUP BY cohort_month\nORDER BY cohort_month;",
+    "solution": "WITH qualifying_orders AS (\n  SELECT customer_id, created_at\n  FROM analytics_orders\n  WHERE status IN ('delivered', 'shipped')\n),\nfirst_purchase AS (\n  SELECT customer_id,\n         DATE_TRUNC('month', MIN(created_at))::date AS cohort_month\n  FROM qualifying_orders\n  GROUP BY customer_id\n)\nSELECT cohort_month,\n       COUNT(*)::int AS customers_in_cohort\nFROM first_purchase\nWHERE cohort_month >= DATE '2023-01-01'\n  AND cohort_month < DATE '2023-04-01'\nGROUP BY cohort_month\nORDER BY cohort_month;",
     "quiz": {
       "question": "Почему для определения когорты используется MIN по дате первого заказа?",
       "options": [
@@ -10209,7 +10209,7 @@ export const exercises = [
     },
     "hint": "Клиент должен попасть ровно в одну когорту — по месяцу первой состоявшейся покупки.",
     "hint2": "Исключи заказы, которые ещё не стали покупкой или были отменены/полностью возвращены. Затем выбери самое раннее событие на клиента.",
-    "hint3": "Сначала агрегируй qualifying orders по customer_id с MIN(DATE_TRUNC('month', created_at)), затем считай клиентов по cohort_month."
+    "hint3": "Сначала агрегируй qualifying orders по customer_id через DATE_TRUNC('month', MIN(created_at)), затем оставь cohort_month от января до марта 2023 года и посчитай клиентов по месяцу."
   },
   {
     "id": "e84",
@@ -10261,7 +10261,7 @@ export const exercises = [
     "m": "analytics",
     "title": "Рассчитай когортный retention",
     "task": "Для когорт, сформированных в январе, феврале и марте 2023 года, рассчитай долю клиентов с покупкой в периоды 0, 1 и 2 месяца после первой покупки. Используй один и тот же исходный размер когорты в знаменателе.",
-    "solution": "WITH qualifying_orders AS (\n  SELECT customer_id, created_at\n  FROM analytics_orders\n  WHERE status IN ('delivered', 'shipped')\n),\ncohorts AS (\n  SELECT customer_id,\n         DATE_TRUNC('month', MIN(created_at))::date AS cohort_month\n  FROM qualifying_orders\n  GROUP BY customer_id\n),\nactivity AS (\n  SELECT DISTINCT q.customer_id,\n         c.cohort_month,\n         DATE_TRUNC('month', q.created_at)::date AS activity_month\n  FROM qualifying_orders AS q\n  JOIN cohorts AS c USING (customer_id)\n  WHERE DATE_TRUNC('month', q.created_at)::date\n        < c.cohort_month + INTERVAL '3 months'\n),\ncohort_sizes AS (\n  SELECT cohort_month, COUNT(*)::int AS cohort_size\n  FROM cohorts\n  GROUP BY cohort_month\n)\nSELECT a.cohort_month::text AS cohort_month,\n       ((EXTRACT(YEAR FROM a.activity_month) - EXTRACT(YEAR FROM a.cohort_month)) * 12\n        + EXTRACT(MONTH FROM a.activity_month) - EXTRACT(MONTH FROM a.cohort_month))::int AS month_number,\n       cs.cohort_size,\n       COUNT(DISTINCT a.customer_id)::int AS active_customers,\n       ROUND(100.0 * COUNT(DISTINCT a.customer_id) / cs.cohort_size, 2)::numeric(5,2)::text AS retention_pct\nFROM activity AS a\nJOIN cohort_sizes AS cs USING (cohort_month)\nWHERE a.cohort_month < DATE '2023-04-01'\nGROUP BY a.cohort_month, a.activity_month, cs.cohort_size\nORDER BY a.cohort_month, month_number;",
+    "solution": "WITH qualifying_orders AS (\n  SELECT customer_id, created_at\n  FROM analytics_orders\n  WHERE status IN ('delivered', 'shipped')\n),\ncohorts AS (\n  SELECT customer_id,\n         DATE_TRUNC('month', MIN(created_at))::date AS cohort_month\n  FROM qualifying_orders\n  GROUP BY customer_id\n),\nactivity AS (\n  SELECT DISTINCT q.customer_id,\n         c.cohort_month,\n         DATE_TRUNC('month', q.created_at)::date AS activity_month\n  FROM qualifying_orders AS q\n  JOIN cohorts AS c USING (customer_id)\n  WHERE DATE_TRUNC('month', q.created_at)::date\n        < c.cohort_month + INTERVAL '3 months'\n),\ncohort_sizes AS (\n  SELECT cohort_month, COUNT(*)::int AS cohort_size\n  FROM cohorts\n  GROUP BY cohort_month\n)\nSELECT a.cohort_month::text AS cohort_month,\n       ((EXTRACT(YEAR FROM a.activity_month) - EXTRACT(YEAR FROM a.cohort_month)) * 12\n        + EXTRACT(MONTH FROM a.activity_month) - EXTRACT(MONTH FROM a.cohort_month))::int AS month_number,\n       cs.cohort_size,\n       COUNT(DISTINCT a.customer_id)::int AS active_customers,\n       ROUND(100.0 * COUNT(DISTINCT a.customer_id) / cs.cohort_size, 2)::numeric(5,2)::text AS retention_pct\nFROM activity AS a\nJOIN cohort_sizes AS cs USING (cohort_month)\nWHERE a.cohort_month >= DATE '2023-01-01'\n  AND a.cohort_month < DATE '2023-04-01'\nGROUP BY a.cohort_month, a.activity_month, cs.cohort_size\nORDER BY a.cohort_month, month_number;",
     "quiz": {
       "question": "Что является знаменателем retention для каждой когорты?",
       "options": [
@@ -10275,7 +10275,7 @@ export const exercises = [
     },
     "hint": "Retention сравнивает активных клиентов с размером исходной когорты, а не с количеством активных в прошлом месяце.",
     "hint2": "Один клиент может купить несколько раз за месяц, но в числителе периода он должен учитываться один раз.",
-    "hint3": "Определи первый месяц qualifying purchase, сформируй DISTINCT customer_id/cohort_month/activity_month и посчитай процент через COUNT(DISTINCT customer_id) / cohort_size."
+    "hint3": "Определи первый месяц qualifying purchase, оставь когорты января–марта 2023 года, сформируй DISTINCT customer_id/cohort_month/activity_month и раздели активных клиентов на исходный cohort_size."
   },
   {
     "id": "e87",
@@ -10481,7 +10481,7 @@ export const exercises = [
     "m": "analytics",
     "title": "Рассчитай MoM чистой выручки",
     "task": "Рассчитай чистую выручку за октябрь, ноябрь и декабрь 2025 года и её изменение к предыдущему календарному месяцу. Учитывай delivered, shipped и refunded; исключи new и cancelled; вычти полные и частичные возвраты.",
-    "solution": "WITH monthly_revenue AS (\n  SELECT DATE_TRUNC('month', created_at)::date AS month,\n         SUM(total_amount - refund_amount)::numeric(12,2) AS net_revenue\n  FROM analytics_orders\n  WHERE status IN ('delivered', 'shipped', 'refunded')\n  GROUP BY 1\n),\nwith_previous AS (\n  SELECT month,\n         net_revenue,\n         LAG(net_revenue) OVER (ORDER BY month) AS previous_month_revenue\n  FROM monthly_revenue\n)\nSELECT month::text AS month,\n       net_revenue::text AS net_revenue,\n       previous_month_revenue::text AS previous_month_revenue,\n       ROUND(\n         100.0 * (net_revenue - previous_month_revenue)\n         / NULLIF(previous_month_revenue, 0),\n         2\n       )::numeric(8,2)::text AS mom_change_pct\nFROM with_previous\nWHERE month >= DATE '2025-10-01'\nORDER BY month;",
+    "solution": "WITH monthly_revenue AS (\n  SELECT DATE_TRUNC('month', created_at)::date AS month,\n         SUM(total_amount - refund_amount)::numeric(12,2) AS net_revenue\n  FROM analytics_orders\n  WHERE status IN ('delivered', 'shipped', 'refunded')\n  GROUP BY 1\n),\nwith_previous AS (\n  SELECT month,\n         net_revenue,\n         LAG(net_revenue) OVER (ORDER BY month) AS previous_month_revenue\n  FROM monthly_revenue\n)\nSELECT month::text AS month,\n       net_revenue::text AS net_revenue,\n       previous_month_revenue::text AS previous_month_revenue,\n       ROUND(\n         100.0 * (net_revenue - previous_month_revenue)\n         / NULLIF(previous_month_revenue, 0),\n         2\n       )::numeric(8,2)::text AS mom_change_pct\nFROM with_previous\nWHERE month >= DATE '2025-10-01'\n  AND month < DATE '2026-01-01'\nORDER BY month;",
     "hint": "Чистая выручка учитывает возвраты, а отменённые и ещё не завершённые заказы не должны попадать в этот отчёт.",
     "hint2": "Сначала получи чистую выручку на каждый месяц за весь доступный диапазон, затем вычисли предыдущее значение и только после этого оставь последний квартал 2025 года.",
     "hint3": "Сгруппируй сумму total_amount - refund_amount по DATE_TRUNC('month', created_at), примени LAG, затем используй NULLIF для знаменателя процента.",
