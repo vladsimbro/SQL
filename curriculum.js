@@ -7809,11 +7809,13 @@ export const modules = [
     "lessons": [
       {
         "title": "VIEW",
-        "body": "VIEW — сохранённое определение SELECT-запроса, которое можно использовать как источник строк. Представление обычно не хранит собственную копию результата: при обращении PostgreSQL выполняет запрос, лежащий в основе view.\n\nVIEW помогает скрыть сложность запроса, повторно использовать логику и ограничить набор доступных столбцов. Но представление само по себе не гарантирует производительность: оптимизатор может встроить его запрос в основной запрос.\n\nИзменение исходных таблиц может повлиять на представление. Перед изменением схемы проверь зависимости. Права на view и базовые таблицы тоже нужно проектировать осознанно.",
-        "example": "CREATE VIEW delivered_orders AS\nSELECT order_id, customer_id, total_amount\nFROM orders\nWHERE status = 'delivered';\n\nSELECT * FROM delivered_orders;",
+        "body": "VIEW — сохранённое определение SELECT-запроса, которое можно использовать как источник строк. Обычное представление не хранит собственную копию результата: при обращении PostgreSQL выполняет запрос, лежащий в его основе.\n\nVIEW помогает скрыть сложность запроса, повторно использовать логику и ограничить набор доступных столбцов. Но само по себе представление не гарантирует производительность: оптимизатор может встроить его запрос в основной запрос.\n\nНекоторые простые представления над одной таблицей автоматически обновляемы: PostgreSQL может направить INSERT, UPDATE или DELETE в исходную таблицу. Представления с GROUP BY, агрегатами, DISTINCT, оконными функциями или несколькими источниками обычно нельзя изменять напрямую без дополнительной логики. Для сложного сценария можно использовать INSTEAD OF trigger.\n\nИзменение исходных таблиц может повлиять на представление. Перед изменением схемы проверь зависимости. Права на view и базовые таблицы тоже нужно проектировать осознанно.",
+        "example": "CREATE OR REPLACE VIEW delivered_orders_demo AS\nSELECT order_id, customer_id, total_amount\nFROM orders\nWHERE status = 'delivered';\n\nSELECT * FROM delivered_orders_demo;",
         "note": "Обычный VIEW не является снимком данных. Для сохранённого результата существует materialized view.",
         "simple": "VIEW — именованный SELECT, который выглядит как таблица, но обычно не хранит результат.",
-        "practiceIds": [],
+        "practiceIds": [
+          "e116"
+        ],
         "outcomes": [
           "Объяснить, что хранит VIEW",
           "создавать и использовать представление."
@@ -7835,11 +7837,13 @@ export const modules = [
       },
       {
         "title": "Материализованное представление",
-        "body": "Materialized view сохраняет результат запроса физически. Чтение может быть быстрее, чем повторное вычисление сложной агрегации, но данные не обновляются автоматически при изменении исходных таблиц.\n\nREFRESH MATERIALIZED VIEW пересчитывает сохранённый результат. CONCURRENTLY позволяет обновлять представление без блокировки обычного чтения, но требует подходящего уникального индекса и имеет дополнительные условия.\n\nMaterialized view полезно для отчётных данных, которые можно обновлять по расписанию или после загрузки. Нужно определить допустимую задержку: насколько свежими должны быть показатели и как часто можно пересчитывать результат.",
-        "example": "CREATE MATERIALIZED VIEW monthly_revenue AS\nSELECT DATE_TRUNC('month', created_at) AS month,\n       SUM(total_amount) AS revenue\nFROM orders\nGROUP BY 1;\n\nREFRESH MATERIALIZED VIEW monthly_revenue;",
+        "body": "Materialized view сохраняет результат запроса физически. Чтение может быть быстрее, чем повторное вычисление сложной агрегации, но данные не обновляются автоматически при изменении исходных таблиц.\n\nREFRESH MATERIALIZED VIEW пересчитывает сохранённый результат. REFRESH ... CONCURRENTLY позволяет обычным SELECT продолжать читать представление во время обновления, но требует уже заполненного materialized view и подходящего уникального индекса по всем строкам. CONCURRENTLY нельзя выполнять внутри транзакционного блока; одновременно для одного представления выполняется только одно обновление.\n\nMaterialized view полезно для отчётных данных, которые можно обновлять по расписанию или после загрузки. Нужно определить допустимую задержку: насколько свежими должны быть показатели и как часто можно пересчитывать результат.",
+        "example": "DROP MATERIALIZED VIEW IF EXISTS monthly_revenue_demo;\nCREATE MATERIALIZED VIEW monthly_revenue_demo AS\nSELECT DATE_TRUNC('month', created_at) AS month,\n       SUM(total_amount) AS revenue\nFROM orders\nGROUP BY 1;\n\nREFRESH MATERIALIZED VIEW monthly_revenue_demo;",
         "note": "Материализованное представление может содержать устаревшие данные между обновлениями.",
         "simple": "Materialized view хранит результат и требует обновления, когда источник меняется.",
-        "practiceIds": [],
+        "practiceIds": [
+          "e117"
+        ],
         "outcomes": [
           "Объяснить отличие VIEW и MATERIALIZED VIEW",
           "выбирать частоту обновления по требованиям свежести."
@@ -7862,10 +7866,12 @@ export const modules = [
       {
         "title": "Функции PostgreSQL",
         "body": "Функция PostgreSQL — именованный программный объект, который принимает аргументы и возвращает значение или набор строк. Функции могут быть написаны на SQL или PL/pgSQL и использоваться в выражениях SELECT, WHERE и FROM.\n\nФункции отличаются по типу возвращаемого значения, волатильности (IMMUTABLE, STABLE, VOLATILE), безопасности и поведению при NULL. Метки волатильности помогают оптимизатору понимать, можно ли повторно использовать результат или перемещать вычисления.\n\nНе объявляй функцию IMMUTABLE, если она зависит от текущего времени, таблиц, настроек сессии или внешнего состояния. Неверная метка может привести к некорректной оптимизации.",
-        "example": "CREATE FUNCTION add_tax(amount NUMERIC, rate NUMERIC)\nRETURNS NUMERIC\nLANGUAGE SQL\nIMMUTABLE\nAS $\n  SELECT amount * (1 + rate);\n$;",
+        "example": "CREATE OR REPLACE FUNCTION add_tax_demo(amount NUMERIC, rate NUMERIC)\nRETURNS NUMERIC\nLANGUAGE SQL\nIMMUTABLE\nAS $$\n  SELECT amount * (1 + rate);\n$$;\n\nSELECT add_tax_demo(100, 0.20) AS taxed_amount;",
         "note": "IMMUTABLE означает одинаковый результат для одинаковых аргументов всегда. Не ставь эту метку просто ради скорости.",
         "simple": "Функция — повторно используемая логика с аргументами и определённым результатом.",
-        "practiceIds": [],
+        "practiceIds": [
+          "e118"
+        ],
         "outcomes": [
           "Создавать простую SQL-функцию",
           "объяснить назначение RETURNS и volatility."
@@ -7887,11 +7893,13 @@ export const modules = [
       },
       {
         "title": "Триггеры",
-        "body": "Триггер — механизм, который автоматически запускает функцию при INSERT, UPDATE, DELETE или TRUNCATE. Триггер может выполняться до изменения (BEFORE), после изменения (AFTER) или вместо операции над представлением (INSTEAD OF).\n\nТриггеры используют для аудита, вычисления производных значений, проверки сложных правил и поддержки истории. Но скрытая логика усложняет отладку: INSERT может изменить больше таблиц, чем видно из самого запроса.\n\nТриггерная функция в PostgreSQL обычно написана на PL/pgSQL и использует специальные значения NEW и OLD. NEW описывает новую строку, OLD — старую. Для BEFORE-триггера можно изменить NEW и повлиять на сохраняемую запись.",
-        "example": "CREATE TABLE customer_demo (\n  customer_id integer PRIMARY KEY,\n  customer_name text NOT NULL,\n  updated_at timestamptz NOT NULL DEFAULT now()\n);\n\nCREATE FUNCTION set_updated_at()\nRETURNS trigger\nLANGUAGE plpgsql\nAS $\nBEGIN\n  NEW.updated_at := now();\n  RETURN NEW;\nEND;\n$;\n\nCREATE TRIGGER trg_set_updated_at\nBEFORE UPDATE ON customer_demo\nFOR EACH ROW\nEXECUTE FUNCTION set_updated_at();",
+        "body": "Триггер автоматически запускает функцию при INSERT, UPDATE, DELETE или TRUNCATE. Для INSERT, UPDATE и DELETE триггеры могут быть построчными (FOR EACH ROW) или операторными (FOR EACH STATEMENT). Для TRUNCATE доступны только операторные триггеры.\n\nBEFORE выполняется до изменения, AFTER — после него. INSTEAD OF используется для операций INSERT, UPDATE или DELETE над представлениями, а не как универсальная замена для любой команды.\n\nТриггеры применяют для аудита, вычисления производных значений и проверки сложных правил. Но скрытая логика усложняет отладку: один INSERT может изменить больше таблиц, чем видно из самого запроса.\n\nТриггерная функция обычно написана на PL/pgSQL и использует специальные значения NEW и OLD. NEW описывает новую строку, OLD — старую. В BEFORE-триггере можно изменить NEW и повлиять на сохраняемую запись.",
+        "example": "CREATE TEMP TABLE IF NOT EXISTS customer_demo (\n  customer_id integer PRIMARY KEY,\n  customer_name text NOT NULL,\n  updated_at timestamptz NOT NULL DEFAULT now()\n);\nTRUNCATE customer_demo;\n\nCREATE OR REPLACE FUNCTION views_set_updated_at_demo()\nRETURNS trigger\nLANGUAGE plpgsql\nAS $$\nBEGIN\n  NEW.updated_at := now();\n  RETURN NEW;\nEND;\n$$;\n\nDROP TRIGGER IF EXISTS trg_set_updated_at_demo ON customer_demo;\nCREATE TRIGGER trg_set_updated_at_demo\nBEFORE UPDATE ON customer_demo\nFOR EACH ROW\nEXECUTE FUNCTION views_set_updated_at_demo();\n\nINSERT INTO customer_demo VALUES (1, 'Anna', TIMESTAMPTZ '2000-01-01 00:00:00+00');\nUPDATE customer_demo SET customer_name = 'Anna Petrova' WHERE customer_id = 1;\nSELECT customer_id, customer_name, updated_at FROM customer_demo;",
         "note": "Триггеры полезны, но не прячь в них бизнес-процесс, который должен быть явно виден и контролируем в приложении.",
         "simple": "Триггер запускает функцию автоматически в ответ на событие изменения данных.",
-        "practiceIds": [],
+        "practiceIds": [
+          "e119"
+        ],
         "outcomes": [
           "Объяснить BEFORE и AFTER",
           "читать NEW и OLD",
@@ -7915,10 +7923,12 @@ export const modules = [
       {
         "title": "Основы PL/pgSQL: переменные и ветвления",
         "body": "PL/pgSQL добавляет к SQL процедурные конструкции: переменные, IF, циклы, обработку ошибок и вызов SQL-команд. Функция на PL/pgSQL подходит, когда логика состоит из нескольких шагов и её удобно выполнять внутри сервера.\n\nПеременная объявляется в блоке DECLARE, значение присваивается через := или SELECT ... INTO. IF ... THEN ... ELSE управляет ветвлением. Блоки BEGIN и END в PL/pgSQL ограничивают тело блока, но это не то же самое, что транзакционные BEGIN и COMMIT.\n\nНе переноси сложные циклы в базу автоматически. SQL-наборные операции обычно эффективнее построчного цикла. PL/pgSQL полезен там, где действительно нужна процедурная логика.",
-        "example": "CREATE FUNCTION order_label(amount NUMERIC)\nRETURNS TEXT\nLANGUAGE plpgsql\nAS $\nBEGIN\n  IF amount >= 10000 THEN\n    RETURN 'large';\n  ELSE\n    RETURN 'regular';\n  END IF;\nEND;\n$;",
+        "example": "CREATE OR REPLACE FUNCTION order_label_demo(amount NUMERIC)\nRETURNS TEXT\nLANGUAGE plpgsql\nAS $$\nDECLARE\n  result_label TEXT;\nBEGIN\n  IF amount >= 10000 THEN\n    result_label := 'large';\n  ELSE\n    result_label := 'regular';\n  END IF;\n  RETURN result_label;\nEND;\n$$;\n\nSELECT order_label_demo(12000), order_label_demo(5000);",
         "note": "Если задачу можно выразить одним SQL-запросом над набором строк, не заменяй его циклом по одной строке.",
         "simple": "PL/pgSQL — язык процедурной логики внутри PostgreSQL, который дополняет SQL.",
-        "practiceIds": [],
+        "practiceIds": [
+          "e120"
+        ],
         "outcomes": [
           "Объявлять переменные и ветвления IF",
           "отличать PL/pgSQL BEGIN/END от транзакционных команд."
@@ -7941,10 +7951,12 @@ export const modules = [
       {
         "title": "Обработка ошибок и EXCEPTION",
         "body": "Блок EXCEPTION перехватывает ошибки, возникшие в соответствующем блоке PL/pgSQL. Это позволяет обработать ожидаемую ситуацию, например уникальный конфликт, и вернуть понятный результат или выполнить альтернативное действие.\n\nОбработка исключения не должна скрывать любые ошибки без разбора. Если перехватить OTHERS и ничего не сделать, настоящие проблемы могут остаться незамеченными. Лучше перехватывать конкретные SQLSTATE или именованные условия и логировать контекст.\n\nВ PostgreSQL блок с EXCEPTION работает как подблок с собственным откатом изменений внутри него. Но внешние побочные эффекты и действия вне транзакции могут не отмениться.",
-        "example": "DO $\nBEGIN\n  INSERT INTO customers (customer_id, customer_name)\n  VALUES (1, 'Test');\nEXCEPTION\n  WHEN unique_violation THEN\n    RAISE NOTICE 'Customer already exists';\nEND;\n$;",
+        "example": "DO $$\nBEGIN\n  INSERT INTO customers (customer_id, customer_name, city, registered_at)\n  VALUES (1, 'Test', 'Warsaw', DATE '2026-11-10');\nEXCEPTION\n  WHEN unique_violation THEN\n    RAISE NOTICE 'Customer already exists';\nEND;\n$$;",
         "note": "Не используй WHEN OTHERS без повторного выброса или осмысленной обработки неизвестной ошибки.",
         "simple": "EXCEPTION позволяет обработать ожидаемую ошибку, но не должен превращаться в заглушку для всех проблем.",
-        "practiceIds": [],
+        "practiceIds": [
+          "e121"
+        ],
         "outcomes": [
           "Перехватывать конкретные ошибки",
           "объяснить, почему нельзя молча проглатывать все исключения."
@@ -10048,6 +10060,78 @@ export const exercises = [
     "hint": "ON DELETE CASCADE задаётся во внешнем ключе дочерней таблицы и управляет удалением связанных строк.",
     "hint2": "Сначала создай обе таблицы и добавь родительские и дочерние строки, затем удали только родительскую запись с ID 1.",
     "hint3": "Каркас: FOREIGN KEY (parent_id) REFERENCES parent_table(parent_id) ON DELETE CASCADE;"
+  },
+  {
+    "id": "e116",
+    "m": "views",
+    "title": "Создай представление для доставленных заказов",
+    "task": "Создай обычное представление practice_delivered_orders, которое показывает идентификатор заказа, клиента и сумму только для заказов со статусом delivered. Проверь, что представление содержит 6 строк, а их общая сумма равна 10740.",
+    "solution": "CREATE OR REPLACE VIEW practice_delivered_orders AS\nSELECT order_id, customer_id, total_amount\nFROM orders\nWHERE status = 'delivered';",
+    "mode": "mutation",
+    "checkQuery": "SELECT COUNT(*)::int AS row_count, SUM(total_amount)::int AS total_amount FROM practice_delivered_orders;",
+    "hint": "VIEW сохраняет определение SELECT, а не копию строк. Сначала сформируй запрос, который отбирает нужный статус.",
+    "hint2": "Укажи только три поля из условия и используй тот же фильтр, что и в запросе для представления.",
+    "hint3": "Каркас: CREATE VIEW имя AS SELECT ... FROM orders WHERE status = ...;"
+  },
+  {
+    "id": "e117",
+    "m": "views",
+    "title": "Обнови материализованное представление",
+    "task": "Создай материализованное представление с общей суммой заказов по каждому статусу. Увеличь сумму заказа 101 на 100, обнови материализованное представление командой REFRESH и проверь новую сумму для статуса delivered: 10840.",
+    "solution": "CREATE MATERIALIZED VIEW practice_status_revenue AS\nSELECT status, SUM(total_amount)::numeric(12,2) AS revenue\nFROM orders\nGROUP BY status;\nUPDATE orders SET total_amount = total_amount + 100 WHERE order_id = 101;\nREFRESH MATERIALIZED VIEW practice_status_revenue;",
+    "mode": "mutation",
+    "checkQuery": "SELECT revenue::int AS delivered_revenue FROM practice_status_revenue WHERE status = 'delivered';",
+    "hint": "В отличие от VIEW, materialized view хранит результат запроса и не меняется автоматически при обновлении исходной таблицы.",
+    "hint2": "После изменения заказа выполни REFRESH MATERIALIZED VIEW для пересчёта сохранённого результата.",
+    "hint3": "Каркас: CREATE MATERIALIZED VIEW имя AS SELECT ...; затем REFRESH MATERIALIZED VIEW имя;"
+  },
+  {
+    "id": "e118",
+    "m": "views",
+    "title": "Создай SQL-функцию для расчёта суммы",
+    "task": "Создай SQL-функцию practice_add_tax, которая принимает исходную сумму и ставку в виде доли (например, 0.20) и возвращает сумму с добавленным процентом. Объяви её IMMUTABLE и проверь результат для 100 и 0.20: должно получиться 120.",
+    "solution": "CREATE OR REPLACE FUNCTION practice_add_tax(amount NUMERIC, rate NUMERIC)\nRETURNS NUMERIC\nLANGUAGE SQL\nIMMUTABLE\nAS $$\n  SELECT amount * (1 + rate);\n$$;",
+    "mode": "mutation",
+    "checkQuery": "SELECT practice_add_tax(100, 0.20)::int AS taxed_amount;",
+    "hint": "SQL-функция может вернуть результат одного выражения SELECT.",
+    "hint2": "Сумма с надбавкой равна исходной сумме, умноженной на единицу плюс ставка.",
+    "hint3": "Каркас: CREATE FUNCTION имя(аргументы) RETURNS NUMERIC LANGUAGE SQL IMMUTABLE AS $$ SELECT выражение; $$;"
+  },
+  {
+    "id": "e119",
+    "m": "views",
+    "title": "Автоматически обновляй время через триггер",
+    "task": "Создай временную таблицу клиентов с полями customer_id, customer_name и updated_at. Напиши триггерную функцию, которая перед UPDATE устанавливает updated_at в TIMESTAMPTZ '2026-01-01 00:00:00+00'. Добавь клиента со старым временем, измени его имя и проверь, что триггер обновил время.",
+    "solution": "CREATE TEMP TABLE practice_trigger_customers (customer_id INTEGER PRIMARY KEY, customer_name TEXT NOT NULL, updated_at TIMESTAMPTZ NOT NULL);\nCREATE OR REPLACE FUNCTION practice_set_updated_at()\nRETURNS trigger\nLANGUAGE plpgsql\nAS $$\nBEGIN\n  NEW.updated_at := TIMESTAMPTZ '2026-01-01 00:00:00+00';\n  RETURN NEW;\nEND;\n$$;\nCREATE TRIGGER practice_set_updated_at_trigger\nBEFORE UPDATE ON practice_trigger_customers\nFOR EACH ROW\nEXECUTE FUNCTION practice_set_updated_at();\nINSERT INTO practice_trigger_customers VALUES (1, 'Old name', TIMESTAMPTZ '2000-01-01 00:00:00+00');\nUPDATE practice_trigger_customers SET customer_name = 'Updated name' WHERE customer_id = 1;",
+    "mode": "mutation",
+    "checkQuery": "SELECT customer_name, updated_at = TIMESTAMPTZ '2026-01-01 00:00:00+00' AS timestamp_updated FROM practice_trigger_customers;",
+    "hint": "Триггер запускается автоматически при указанном событии; в BEFORE UPDATE можно изменить NEW до сохранения строки.",
+    "hint2": "Функция должна вернуть NEW, а сам триггер нужно привязать к UPDATE таблицы на уровне каждой строки.",
+    "hint3": "Каркас: CREATE FUNCTION ... RETURNS trigger ...; CREATE TRIGGER ... BEFORE UPDATE ... FOR EACH ROW EXECUTE FUNCTION ...;"
+  },
+  {
+    "id": "e120",
+    "m": "views",
+    "title": "Используй переменную и IF в PL/pgSQL",
+    "task": "Создай PL/pgSQL-функцию practice_order_label(amount), которая возвращает 'large' для суммы от 10000 включительно и 'regular' для меньшей суммы. Используй переменную и IF/ELSE. Проверь обе ветви.",
+    "solution": "CREATE OR REPLACE FUNCTION practice_order_label(amount NUMERIC)\nRETURNS TEXT\nLANGUAGE plpgsql\nAS $$\nDECLARE\n  result_label TEXT;\nBEGIN\n  IF amount >= 10000 THEN\n    result_label := 'large';\n  ELSE\n    result_label := 'regular';\n  END IF;\n  RETURN result_label;\nEND;\n$$;",
+    "mode": "mutation",
+    "checkQuery": "SELECT practice_order_label(12000) AS large_label, practice_order_label(5000) AS regular_label;",
+    "hint": "Переменные объявляются в DECLARE, а присваивание в PL/pgSQL выполняется через :=.",
+    "hint2": "В IF проверь порог 10000; в каждой ветви присвой переменной нужную метку.",
+    "hint3": "Каркас: DECLARE переменная TEXT; BEGIN IF условие THEN переменная := ...; ELSE переменная := ...; END IF; RETURN переменная; END;"
+  },
+  {
+    "id": "e121",
+    "m": "views",
+    "title": "Обработай ожидаемый конфликт",
+    "task": "Создай временную таблицу с уникальным идентификатором клиента. Добавь клиента с ID 1, затем внутри блока PL/pgSQL попробуй добавить ещё одну запись с тем же ID. Перехвати только unique_violation и проверь, что в таблице осталась исходная запись.",
+    "solution": "CREATE TEMP TABLE practice_unique_customers (customer_id INTEGER PRIMARY KEY, customer_name TEXT NOT NULL);\nINSERT INTO practice_unique_customers VALUES (1, 'Existing');\nDO $$\nBEGIN\n  INSERT INTO practice_unique_customers VALUES (1, 'Duplicate');\nEXCEPTION\n  WHEN unique_violation THEN\n    RAISE NOTICE 'Duplicate customer skipped';\nEND;\n$$;",
+    "mode": "mutation",
+    "checkQuery": "SELECT COUNT(*)::int AS row_count, MIN(customer_name) AS retained_name FROM practice_unique_customers;",
+    "hint": "EXCEPTION перехватывает ошибку внутри блока и позволяет выполнить обработчик вместо прерывания всей внешней операции.",
+    "hint2": "Укажи конкретное условие unique_violation, а не общий обработчик OTHERS.",
+    "hint3": "Каркас: BEGIN; команда; EXCEPTION WHEN unique_violation THEN обработчик; END;"
   },
   {
     "id": "e72",
