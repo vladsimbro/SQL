@@ -112,9 +112,9 @@ assert.ok(Array.isArray(reference) && reference.length >= 8, 'SQL quick referenc
 assert.ok(exercises.every(exercise => ['select','explain','mutation','transaction'].includes(exercise.mode)), 'Every exercise must have a supported explicit mode');
 assert.equal(exercises.filter(exercise => exercise.mode === 'select').length, 90, 'Expected 90 SELECT exercises');
 assert.equal(exercises.filter(exercise => exercise.mode === 'explain').length, 4, 'Expected four EXPLAIN exercises');
-assert.equal(exercises.filter(exercise => exercise.mode === 'mutation').length, 30, 'Expected thirty mutation exercises');
+assert.equal(exercises.filter(exercise => exercise.mode === 'mutation').length, 32, 'Expected thirty-two mutation exercises');
 assert.equal(exercises.filter(exercise => exercise.mode === 'transaction').length, 4, 'Expected four transaction exercises');
-assert.equal(exercises.length, 128, 'Expected 128 total practice exercises');
+assert.equal(exercises.length, 130, 'Expected 130 total practice exercises');
 assert.ok(exercises.every(exercise => modules.some(module => module.id === exercise.m)), 'Every exercise must belong to a real module');
 const fanoutLesson = modules.find(module => module.id === 'joins')?.lessons.find(lesson => lesson.id === 'joins.fan-out-pochemu-join-umnozhaet-stroki');
 assert.deepEqual(fanoutLesson?.practiceIds, ['e103'], 'The fan-out lesson must link its dedicated practice exercise exactly once');
@@ -451,6 +451,16 @@ assert.deepEqual(advancedQualityModule.lessons.find(lesson => lesson.title === '
 assert.ok(advancedQualityModule.lessons.find(lesson => lesson.title === 'Полнотекстовый поиск').example.includes('USING GIN'), 'Full-text example must show a GIN index');
 assert.ok(advancedQualityModule.lessons.find(lesson => lesson.title === 'Партиционирование').example.includes('PARTITION OF'), 'Partitioning example must create actual child partitions');
 assert.ok(advancedQualityModule.lessons.find(lesson => lesson.title === 'Временные и UNLOGGED-таблицы').note.includes('PGlite'), 'UNLOGGED note must distinguish server WAL behavior from the browser sandbox');
+const securityQualityModule = modules.find(module => module.id === 'security');
+assert.deepEqual(securityQualityModule.lessons.find(lesson => lesson.title === 'Параметризованные запросы: безопасная передача значений').practiceIds, ['e129'], 'Parameterized-query lesson must link its positional-parameter task');
+assert.deepEqual(securityQualityModule.lessons.find(lesson => lesson.title === 'Безопасный динамический SQL').practiceIds, ['e130'], 'Dynamic SQL lesson must link its identifier/value safety task');
+assert.ok(securityQualityModule.lessons.find(lesson => lesson.title === 'RLS и безопасные функции').body.includes('SECURITY DEFINER') && securityQualityModule.lessons.find(lesson => lesson.title === 'RLS и безопасные функции').body.includes('search_path'), 'Security-definer guidance must explain trusted search_path');
+assert.ok(securityQualityModule.lessons.find(lesson => lesson.title === 'RLS и безопасные функции').example.includes("current_setting('app.store_id', true)"), 'RLS example must deny rows safely when the tenant setting is absent');
+assert.ok(securityQualityModule.lessons.find(lesson => lesson.title === 'Параметризованные запросы: безопасная передача значений').example.includes('DEALLOCATE'), 'Prepared-statement example must release the prepared statement');
+assert.ok(securityQualityModule.lessons.find(lesson => lesson.title === 'Безопасный динамический SQL').example.includes('EXECUTE format') && securityQualityModule.lessons.find(lesson => lesson.title === 'Безопасный динамический SQL').example.includes('USING'), 'Dynamic SQL example must separate identifiers and values');
+assert.ok(securityQualityModule.lessons.find(lesson => lesson.title === 'Роли и права').note.includes('PGlite'), 'Role-management note must distinguish server privileges from the embedded sandbox');
+assert.ok(securityQualityModule.lessons.find(lesson => lesson.title === 'Резервные копии и восстановление').note.includes('pg_dump'), 'Backup note must identify external command-line tools');
+
 
 
 const aggregateModule = modules.find(module => module.id === 'aggregates');
@@ -1015,6 +1025,10 @@ try {
           assert.deepEqual(observed.rows, [{event_id:1,partition_name:'practice_events_2026_01'},{event_id:2,partition_name:'practice_events_2026_02'}], 'Range partitioning must route each event into the matching month partition');
         } else if (exercise.id === 'e127') {
           assert.deepEqual(observed.rows, [{match_count:2,first_id:1,last_id:3,index_count:1}], 'Full-text search must find only matching documents and create the GIN index');
+        } else if (exercise.id === 'e129') {
+          assert.deepEqual(observed.rows, [{result_count:6,first_order_id:101,last_order_id:111}], 'Parameterized SQL function must return only delivered orders for the supplied value');
+        } else if (exercise.id === 'e130') {
+          assert.deepEqual(observed.rows, [{delivered_count:2}], 'Dynamic SQL must quote the approved identifier and bind the status value safely');
         } else if (exercise.id === 'e68') {
           assert.equal(observed.rows.length, 1, 'Index task must create the requested index');
           assert.match(observed.rows[0].indexdef, /\(status\)/i, 'Index task must index the status column');
