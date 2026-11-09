@@ -7341,7 +7341,7 @@ export const modules = [
     "id": "dml",
     "title": "DML: изменение и удаление данных",
     "stage": "01 · Изменение данных",
-    "desc": "Освоить INSERT, UPDATE, DELETE, RETURNING, UPSERT и безопасный порядок действий.",
+    "desc": "Освоить безопасное изменение и удаление данных: UPDATE, DELETE, RETURNING, UPSERT и MERGE.",
     "lessons": [
       {
         "title": "UPDATE",
@@ -7405,7 +7405,9 @@ export const modules = [
         "example": "UPDATE customers\nSET city = 'Krakow'\nWHERE customer_id = 9\nRETURNING customer_id, customer_name, city;",
         "note": "Если UPDATE или DELETE вернул неожиданное число строк, не подтверждай транзакцию до выяснения причины.",
         "simple": "RETURNING возвращает строки, затронутые изменяющей командой.",
-        "practiceIds": [],
+        "practiceIds": [
+          "e112"
+        ],
         "outcomes": [
           "Получать изменённые строки через RETURNING",
           "объяснить разницу с отдельным SELECT."
@@ -7427,7 +7429,7 @@ export const modules = [
       },
       {
         "title": "UPSERT: ON CONFLICT",
-        "body": "UPSERT в PostgreSQL реализуется через INSERT ... ON CONFLICT. Если вставка нарушает указанный уникальный или exclusion-конфликт, можно выполнить DO NOTHING или DO UPDATE.\n\nON CONFLICT требует подходящего ограничения или индекса, который определяет конфликт. Например, уникальный email может означать, что при повторном импорте клиента нужно обновить имя. EXCLUDED содержит значения, которые пытались вставить.\n\nUPSERT удобен для идемпотентной загрузки, но нужно аккуратно выбирать поля для обновления. Не перезаписывай свежие данные устаревшей выгрузкой. Также учитывай, что конкурирующие транзакции могут влиять на то, какая версия записи останется.",
+        "body": "UPSERT в PostgreSQL реализуется через INSERT ... ON CONFLICT. DO NOTHING позволяет пропустить строку при конфликте. Для DO UPDATE нужен подходящий уникальный индекс или ограничение PRIMARY KEY/UNIQUE; exclusion constraints не могут быть арбитром для DO UPDATE.\n\nНапример, уникальный email может означать, что при повторном импорте клиента нужно обновить имя. EXCLUDED содержит значения, которые пытались вставить, а не текущие значения существующей строки.\n\nUPSERT удобен для идемпотентной загрузки, но нужно аккуратно выбирать поля для обновления. Не перезаписывай свежие данные устаревшей выгрузкой. Также учитывай, что конкурирующие транзакции могут влиять на то, какая версия записи останется.",
         "example": "INSERT INTO products (product_id, product_name, category, price)\nVALUES (1, 'Updated coffee', 'Drinks', 499.00)\nON CONFLICT (product_id)\nDO UPDATE SET product_name = EXCLUDED.product_name,\n              price = EXCLUDED.price;",
         "note": "ON CONFLICT не сработает без подходящего уникального ограничения или индекса на указанном ключе.",
         "simple": "ON CONFLICT обрабатывает нарушение уникальности в момент INSERT. EXCLUDED — строка, которую пытались вставить.",
@@ -7459,7 +7461,9 @@ export const modules = [
         "example": "MERGE INTO customers AS t\nUSING (VALUES\n  (1, 'Updated customer', 'Warsaw', DATE '2026-01-01'),\n  (999, 'New customer', 'Krakow', DATE '2026-11-07')\n) AS s(customer_id, customer_name, city, registered_at)\nON t.customer_id = s.customer_id\nWHEN MATCHED THEN\n  UPDATE SET customer_name = s.customer_name\nWHEN NOT MATCHED THEN\n  INSERT (customer_id, customer_name, city, registered_at)\n  VALUES (s.customer_id, s.customer_name, s.city, s.registered_at);",
         "note": "До MERGE проверь уникальность ключа в источнике и точность условия ON.",
         "simple": "MERGE сопоставляет источник и цель, а затем выбирает действие для совпавших и несовпавших строк.",
-        "practiceIds": [],
+        "practiceIds": [
+          "e113"
+        ],
         "outcomes": [
           "Объяснить ветви MERGE",
           "отличать MERGE от ON CONFLICT",
@@ -9828,9 +9832,9 @@ export const exercises = [
     "solution": "UPDATE products SET price = price * 1.10 WHERE product_id = 1;",
     "mode": "mutation",
     "checkQuery": "SELECT product_id, price FROM products WHERE product_id = 1;",
-    "hint": "UPDATE меняет только строки, попавшие под WHERE. Перед изменением проверь, что фильтр выделяет нужный товар.",
-    "hint2": "UPDATE меняет все строки, подходящие под WHERE. Перед выполнением проверь, что фильтр ограничивает изменение нужной записью или группой.",
-    "hint3": "Каркас: UPDATE таблица SET поле = значение WHERE ключ = ...; / DELETE FROM таблица WHERE ...;"
+    "hint": "Сначала проверь текущую цену выбранного товара и убедись, что его идентификатор уникален.",
+    "hint2": "Новое значение можно вычислить из старого прямо в SET; условие WHERE должно ограничить изменение нужной записью.",
+    "hint3": "Каркас: UPDATE products SET price = price * коэффициент WHERE product_id = ...;"
   },
   {
     "id": "e64",
@@ -9840,9 +9844,9 @@ export const exercises = [
     "solution": "DELETE FROM products WHERE product_id = 7;",
     "mode": "mutation",
     "checkQuery": "SELECT COUNT(*) AS remaining_rows FROM products WHERE product_id = 7;",
-    "hint": "DELETE удаляет строки по условию. Проверь выборку с тем же WHERE до выполнения удаления.",
-    "hint2": "DELETE удаляет все строки, удовлетворяющие WHERE. Проверь фильтр до выполнения и учитывай, что транзакция позволяет отменить изменение.",
-    "hint3": "Каркас: UPDATE таблица SET поле = значение WHERE ключ = ...; / DELETE FROM таблица WHERE ...;"
+    "hint": "Перед удалением выполни SELECT с тем же условием и посмотри, какая запись будет выбрана.",
+    "hint2": "Сверь количество совпадений с целью задачи: DELETE удалит каждую строку, которую вернёт эта выборка.",
+    "hint3": "Каркас: DELETE FROM products WHERE product_id = ...;"
   },
   {
     "id": "e65",
@@ -9854,7 +9858,7 @@ export const exercises = [
     "checkQuery": "SELECT product_id, product_name, category, price FROM products WHERE product_id = 1;",
     "hint": "ON CONFLICT требует уникального ограничения или ключа, по которому PostgreSQL распознает конфликт.",
     "hint2": "При конфликте уникального ключа PostgreSQL должен перейти к ветке обновления; EXCLUDED обозначает предложенную к вставке строку.",
-    "hint3": "Каркас: UPDATE таблица SET поле = значение WHERE ключ = ...; / DELETE FROM таблица WHERE ...;"
+    "hint3": "Каркас: INSERT INTO products (product_id, product_name, category, price) VALUES (...) ON CONFLICT (product_id) DO UPDATE SET поле = EXCLUDED.поле;"
   },
   {
     "id": "e66",
@@ -9903,6 +9907,30 @@ export const exercises = [
     "hint": "Один INSERT может содержать несколько наборов VALUES, разделённых запятыми.",
     "hint2": "Каждый набор должен содержать столько же значений, сколько указано целевых столбцов, и в том же порядке.",
     "hint3": "Каркас: INSERT INTO таблица (столбцы) VALUES (...), (...);"
+  },
+  {
+    "id": "e112",
+    "m": "dml",
+    "title": "Проверь изменение через RETURNING",
+    "task": "Измени город клиента с customer_id = 9 на 'Krakow'. Получи в результате той же команды идентификатор клиента, имя и новый город. Проверка убедится, что изменилась нужная запись.",
+    "solution": "UPDATE customers\nSET city = 'Krakow'\nWHERE customer_id = 9\nRETURNING customer_id, customer_name, city;",
+    "mode": "mutation",
+    "checkQuery": "SELECT customer_id, customer_name, city FROM customers WHERE customer_id = 9;",
+    "hint": "RETURNING добавляется к изменяющей команде и возвращает строки, которые она действительно затронула.",
+    "hint2": "Ограничь UPDATE тем же уникальным идентификатором, по которому затем проверишь состояние клиента.",
+    "hint3": "Каркас: UPDATE таблица SET поле = значение WHERE ключ = ... RETURNING столбцы;"
+  },
+  {
+    "id": "e113",
+    "m": "dml",
+    "title": "Синхронизируй данные через MERGE",
+    "task": "Создай временную таблицу target_inventory и добавь две исходные записи: (1, 'Coffee', 10) и (2, 'Tea', 20). Синхронизируй её с набором (1, 'Coffee beans', 12) и (3, 'Mug', 5): для совпавшего идентификатора обнови название и количество, для нового — добавь строку. Проверь итоговый набор.",
+    "solution": "CREATE TEMP TABLE target_inventory (product_id INTEGER PRIMARY KEY, product_name TEXT NOT NULL, quantity INTEGER NOT NULL);\nINSERT INTO target_inventory VALUES (1, 'Coffee', 10), (2, 'Tea', 20);\nMERGE INTO target_inventory AS target\nUSING (VALUES (1, 'Coffee beans', 12), (3, 'Mug', 5)) AS source(product_id, product_name, quantity)\nON target.product_id = source.product_id\nWHEN MATCHED THEN UPDATE SET product_name = source.product_name, quantity = source.quantity\nWHEN NOT MATCHED THEN INSERT (product_id, product_name, quantity) VALUES (source.product_id, source.product_name, source.quantity);",
+    "mode": "mutation",
+    "checkQuery": "SELECT product_id, product_name, quantity FROM target_inventory ORDER BY product_id;",
+    "hint": "Сначала подготовь целевую таблицу и проверь, что её ключ однозначно идентифицирует строку.",
+    "hint2": "В MERGE источник соединяется с целью через ON; совпадения и отсутствие совпадения обрабатываются разными ветвями.",
+    "hint3": "Каркас: MERGE INTO цель USING источник ON условие WHEN MATCHED THEN UPDATE ... WHEN NOT MATCHED THEN INSERT ...;"
   },
   {
     "id": "e68",

@@ -112,9 +112,9 @@ assert.ok(Array.isArray(reference) && reference.length >= 8, 'SQL quick referenc
 assert.ok(exercises.every(exercise => ['select','explain','mutation','transaction'].includes(exercise.mode)), 'Every exercise must have a supported explicit mode');
 assert.equal(exercises.filter(exercise => exercise.mode === 'select').length, 89, 'Expected 89 SELECT exercises');
 assert.equal(exercises.filter(exercise => exercise.mode === 'explain').length, 3, 'Expected three EXPLAIN exercises');
-assert.equal(exercises.filter(exercise => exercise.mode === 'mutation').length, 16, 'Expected sixteen mutation exercises');
+assert.equal(exercises.filter(exercise => exercise.mode === 'mutation').length, 18, 'Expected eighteen mutation exercises');
 assert.equal(exercises.filter(exercise => exercise.mode === 'transaction').length, 3, 'Expected three transaction exercises');
-assert.equal(exercises.length, 111, 'Expected 111 total practice exercises');
+assert.equal(exercises.length, 113, 'Expected 113 total practice exercises');
 assert.ok(exercises.every(exercise => modules.some(module => module.id === exercise.m)), 'Every exercise must belong to a real module');
 const fanoutLesson = modules.find(module => module.id === 'joins')?.lessons.find(lesson => lesson.id === 'joins.fan-out-pochemu-join-umnozhaet-stroki');
 assert.deepEqual(fanoutLesson?.practiceIds, ['e103'], 'The fan-out lesson must link its dedicated practice exercise exactly once');
@@ -413,6 +413,10 @@ assert.ok(insertQualityModule.lessons.find(lesson => lesson.title === 'COPY и �
 const dmlQualityModule = modules.find(module => module.id === 'dml');
 assert.ok(dmlQualityModule.lessons.find(lesson => lesson.title === 'UPDATE').example.includes('WHERE product_id = 1'), 'UPDATE example must target a specific existing product');
 assert.ok(dmlQualityModule.lessons.find(lesson => lesson.title === 'DELETE и TRUNCATE').example.includes("DATE '2026-01-13'"), 'DELETE example must target a matching cancelled order in the teaching data');
+assert.deepEqual(dmlQualityModule.lessons.find(lesson => lesson.title === 'RETURNING').practiceIds, ['e112'], 'RETURNING lesson must link its dedicated mutation exercise');
+assert.deepEqual(dmlQualityModule.lessons.find(lesson => lesson.title === 'MERGE: синхронизация двух наборов').practiceIds, ['e113'], 'MERGE lesson must link its dedicated synchronization exercise');
+assert.ok(dmlQualityModule.lessons.find(lesson => lesson.title === 'UPSERT: ON CONFLICT').body.includes('exclusion constraints не могут быть арбитром для DO UPDATE'), 'UPSERT lesson must distinguish the unique arbiter requirement for DO UPDATE');
+assert.ok(exercises.find(exercise => exercise.id === 'e112').solution.includes('RETURNING'), 'RETURNING practice must execute and expose the changed row in the same statement');
 const ddlQualityModule = modules.find(module => module.id === 'ddl');
 assert.ok(ddlQualityModule.lessons.find(lesson => lesson.title === 'PostgreSQL: ограничения и блокировки при миграциях').example.includes('VALIDATE CONSTRAINT'), 'Migration lesson must demonstrate deferred constraint validation');
 const transactionQualityModule = modules.find(module => module.id === 'constraints');
@@ -909,7 +913,7 @@ try {
     if (exercise.mode === 'mutation') {
       await db.exec('BEGIN;');
       try {
-        await db.exec(exercise.solution);
+        const executionResult = exercise.id === 'e112' ? await db.query(exercise.solution) : await db.exec(exercise.solution);
         const observed = await db.query(exercise.checkQuery);
         assert.ok(observed.rows.length > 0, `Mutation exercise ${exercise.id} did not produce a checkable state`);
         if (exercise.id === 'e61') {
@@ -951,6 +955,11 @@ try {
           assert.deepEqual(observed.rows, [{import_id:1,status:'queued',source:'manual'}], 'DEFAULT/RETURNING task must verify the generated ID and default status');
         } else if (exercise.id === 'e111') {
           assert.deepEqual(observed.rows.map(row => [row.product_id,row.product_name,row.category,Number(row.price)]), [[201,'Desk lamp','Home',1200],[202,'Notebook','Office',150]], 'Multi-row INSERT task must verify both inserted products and all values');
+        } else if (exercise.id === 'e112') {
+          assert.deepEqual(executionResult.rows, [{customer_id:9,customer_name:'Екатерина',city:'Krakow'}], 'UPDATE ... RETURNING must return the exact row and its new values');
+          assert.deepEqual(observed.rows, [{customer_id:9,customer_name:'Екатерина',city:'Krakow'}], 'RETURNING task must leave only the selected customer updated');
+        } else if (exercise.id === 'e113') {
+          assert.deepEqual(observed.rows, [{product_id:1,product_name:'Coffee beans',quantity:12},{product_id:2,product_name:'Tea',quantity:20},{product_id:3,product_name:'Mug',quantity:5}], 'MERGE task must update the matching row, preserve unmatched target rows and insert the new source row');
         } else if (exercise.id === 'e68') {
           assert.equal(observed.rows.length, 1, 'Index task must create the requested index');
           assert.match(observed.rows[0].indexdef, /\(status\)/i, 'Index task must index the status column');
