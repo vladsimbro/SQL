@@ -7,11 +7,12 @@
 - Репозиторий: https://github.com/vladsimbro/SQL
 - GitHub Pages: https://vladsimbro.github.io/SQL/
 - Основная ветка: `main`; на момент последней проверки других веток нет.
-- Последний commit с кодом на момент обновления: `6543e6285c0b4d6cc5478209decf9216275ca602`.
-- Build в `version.json`: `20261110-130`.
+- Последний commit с кодом на момент обновления: `12d74dda782d0cfa5be197861b49f456b29341c1`.
+- Build в `version.json`: `20261110-131`.
 - Предыдущий build `20261110-129` на code HEAD `67c9dfd1b660b4cb5b3dd2f0a52352993f325bdc` полностью подтверждён: validate, deploy, browser-smoke и Pages build SUCCESS (workflow `42717849478`, Pages `42717848933`).
 - Последний commit с содержательными изменениями модуля workflow: `b2f55066ed2374d611572b8d5168c8b5ac92ee97`.
-- Текущий build `20261110-130` запущен на HEAD `6543e6285c0b4d6cc5478209decf9216275ca602`; validate и Pages build были IN_PROGRESS при последней проверке. Не считать build 130 опубликованным до успешного browser-smoke.
+- Build `20261110-130` на HEAD `6543e6285c0b4d6cc5478209decf9216275ca602` не прошёл validate: тест ожидал только три типа ограничений, но PGlite также вернул три записи NOT NULL (`contype = 'n'`). Это ошибка ожидаемого результата теста, не ошибка SQL-примера. Pages workflow для build 131 был отменён.
+- Проверка исправлена: smoke test теперь явно ожидает PK, UNIQUE, FK и три NOT NULL ограничения. Исправление включено в build `20261110-131`; его CI ещё не завершён.
 - Стек: HTML, CSS, JavaScript ES modules, PGlite 0.5.15, CodeMirror 5, GitHub Pages, GitHub Actions, Playwright.
 
 ## 2. Цель и подтверждённый объём
@@ -59,7 +60,7 @@ SQL Academy обучает самостоятельному решению ан�
 
 **Фаза 2 — педагогический аудит и практика модуля `ddl` дополнительного маршрута PostgreSQL.**
 
-**Изменения уже внесены в код на HEAD `6543e6285c0b4d6cc5478209decf9216275ca602`, build `20261110-130`:**
+**Изменения уже внесены в код на HEAD `6543e6285c0b4d6cc5478209decf9216275ca602`, build `20261110-131`:**
 - Проверены все восемь уроков модуля и сохранены их lesson IDs.
 - Уточнено поведение `ALTER TABLE ... ADD COLUMN ... DEFAULT`: различены быстрый путь для non-volatile DEFAULT в PostgreSQL 11+ и случаи, где возможны переписывание таблицы/блокировки.
 - Уточнено поведение `GENERATED ALWAYS AS IDENTITY` и `OVERRIDING SYSTEM VALUE`.
@@ -69,11 +70,11 @@ SQL Academy обучает самостоятельному решению ан�
 - Все восемь уроков теперь имеют ровно одно связанное практическое задание: `e61`, `e104`, `e105`, `e106`, `e107`, `e66`, `e108`, `e109`.
 - Общее число заданий увеличено с 103 до 109; число mutation-задач — с 8 до 14. Существующие ID не менялись.
 - В `scripts/smoke-test.mjs` добавлены проверки структуры всех новых задач и семантики составного FK/NOT VALID.
-- Cache-busting imports синхронизированы с build `20261110-130`.
+- Cache-busting imports синхронизированы с build `20261110-131`.
 
-**Осталось для закрытия:** дождаться CI на HEAD `6543e6285c0b4d6cc5478209decf9216275ca602`; подтвердить curriculum/PGlite smoke, validate, deploy, Pages build и browser-smoke опубликованного сайта. Workflow validate `42719219144` и Pages build `42719218812` были IN_PROGRESS при последней проверке.
+**Осталось для закрытия:** дождаться CI на HEAD `12d74dda782d0cfa5be197861b49f456b29341c1`; подтвердить curriculum/PGlite smoke, validate, deploy, Pages build и browser-smoke опубликованного сайта. Workflow validate `42719219144` завершился FAILURE из-за слишком узкого ожидаемого списка contype; Pages workflow `42719218812` отменён. Исправление теста внесено в build 131.
 
-**Критерии закрытия:** все 109 практических задач проходят curriculum smoke; все шесть новых DDL mutation-задач выполняются и проходят точные проверки; validate, deploy, Pages build и browser-smoke для build 130 успешны; опубликованный сайт соответствует build 130. После этого закрыть DDL и перейти к следующему модулю PostgreSQL `inserts` по существующей последовательности курса. Не расширять задачу дополнительными необязательными улучшениями.
+**Критерии закрытия:** все 109 практических задач проходят curriculum smoke; все шесть новых DDL mutation-задач выполняются и проходят точные проверки; validate, deploy, Pages build и browser-smoke для build 131 успешны; опубликованный сайт соответствует build 130. После этого закрыть DDL и перейти к следующему модулю PostgreSQL `inserts` по существующей последовательности курса. Не расширять задачу дополнительными необязательными улучшениями.
 
 ## 6. Последние подтверждённые проверки
 
