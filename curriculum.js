@@ -10187,19 +10187,19 @@ export const exercises = [
     "id": "e125",
     "m": "performance",
     "title": "Используй индексируемый диапазон дат",
-    "task": "Построй EXPLAIN для выборки заказов за 15 января 2026 года. Используй полуоткрытый диапазон по created_at: нижняя граница включается, верхняя — нет. Не преобразовывай сам столбец к date.",
-    "solution": "EXPLAIN SELECT order_id FROM orders WHERE created_at >= TIMESTAMP '2026-01-15 00:00:00' AND created_at < TIMESTAMP '2026-01-16 00:00:00';",
+    "task": "Построй EXPLAIN для выборки заказов за 15 января 2026 года. В orders.created_at хранится DATE, поэтому используй полуоткрытый диапазон с DATE-границами: начало дня включается, следующий день исключается. Не преобразовывай сам столбец.",
+    "solution": "EXPLAIN SELECT order_id FROM orders WHERE created_at >= DATE '2026-01-15' AND created_at < DATE '2026-01-16';",
     "mode": "explain",
     "requiredPatterns": [
       "\\bEXPLAIN\\s+SELECT\\b",
       "\\bFROM\\s+orders\\b",
-      "created_at\\s*>=\\s*TIMESTAMP",
-      "created_at\\s*<\\s*TIMESTAMP"
+      "created_at\\s*>=\\s*DATE",
+      "created_at\\s*<\\s*DATE"
     ],
-    "requirementsMessage": "Нужен EXPLAIN по orders с нижней и верхней границей created_at, без преобразования столбца к date.",
-    "hint": "Полуоткрытый диапазон включает начало дня и исключает начало следующего дня.",
-    "hint2": "Сравнивай исходный timestamp со значениями границ, а не применяй CAST или функцию к каждой строке столбца.",
-    "hint3": "Каркас: WHERE created_at >= TIMESTAMP 'начало' AND created_at < TIMESTAMP 'следующий день';"
+    "requirementsMessage": "Нужен EXPLAIN по orders с нижней и верхней DATE-границей created_at, без преобразования самого столбца.",
+    "hint": "Полуоткрытый диапазон включает дату 15 января и исключает дату 16 января.",
+    "hint2": "Сравнивай исходный столбец DATE с константами DATE, а не применяй CAST или функцию к каждой строке.",
+    "hint3": "Каркас: WHERE created_at >= DATE 'начало' AND created_at < DATE 'следующий день';"
   },
   {
     "id": "e126",
