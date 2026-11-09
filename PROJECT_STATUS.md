@@ -7,12 +7,12 @@
 - Репозиторий: https://github.com/vladsimbro/SQL
 - GitHub Pages: https://vladsimbro.github.io/SQL/
 - Основная ветка: main; GitHub API подтверждает единственную ветку main.
-- Текущий HEAD main: 3545fa0307539eaff7a475f66ff23be1f53c244f (код: адресные исправления подсказок e03–e15; статус-документ будет обновлён следующим commit).
+- Текущий HEAD main: 663a8db655daec234296beb9682ecfd645c5ab30 (последний commit обновил PROJECT_STATUS.md; новый статусный commit фиксирует завершение browser-smoke).
 - Последний проверенный code/test commit: 3545fa0307539eaff7a475f66ff23be1f53c244f.
 - Build приложения: 20261109-114.
-- Workflow 42537758934 на 3545fa0: validate и deploy — success; browser-smoke выполняется.
+- Workflow 42537758934 на 3545fa0: validate, deploy и browser-smoke — success.
 - Pages workflow 42537758183 на 3545fa0: build и deploy — success.
-- Browser-smoke опубликованного сайта для build 20261109-114 ещё не завершён; не считать его проверенным до итогового статуса.
+- Browser-smoke опубликованного сайта для build 20261109-114 — success; runtime и mobile smoke проверены.
 - Открытых Pull Requests нет. Ветка только main; незавершённых переносов между ветками не обнаружено.
 - Изменения выполнялись через GitHub API; локальный clone и локальный git status не использовались.
 - Предыдущие SHA/build/workflow в исторических разделах ниже относятся к прежним состояниям. Для текущего состояния использовать этот раздел и финальную передачу в конце документа.
@@ -616,7 +616,7 @@ Browser-smoke assertions:
 ### Тестирование и публикация
 
 - Workflow 42537758934 на commit 3545fa0: JS syntax checks — success; npm run test:curriculum (включая выполнение учебных примеров и решений заданий) — success; deploy job — success.
-- Browser-smoke опубликованного GitHub Pages сайта в workflow 42537758934 — IN_PROGRESS на момент последнего обновления документа.
+- Browser-smoke опубликованного GitHub Pages сайта в workflow 42537758934 — success.
 - Pages workflow 42537758183 на commit 3545fa0: build, report-build-status и deploy — success.
 - Локальные тесты не запускались; проверки выполнены в GitHub Actions.
 - Физические мобильные устройства и альтернативные браузерные движки не проверялись.
@@ -630,10 +630,10 @@ Browser-smoke assertions:
 
 ### Последние контрольные пункты
 
-- Последняя завершённая задача: адресная проверка и исправление подсказок ранней практики e03–e15 — IMPLEMENTED; validate и deploy прошли.
+- Последняя завершённая задача: адресная проверка и исправление подсказок ранней практики e03–e15 — DEPLOYED_VERIFIED.
 - Текущая незавершённая задача: полный педагогический аудит основного SQL-курса — IN_PROGRESS.
 - Следующая конкретная задача: аудит следующего блока после e15: уроки и практика агрегатов, GROUP BY, HAVING и связанных фильтров; проверить качество условий, подсказок, эталонов и expected results.
 - Последний проверенный code commit SHA: 3545fa0307539eaff7a475f66ff23be1f53c244f.
-- Последний результат тестирования: workflow 42537758934: JS syntax, curriculum smoke и deploy — success; browser-smoke ещё выполняется.
+- Последний результат тестирования: workflow 42537758934 — validate, deploy и browser-smoke success; browser smoke подтвердил build 20261109-114, shellReadyMs=1271, recoveryMs=6976, resetReadyMs=6118, ширины 390 и 320 px, выполнение SQL, retry PGlite, сохранение черновика и отрицательные сценарии backup import.
 - Состояние GitHub: изменения находятся в main; единственная ветка main; открытых PR нет.
-- Состояние GitHub Pages: build 20261109-114 опубликован Pages workflow 42537758183 (success); проверка опубликованного сайта через browser-smoke ожидает завершения.
+- Состояние GitHub Pages: build 20261109-114 опубликован Pages workflow 42537758183 (success); browser-smoke опубликованного сайта прошёл. Artifact sql-academy-ux-audit-screenshots: 68 screenshots, ID 13639629872.
