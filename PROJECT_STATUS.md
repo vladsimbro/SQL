@@ -72,7 +72,9 @@ SQL Academy обучает самостоятельному решению ан�
 - В `scripts/smoke-test.mjs` добавлены проверки структуры всех новых задач и семантики составного FK/NOT VALID.
 - Cache-busting imports синхронизированы с build `20261110-131`.
 
-**Осталось для закрытия:** дождаться CI на HEAD `12d74dda782d0cfa5be197861b49f456b29341c1`; подтвердить curriculum/PGlite smoke, validate, deploy, Pages build и browser-smoke опубликованного сайта. Workflow validate `42719219144` завершился FAILURE из-за слишком узкого ожидаемого списка contype; Pages workflow `42719218812` отменён. Исправление теста внесено в build 131.
+**Проверки build 131:** validate SUCCESS на workflow `42719311116`; все 109 runnable exercises, включая e104–e109, прошли PGlite smoke; выполнены 114 read-only lesson examples, проверены 81 example result table и backup/restore checks. JavaScript syntax validation также SUCCESS. Deploy job этого workflow ещё выполняется; browser-smoke запускается после deploy. Build 130 был неудачным только из-за ошибочного ожидания `contype` в smoke test; исправление вошло в build 131.
+
+**Осталось для закрытия:** дождаться deploy, Pages deployment и browser-smoke на HEAD `12d74dda782d0cfa5be197861b49f456b29341c1`, затем подтвердить, что опубликован build `20261110-131`.
 
 **Критерии закрытия:** все 109 практических задач проходят curriculum smoke; все шесть новых DDL mutation-задач выполняются и проходят точные проверки; validate, deploy, Pages build и browser-smoke для build 131 успешны; опубликованный сайт соответствует build 131. После этого закрыть DDL и перейти к следующему модулю PostgreSQL `inserts` по существующей последовательности курса. Не расширять задачу дополнительными необязательными улучшениями.
 
@@ -94,8 +96,8 @@ SQL Academy обучает самостоятельному решению ан�
 - Pages workflow `42719218812` был отменён. Build 130 не считается успешным релизом.
 
 Для build 131 / code HEAD `12d74dda782d0cfa5be197861b49f456b29341c1`:
-- Исправлено ожидание smoke test: проверяются PK, UNIQUE, FK и три NOT NULL.
-- Результаты GitHub Actions ещё не подтверждены на момент последнего обновления документа.
+- Workflow `42719311116`: validate SUCCESS; curriculum smoke подтвердил 109 runnable exercises, 114 read-only lesson examples, 81 example result table и backup/restore checks.
+- Deploy job `129509063550` был IN_PROGRESS при последней проверке; browser-smoke ещё не запускался.
 
 ## 7. Известные проблемы и ограничения проверки
 
