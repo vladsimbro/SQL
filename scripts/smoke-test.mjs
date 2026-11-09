@@ -923,7 +923,7 @@ try {
         } else if (exercise.id === 'e65') {
           assert.deepEqual(observed.rows.map(row => [row.product_id, row.product_name, row.category, Number(row.price)]), [[1, 'Coffee machine', 'Equipment', 2750]], 'UPSERT task must verify the final row values');
         } else if (exercise.id === 'e104') {
-          assert.deepEqual(observed.rows.map(row => row.contype).sort(), ['f','p','u'], 'Integrity task must verify primary, unique and foreign-key constraints');
+          assert.deepEqual(observed.rows.map(row => row.contype).sort(), ['f','n','n','n','p','u'], 'Integrity task must verify primary, unique, foreign-key and three NOT NULL constraints');
         } else if (exercise.id === 'e105') {
           assert.deepEqual(observed.rows.map(row => [row.column_name,row.data_type,row.is_nullable]), [['client_id','integer','NO'],['full_name','text','YES'],['email','text','NO']], 'ALTER TABLE task must verify the final column names and nullability');
         } else if (exercise.id === 'e106') {
