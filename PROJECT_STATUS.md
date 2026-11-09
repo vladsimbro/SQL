@@ -1,16 +1,17 @@
 # SQL Academy — актуальное состояние и передача разработки
 
-Последнее обновление: 2026-11-09; исправлены JOIN-подсказки и последовательность обучения fan-out/LATERAL; build 20261109-118 ожидает CI.
+Последнее обновление: 2026-11-09; аудит JOIN и исправление e103 через LATERAL завершены; build 20261109-118 прошёл CI, deploy и browser-smoke.
 
 ## 1. Репозиторий и проверенные ревизии
 
 - Репозиторий: https://github.com/vladsimbro/SQL
 - GitHub Pages: https://vladsimbro.github.io/SQL/
 - Основная ветка: main; GitHub API подтверждает единственную ветку main.
-- Последний code commit перед текущим обновлением статуса: `6a584b5725754f42a8e706a9f1123573a485a1da`.
+- Последний проверенный code/test commit: `6a584b5725754f42a8e706a9f1123573a485a1da`.
 - Build приложения: `20261109-118`.
-- Workflow `42540608452` на 6a584b5: PENDING; Pages workflow `42540608471`: QUEUED.
-- Последний полностью проверенный build: `20261109-117`. Workflow `42540395669` на 7e421ce: validate, deploy и browser-smoke — SUCCESS. Pages workflow `42540441878` на status commit b7f58b8: build и deploy — SUCCESS. Build 117 опубликован и проверен; build 118 ожидает CI.
+- Workflow `42540608452` на 6a584b5: validate, deploy и browser-smoke — SUCCESS.
+- Pages workflow `42540643057` на status commit 9343c35: build, report-build-status и deploy — SUCCESS.
+- Build 118 опубликован и проверен. Browser-smoke: shellReadyMs=657, recoveryMs=6776, resetReadyMs=6169; ширины 390 и 320 px; PGlite retry, выполнение SQL, сохранение черновика, reset базы, мобильная навигация, backup validation и отказ от восстановления проверены. Artifact `sql-academy-ux-audit-screenshots`, ID `13640234692`.
 - Открытых Pull Requests нет. Ветка только main; незавершённых переносов между ветками не обнаружено.
 - Изменения выполнялись через GitHub API; локальный clone и локальный git status не использовались.
 - Предыдущие SHA/build/workflow в исторических разделах ниже относятся к прежним состояниям. Для текущего состояния использовать этот раздел и финальную передачу в конце документа.
@@ -773,14 +774,14 @@ Browser-smoke assertions:
 - Commit `a52cd4036894dd446f398a3fb3ecf9f686a49ce4`: версия приложения 20261109-118.
 - Commit `6a584b5725754f42a8e706a9f1123573a485a1da`: cache-busting imports для build 118; текущий code HEAD перед обновлением этого документа.
 - Предыдущий build 117 прошёл `npm run test:curriculum`, deploy и browser-smoke — SUCCESS (workflow `42540395669`).
-- Build 118: workflow `42540608452` ожидает запуска; Pages workflow `42540608471` ожидает запуска. До завершения этих workflow новое решение e103 считается IMPLEMENTED, но не TESTED/DEPLOYED.
+- Build 118: workflow `42540608452` — validate, deploy и browser-smoke SUCCESS; Pages workflow `42540643057` — build и deploy SUCCESS. Решение e103 через LATERAL прошло выполнение в PGlite и дополнительный сценарий заказа без позиций и событий.
 
 ### Последние контрольные пункты
 
-- Последняя завершённая задача: JOIN-подсказки e22–e26/e49/e50/e52 и корректировка привязок упражнений — TESTED и DEPLOYED в build 117; browser-smoke SUCCESS.
-- Текущая незавершённая задача: проверка изменённого эталона e103 на build 118 — IN_PROGRESS.
-- Следующая конкретная задача: дождаться CI build 118, проверить выполнение e103 и дополнительный сценарий заказа без деталей, затем проверить deployment и browser-smoke; после этого продолжить оставшийся аудит JOIN и expected results.
-- Последний code commit SHA перед статусным commit: `6a584b5725754f42a8e706a9f1123573a485a1da`.
-- Последний результат тестирования: build 117 / workflow `42540395669` — validate, deploy, browser-smoke SUCCESS; build 118 пока PENDING.
+- Последняя завершённая задача: аудит JOIN-модуля и исправление практики e22–e26/e49/e50/e52/e103, включая перенос неверно привязанных заданий и замену преждевременного CTE в e103 на уже изученный LATERAL — DEPLOYED_VERIFIED.
+- Текущая незавершённая задача: полный педагогический аудит основного SQL-курса — IN_PROGRESS.
+- Следующая конкретная задача: аудит модуля «Подзапросы и коррелированные запросы» и практики e27–e30/e58; проверить скалярные подзапросы, IN, EXISTS/NOT EXISTS, корреляцию, количество возвращаемых строк, подсказки и expected results.
+- Последний проверенный code commit SHA: `6a584b5725754f42a8e706a9f1123573a485a1da`.
+- Последний результат тестирования: workflow `42540608452` — JS syntax SUCCESS; `npm run test:curriculum` SUCCESS: 25 модулей, 173 урока, 100 проверок знаний, 103 задания, 350 random sandbox tasks, 14 таблиц учебной БД; проверены 81 таблица ожидаемых результатов уроков и исполнены 114 SQL-примеров; browser-smoke SUCCESS.
 - Состояние GitHub: изменения в main; новые ветки и PR не создавались.
-- Состояние GitHub Pages: build 117 опубликован и проверен; build 118 ещё не опубликован.
+- Состояние GitHub Pages: build 20261109-118 опубликован; Pages workflow `42540643057` SUCCESS; browser-smoke опубликованного сайта SUCCESS. Artifact скриншотов UX ID `13640234692`.
