@@ -7,11 +7,13 @@
 - Репозиторий: https://github.com/vladsimbro/SQL
 - GitHub Pages: https://vladsimbro.github.io/SQL/
 - Основная ветка: `main`; на момент последней проверки других веток нет.
-- Последний implementation commit: `b2f55066ed2374d611572b8d5168c8b5ac92ee97`.
-- Последний подтверждённый build: `20261109-127`.
-- Build 127 / commit `6b72acd`: workflow `42691984807`, attempt 2 — validate SUCCESS, deploy SUCCESS, browser-smoke SUCCESS; Pages workflow `42691984992` — SUCCESS.
+- Последний commit `main` на момент этой сверки: `67c9dfd1b660b4cb5b3dd2f0a52352993f325bdc`.
+- Последний commit с содержательными изменениями модуля workflow: `b2f55066ed2374d611572b8d5168c8b5ac92ee97`.
+- Текущий build в `version.json`: `20261110-129`.
+- Последний подтверждённый build остаётся `20261109-127`: workflow `42691984807`, attempt 2 — validate SUCCESS, deploy SUCCESS, browser-smoke SUCCESS; Pages workflow `42691984992` — SUCCESS.
+- Build 129 подготовлен в коде, но его validate/deploy/browser-smoke и фактическая публикация в этой сверке не подтверждены. Не считать его релизом до проверки GitHub Actions.
+- Между записанным ранее HEAD `b2f5506` и текущим HEAD вошли два commit: `6591abf` (синхронизация статуса) и `67c9dfd` (сохранение десятичной точности результата SQL-клиента и cache-busting build 129).
 - Стек: HTML, CSS, JavaScript ES modules, PGlite 0.5.15, CodeMirror 5, GitHub Pages, GitHub Actions, Playwright.
-- Текущая итерация подготавливает build `20261110-128`; до завершения CI он не считается проверенным или опубликованным.
 
 ## 2. Цель и подтверждённый объём
 
@@ -71,13 +73,17 @@ SQL Academy обучает самостоятельному решению ан�
 
 ## 6. Последние подтверждённые проверки
 
-Для build 125:
-- Workflow `42542386673`: validate SUCCESS, deploy SUCCESS, browser-smoke SUCCESS.
-- Validate включал синтаксические проверки JavaScript и исполнение всех эталонных упражнений на PGlite.
-- Browser-smoke запускал Playwright против опубликованного GitHub Pages URL.
-- Pages workflow `42542838960` на текущем документальном HEAD до этой итерации: SUCCESS.
+Для build 127 / commit `6b72acd3995289ef1345fdebd591d334cdcb2c2b`:
+- Workflow `42691984807`, attempt 2: validate SUCCESS, deploy SUCCESS, browser-smoke SUCCESS.
+- Pages workflow `42691984992`: SUCCESS.
+- Validate включает синтаксические проверки JavaScript и выполнение эталонных SQL-примеров/заданий на PGlite.
+- Browser-smoke проверяет именно опубликованный GitHub Pages URL через Playwright.
 
-Build 126: validate остановился на тестовой нормализации DATE в e90 (PGlite вернул Date object, а тест ожидал ISO-строку). Это исправлено в тестовом harness; продуктовый SQL до этой проверки прошёл предыдущие этапы.
+Для HEAD `67c9dfd1b660b4cb5b3dd2f0a52352993f325bdc`:
+- `version.json` содержит `20261110-129`; семь cache-busting imports в `app.js` синхронизированы с этой версией.
+- Сводный commit status, доступный через текущую интеграцию, не вернул проверок; список workflow runs для push-коммита также не был доступен через используемый endpoint. Это НЕ означает ни успех, ни провал CI.
+- Локальный clone и npm-тесты не запущены: среда выполнения не смогла разрешить `github.com`. Не выдавать локальную проверку за выполненную.
+- До получения прямого подтверждения Actions считать build 129 непроверенным и неопубликованным.
 
 ## 7. Известные проблемы и ограничения проверки
 
@@ -101,9 +107,9 @@ Build 126: validate остановился на тестовой нормали�
 
 ## 10. Инструкция для следующего чата
 
-1. Прочитай этот файл и проверь актуальный HEAD `main`, ветки и последние Actions.
+1. Прочитай этот файл и проверь актуальный HEAD `main` и состояние workflow build 129.
 2. Не используй `docs/PROJECT_HISTORY.md` как источник текущего статуса.
-3. Выполняй только одну задачу из раздела 5.
-4. Не ломай стабильные IDs и пользовательский прогресс.
-5. После изменения запускай CI; изучай реальные логи при ошибке.
-6. Обновляй этот файл фактическими SHA/build/workflow. Не заявляй об успешной публикации без подтверждения.
+3. Не повторяй содержательный аудит девяти уроков, если не найден конкретный дефект.
+4. Сначала добейся подтверждения validate/deploy/browser-smoke для HEAD `67c9dfd`; если workflow завершился ошибкой, изучи лог упавшего job и исправь только её причину.
+5. Проверь, что опубликованный сайт соответствует build `20261110-129`.
+6. После подтверждения закрой текущую задачу и перейди к следующей задаче из раздела 9 — модуль `ddl` PostgreSQL. Не добавляй новые фазы.
