@@ -9402,8 +9402,8 @@ export const exercises = [
     "task": "Найди заказы, сумма которых выше средней суммы всех заказов. Верни order_id и total_amount.",
     "solution": "SELECT order_id, total_amount FROM orders WHERE total_amount > (SELECT AVG(total_amount) FROM orders);",
     "hint": "Подзапрос со средним должен вернуть одно число, с которым сравнивается сумма каждого заказа.",
-    "hint2": "Агрегат считает значения в текущем наборе строк. Проверь, не размножило ли JOIN исходные записи до вычисления суммы или среднего.",
-    "hint3": "Каркас: WHERE EXISTS (SELECT 1 FROM связанная_таблица x WHERE x.key = outer_table.key);"
+    "hint2": "AVG без GROUP BY возвращает одно значение для всей таблицы. Если добавить группировку, подзапрос может вернуть несколько строк и перестать быть скалярным.",
+    "hint3": "Каркас: WHERE total_amount > (SELECT AVG(total_amount) FROM orders);"
   },
   {
     "id": "e28",
@@ -9425,7 +9425,7 @@ export const exercises = [
     "solution": "SELECT c.customer_id, c.customer_name FROM customers c WHERE NOT EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.customer_id);",
     "hint": "Для клиентов без заказов используй NOT EXISTS с корреляцией по customer_id.",
     "hint2": "Проверяй сам факт наличия связанной строки. Такой подход не размножает внешнюю запись при нескольких совпадениях.",
-    "hint3": "Каркас: WHERE EXISTS (SELECT 1 FROM связанная_таблица x WHERE x.key = outer_table.key);"
+    "hint3": "Каркас: WHERE NOT EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.customer_id);"
   },
   {
     "id": "e30",
@@ -9435,8 +9435,8 @@ export const exercises = [
     "task": "Найди заказы, сумма которых выше среднего чека своего магазина. Используй коррелированный подзапрос.",
     "solution": "SELECT o.order_id, o.store_id, o.total_amount FROM orders o WHERE o.total_amount > (SELECT AVG(o2.total_amount) FROM orders o2 WHERE o2.store_id = o.store_id);",
     "hint": "Среднее должно рассчитываться внутри того же store_id, что и внешний заказ. Это коррелированный подзапрос.",
-    "hint2": "Агрегат считает значения в текущем наборе строк. Проверь, не размножило ли JOIN исходные записи до вычисления суммы или среднего.",
-    "hint3": "Каркас: WHERE EXISTS (SELECT 1 FROM связанная_таблица x WHERE x.key = outer_table.key);"
+    "hint2": "Внутренний AVG должен ограничиваться магазином текущего внешнего заказа. Свяжи внутренний o2.store_id с внешним o.store_id.",
+    "hint3": "Каркас: WHERE o.total_amount > (SELECT AVG(o2.total_amount) FROM orders o2 WHERE o2.store_id = o.store_id);"
   },
   {
     "id": "e31",
@@ -9755,8 +9755,8 @@ export const exercises = [
     "task": "Найди товары, для которых не существует ни одной позиции заказа. В учебной базе есть как минимум один такой товар. Используй NOT EXISTS.",
     "solution": "SELECT p.product_id, p.product_name FROM products p WHERE NOT EXISTS (SELECT 1 FROM order_items oi WHERE oi.product_id = p.product_id);",
     "hint": "Товар без продаж определяется отсутствием связанной строки order_items. NOT EXISTS лучше, чем сравнение с потенциальным NULL.",
-    "hint2": "Проверяй сам факт наличия связанной строки. Такой подход не размножает внешнюю запись при нескольких совпадениях.",
-    "hint3": "Каркас: WHERE EXISTS (SELECT 1 FROM связанная_таблица x WHERE x.key = outer_table.key);"
+    "hint2": "Проверяй каждую строку products на наличие хотя бы одной позиции с тем же product_id. Товар без совпадений должен остаться.",
+    "hint3": "Каркас: WHERE NOT EXISTS (SELECT 1 FROM order_items oi WHERE oi.product_id = p.product_id);"
   },
   {
     "id": "e59",
