@@ -2,12 +2,11 @@
 
 Последнее обновление: 2026-11-09; аудит SELECT-практики e03–e15 завершён, build 20261109-114 прошёл validate, deploy и browser-smoke; публикация проверена.
 
-## 1. Репозиторий и текущий HEAD
+## 1. Репозиторий и проверенные ревизии
 
 - Репозиторий: https://github.com/vladsimbro/SQL
 - GitHub Pages: https://vladsimbro.github.io/SQL/
 - Основная ветка: main; GitHub API подтверждает единственную ветку main.
-- Последний проверенный статусный commit main: 532f9887f98baed250ccf5976c19abe3654c6b4d; последний code/test commit: 3545fa0307539eaff7a475f66ff23be1f53c244f.
 - Последний проверенный code/test commit: 3545fa0307539eaff7a475f66ff23be1f53c244f.
 - Build приложения: 20261109-114.
 - Workflow 42537758934 на 3545fa0: validate, deploy и browser-smoke — success.
