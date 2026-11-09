@@ -1,17 +1,17 @@
 # SQL Academy — актуальное состояние и передача разработки
 
-Последнее обновление: 2026-11-09; datetime e72–e79 прошёл build 122; исправлены подсказки оконных функций e35–e39/e80 и уточнено условие e94, build 123 ожидает CI.
+Последнее обновление: 2026-11-09; аудит оконных функций и исправления e35–e39/e80/e94 прошли build 123; следующий блок — аналитические метрики.
 
 ## 1. Репозиторий и проверенные ревизии
 
 - Репозиторий: https://github.com/vladsimbro/SQL
 - GitHub Pages: https://vladsimbro.github.io/SQL/
 - Основная ветка: main; GitHub API подтверждает единственную ветку main.
-- Последний code commit перед текущим обновлением статуса: `7a08ad257eca7365bdd17c9775cd61f3356a03ed`.
+- Последний проверенный code commit: `7a08ad257eca7365bdd17c9775cd61f3356a03ed`.
 - Build приложения: `20261109-123`.
-- Workflow `42541896826` на 7a08ad2: QUEUED; Pages workflow `42541896486`: PENDING.
-- Последний полностью проверенный build: `20261109-122`. Workflow `42541603291` на 518501c: validate, deploy и browser-smoke — SUCCESS. Pages workflow `42541642903` на status commit e2fd568: build, report-build-status и deploy — SUCCESS.
-- Build 122 опубликован и проверен. Browser-smoke: shellReadyMs=1199, recoveryMs=4159, resetReadyMs=3553; ширины 390 и 320 px; PGlite retry, выполнение SQL, сохранение черновика, reset базы, мобильная навигация, backup validation и отказ от восстановления проверены. Artifact `sql-academy-ux-audit-screenshots`, ID `13640888802`.
+- Workflow `42541896826` на 7a08ad2: validate, deploy и browser-smoke — SUCCESS.
+- Pages workflow `42541935921` на status commit 72ec937: build, report-build-status и deploy — SUCCESS.
+- Build 123 опубликован и проверен. Browser-smoke: shellReadyMs=1248, recoveryMs=5548, resetReadyMs=4753; ширины 390 и 320 px; PGlite retry, выполнение SQL, сохранение черновика, reset базы, мобильная навигация, backup validation и отказ от восстановления проверены. Artifact `sql-academy-ux-audit-screenshots`, ID `13641317829`.
 - Открытых Pull Requests нет. Ветка только main; незавершённых переносов между ветками не обнаружено.
 - Изменения выполнялись через GitHub API; локальный clone и локальный git status не использовались.
 - Предыдущие SHA/build/workflow в исторических разделах ниже относятся к прежним состояниям. Для текущего состояния использовать этот раздел и финальную передачу в конце документа.
@@ -903,3 +903,12 @@ e31 оставлен без изменений: его подсказки кор
 - Последний результат тестирования: build 120 / workflow `42541167269` — validate, deploy и browser-smoke SUCCESS; build 121 ещё проверяется.
 - Состояние GitHub: изменения в main; новые ветки и PR не создавались.
 - Состояние GitHub Pages: build 120 опубликован и проверен; build 121 ожидает workflow `42541363654`.
+
+## 25. Оконные функции — результат аудита
+
+- Полный набор уроков и связанных упражнений проверен: e35–e39, e80–e82, e91, e93–e95, e100.
+- Исправлены общие/нерелевантные hint2/hint3 для ROW_NUMBER, RANK, LAG, накопительной SUM, top-1 на группу и AVG OVER; уточнено условие e94 о peers для PERCENT_RANK/CUME_DIST и tie-breaker для NTILE.
+- Остальные задания имеют согласованные подсказки и решения; теоретические уроки не требовали переписывания.
+- Build 123 / workflow `42541896826`: validate, curriculum smoke, deploy и browser-smoke — SUCCESS.
+- Pages workflow `42541935921` на status commit 72ec937: build/deploy SUCCESS.
+- Следующий учебный блок для аудита: аналитические метрики и проекты. Начать с зерна метрики, знаменателей, воронок и когорт, не переходя к рекомендациям по метрикам без проверки бизнес-определений.
