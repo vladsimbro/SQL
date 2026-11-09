@@ -7,7 +7,7 @@
 - Репозиторий: https://github.com/vladsimbro/SQL
 - GitHub Pages: https://vladsimbro.github.io/SQL/
 - Основная ветка: `main`; на момент последней проверки других веток нет.
-- Последний commit `main` на момент этой сверки: `67c9dfd1b660b4cb5b3dd2f0a52352993f325bdc`.
+- Последний commit с кодом и build 129 перед документальной синхронизацией: `67c9dfd1b660b4cb5b3dd2f0a52352993f325bdc`. После него выполнена только корректировка `PROJECT_STATUS.md`.
 - Последний commit с содержательными изменениями модуля workflow: `b2f55066ed2374d611572b8d5168c8b5ac92ee97`.
 - Текущий build в `version.json`: `20261110-129`.
 - Последний подтверждённый build остаётся `20261109-127`: workflow `42691984807`, attempt 2 — validate SUCCESS, deploy SUCCESS, browser-smoke SUCCESS; Pages workflow `42691984992` — SUCCESS.
