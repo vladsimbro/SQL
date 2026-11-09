@@ -9468,8 +9468,8 @@ export const exercises = [
     "task": "Объедини список customer_id из customers и orders, не оставляя повторов.",
     "solution": "SELECT customer_id FROM customers UNION SELECT customer_id FROM orders;",
     "hint": "Обе ветви UNION должны возвращать одинаковые по типам столбцы. Здесь нужен общий список клиентов из двух наборов.",
-    "hint2": "Обе части операции должны возвращать одинаковое число столбцов с совместимыми типами. Помни, что UNION убирает дубликаты, а UNION ALL сохраняет.",
-    "hint3": "Каркас: SELECT совместимые_поля FROM a UNION [ALL] SELECT совместимые_поля FROM b;"
+    "hint2": "UNION удаляет повторяющиеся строки результата целиком. Здесь выбран только customer_id, поэтому ID, встретившийся в обоих источниках, останется один раз.",
+    "hint3": "Каркас: SELECT customer_id FROM customers UNION SELECT customer_id FROM orders;"
   },
   {
     "id": "e34",
@@ -9479,8 +9479,8 @@ export const exercises = [
     "task": "Найди идентификаторы клиентов, которые есть в customers, но отсутствуют среди customer_id заказов. Используй EXCEPT.",
     "solution": "SELECT customer_id FROM customers EXCEPT SELECT customer_id FROM orders;",
     "hint": "EXCEPT оставляет строки первого набора, которых нет во втором. Сначала определи оба множества customer_id.",
-    "hint2": "Обе части операции должны возвращать одинаковое число столбцов с совместимыми типами. Помни, что UNION убирает дубликаты, а UNION ALL сохраняет.",
-    "hint3": "Каркас: SELECT совместимые_поля FROM a UNION [ALL] SELECT совместимые_поля FROM b;"
+    "hint2": "EXCEPT направлен: слева должен быть полный набор customers, справа — customer_id из orders. Если поменять стороны, получится другой вопрос.",
+    "hint3": "Каркас: SELECT customer_id FROM customers EXCEPT SELECT customer_id FROM orders;"
   },
   {
     "id": "e35",
