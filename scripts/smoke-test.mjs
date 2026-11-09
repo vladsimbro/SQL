@@ -913,7 +913,7 @@ try {
     if (exercise.mode === 'mutation') {
       await db.exec('BEGIN;');
       try {
-        await db.exec(exercise.solution);
+        const executionResult = exercise.id === 'e112' ? await db.query(exercise.solution) : await db.exec(exercise.solution);
         const observed = await db.query(exercise.checkQuery);
         assert.ok(observed.rows.length > 0, `Mutation exercise ${exercise.id} did not produce a checkable state`);
         if (exercise.id === 'e61') {
@@ -956,7 +956,8 @@ try {
         } else if (exercise.id === 'e111') {
           assert.deepEqual(observed.rows.map(row => [row.product_id,row.product_name,row.category,Number(row.price)]), [[201,'Desk lamp','Home',1200],[202,'Notebook','Office',150]], 'Multi-row INSERT task must verify both inserted products and all values');
         } else if (exercise.id === 'e112') {
-          assert.deepEqual(observed.rows, [{customer_id:9,customer_name:'Екатерина',city:'Krakow'}], 'RETURNING task must update only the selected customer and preserve the returned identity');
+          assert.deepEqual(executionResult.rows, [{customer_id:9,customer_name:'Екатерина',city:'Krakow'}], 'UPDATE ... RETURNING must return the exact row and its new values');
+          assert.deepEqual(observed.rows, [{customer_id:9,customer_name:'Екатерина',city:'Krakow'}], 'RETURNING task must leave only the selected customer updated');
         } else if (exercise.id === 'e113') {
           assert.deepEqual(observed.rows, [{product_id:1,product_name:'Coffee beans',quantity:12},{product_id:2,product_name:'Tea',quantity:20},{product_id:3,product_name:'Mug',quantity:5}], 'MERGE task must update the matching row, preserve unmatched target rows and insert the new source row');
         } else if (exercise.id === 'e68') {
