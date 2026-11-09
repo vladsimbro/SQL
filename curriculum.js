@@ -9950,23 +9950,25 @@ export const exercises = [
   {
     "id": "e69",
     "m": "constraints",
-    "title": "Две операции в одной транзакции",
-    "task": "Открой транзакцию, увеличь цену товара с product_id = 1 на 5%, уменьши цену товара с product_id = 2 на 10% и зафиксируй обе операции одной командой COMMIT. Проверка сравнит итоговые цены.",
-    "solution": "BEGIN;\nUPDATE products SET price = price * 1.05 WHERE product_id = 1;\nUPDATE products SET price = price * 0.90 WHERE product_id = 2;\nCOMMIT;",
+    "title": "Переведи деньги в одной транзакции",
+    "task": "Создай временную таблицу счетов и добавь два счёта с балансами 1000 и 500. Переведи 100 со счёта 1 на счёт 2 в одной транзакции и зафиксируй её. Итоговые балансы должны быть 900 и 600, а общая сумма — остаться 1500.",
+    "solution": "BEGIN;\nCREATE TEMP TABLE transfer_accounts (account_id INTEGER PRIMARY KEY, balance NUMERIC(12,2) NOT NULL CHECK (balance >= 0));\nINSERT INTO transfer_accounts VALUES (1, 1000), (2, 500);\nUPDATE transfer_accounts SET balance = balance - 100 WHERE account_id = 1;\nUPDATE transfer_accounts SET balance = balance + 100 WHERE account_id = 2;\nCOMMIT;",
     "mode": "transaction",
     "requiredPatterns": [
       "\\bBEGIN\\b",
-      "\\bUPDATE\\s+products\\b",
+      "\\bCREATE\\s+TEMP\\s+TABLE\\s+transfer_accounts\\b",
+      "\\bUPDATE\\s+transfer_accounts\\b",
       "\\bCOMMIT\\b"
     ],
-    "checkQuery": "SELECT (SELECT price FROM products WHERE product_id = 1) = 2625::numeric AS product_1_ok, (SELECT price FROM products WHERE product_id = 2) = 450::numeric AS product_2_ok;",
+    "checkQuery": "SELECT (SELECT balance::int FROM transfer_accounts WHERE account_id = 1) AS source_balance, (SELECT balance::int FROM transfer_accounts WHERE account_id = 2) AS destination_balance, (SELECT SUM(balance)::int FROM transfer_accounts) AS total_balance;",
     "expectedCheck": {
-      "product_1_ok": true,
-      "product_2_ok": true
+      "source_balance": 900,
+      "destination_balance": 600,
+      "total_balance": 1500
     },
-    "hint": "Обе операции должны находиться между BEGIN и COMMIT. Ошибка в одной из них должна отменить весь набор изменений.",
-    "hint2": "UPDATE меняет все строки, подходящие под WHERE. Перед выполнением проверь, что фильтр ограничивает изменение нужной записью или группой.",
-    "hint3": "Каркас: PRIMARY KEY (...), UNIQUE (...), NOT NULL, CHECK (условие)."
+    "hint": "Обе части перевода должны быть одной логической операцией: нельзя сохранить списание без зачисления.",
+    "hint2": "Создай границу транзакции до изменений и фиксируй её только после обеих операций.",
+    "hint3": "Каркас: BEGIN; UPDATE ...; UPDATE ...; COMMIT;"
   },
   {
     "id": "e70",
@@ -9984,9 +9986,9 @@ export const exercises = [
     "expectedCheck": {
       "rollback_preserved": true
     },
-    "hint": "ROLLBACK завершает транзакцию и отменяет её изменения. После отката проверь исходное состояние.",
-    "hint2": "DELETE удаляет все строки, удовлетворяющие WHERE. Проверь фильтр до выполнения и учитывай, что транзакция позволяет отменить изменение.",
-    "hint3": "Каркас: PRIMARY KEY (...), UNIQUE (...), NOT NULL, CHECK (условие)."
+    "hint": "ROLLBACK отменяет все изменения, выполненные после BEGIN в этой транзакции.",
+    "hint2": "После отката проверь не результат DELETE, а наличие исходной записи в таблице.",
+    "hint3": "Каркас: BEGIN; DELETE FROM таблица WHERE условие; ROLLBACK;"
   },
   {
     "id": "e71",
@@ -10007,9 +10009,45 @@ export const exercises = [
       "product_1_committed": true,
       "product_2_rolled_back": true
     },
-    "hint": "SAVEPOINT создаёт точку возврата внутри транзакции. ROLLBACK TO отменит только действия после неё.",
-    "hint2": "UPDATE меняет все строки, подходящие под WHERE. Перед выполнением проверь, что фильтр ограничивает изменение нужной записью или группой.",
-    "hint3": "Каркас: PRIMARY KEY (...), UNIQUE (...), NOT NULL, CHECK (условие)."
+    "hint": "Создай SAVEPOINT после первого UPDATE, чтобы сохранить эту операцию как часть транзакции.",
+    "hint2": "Второй UPDATE должен находиться после SAVEPOINT: именно его результат нужно отменить.",
+    "hint3": "Каркас: BEGIN; UPDATE ...; SAVEPOINT имя; UPDATE ...; ROLLBACK TO SAVEPOINT имя; COMMIT;"
+  },
+  {
+    "id": "e114",
+    "m": "constraints",
+    "title": "Отложи проверку внешнего ключа до COMMIT",
+    "task": "Создай временные таблицы родительских и дочерних записей со внешним ключом DEFERRABLE INITIALLY DEFERRED. В одной транзакции сначала добавь дочернюю запись со ссылкой на parent_id = 10, затем родительскую запись с этим ID и зафиксируй транзакцию. Проверь, что обе записи сохранены и осиротевшей ссылки нет.",
+    "solution": "BEGIN;\nCREATE TEMP TABLE practice_parent (parent_id INTEGER PRIMARY KEY);\nCREATE TEMP TABLE practice_child (child_id INTEGER PRIMARY KEY, parent_id INTEGER NOT NULL, CONSTRAINT practice_child_parent_fk FOREIGN KEY (parent_id) REFERENCES practice_parent(parent_id) DEFERRABLE INITIALLY DEFERRED);\nINSERT INTO practice_child VALUES (1, 10);\nINSERT INTO practice_parent VALUES (10);\nCOMMIT;",
+    "mode": "transaction",
+    "requiredPatterns": [
+      "\\bBEGIN\\b",
+      "DEFERRABLE\\s+INITIALLY\\s+DEFERRED",
+      "INSERT\\s+INTO\\s+practice_child",
+      "INSERT\\s+INTO\\s+practice_parent",
+      "\\bCOMMIT\\b"
+    ],
+    "checkQuery": "SELECT (SELECT COUNT(*)::int FROM practice_parent) AS parent_count, (SELECT COUNT(*)::int FROM practice_child) AS child_count, (SELECT COUNT(*)::int FROM practice_child c LEFT JOIN practice_parent p ON p.parent_id = c.parent_id WHERE p.parent_id IS NULL) AS orphan_count;",
+    "expectedCheck": {
+      "parent_count": 1,
+      "child_count": 1,
+      "orphan_count": 0
+    },
+    "hint": "DEFERRABLE INITIALLY DEFERRED переносит проверку внешнего ключа на конец транзакции.",
+    "hint2": "Сначала создай дочернюю запись, затем родительскую. Обе операции должны завершиться до COMMIT.",
+    "hint3": "Каркас: FOREIGN KEY (...) REFERENCES родительская_таблица(...) DEFERRABLE INITIALLY DEFERRED;"
+  },
+  {
+    "id": "e115",
+    "m": "constraints",
+    "title": "Проверь каскадное удаление",
+    "task": "Создай родительскую таблицу projects и дочернюю tasks со связью ON DELETE CASCADE. Добавь проекты 1 и 2 и три задачи: 101 и 102 для проекта 1, 201 для проекта 2. Удали проект 1 и проверь, что его задачи удалились вместе с ним, а задача проекта 2 сохранилась.",
+    "solution": "CREATE TEMP TABLE practice_projects (project_id INTEGER PRIMARY KEY);\nCREATE TEMP TABLE practice_tasks (task_id INTEGER PRIMARY KEY, project_id INTEGER NOT NULL REFERENCES practice_projects(project_id) ON DELETE CASCADE);\nINSERT INTO practice_projects VALUES (1), (2);\nINSERT INTO practice_tasks VALUES (101, 1), (102, 1), (201, 2);\nDELETE FROM practice_projects WHERE project_id = 1;",
+    "mode": "mutation",
+    "checkQuery": "SELECT task_id, project_id FROM practice_tasks ORDER BY task_id;",
+    "hint": "ON DELETE CASCADE задаётся во внешнем ключе дочерней таблицы и управляет удалением связанных строк.",
+    "hint2": "Сначала создай обе таблицы и добавь родительские и дочерние строки, затем удали только родительскую запись с ID 1.",
+    "hint3": "Каркас: FOREIGN KEY (parent_id) REFERENCES parent_table(parent_id) ON DELETE CASCADE;"
   },
   {
     "id": "e72",
