@@ -10631,10 +10631,10 @@ export const exercises = [
     "m": "joins",
     "title": "Сохрани зерно заказа при двух деталях",
     "task": "Подготовь сводку по каждому заказу: общую стоимость товарных позиций и количество зарегистрированных событий. Заказ должен появиться в результате один раз, даже если у него несколько позиций и несколько событий. Сохрани заказы, для которых нет позиций или событий, и не допускай повторного учёта.",
-    "solution": "WITH item_totals AS (SELECT order_id, SUM(quantity * unit_price) AS items_amount FROM order_items GROUP BY order_id), event_totals AS (SELECT order_id, COUNT(*) AS events_count FROM order_events GROUP BY order_id) SELECT o.order_id, COALESCE(i.items_amount, 0) AS items_amount, COALESCE(e.events_count, 0) AS events_count FROM orders AS o LEFT JOIN item_totals AS i ON i.order_id = o.order_id LEFT JOIN event_totals AS e ON e.order_id = o.order_id ORDER BY o.order_id;",
+    "solution": "SELECT o.order_id, COALESCE(i.items_amount, 0) AS items_amount, e.events_count FROM orders AS o LEFT JOIN LATERAL (SELECT SUM(oi.quantity * oi.unit_price) AS items_amount FROM order_items AS oi WHERE oi.order_id = o.order_id) AS i ON TRUE LEFT JOIN LATERAL (SELECT COUNT(*) AS events_count FROM order_events AS oe WHERE oe.order_id = o.order_id) AS e ON TRUE ORDER BY o.order_id;",
     "hint": "Перед соединением сформулируй зерно каждой исходной таблицы и проверь, сколько строк может относиться к одному заказу.",
     "hint2": "Если напрямую соединить позиции и события, строки перемножатся. Для заказа с тремя позициями и двумя событиями получится шесть комбинаций.",
-    "hint3": "Сведи позиции и события к одной строке на заказ в отдельных наборах, затем присоедини их к orders. DISTINCT по сумме не решает проблему: разные реальные записи могут иметь одинаковые значения."
+    "hint3": "Используй два независимых LEFT JOIN LATERAL: один агрегирует позиции текущего заказа, второй считает его события. Каждый подзапрос должен работать только со своим источником деталей. DISTINCT по сумме не решает проблему: разные реальные записи могут иметь одинаковые значения."
   }
 
 ];
