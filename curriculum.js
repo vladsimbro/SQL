@@ -7813,7 +7813,9 @@ export const modules = [
         "example": "CREATE OR REPLACE VIEW delivered_orders_demo AS\nSELECT order_id, customer_id, total_amount\nFROM orders\nWHERE status = 'delivered';\n\nSELECT * FROM delivered_orders_demo;",
         "note": "Обычный VIEW не является снимком данных. Для сохранённого результата существует materialized view.",
         "simple": "VIEW — именованный SELECT, который выглядит как таблица, но обычно не хранит результат.",
-        "practiceIds": [],
+        "practiceIds": [
+          "e116"
+        ],
         "outcomes": [
           "Объяснить, что хранит VIEW",
           "создавать и использовать представление."
@@ -7839,7 +7841,9 @@ export const modules = [
         "example": "DROP MATERIALIZED VIEW IF EXISTS monthly_revenue_demo;\nCREATE MATERIALIZED VIEW monthly_revenue_demo AS\nSELECT DATE_TRUNC('month', created_at) AS month,\n       SUM(total_amount) AS revenue\nFROM orders\nGROUP BY 1;\n\nREFRESH MATERIALIZED VIEW monthly_revenue_demo;",
         "note": "Материализованное представление может содержать устаревшие данные между обновлениями.",
         "simple": "Materialized view хранит результат и требует обновления, когда источник меняется.",
-        "practiceIds": [],
+        "practiceIds": [
+          "e117"
+        ],
         "outcomes": [
           "Объяснить отличие VIEW и MATERIALIZED VIEW",
           "выбирать частоту обновления по требованиям свежести."
@@ -7865,7 +7869,9 @@ export const modules = [
         "example": "CREATE OR REPLACE FUNCTION add_tax_demo(amount NUMERIC, rate NUMERIC)\nRETURNS NUMERIC\nLANGUAGE SQL\nIMMUTABLE\nAS $\n  SELECT amount * (1 + rate);\n$;\n\nSELECT add_tax_demo(100, 0.20) AS taxed_amount;",
         "note": "IMMUTABLE означает одинаковый результат для одинаковых аргументов всегда. Не ставь эту метку просто ради скорости.",
         "simple": "Функция — повторно используемая логика с аргументами и определённым результатом.",
-        "practiceIds": [],
+        "practiceIds": [
+          "e118"
+        ],
         "outcomes": [
           "Создавать простую SQL-функцию",
           "объяснить назначение RETURNS и volatility."
@@ -7891,7 +7897,9 @@ export const modules = [
         "example": "CREATE TEMP TABLE IF NOT EXISTS customer_demo (\n  customer_id integer PRIMARY KEY,\n  customer_name text NOT NULL,\n  updated_at timestamptz NOT NULL DEFAULT now()\n);\nTRUNCATE customer_demo;\n\nCREATE OR REPLACE FUNCTION views_set_updated_at_demo()\nRETURNS trigger\nLANGUAGE plpgsql\nAS $\nBEGIN\n  NEW.updated_at := now();\n  RETURN NEW;\nEND;\n$;\n\nDROP TRIGGER IF EXISTS trg_set_updated_at_demo ON customer_demo;\nCREATE TRIGGER trg_set_updated_at_demo\nBEFORE UPDATE ON customer_demo\nFOR EACH ROW\nEXECUTE FUNCTION views_set_updated_at_demo();\n\nINSERT INTO customer_demo VALUES (1, 'Anna', TIMESTAMPTZ '2000-01-01 00:00:00+00');\nUPDATE customer_demo SET customer_name = 'Anna Petrova' WHERE customer_id = 1;\nSELECT customer_id, customer_name, updated_at FROM customer_demo;",
         "note": "Триггеры полезны, но не прячь в них бизнес-процесс, который должен быть явно виден и контролируем в приложении.",
         "simple": "Триггер запускает функцию автоматически в ответ на событие изменения данных.",
-        "practiceIds": [],
+        "practiceIds": [
+          "e119"
+        ],
         "outcomes": [
           "Объяснить BEFORE и AFTER",
           "читать NEW и OLD",
@@ -7918,7 +7926,9 @@ export const modules = [
         "example": "CREATE OR REPLACE FUNCTION order_label_demo(amount NUMERIC)\nRETURNS TEXT\nLANGUAGE plpgsql\nAS $\nDECLARE\n  result_label TEXT;\nBEGIN\n  IF amount >= 10000 THEN\n    result_label := 'large';\n  ELSE\n    result_label := 'regular';\n  END IF;\n  RETURN result_label;\nEND;\n$;\n\nSELECT order_label_demo(12000), order_label_demo(5000);",
         "note": "Если задачу можно выразить одним SQL-запросом над набором строк, не заменяй его циклом по одной строке.",
         "simple": "PL/pgSQL — язык процедурной логики внутри PostgreSQL, который дополняет SQL.",
-        "practiceIds": [],
+        "practiceIds": [
+          "e120"
+        ],
         "outcomes": [
           "Объявлять переменные и ветвления IF",
           "отличать PL/pgSQL BEGIN/END от транзакционных команд."
@@ -7944,7 +7954,9 @@ export const modules = [
         "example": "DO $\nBEGIN\n  INSERT INTO customers (customer_id, customer_name, city, registered_at)\n  VALUES (1, 'Test', 'Warsaw', DATE '2026-11-10');\nEXCEPTION\n  WHEN unique_violation THEN\n    RAISE NOTICE 'Customer already exists';\nEND;\n$;",
         "note": "Не используй WHEN OTHERS без повторного выброса или осмысленной обработки неизвестной ошибки.",
         "simple": "EXCEPTION позволяет обработать ожидаемую ошибку, но не должен превращаться в заглушку для всех проблем.",
-        "practiceIds": [],
+        "practiceIds": [
+          "e121"
+        ],
         "outcomes": [
           "Перехватывать конкретные ошибки",
           "объяснить, почему нельзя молча проглатывать все исключения."
