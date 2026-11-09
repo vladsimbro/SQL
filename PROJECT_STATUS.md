@@ -1,16 +1,16 @@
 # SQL Academy — актуальное состояние и передача разработки
 
-Последнее обновление: 2026-11-09; модуль временной аналитики и практика e72–e79 прошли build 122; начат следующий блок — оконные функции.
+Последнее обновление: 2026-11-09; datetime e72–e79 прошёл build 122; исправлены подсказки оконных функций e35–e39/e80 и уточнено условие e94, build 123 ожидает CI.
 
 ## 1. Репозиторий и проверенные ревизии
 
 - Репозиторий: https://github.com/vladsimbro/SQL
 - GitHub Pages: https://vladsimbro.github.io/SQL/
 - Основная ветка: main; GitHub API подтверждает единственную ветку main.
-- Последний проверенный code commit: `518501c1e21036aa65c64bb6a2159ad15558689f`.
-- Build приложения: `20261109-122`.
-- Workflow `42541603291` на 518501c: validate, deploy и browser-smoke — SUCCESS.
-- Pages workflow `42541642903` на status commit e2fd568: build, report-build-status и deploy — SUCCESS.
+- Последний code commit перед текущим обновлением статуса: `7a08ad257eca7365bdd17c9775cd61f3356a03ed`.
+- Build приложения: `20261109-123`.
+- Workflow `42541896826` на 7a08ad2: QUEUED; Pages workflow `42541896486`: PENDING.
+- Последний полностью проверенный build: `20261109-122`. Workflow `42541603291` на 518501c: validate, deploy и browser-smoke — SUCCESS. Pages workflow `42541642903` на status commit e2fd568: build, report-build-status и deploy — SUCCESS.
 - Build 122 опубликован и проверен. Browser-smoke: shellReadyMs=1199, recoveryMs=4159, resetReadyMs=3553; ширины 390 и 320 px; PGlite retry, выполнение SQL, сохранение черновика, reset базы, мобильная навигация, backup validation и отказ от восстановления проверены. Artifact `sql-academy-ux-audit-screenshots`, ID `13640888802`.
 - Открытых Pull Requests нет. Ветка только main; незавершённых переносов между ветками не обнаружено.
 - Изменения выполнялись через GitHub API; локальный clone и локальный git status не использовались.
