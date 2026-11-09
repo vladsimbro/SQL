@@ -8628,7 +8628,9 @@ export const modules = [
         "example": "CREATE INDEX IF NOT EXISTS idx_products_fulltext_demo\nON products USING GIN (to_tsvector('simple', product_name));\n\nSELECT product_id, product_name,\n       ts_rank(to_tsvector('simple', product_name), plainto_tsquery('simple', 'coffee')) AS rank\nFROM products\nWHERE to_tsvector('simple', product_name) @@ plainto_tsquery('simple', 'coffee')\nORDER BY rank DESC;",
         "note": "Для частых запросов создай GIN индекс по tsvector и проверь план.",
         "simple": "Полнотекстовый поиск сравнивает нормализованные лексемы, а не просто подстроки.",
-        "practiceIds": [],
+        "practiceIds": [
+          "e127"
+        ],
         "outcomes": [
           "Объяснить tsvector и tsquery",
           "применять @@ и ранжирование результатов."
@@ -8654,7 +8656,9 @@ export const modules = [
         "example": "DROP TABLE IF EXISTS events_demo CASCADE;\nCREATE TABLE events_demo (\n  event_id BIGINT NOT NULL,\n  occurred_at DATE NOT NULL,\n  payload JSONB\n) PARTITION BY RANGE (occurred_at);\n\nCREATE TABLE events_demo_2026_01 PARTITION OF events_demo\nFOR VALUES FROM ('2026-01-01') TO ('2026-02-01');\nCREATE TABLE events_demo_2026_02 PARTITION OF events_demo\nFOR VALUES FROM ('2026-02-01') TO ('2026-03-01');\n\nINSERT INTO events_demo VALUES\n  (1, DATE '2026-01-15', '{\"source\":\"web\"}'),\n  (2, DATE '2026-02-15', '{\"source\":\"mobile\"}');\n\nSELECT event_id, tableoid::regclass AS partition_name\nFROM events_demo\nORDER BY event_id;",
         "note": "Не партиционируй маленькие таблицы без причины. Уникальное ограничение или PRIMARY KEY на partitioned table должен включать все столбцы ключа партиционирования; также учитывай эксплуатационную сложность.",
         "simple": "Партиционирование делит большую таблицу на разделы, которые PostgreSQL может исключать из чтения.",
-        "practiceIds": [],
+        "practiceIds": [
+          "e126"
+        ],
         "outcomes": [
           "Объяснить partition pruning",
           "выбирать ключ партиционирования по фильтрам и жизненному циклу."
@@ -8706,7 +8710,9 @@ export const modules = [
         "example": "SELECT table_name, column_name, data_type\nFROM information_schema.columns\nWHERE table_schema = 'public'\nORDER BY table_name, ordinal_position;",
         "note": "Не угадывай схему по названию. Проверяй реальные столбцы и ограничения.",
         "simple": "information_schema — переносимый обзор схемы, pg_catalog — подробные внутренние каталоги PostgreSQL.",
-        "practiceIds": [],
+        "practiceIds": [
+          "e128"
+        ],
         "outcomes": [
           "Находить таблицы и столбцы через information_schema",
           "понимать, когда нужен pg_catalog."
