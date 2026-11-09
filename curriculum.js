@@ -8983,7 +8983,9 @@ export const modules = [
         "simple": "Значения передавай параметрами. Имена объектов выбирай из белого списка.",
         "example": "-- Серверный пример PREPARE/EXECUTE; приложение передаёт значение отдельно через API драйвера\nPREPARE orders_by_customer_demo(BIGINT) AS\nSELECT order_id\nFROM orders\nWHERE customer_id = $1;\n\nEXECUTE orders_by_customer_demo(42);\nDEALLOCATE orders_by_customer_demo;",
         "note": "Плейсхолдер передаёт значение, но не заменяет имя таблицы или столбца.",
-        "practiceIds": [],
+        "practiceIds": [
+          "e129"
+        ],
         "outcomes": [
           "Применять параметры для значений",
           "безопасно выбирать динамические идентификаторы из белого списка."
@@ -9021,7 +9023,9 @@ export const modules = [
         "simple": "%I — идентификатор, USING — значения. Не склеивай пользовательский ввод в SQL.",
         "example": "DO $\nDECLARE\n  table_name TEXT := 'orders';\n  wanted_status TEXT := 'delivered';\n  row_count BIGINT;\nBEGIN\n  IF table_name NOT IN ('orders') THEN\n    RAISE EXCEPTION 'Table is not allowed';\n  END IF;\n\n  EXECUTE format('SELECT COUNT(*) FROM %I WHERE status = $1', table_name)\n  INTO row_count\n  USING wanted_status;\n\n  RAISE NOTICE 'Matching orders: %', row_count;\nEND;\n$;",
         "note": "%I защищает синтаксис имени, но белый список всё равно нужен для ограничения допустимых объектов.",
-        "practiceIds": [],
+        "practiceIds": [
+          "e130"
+        ],
         "outcomes": [
           "Использовать format('%I') для идентификаторов и USING для значений",
           "объяснить разницу с конкатенацией."
@@ -10235,6 +10239,30 @@ export const exercises = [
     "hint": "information_schema.columns хранит по одной строке на каждый столбец доступной таблицы.",
     "hint2": "Ограничь метаданные схемой public и таблицей orders, а порядок задай через ordinal_position.",
     "hint3": "Каркас: SELECT column_name, data_type FROM information_schema.columns WHERE table_schema = ... AND table_name = ... ORDER BY ordinal_position;"
+  },
+  {
+    "id": "e129",
+    "m": "security",
+    "title": "Передай значение параметром, а не текстом",
+    "task": "Создай SQL-функцию practice_orders_by_status с одним текстовым параметром. Внутри используй позиционный параметр $1 в условии по status, не собирай SQL конкатенацией. Вызови функцию для delivered и проверь количество найденных заказов.",
+    "solution": "CREATE OR REPLACE FUNCTION practice_orders_by_status(TEXT)\nRETURNS TABLE(order_id BIGINT)\nLANGUAGE SQL\nAS $$\n  SELECT o.order_id\n  FROM orders o\n  WHERE o.status = $1;\n$$;",
+    "mode": "mutation",
+    "checkQuery": "SELECT COUNT(*)::int AS result_count, MIN(order_id)::int AS first_order_id, MAX(order_id)::int AS last_order_id FROM practice_orders_by_status('delivered');",
+    "hint": "Параметр функции доступен внутри SQL-тела по позиции $1; значение не нужно вставлять в текст запроса.",
+    "hint2": "Оставь сравнение status = $1 внутри SELECT, а значение delivered передай при вызове функции.",
+    "hint3": "Каркас: CREATE FUNCTION имя(TEXT) RETURNS TABLE(...) LANGUAGE SQL AS $$ SELECT ... WHERE поле = $1; $$;"
+  },
+  {
+    "id": "e130",
+    "m": "security",
+    "title": "Собери безопасный динамический запрос",
+    "task": "Создай временную таблицу practice_dynamic_orders с тремя строками. Затем напиши PL/pgSQL-функцию practice_count_dynamic, которая принимает имя таблицы и статус. Разреши только имя practice_dynamic_orders, вставляй его через format('%I', ...) и передавай статус через USING. Проверь, что для delivered найдено две строки.",
+    "solution": "CREATE TEMP TABLE practice_dynamic_orders (order_id INTEGER PRIMARY KEY, status TEXT NOT NULL);\nINSERT INTO practice_dynamic_orders VALUES (1, 'delivered'), (2, 'new'), (3, 'delivered');\nCREATE OR REPLACE FUNCTION practice_count_dynamic(table_name TEXT, wanted_status TEXT)\nRETURNS BIGINT\nLANGUAGE plpgsql\nAS $$\nDECLARE\n  row_count BIGINT;\nBEGIN\n  IF table_name <> 'practice_dynamic_orders' THEN\n    RAISE EXCEPTION 'Table is not allowed';\n  END IF;\n  EXECUTE format('SELECT COUNT(*) FROM %I WHERE status = $1', table_name)\n  INTO row_count\n  USING wanted_status;\n  RETURN row_count;\nEND;\n$$;",
+    "mode": "mutation",
+    "checkQuery": "SELECT practice_count_dynamic('practice_dynamic_orders', 'delivered')::int AS delivered_count;",
+    "hint": "Идентификатор таблицы и значение фильтра — разные части запроса: для них нужны разные механизмы передачи.",
+    "hint2": "%I экранирует имя объекта, а USING передаёт значение как параметр. До этого проверь имя по белому списку.",
+    "hint3": "Каркас: EXECUTE format('SELECT ... FROM %I WHERE поле = $1', имя) INTO переменная USING значение;"
   },
   {
     "id": "e72",
