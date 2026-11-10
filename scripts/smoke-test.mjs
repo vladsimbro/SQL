@@ -21,6 +21,9 @@ for (const track of learningTracks) {
     ...module.lessons.flatMap(lesson => lesson.quiz || []),
     ...(module.quiz || [])
   ]);
+  const normalizedQuestionText = question => question.question.replace(/\\s+/g, ' ').trim().toLowerCase();
+  assert.equal(new Set(questions.map(normalizedQuestionText)).size, questions.length, `Quiz questions must not repeat within the ${track.id} learning route`);
+  assert.ok(questions.every(question => new Set(question.options).size === question.options.length), `Quiz options must be distinct in the ${track.id} learning route`);
   const uniqueQuestions = [...new Map(questions.map(question => [quizOptionKey(question, track.id), question])).values()];
   const positionCounts = [0, 0, 0, 0];
   for (const question of uniqueQuestions) {
@@ -513,6 +516,7 @@ assert.ok(modules.every(module => module.sources?.length), 'Every module must li
 assert.ok(modules.every(module => module.quiz?.length >= 4), 'Every module must include a question bank');
 const quizQuestions = modules.flatMap(module => module.quiz);
 assert.equal(quizQuestions.length, 100, 'Expected 100 knowledge-check questions');
+assert.equal(new Set(quizQuestions.map(question => question.question.replace(/\\s+/g, ' ').trim().toLowerCase())).size, 100, 'The 100-question assessment bank must not repeat question wording');
 assert.ok(quizQuestions.every(question => question.question && question.options?.length === 4 && Number.isInteger(question.answer) && question.answer >= 0 && question.answer < 4 && question.explanation), 'Every quiz question must have four options, a valid answer and an explanation');
 const answerPositionCounts = [0,0,0,0];
 for (const question of quizQuestions) answerPositionCounts[question.answer]++;
@@ -1330,6 +1334,18 @@ try {
       randomChecked++;
     }
   }
+  let projectTasksChecked = 0;
+  for (const project of projects) {
+    for (const task of project.tasks) {
+      assert.equal(sqlLexer.readOnlyQueryKeyword(task.solution), 'SELECT', `Project task ${task.id} must be a read-only SELECT/CTE`);
+      const result = await db.query(task.solution);
+      assert.ok(result && Array.isArray(result.rows) && result.fields?.length > 0, `Project task ${task.id} must execute and return a tabular result`);
+      assert.ok(result.rows.length > 0, `Project task ${task.id} must return data from the project dataset`);
+      projectTasksChecked++;
+    }
+  }
+  assert.equal(projectTasksChecked, projectTaskCount, 'All nine analytical project tasks must execute against the seeded analytics datasets');
+  console.log(`Executed ${projectTasksChecked} SQL solutions from the three analytical projects.`);
   console.log(`SQL Academy smoke test passed: ${modules.length} modules, ${modules.reduce((sum, module) => sum + module.lessons.length, 0)} lessons, ${quizQuestions.length} knowledge checks, ${glossary.length} glossary terms, ${reference.length} reference groups, ${checked} runnable exercises, ${randomChecked} random sandbox tasks, ${tables.rows.length} seed tables.`);
 } finally {
   await db.close();
