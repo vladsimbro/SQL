@@ -7,7 +7,7 @@
 - Репозиторий: https://github.com/vladsimbro/SQL
 - GitHub Pages: https://vladsimbro.github.io/SQL/
 - Основная ветка: `main`.
-- Актуальный HEAD `main`: `dbe12e71914d91b8c8df45038efec896bc568410` (merge PR #47).
+- Последний проверенный кодовый commit в `main`: `dbe12e71914d91b8c8df45038efec896bc568410` (merge PR #47). После него в `main` внесены только обновления документации; код и опубликованный build не менялись.
 - Опубликованный build: `20261110-145`.
 - PR #46: доступное состояние активного пункта основной навигации через `aria-current="page"`, клавиатурная активация Enter/Space и проверки; merge commit `56fcc5d3b27b45ff350fd23e39094772e1998484`.
 - PR #47: исправлен browser-smoke locator — тест теперь выбирает кнопку меню, а не одновременно логотип и кнопку «Главная»; merge commit и текущий HEAD: `dbe12e71914d91b8c8df45038efec896bc568410`.
