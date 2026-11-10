@@ -9,12 +9,22 @@ const variants = {
   days: [10,11,12,13,14],
   months: [1,2,3,4,5]
 };
-const task = (topic, n, title, prompt, hint, solution) => ({
-  id: `rnd-${topic}-${String(n).padStart(2,'0')}`,
-  topic, title, prompt: prompt + ` Вариант №${n}: используй именно указанные в этом условии параметры.`, hint: hint + ` Для варианта №${n} проверь конкретный порог, статус или размер выборки из условия, а не переноси значение из соседней карточки.`,
-  orderMatters: /(?:сортир|алфавит|по убыванию|по возрастанию|последн|первые\s+\d+|страниц|в порядке|ранг|ранжир|топ|не более|при одинаков|сначала самые|самые (?:дорогие|дешёвые|дешевые|новые|старые))/i.test(prompt),
-  solution
-});
+const task = (topic, n, title, prompt, hint, solution) => {
+  const details = [
+    ...[...prompt.matchAll(/«([^»]+)»/g)].map(match => match[1]),
+    ...[...prompt.matchAll(/\b\d{4}-\d{2}-\d{2}\b/g)].map(match => match[0]),
+    ...[...prompt.matchAll(/\b\d+(?:[.,]\d+)?\b/g)].map(match => match[0])
+  ];
+  const variantContext = [...new Set(details)].join(' / ') || prompt.slice(0, 110);
+  return {
+    id: `rnd-${topic}-${String(n).padStart(2,'0')}`,
+    topic, title,
+    prompt: prompt + ` Вариант №${n}: используй именно указанные в этом условии параметры.`,
+    hint: hint + ` Для этой карточки проверь именно: ${variantContext}. Не переноси параметры из соседних вариантов.`,
+    orderMatters: /(?:сортир|алфавит|по убыванию|по возрастанию|последн|первые\s+\d+|страниц|в порядке|ранг|ранжир|топ|не более|при одинаков|сначала самые|самые (?:дорогие|дешёвые|дешевые|новые|старые))/i.test(prompt),
+    solution
+  };
+};
 const topics = [];
 function addTopic(id,title,items){if(items.length!==25)throw new Error(`${id}: expected 25 tasks, got ${items.length}`);topics.push({id,title,tasks:items});}
 function fiveByFive(topic,patterns){
@@ -66,7 +76,11 @@ addTopic('aggregates','Агрегация и группировки',fiveByFive(
 // 6. JOIN: preserve unmatched rows and avoid multiplying metrics.
 addTopic('joins','JOIN и зерно данных',fiveByFive('joins',[
  [0,1,2,3,4].map(i=>['Заказы с клиентами',`Покажи заказы клиентов из города «${variants.cities[i]}». Выведи номер заказа, имя клиента, статус и сумму.`,`Связь orders → customers проходит по customer_id. Фильтр по городу относится к customers, но строка результата остаётся одним заказом.`,`SELECT o.order_id,c.customer_name,o.status,o.total_amount FROM orders o JOIN customers c ON c.customer_id=o.customer_id WHERE c.city='${variants.cities[i]}' ORDER BY o.order_id;`]),
- [0,1,2,3,4].map(i=>['Магазины и заказы',`Покажи все магазины и число заказов в каждом, включая магазины без заказов. Сначала выведи города по алфавиту.`,`Начинай со stores и используй LEFT JOIN. Для подсчёта считай order_id, а не COUNT(*), иначе магазин без заказов получит единицу.`,`SELECT s.store_name,s.city,COUNT(o.order_id) AS orders_count FROM stores s LEFT JOIN orders o ON o.store_id=s.store_id GROUP BY s.store_id,s.store_name,s.city ORDER BY s.city,s.store_name;`]),
+  ['Число заказов по магазинам', 'Покажи каждый магазин и число его заказов. Магазины без заказов тоже должны присутствовать; отсортируй по городу и названию.', 'Начинай с stores и используй LEFT JOIN. Считай order_id, а не COUNT(*): у магазина без совпадений правая сторона будет NULL.', 'SELECT s.store_id,s.store_name,s.city,COUNT(o.order_id) AS orders_count FROM stores s LEFT JOIN orders o ON o.store_id=s.store_id GROUP BY s.store_id,s.store_name,s.city ORDER BY s.city,s.store_name;'],
+  ['Выручка по магазинам', 'Для каждого магазина рассчитай выручку по заказам. Не исключай магазины без заказов и показывай для них нулевую выручку.', 'После LEFT JOIN сумма для магазина без заказов будет NULL. Преобразуй её в 0 через COALESCE, сохранив строку магазина.', 'SELECT s.store_id,s.store_name,s.city,COALESCE(SUM(o.total_amount),0) AS revenue FROM stores s LEFT JOIN orders o ON o.store_id=s.store_id GROUP BY s.store_id,s.store_name,s.city ORDER BY revenue DESC,s.store_id;'],
+  ['Уникальные клиенты магазинов', 'Для каждого магазина посчитай, сколько разных клиентов делали в нём заказы. Магазины без заказов не теряй.', 'Один клиент может оформить несколько заказов в одном магазине. Используй COUNT(DISTINCT ...), а не обычный COUNT.', 'SELECT s.store_id,s.store_name,COUNT(DISTINCT o.customer_id) AS customers_count FROM stores s LEFT JOIN orders o ON o.store_id=s.store_id GROUP BY s.store_id,s.store_name ORDER BY customers_count DESC,s.store_id;'],
+  ['Средний чек по магазинам', 'Покажи среднюю сумму заказа для каждого магазина. Сохрани и магазины, в которых пока нет заказов.', 'AVG игнорирует NULL, поэтому LEFT JOIN сохранит магазин, а средний чек для него останется NULL. Не подменяй его нулём без требования.', 'SELECT s.store_id,s.store_name,ROUND(AVG(o.total_amount),2) AS avg_order_amount FROM stores s LEFT JOIN orders o ON o.store_id=s.store_id GROUP BY s.store_id,s.store_name ORDER BY avg_order_amount DESC NULLS LAST,s.store_id;'],
+  ['Последний заказ магазина', 'Для каждого магазина покажи дату самого позднего заказа и количество заказов. Магазины без заказов тоже должны остаться.', 'MAX находит последнюю дату, COUNT считает только реальные order_id. Обе метрики можно получить в одной группировке после LEFT JOIN.', 'SELECT s.store_id,s.store_name,MAX(o.created_at) AS last_order_date,COUNT(o.order_id) AS orders_count FROM stores s LEFT JOIN orders o ON o.store_id=s.store_id GROUP BY s.store_id,s.store_name ORDER BY last_order_date DESC NULLS LAST,s.store_id;']
  [0,1,2,3,4].map(i=>['Сотрудники и назначенные заказы',`Для каждого сотрудника покажи имя и число заказов со статусом «${variants.statuses[i]}». Сотрудники без таких заказов должны остаться.`,`Ограничение статуса помести в ON, а не в WHERE: фильтр в WHERE удалит строки, где заказ отсутствует.`,`SELECT e.employee_id,e.employee_name,COUNT(o.order_id) AS orders_count FROM employees e LEFT JOIN orders o ON o.employee_id=e.employee_id AND o.status='${variants.statuses[i]}' GROUP BY e.employee_id,e.employee_name ORDER BY orders_count DESC,e.employee_id;`]),
  [0,1,2,3,4].map(i=>['Товары в позициях заказов',`Для товаров категории «${variants.categories[i]}» покажи число разных заказов, в которых они встречались, и общее проданное количество.`,`Свяжи products с order_items по product_id. COUNT(DISTINCT order_id) считает заказы, SUM(quantity) считает физические единицы.`,`SELECT p.product_name,COUNT(DISTINCT oi.order_id) AS orders_count,SUM(oi.quantity) AS units_sold FROM products p JOIN order_items oi ON oi.product_id=p.product_id WHERE p.category='${variants.categories[i]}' GROUP BY p.product_id,p.product_name ORDER BY units_sold DESC;`]),
  [0,1,2,3,4].map(i=>['Сверка заказов и оплат',`Для каждого заказа со статусом «${variants.statuses[i]}» покажи сумму заказа и сумму успешных оплат. Заказы без успешной оплаты не теряй.`,`Сначала агрегируй payments до одной строки на order_id, затем LEFT JOIN к orders. Иначе несколько платежей могут размножить заказ.`,`WITH paid AS (SELECT order_id,SUM(amount) AS paid_amount FROM payments WHERE payment_status='paid' GROUP BY order_id) SELECT o.order_id,o.total_amount,COALESCE(p.paid_amount,0) AS paid_amount FROM orders o LEFT JOIN paid p ON p.order_id=o.order_id WHERE o.status='${variants.statuses[i]}' ORDER BY o.order_id;`])
