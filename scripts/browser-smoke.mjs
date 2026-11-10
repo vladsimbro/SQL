@@ -739,7 +739,9 @@ try {
       'SQL editor persistence while offline and after database reset',
       'real PostgreSQL query execution',
       'mobile menu state, Escape and focus restoration',
-      '320px layout overflow on dashboard, practice and playground',
+      'dedicated progress screen with direct route, reload, desktop/mobile layout and 320px overflow',
+      'course navigation preserves core/PostgreSQL context across program, theory, practice, assessments and Back/Forward',
+      '320px layout overflow on dashboard, practice, playground and progress',
       'backup import rejects malformed JSON, unsupported versions, and files larger than 5 MB without changing local data',
       'declining backup restore confirmation preserves existing local data'
     ]
