@@ -1,10 +1,10 @@
-import { modules, learningTracks, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261110-144';
-import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261110-144';
-import { firstSqlKeyword, explainStatementKeyword, explainStatementBody, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261110-144';
-import { migrateProgress, getTrackProgress, findNextLesson } from './progress-utils.js?v=20261110-144';
-import { projects, projectTaskCount } from './projects.js?v=20261110-144';
-import { createBackup, parseBackup, restoreBackup } from './backup-utils.js?v=20261110-144';
-import { buildQuizOptionOrders, quizOptionKey } from './quiz-options.js?v=20261110-144';
+import { modules, learningTracks, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261110-145';
+import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261110-145';
+import { firstSqlKeyword, explainStatementKeyword, explainStatementBody, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261110-145';
+import { migrateProgress, getTrackProgress, findNextLesson } from './progress-utils.js?v=20261110-145';
+import { projects, projectTaskCount } from './projects.js?v=20261110-145';
+import { createBackup, parseBackup, restoreBackup } from './backup-utils.js?v=20261110-145';
+import { buildQuizOptionOrders, quizOptionKey } from './quiz-options.js?v=20261110-145';
 
 const $ = (s, root=document) => root.querySelector(s);
 const $$ = (s, root=document) => [...root.querySelectorAll(s)];
@@ -197,7 +197,12 @@ function render() {
   for(const cm of state.editors.values()){try{cm.toTextArea();}catch{}}
   state.editors.clear();
   const activeView=['roadmap','study'].includes(state.view)?'courses':state.view==='project'?'projects':state.view;
-  $$('.nav-item').forEach(b=>b.classList.toggle('active',b.dataset.nav===activeView));
+  $$('.nav-item').forEach(button=>{
+    const active=button.dataset.nav===activeView;
+    button.classList.toggle('active',active);
+    if(active)button.setAttribute('aria-current','page');
+    else button.removeAttribute('aria-current');
+  });
   $('#breadcrumb-current').textContent=label[state.view]||'Учебник';
   updateProgress();
   const pages={dashboard:renderDashboard,courses:renderCourses,roadmap:renderRoadmap,study:renderStudy,practice:renderPractice,projects:renderProjects,project:renderProject,assessment:renderAssessment,progress:renderProgress,playground:renderPlayground,schema:renderSchema,reference:renderReference,glossary:renderGlossary};

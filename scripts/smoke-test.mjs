@@ -58,6 +58,7 @@ assert.ok(appSource.includes("'progress'") && appSource.includes("progress:'Пр
 assert.ok(cssSource.includes('.progress-course-grid') && cssSource.includes('.progress-project-grid') && cssSource.includes('@media(max-width:560px)'), 'The progress screen must have dedicated responsive course and project layouts');
 assert.ok(appSource.includes('function renderCourseSubnav(') && appSource.includes('data-course-nav=') && appSource.includes("renderCourseSubnav('roadmap'") && appSource.includes("renderCourseSubnav('study'") && appSource.includes("renderCourseSubnav('practice'") && appSource.includes("renderCourseSubnav('assessment'"), 'The four course views must share contextual navigation');
 assert.ok(appSource.includes('if(el.dataset.courseNav)') && appSource.includes('state.roadmapTrack=state.practiceTrack=state.assessmentTrack=track.id'), 'Course navigation must preserve one selected track across all views');
+assert.ok(appSource.includes("button.setAttribute('aria-current','page')") && appSource.includes("button.removeAttribute('aria-current')"), 'The active top-level route must be exposed semantically to assistive technology');
 
 assert.ok(appSource.includes('[data-open-course]'), 'Course catalog actions must be included in delegated click handling');
 assert.ok(appSource.includes('[data-practice-track]') && appSource.includes('state.practiceTrack=track.id'), 'Practice must allow selecting a separate course');

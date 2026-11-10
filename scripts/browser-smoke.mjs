@@ -140,6 +140,15 @@ try {
   await page.goto(baseURL + '#view=roadmap&track=core', { waitUntil: 'domcontentloaded' });
   await page.locator('.course-subnav [data-course-nav="practice"]').click();
   assert.equal(await page.locator('.practice-course-switch [data-practice-track="core"]').getAttribute('aria-pressed'), 'true', 'The core route must remain separate from PostgreSQL practice');
+  await page.goto(baseURL + '#view=dashboard', { waitUntil: 'domcontentloaded' });
+  assert.equal(await page.locator('#sidebar [data-nav="dashboard"]').getAttribute('aria-current'), 'page', 'The active dashboard route must be exposed to assistive technology');
+  await page.locator('#sidebar [data-nav="progress"]').focus();
+  await page.keyboard.press('Enter');
+  assert.equal(await page.locator('#sidebar [data-nav="progress"]').getAttribute('aria-current'), 'page', 'Enter must navigate and update the active-page state');
+  assert.equal(await page.locator('#sidebar [data-nav="dashboard"]').getAttribute('aria-current'), null, 'Inactive navigation items must not claim the current page');
+  await page.locator('#sidebar [data-nav="courses"]').focus();
+  await page.keyboard.press('Space');
+  assert.equal(await page.locator('#sidebar [data-nav="courses"]').getAttribute('aria-current'), 'page', 'Space must navigate and update the active-page state');
   blockFirstPGliteRequest = true;
   await page.goto(baseURL, { waitUntil: 'domcontentloaded' });
   await page.locator('#app-content .hero').waitFor({ state: 'visible' });
@@ -741,6 +750,7 @@ try {
       'mobile menu state, Escape and focus restoration',
       'dedicated progress screen with direct route, reload, desktop/mobile layout and 320px overflow',
       'course navigation preserves core/PostgreSQL context across program, theory, practice, assessments and Back/Forward',
+      'primary navigation exposes aria-current and supports Enter/Space keyboard activation',
       '320px layout overflow on dashboard, practice, playground and progress',
       'backup import rejects malformed JSON, unsupported versions, and files larger than 5 MB without changing local data',
       'declining backup restore confirmation preserves existing local data'
