@@ -141,14 +141,14 @@ try {
   await page.locator('.course-subnav [data-course-nav="practice"]').click();
   assert.equal(await page.locator('.practice-course-switch [data-practice-track="core"]').getAttribute('aria-pressed'), 'true', 'The core route must remain separate from PostgreSQL practice');
   await page.goto(baseURL + '#view=dashboard', { waitUntil: 'domcontentloaded' });
-  assert.equal(await page.locator('#sidebar [data-nav="dashboard"]').getAttribute('aria-current'), 'page', 'The active dashboard route must be exposed to assistive technology');
-  await page.locator('#sidebar [data-nav="progress"]').focus();
+  assert.equal(await page.locator('#sidebar button.nav-item[data-nav="dashboard"]').getAttribute('aria-current'), 'page', 'The active dashboard route must be exposed to assistive technology');
+  await page.locator('#sidebar button.nav-item[data-nav="progress"]').focus();
   await page.keyboard.press('Enter');
-  assert.equal(await page.locator('#sidebar [data-nav="progress"]').getAttribute('aria-current'), 'page', 'Enter must navigate and update the active-page state');
-  assert.equal(await page.locator('#sidebar [data-nav="dashboard"]').getAttribute('aria-current'), null, 'Inactive navigation items must not claim the current page');
-  await page.locator('#sidebar [data-nav="courses"]').focus();
+  assert.equal(await page.locator('#sidebar button.nav-item[data-nav="progress"]').getAttribute('aria-current'), 'page', 'Enter must navigate and update the active-page state');
+  assert.equal(await page.locator('#sidebar button.nav-item[data-nav="dashboard"]').getAttribute('aria-current'), null, 'Inactive navigation items must not claim the current page');
+  await page.locator('#sidebar button.nav-item[data-nav="courses"]').focus();
   await page.keyboard.press('Space');
-  assert.equal(await page.locator('#sidebar [data-nav="courses"]').getAttribute('aria-current'), 'page', 'Space must navigate and update the active-page state');
+  assert.equal(await page.locator('#sidebar button.nav-item[data-nav="courses"]').getAttribute('aria-current'), 'page', 'Space must navigate and update the active-page state');
   blockFirstPGliteRequest = true;
   await page.goto(baseURL, { waitUntil: 'domcontentloaded' });
   await page.locator('#app-content .hero').waitFor({ state: 'visible' });
@@ -166,7 +166,7 @@ try {
   assert.equal(await page.locator('#app-content .hero').isVisible(), true, 'Database failure must not replace the learning page');
   assert.equal(await page.locator('#app-content [data-action="retry-engine"]').isVisible(), true, 'Database failure must expose a retry action');
 
-  await page.locator('#sidebar [data-nav="courses"]').click();
+  await page.locator('#sidebar button.nav-item[data-nav="courses"]').click();
   const courseCards = page.locator('#app-content .course-card');
   assert.equal(await courseCards.count(), 2, 'The catalog must show only the two implemented courses');
   assert.deepEqual(await courseCards.locator('h2').allTextContents(), ['SQL для аналитика данных','PostgreSQL']);
@@ -177,7 +177,7 @@ try {
   assert.equal(await page.locator('.lesson-track-group').count(), 1, 'A lesson must show only its own course in the sidebar');
   assert.match(await page.locator('#side-progress-detail').textContent(), /112 уроков · SQL для аналитика данных/, 'Sidebar progress must follow the selected SQL course');
   await captureUxScreen('03-sql-lesson-desktop-pglite-error');
-  await page.locator('#sidebar [data-nav="courses"]').click();
+  await page.locator('#sidebar button.nav-item[data-nav="courses"]').click();
   await page.locator('[data-open-course="postgresql"]').click();
   await page.locator('[data-module="ddl"]').click();
   assert.equal(await page.locator('.lesson-track-group h3').textContent(), 'PostgreSQL');
@@ -355,7 +355,7 @@ try {
   assert.ok(allProjectNotes.ecommerce && allProjectNotes.delivery,'Each practical project must keep its own final note');
   const allProjectReviews = JSON.parse(await page.evaluate(()=>localStorage.getItem('sql-academy-project-reviews-v1')));
   assert.ok(allProjectReviews.product && allProjectReviews.ecommerce && allProjectReviews.delivery,'Interpretation answers must persist independently for all three projects');
-  await page.locator('#sidebar [data-nav="progress"]').click();
+  await page.locator('#sidebar button.nav-item[data-nav="progress"]').click();
   assert.equal(await page.locator('.progress-course-card').count(), 2, 'The progress screen must show both independent courses');
   assert.equal(await page.locator('.progress-project-card').count(), 3, 'The progress screen must show all three analytical projects');
   const projectProgressSummary = await page.locator('.progress-stats .stat-card').nth(3).innerText();
@@ -388,7 +388,7 @@ try {
   assert.equal(await page.evaluate(() => document.activeElement?.id), 'mobile-menu', 'Navigation must return focus to the mobile menu trigger');
   await captureUxScreen('10-practice-mobile-390');
   await menuButton.click();
-  await page.locator('#sidebar [data-nav="progress"]').click();
+  await page.locator('#sidebar button.nav-item[data-nav="progress"]').click();
   assert.equal(await page.locator('.progress-course-card').count(), 2, 'The progress screen must remain available from the mobile navigation');
   await assertNoHorizontalOverflow(390);
   await page.setViewportSize({ width: 320, height: 740 });
