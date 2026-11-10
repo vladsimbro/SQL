@@ -7,7 +7,7 @@
 - Репозиторий: https://github.com/vladsimbro/SQL
 - GitHub Pages: https://vladsimbro.github.io/SQL/
 - Основная ветка: `main`. В репозитории также остались семь веток `phase-2/postgres-*`; сравнение с `main` показывает, что все семь разошлись с основной веткой и содержат собственные коммиты. Их нельзя автоматически удалять как уже слитые: перед удалением нужно отдельно проверить, что их содержимое полностью представлено в `main`.
-- Актуальный HEAD `main`: `48109b5778359cb3d3e89e77b40c331829f3b96d`. Он на два commit впереди последнего code commit `41c08616c5f069e8dd18aaaec0c57a9e4dfb3d9a` (squash merge PR #37); сравнение подтверждает, что оба последующих commit меняют только `PROJECT_STATUS.md` и `CHANGELOG_FOR_USER.md`.
+- Последний проверенный HEAD `main` перед этим обновлением статуса: `48210edd2c9c5f16ded141952078fe102c46f3bb`. Последний commit с изменениями кода — `41c08616c5f069e8dd18aaaec0c57a9e4dfb3d9a` (squash merge PR #37); сравнение подтверждает, что последующие commits меняли только `PROJECT_STATUS.md` и `CHANGELOG_FOR_USER.md`.
 - Build в `version.json`: `20261110-138`.
 - Предыдущий build `20261110-129` на code HEAD `67c9dfd1b660b4cb5b3dd2f0a52352993f325bdc` полностью подтверждён: validate, deploy, browser-smoke и Pages build SUCCESS (workflow `42717849478`, Pages `42717848933`).
 - Последний commit с содержательными изменениями учебного модуля security: `41c08616c5f069e8dd18aaaec0c57a9e4dfb3d9a`.
