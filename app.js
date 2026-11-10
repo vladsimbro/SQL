@@ -197,7 +197,7 @@ function render() {
   for(const cm of state.editors.values()){try{cm.toTextArea();}catch{}}
   state.editors.clear();
   const activeView=['roadmap','study'].includes(state.view)?'courses':state.view==='project'?'projects':state.view;
-  $('.nav-item').forEach(button=>{
+  $$('.nav-item').forEach(button=>{
     const active=button.dataset.nav===activeView;
     button.classList.toggle('active',active);
     if(active)button.setAttribute('aria-current','page');
