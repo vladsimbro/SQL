@@ -391,3 +391,15 @@ a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible,
 .progress-storage-note{margin-top:16px}
 @media(max-width:900px){.progress-course-grid{grid-template-columns:1fr}.progress-project-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:560px){.progress-project-grid{grid-template-columns:1fr}.progress-course-card,.progress-project-card{padding:14px}.progress-course-head h2{font-size:15px}.progress-course-percent{font-size:26px}.progress-module-meta{gap:7px}}
+
+
+.course-subnav{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:11px 13px;margin:0 0 17px;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
+.course-subnav-context{display:grid;gap:3px;min-width:0}
+.course-subnav-context strong{font-size:12px;line-height:1.35;overflow-wrap:anywhere}
+.course-subnav-links{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.course-subnav-link{border:1px solid transparent;background:transparent;color:var(--muted);border-radius:9px;padding:8px 11px;font:600 11px var(--sans);cursor:pointer;transition:background .16s ease,color .16s ease,border-color .16s ease}
+.course-subnav-link:hover{background:var(--panel2);color:var(--text)}
+.course-subnav-link.active{background:var(--panel3);color:var(--accent);border-color:var(--line)}
+.course-subnav-link:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media(max-width:760px){.course-subnav{align-items:stretch;flex-direction:column;gap:9px}.course-subnav-links{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}.course-subnav-link{padding:9px 5px;font-size:10px}}
+@media(max-width:420px){.course-subnav-links{grid-template-columns:repeat(2,minmax(0,1fr))}.course-subnav-link{min-height:38px}}
