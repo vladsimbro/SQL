@@ -9,12 +9,66 @@ const variants = {
   days: [10,11,12,13,14],
   months: [1,2,3,4,5]
 };
-const task = (topic, n, title, prompt, hint, solution) => ({
-  id: `rnd-${topic}-${String(n).padStart(2,'0')}`,
-  topic, title, prompt: prompt + ` Вариант №${n}: используй именно указанные в этом условии параметры.`, hint: hint + ` Для варианта №${n} проверь конкретный порог, статус или размер выборки из условия, а не переноси значение из соседней карточки.`,
-  orderMatters: /(?:сортир|алфавит|по убыванию|по возрастанию|последн|первые\s+\d+|страниц|в порядке|ранг|ранжир|топ|не более|при одинаков|сначала самые|самые (?:дорогие|дешёвые|дешевые|новые|старые))/i.test(prompt),
-  solution
-});
+const taskOverrides = {
+  'select-05': {
+    title: 'Доставленные заказы с высокой суммой',
+    prompt: 'Покажи номер, статус, сумму и дату доставленных заказов на сумму не меньше 3000. Сначала самые дорогие, при равенстве сортируй по номеру.',
+    hint: 'Сначала отфильтруй delivered, затем примени порог к total_amount. Порядок разрешай через order_id.',
+    solution: "SELECT order_id, status, total_amount, created_at FROM orders WHERE status = 'delivered' AND total_amount >= 3000 ORDER BY total_amount DESC, order_id;"
+  },
+  'where-20': {
+    title: 'Заказы с сотрудником без доставленного статуса',
+    prompt: 'Найди заказы с назначенным сотрудником, исключив статус delivered. Покажи номер, статус и employee_id.',
+    hint: 'Здесь employee_id должен быть заполнен, а статус должен отличаться от delivered. Для NULL используй IS NOT NULL.',
+    solution: "SELECT order_id, status, employee_id FROM orders WHERE employee_id IS NOT NULL AND status <> 'delivered' ORDER BY order_id;"
+  },
+  'joins-15': {
+    title: 'Сотрудники и крупные доставленные заказы',
+    prompt: 'Для каждого сотрудника посчитай число доставленных заказов на сумму не меньше 3000. Сотрудники без таких заказов должны остаться.',
+    hint: 'Оба условия заказа помести в ON у LEFT JOIN, иначе сотрудники без совпадений исчезнут.',
+    solution: "SELECT e.employee_id,e.employee_name,COUNT(o.order_id) AS orders_count FROM employees e LEFT JOIN orders o ON o.employee_id=e.employee_id AND o.status='delivered' AND o.total_amount>=3000 GROUP BY e.employee_id,e.employee_name ORDER BY orders_count DESC,e.employee_id;"
+  },
+  'joins-25': {
+    title: 'Сверка крупных доставленных заказов и оплат',
+    prompt: 'Для каждого доставленного заказа на сумму не меньше 3000 покажи сумму заказа и сумму успешных оплат. Заказы без успешной оплаты не теряй.',
+    hint: 'Сначала сверни payments до одной строки на order_id, затем присоедини результат через LEFT JOIN.',
+    solution: "WITH paid AS (SELECT order_id,SUM(amount) AS paid_amount FROM payments WHERE payment_status='paid' GROUP BY order_id) SELECT o.order_id,o.total_amount,COALESCE(p.paid_amount,0) AS paid_amount FROM orders o LEFT JOIN paid p ON p.order_id=o.order_id WHERE o.status='delivered' AND o.total_amount>=3000 ORDER BY o.order_id;"
+  },
+  'subqueries-25': {
+    title: 'Магазины с крупными доставленными заказами',
+    prompt: 'Найди магазины, у которых есть хотя бы один доставленный заказ на сумму не меньше 3000. Покажи название и город.',
+    hint: 'Проверяй наличие подходящего заказа через EXISTS и связывай его с магазином по store_id.',
+    solution: "SELECT s.store_id,s.store_name,s.city FROM stores s WHERE EXISTS (SELECT 1 FROM orders o WHERE o.store_id=s.store_id AND o.status='delivered' AND o.total_amount>=3000) ORDER BY s.store_id;"
+  },
+  'cte-25': {
+    title: 'Сводка по крупным доставленным заказам',
+    prompt: 'Сначала в CTE оставь доставленные заказы на сумму не меньше 3000, затем рассчитай число заказов и выручку по городам магазинов. Отсортируй города по убыванию выручки.',
+    hint: 'Отбор выполняется в первом CTE. После соединения со stores сгруппируй результат по city.',
+    solution: "WITH selected_orders AS (SELECT * FROM orders WHERE status='delivered' AND total_amount>=3000) SELECT s.city,COUNT(*) AS orders_count,SUM(o.total_amount) AS revenue FROM selected_orders o JOIN stores s ON s.store_id=o.store_id GROUP BY s.city ORDER BY revenue DESC;"
+  },
+  'setops-20': {
+    title: 'Города крупных доставленных заказов и новых клиентов',
+    prompt: 'Получи города магазинов, где есть доставленные заказы на сумму не меньше 3000, и объедини их с городами клиентов, зарегистрированных после 2024-03-01. Используй UNION ALL.',
+    hint: 'В первой ветви отфильтруй заказы по статусу и сумме, во второй — клиентов по дате. UNION ALL сохранит повторы.',
+    solution: "SELECT s.city FROM orders o JOIN stores s ON s.store_id=o.store_id WHERE o.status='delivered' AND o.total_amount>=3000 UNION ALL SELECT city FROM customers WHERE registered_at > DATE '2024-03-01' ORDER BY city;"
+  },
+  'combined-10': {
+    title: 'Клиенты и их крупные доставленные заказы',
+    prompt: 'Для каждого клиента посчитай число доставленных заказов на сумму не меньше 3000 и их общую сумму. Сохрани клиентов без таких заказов и отсортируй по выручке.',
+    hint: 'Используй LEFT JOIN с обоими условиями в ON. COUNT должен считать order_id, а COALESCE превратит отсутствие суммы в ноль.',
+    solution: "SELECT c.customer_id,c.customer_name,COUNT(o.order_id) AS orders_count,COALESCE(SUM(o.total_amount),0) AS revenue FROM customers c LEFT JOIN orders o ON o.customer_id=c.customer_id AND o.status='delivered' AND o.total_amount>=3000 GROUP BY c.customer_id,c.customer_name ORDER BY revenue DESC,c.customer_id;"
+  }
+};
+const task = (topic, n, title, prompt, hint, solution) => {
+  const override = taskOverrides[`${topic}-${String(n).padStart(2,'0')}`];
+  if (override) ({title,prompt,hint,solution} = override);
+  return {
+    id: `rnd-${topic}-${String(n).padStart(2,'0')}`,
+    topic, title, prompt: prompt + ` Вариант №${n}: используй именно указанные в этом условии параметры.`, hint: hint + ` Для варианта №${n} проверь конкретный порог, статус или размер выборки из условия, а не переноси значение из соседней карточки.`,
+    orderMatters: /(?:сортир|алфавит|по убыванию|по возрастанию|последн|первые\s+\d+|страниц|в порядке|ранг|ранжир|топ|не более|при одинаков|сначала самые|самые (?:дорогие|дешёвые|дешевые|новые|старые))/i.test(prompt),
+    solution
+  };
+};
 const topics = [];
 function addTopic(id,title,items){if(items.length!==25)throw new Error(`${id}: expected 25 tasks, got ${items.length}`);topics.push({id,title,tasks:items});}
 function fiveByFive(topic,patterns){
