@@ -322,6 +322,15 @@ try {
   assert.ok(allProjectNotes.ecommerce && allProjectNotes.delivery,'Each practical project must keep its own final note');
   const allProjectReviews = JSON.parse(await page.evaluate(()=>localStorage.getItem('sql-academy-project-reviews-v1')));
   assert.ok(allProjectReviews.product && allProjectReviews.ecommerce && allProjectReviews.delivery,'Interpretation answers must persist independently for all three projects');
+  await page.locator('#sidebar [data-nav="progress"]').click();
+  assert.equal(await page.locator('.progress-course-card').count(), 2, 'The progress screen must show both independent courses');
+  assert.equal(await page.locator('.progress-project-card').count(), 3, 'The progress screen must show all three analytical projects');
+  const projectProgressSummary = await page.locator('.progress-stats .stat-card').nth(3).innerText();
+  assert.match(projectProgressSummary, /9\\/9/, 'The progress screen must include all nine completed project tasks');
+  assert.match(projectProgressSummary, /3 из 3/, 'The progress screen must include all three completed project reviews');
+  await captureUxScreen('25-progress-desktop-ready');
+  await page.locator('#sidebar [data-nav="projects"]').click();
+
 
   await page.setViewportSize({width:320,height:740});
   await assertNoHorizontalOverflow(320);
@@ -345,6 +354,15 @@ try {
   assert.equal(await menuButton.getAttribute('aria-expanded'), 'false', 'Following a mobile navigation link must close the menu');
   assert.equal(await page.evaluate(() => document.activeElement?.id), 'mobile-menu', 'Navigation must return focus to the mobile menu trigger');
   await captureUxScreen('10-practice-mobile-390');
+  await menuButton.click();
+  await page.locator('#sidebar [data-nav="progress"]').click();
+  assert.equal(await page.locator('.progress-course-card').count(), 2, 'The progress screen must remain available from the mobile navigation');
+  await assertNoHorizontalOverflow(390);
+  await page.setViewportSize({ width: 320, height: 740 });
+  await assertNoHorizontalOverflow(320);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await captureUxScreen('26-progress-mobile-390');
+
 
   await menuButton.click();
   await page.locator('#sidebar .nav-item[data-nav="dashboard"]').click();
