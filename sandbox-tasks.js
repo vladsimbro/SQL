@@ -15,7 +15,7 @@ const task = (topic, n, title, prompt, hint, solution) => {
     ...[...prompt.matchAll(/\b\d{4}-\d{2}-\d{2}\b/g)].map(match => match[0]),
     ...[...prompt.matchAll(/\b\d+(?:[.,]\d+)?\b/g)].map(match => match[0])
   ];
-  const variantContext = [...new Set(details)].join(' / ') || prompt.slice(0, 110);
+  const variantContext = [...new Set(details)].join(' / ') || `сценарий «${title}»`;
   return {
     id: `rnd-${topic}-${String(n).padStart(2,'0')}`,
     topic, title,
