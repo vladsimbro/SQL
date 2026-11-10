@@ -750,6 +750,7 @@ try {
       'mobile menu state, Escape and focus restoration',
       'dedicated progress screen with direct route, reload, desktop/mobile layout and 320px overflow',
       'course navigation preserves core/PostgreSQL context across program, theory, practice, assessments and Back/Forward',
+      'primary navigation exposes aria-current and supports Enter/Space keyboard activation',
       '320px layout overflow on dashboard, practice, playground and progress',
       'backup import rejects malformed JSON, unsupported versions, and files larger than 5 MB without changing local data',
       'declining backup restore confirmation preserves existing local data'
