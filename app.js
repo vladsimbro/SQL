@@ -197,7 +197,12 @@ function render() {
   for(const cm of state.editors.values()){try{cm.toTextArea();}catch{}}
   state.editors.clear();
   const activeView=['roadmap','study'].includes(state.view)?'courses':state.view==='project'?'projects':state.view;
-  $$('.nav-item').forEach(b=>b.classList.toggle('active',b.dataset.nav===activeView));
+  $('.nav-item').forEach(button=>{
+    const active=button.dataset.nav===activeView;
+    button.classList.toggle('active',active);
+    if(active)button.setAttribute('aria-current','page');
+    else button.removeAttribute('aria-current');
+  });
   $('#breadcrumb-current').textContent=label[state.view]||'Учебник';
   updateProgress();
   const pages={dashboard:renderDashboard,courses:renderCourses,roadmap:renderRoadmap,study:renderStudy,practice:renderPractice,projects:renderProjects,project:renderProject,assessment:renderAssessment,progress:renderProgress,playground:renderPlayground,schema:renderSchema,reference:renderReference,glossary:renderGlossary};
