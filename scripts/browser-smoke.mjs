@@ -216,6 +216,21 @@ try {
 
   await page.locator('#sidebar .nav-item[data-nav="dashboard"]').click();
   await captureUxScreen('14-dashboard-desktop-ready-dark');
+  const darkTokens = await page.evaluate(() => {
+    const root = getComputedStyle(document.documentElement);
+    const button = document.querySelector('.btn');
+    const card = document.querySelector('.stat-card,.card');
+    return {
+      surface: root.getPropertyValue('--surface').trim(),
+      accentSoft: root.getPropertyValue('--accent-soft').trim(),
+      radius: root.getPropertyValue('--radius-lg').trim(),
+      controlHeight: getComputedStyle(button).minHeight,
+      cardRadius: card ? getComputedStyle(card).borderRadius : ''
+    };
+  });
+  assert.ok(darkTokens.surface && darkTokens.accentSoft && darkTokens.radius === '16px', `Dark theme design tokens must resolve: ${JSON.stringify(darkTokens)}`);
+  assert.equal(darkTokens.controlHeight, '40px', 'Primary controls must use the shared 40px control height');
+  assert.equal(darkTokens.cardRadius, '16px', 'Dashboard cards must use the shared card radius');
   await page.locator('#theme-toggle').click();
   const lightContrast = await page.evaluate(() => {
     const root = getComputedStyle(document.documentElement);
@@ -235,6 +250,21 @@ try {
   assert.ok(lightContrast.mutedOnBackground >= 4.5, `Light muted text contrast must be at least 4.5:1: ${JSON.stringify(lightContrast)}`);
   assert.ok(lightContrast.accentOnPanel >= 4.5, `Light accent text contrast must be at least 4.5:1: ${JSON.stringify(lightContrast)}`);
   assert.ok(lightContrast.sidebarLabelOnBackground >= 4.5, `Light sidebar label contrast must be at least 4.5:1: ${JSON.stringify(lightContrast)}`);
+  const lightTokens = await page.evaluate(() => {
+    const root = getComputedStyle(document.documentElement);
+    const button = document.querySelector('.btn');
+    const card = document.querySelector('.stat-card,.card');
+    return {
+      surface: root.getPropertyValue('--surface').trim(),
+      accentSoft: root.getPropertyValue('--accent-soft').trim(),
+      radius: root.getPropertyValue('--radius-lg').trim(),
+      controlHeight: getComputedStyle(button).minHeight,
+      cardRadius: card ? getComputedStyle(card).borderRadius : ''
+    };
+  });
+  assert.ok(lightTokens.surface === '#fff' && lightTokens.accentSoft === '#ecebff' && lightTokens.radius === '16px', `Light theme design tokens must resolve: ${JSON.stringify(lightTokens)}`);
+  assert.equal(lightTokens.controlHeight, '40px', 'Light theme controls must retain the shared 40px height');
+  assert.equal(lightTokens.cardRadius, '16px', 'Light theme cards must retain the shared card radius');
   await captureUxScreen('15-dashboard-desktop-light');
   await page.locator('#theme-toggle').click();
   await page.locator('#sidebar .nav-item[data-nav="courses"]').click();
