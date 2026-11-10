@@ -686,6 +686,22 @@ try {
       assert.equal(resultMatches(normalize(actual), normalize(expected), task.orderMatters), true, `JOIN task ${task.id} must match its independent store-level oracle`);
       continue;
     }
+    if (pattern === 1) {
+      const storeOracleQueries = [
+        "SELECT s.store_id,s.store_name,s.city,(SELECT COUNT(*) FROM orders o WHERE o.store_id=s.store_id) AS orders_count FROM stores s ORDER BY s.city,s.store_name",
+        "SELECT s.store_id,s.store_name,s.city,COALESCE((SELECT SUM(o.total_amount) FROM orders o WHERE o.store_id=s.store_id),0) AS revenue FROM stores s ORDER BY revenue DESC,s.store_id",
+        "SELECT s.store_id,s.store_name,(SELECT COUNT(DISTINCT o.customer_id) FROM orders o WHERE o.store_id=s.store_id) AS customers_count FROM stores s ORDER BY customers_count DESC,s.store_id",
+        "SELECT s.store_id,s.store_name,(SELECT ROUND(AVG(o.total_amount),2) FROM orders o WHERE o.store_id=s.store_id) AS avg_order_amount FROM stores s ORDER BY avg_order_amount DESC NULLS LAST,s.store_id",
+        "SELECT s.store_id,s.store_name,(SELECT MAX(o.created_at) FROM orders o WHERE o.store_id=s.store_id) AS last_order_date,(SELECT COUNT(*) FROM orders o WHERE o.store_id=s.store_id) AS orders_count FROM stores s ORDER BY last_order_date DESC NULLS LAST,s.store_id"
+      ];
+      const task = joinRandomTasks[pattern * 5 + variant];
+      const actual = await db.query(task.solution);
+      const expected = await db.query(storeOracleQueries[variant]);
+      assert.equal(actual.rows.length, 5, `JOIN task ${task.id} must retain every store`);
+      assert.equal(new Set(actual.rows.map(row => row.store_id)).size, 5, `JOIN task ${task.id} must preserve one row per store`);
+      assert.equal(resultMatches(normalize(actual), normalize(expected), task.orderMatters), true, `JOIN task ${task.id} must match its independent store-level oracle`);
+      continue;
+    }
     const params = oracleCase.params.length ? [oracleCase.params[variant]] : [];
       const actual = await db.query(task.solution);
       let expected;
