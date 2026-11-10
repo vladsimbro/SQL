@@ -121,6 +121,25 @@ try {
   assert.equal(await page.locator('#app-content .progress-project-card').count(), 3, 'Direct progress routes must restore the full progress screen');
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.locator('#app-content .progress-course-card').first().waitFor({ state: 'visible' });
+  await page.goto(baseURL + '#view=roadmap&track=postgresql', { waitUntil: 'domcontentloaded' });
+  await page.locator('#app-content .course-subnav').waitFor({ state: 'visible' });
+  assert.match(await page.locator('.course-subnav-context strong').textContent(), /PostgreSQL/, 'The course sub-navigation must show the selected PostgreSQL route');
+  await page.locator('.course-subnav [data-course-nav="practice"]').click();
+  assert.equal(await page.locator('.practice-course-switch [data-practice-track="postgresql"]').getAttribute('aria-pressed'), 'true', 'Moving from the PostgreSQL program to practice must preserve the selected track');
+  assert.match(page.url(), /track=postgresql/, 'The selected course must be preserved in the practice URL');
+  await page.locator('.course-subnav [data-course-nav="assessment"]').click();
+  assert.ok(await page.locator('.assessment-track-tabs [data-assessment-track="postgresql"]').evaluate(el => el.classList.contains('active')), 'Moving to assessments must preserve the PostgreSQL track');
+  await page.locator('.course-subnav [data-course-nav="study"]').click();
+  assert.match(await page.locator('.lesson-track-group h3').textContent(), /PostgreSQL/, 'The theory view must open inside the selected PostgreSQL route');
+  await page.locator('.course-subnav [data-course-nav="roadmap"]').click();
+  assert.match(await page.locator('.course-subnav-context strong').textContent(), /PostgreSQL/, 'Returning to the program must keep the same course selected');
+  await page.goBack();
+  assert.match(await page.locator('.lesson-track-group h3').textContent(), /PostgreSQL/, 'Browser Back must restore the PostgreSQL theory view');
+  await page.goForward();
+  assert.match(await page.locator('.course-subnav-context strong').textContent(), /PostgreSQL/, 'Browser Forward must restore the PostgreSQL program view');
+  await page.goto(baseURL + '#view=roadmap&track=core', { waitUntil: 'domcontentloaded' });
+  await page.locator('.course-subnav [data-course-nav="practice"]').click();
+  assert.equal(await page.locator('.practice-course-switch [data-practice-track="core"]').getAttribute('aria-pressed'), 'true', 'The core route must remain separate from PostgreSQL practice');
   blockFirstPGliteRequest = true;
   await page.goto(baseURL, { waitUntil: 'domcontentloaded' });
   await page.locator('#app-content .hero').waitFor({ state: 'visible' });
@@ -720,7 +739,9 @@ try {
       'SQL editor persistence while offline and after database reset',
       'real PostgreSQL query execution',
       'mobile menu state, Escape and focus restoration',
-      '320px layout overflow on dashboard, practice and playground',
+      'dedicated progress screen with direct route, reload, desktop/mobile layout and 320px overflow',
+      'course navigation preserves core/PostgreSQL context across program, theory, practice, assessments and Back/Forward',
+      '320px layout overflow on dashboard, practice, playground and progress',
       'backup import rejects malformed JSON, unsupported versions, and files larger than 5 MB without changing local data',
       'declining backup restore confirmation preserves existing local data'
     ]
