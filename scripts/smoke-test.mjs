@@ -223,6 +223,14 @@ assert.ok(appSource.includes("const core=moduleLessons('core')")&&appSource.incl
 assert.equal(glossary.length, 72, 'Expected 72 glossary terms');
 assert.equal(reference.length, 13, 'Expected 13 reference groups');
 const allRandomTasks = sandboxTaskTopics.flatMap(topic => topic.tasks);
+const normalizeRandomTaskText = value => value.replace(/ Вариант №\\d+:.*$/, '').replace(/\\s+/g, ' ').trim();
+assert.equal(new Set(allRandomTasks.map(task => task.id)).size, 350, 'Random task IDs must be globally unique');
+for (const topic of sandboxTaskTopics) {
+  assert.equal(topic.tasks.length, 25, `Topic ${topic.id} must contain exactly 25 tasks`);
+  assert.equal(new Set(topic.tasks.map(task => normalizeRandomTaskText(task.prompt))).size, 25, `Topic ${topic.id} must not disguise repeated prompts with a variant number`);
+  assert.equal(new Set(topic.tasks.map(task => task.hint.trim())).size, 25, `Topic ${topic.id} must provide a task-specific hint`);
+  assert.equal(new Set(topic.tasks.map(task => task.solution.replace(/\\s+/g, ' ').trim().toLowerCase())).size, 25, `Topic ${topic.id} must not repeat reference SQL`);
+}
 const orderSensitiveRandomTasks = allRandomTasks.filter(task => task.orderMatters);
 assert.equal(orderSensitiveRandomTasks.length, 95, 'Random tasks that explicitly request result order must preserve row order during validation');
 assert.equal(orderSensitiveRandomTasks.filter(task => task.topic === 'joins').length, 5, 'Alphabetically ordered JOIN tasks must preserve row order');
@@ -648,7 +656,7 @@ try {
     },
     {
       params: ['delivered','shipped','new','cancelled','delivered'],
-      expectedCounts: [6,3,2,1,6], // Includes synthetic order 113 from the fan-out regression fixture.
+      expectedCounts: [6,3,2,1,1], // The fifth task additionally filters delivered orders to amounts of at least 2000.
       query: `SELECT o.order_id, o.total_amount,
                      COALESCE((SELECT SUM(p.amount) FROM payments p
                                WHERE p.order_id = o.order_id AND p.payment_status = 'paid'), 0) AS paid_amount
@@ -662,9 +670,32 @@ try {
     for (let variant = 0; variant < 5; variant++) {
       const task = joinRandomTasks[pattern * 5 + variant];
       assert.ok(task && task.id === `rnd-joins-${String(pattern * 5 + variant + 1).padStart(2,'0')}`, 'JOIN task order must remain grouped into its five documented families');
-      const params = oracleCase.params.length ? [oracleCase.params[variant]] : [];
+      if (pattern === 1) {
+      const storeOracleQueries = [
+        "SELECT s.store_id,s.store_name,s.city,(SELECT COUNT(*) FROM orders o WHERE o.store_id=s.store_id) AS orders_count FROM stores s ORDER BY s.city,s.store_name",
+        "SELECT s.store_id,s.store_name,s.city,COALESCE((SELECT SUM(o.total_amount) FROM orders o WHERE o.store_id=s.store_id),0) AS revenue FROM stores s ORDER BY revenue DESC,s.store_id",
+        "SELECT s.store_id,s.store_name,(SELECT COUNT(DISTINCT o.customer_id) FROM orders o WHERE o.store_id=s.store_id) AS customers_count FROM stores s ORDER BY customers_count DESC,s.store_id",
+        "SELECT s.store_id,s.store_name,(SELECT ROUND(AVG(o.total_amount),2) FROM orders o WHERE o.store_id=s.store_id) AS avg_order_amount FROM stores s ORDER BY avg_order_amount DESC NULLS LAST,s.store_id",
+        "SELECT s.store_id,s.store_name,(SELECT MAX(o.created_at) FROM orders o WHERE o.store_id=s.store_id) AS last_order_date,(SELECT COUNT(*) FROM orders o WHERE o.store_id=s.store_id) AS orders_count FROM stores s ORDER BY last_order_date DESC NULLS LAST,s.store_id"
+      ];
+      const task = joinRandomTasks[pattern * 5 + variant];
       const actual = await db.query(task.solution);
-      const expected = await db.query(oracleCase.query, params);
+      const expected = await db.query(storeOracleQueries[variant]);
+      assert.equal(actual.rows.length, 5, `JOIN task ${task.id} must retain every store`);
+      assert.equal(new Set(actual.rows.map(row => row.store_id)).size, 5, `JOIN task ${task.id} must preserve one row per store`);
+      assert.equal(resultMatches(normalize(actual), normalize(expected), task.orderMatters), true, `JOIN task ${task.id} must match its independent store-level oracle`);
+      continue;
+    }
+    const params = oracleCase.params.length ? [oracleCase.params[variant]] : [];
+      const actual = await db.query(task.solution);
+      let expected;
+      if (pattern === 2 && variant === 4) {
+        expected = await db.query("SELECT e.employee_id,e.employee_name,(SELECT COUNT(*) FROM orders o WHERE o.employee_id=e.employee_id AND o.status=$1 AND o.created_at >= DATE '2026-01-13') AS orders_count FROM employees e ORDER BY orders_count DESC,e.employee_id", params);
+      } else if (pattern === 4 && variant === 4) {
+        expected = await db.query("SELECT o.order_id,o.total_amount,COALESCE((SELECT SUM(p.amount) FROM payments p WHERE p.order_id=o.order_id AND p.payment_status='paid'),0) AS paid_amount FROM orders o WHERE o.status=$1 AND o.total_amount >= 2000 ORDER BY o.order_id", params);
+      } else {
+        expected = await db.query(oracleCase.query, params);
+      }
       assert.equal(actual.rows.length, oracleCase.expectedCounts[variant], `JOIN task ${task.id} must return the expected number of rows`);
       const grainColumn = ['order_id','store_name','employee_id','product_name','order_id'][pattern];
       assert.equal(
