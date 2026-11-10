@@ -9165,8 +9165,8 @@ export const exercises = [
     "task": "Выведи все столбцы и все строки таблицы orders. Это разведочный запрос: пока не сокращай результат.",
     "solution": "SELECT * FROM orders;",
     "hint": "Начни с одной таблицы orders и проверь, что запрос возвращает все её поля без фильтрации.",
-    "hint2": "Определи набор столбцов и источник. Если условие не ограничивает строки, WHERE не нужен.",
-    "hint3": "Каркас: SELECT нужные_столбцы FROM таблица;"
+    "hint2": "Поскольку нужны все поля, используй звёздочку после SELECT; таблица orders остаётся единственным источником.",
+    "hint3": "Каркас: SELECT * FROM orders;"
   },
   {
     "id": "e02",
@@ -9176,8 +9176,8 @@ export const exercises = [
     "task": "Выведи номер заказа, статус и сумму заказа. Не используй SELECT *.",
     "solution": "SELECT order_id, status, total_amount FROM orders;",
     "hint": "В SELECT перечисли только три нужных столбца в порядке, указанном в условии.",
-    "hint2": "Определи набор столбцов и источник. Если условие не ограничивает строки, WHERE не нужен.",
-    "hint3": "Каркас: SELECT нужные_столбцы FROM таблица;"
+    "hint2": "Перечисли только order_id, status и total_amount; не добавляй другие поля и не используй звёздочку.",
+    "hint3": "Каркас: SELECT order_id, status, total_amount FROM orders;"
   },
   {
     "id": "e03",
@@ -9265,7 +9265,7 @@ export const exercises = [
     "task": "Покажи пять самых дорогих заказов. При одинаковой сумме более новый order_id должен идти первым.",
     "solution": "SELECT order_id, total_amount FROM orders ORDER BY total_amount DESC, order_id DESC LIMIT 5;",
     "hint": "Сортировка по total_amount должна идти по убыванию, а LIMIT ограничит уже отсортированный результат.",
-    "hint2": "Сначала задай основной порядок, затем дополнительный ключ для разрешения равенств. LIMIT без однозначного ORDER BY не гарантирует стабильную выборку.",
+    "hint2": "При равной сумме выбирай больший order_id первым; после двух ключей сортировки ограничь результат пятью строками.",
     "hint3": "Каркас: ORDER BY total_amount DESC, order_id DESC LIMIT 5;"
   },
   {
@@ -9277,7 +9277,7 @@ export const exercises = [
     "task": "Покажи три самых новых заказа, сортируя сначала по дате, затем по ID по убыванию.",
     "solution": "SELECT order_id, created_at FROM orders ORDER BY created_at DESC, order_id DESC LIMIT 3;",
     "hint": "Для последних заказов сортируй дату от новых к старым. Добавь order_id, чтобы разрешить одинаковые даты.",
-    "hint2": "Сначала задай основной порядок, затем дополнительный ключ для разрешения равенств. LIMIT без однозначного ORDER BY не гарантирует стабильную выборку.",
+    "hint2": "Сначала отсортируй created_at по убыванию, затем order_id по убыванию; LIMIT 3 применяется после этого порядка.",
     "hint3": "Каркас: ORDER BY created_at DESC, order_id DESC LIMIT 3;"
   },
   {
@@ -9388,7 +9388,7 @@ export const exercises = [
     "task": "В одной строке посчитай общее количество заказов и количество доставленных. Используй FILTER.",
     "solution": "SELECT COUNT(*) AS total_orders, COUNT(*) FILTER (WHERE status = 'delivered') AS delivered_orders FROM orders;",
     "hint": "Обе метрики должны считаться на одном уровне группировки. Проверь, что агрегаты не соединяются с деталями.",
-    "hint2": "FILTER ограничивает строки только для конкретного агрегата. Другие агрегаты в том же SELECT продолжают видеть общий набор.",
+    "hint2": "COUNT(*) считает все заказы, а FILTER добавляет условие только к счётчику доставленных — не фильтруй весь FROM.",
     "hint3": "Каркас: COUNT(*) AS total_orders, COUNT(*) FILTER (WHERE status = 'delivered') AS delivered_orders"
   },
   {
@@ -9399,7 +9399,7 @@ export const exercises = [
     "task": "Соедини заказы с сотрудниками. Выведи order_id и employee_name. Оставь только заказы с назначенным сотрудником.",
     "solution": "SELECT o.order_id, c.employee_name FROM orders o INNER JOIN employees c ON c.employee_id = o.employee_id;",
     "hint": "Сопоставь employee_id в заказе с employee_id сотрудника. Это обычная связь многие-к-одному.",
-    "hint2": "Перед соединением проверь ключ и кардинальность связи: несколько совпадений справа могут размножить строки слева.",
+    "hint2": "INNER JOIN здесь подходит, потому что нужны только заказы с найденным сотрудником; проверь совпадение employee_id с ключом employees.",
     "hint3": "INNER JOIN оставляет только заказы, для которых найден сотрудник. Свяжи employee_id заказа с первичным ключом employees.employee_id."
   },
   {
@@ -9465,7 +9465,7 @@ export const exercises = [
     "task": "Найди клиентов, у которых есть хотя бы один заказ. Используй EXISTS. Верни customer_id и customer_name.",
     "solution": "SELECT c.customer_id, c.customer_name FROM customers c WHERE EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.customer_id);",
     "hint": "Проверь существование заказов по customer_id. EXISTS не размножает клиента при нескольких заказах.",
-    "hint2": "Проверяй сам факт наличия связанной строки. Такой подход не размножает внешнюю запись при нескольких совпадениях.",
+    "hint2": "Внутри EXISTS свяжи orders.customer_id с текущим customers.customer_id; достаточно одной найденной строки.",
     "hint3": "Каркас: WHERE EXISTS (SELECT 1 FROM связанная_таблица x WHERE x.key = outer_table.key);"
   },
   {
@@ -9476,7 +9476,7 @@ export const exercises = [
     "task": "Найди клиентов, у которых нет ни одного заказа. Используй NOT EXISTS.",
     "solution": "SELECT c.customer_id, c.customer_name FROM customers c WHERE NOT EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.customer_id);",
     "hint": "Для клиентов без заказов используй NOT EXISTS с корреляцией по customer_id.",
-    "hint2": "Проверяй сам факт наличия связанной строки. Такой подход не размножает внешнюю запись при нескольких совпадениях.",
+    "hint2": "NOT EXISTS сохраняет клиента только тогда, когда коррелированный поиск по orders не нашёл ни одной записи.",
     "hint3": "Каркас: WHERE NOT EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.customer_id);"
   },
   {
@@ -9600,7 +9600,7 @@ export const exercises = [
     "task": "Посчитай долю доставленных заказов от общего числа в процентах. Используй FILTER и приведение типа к numeric, чтобы не получить целочисленное деление.",
     "solution": "SELECT ROUND(100 * COUNT(*) FILTER (WHERE status = 'delivered')::numeric / NULLIF(COUNT(*), 0), 2) AS delivered_percent FROM orders;",
     "hint": "Числитель и знаменатель должны относиться к одной совокупности заказов. Долю считай после определения статуса.",
-    "hint2": "FILTER ограничивает строки только для конкретного агрегата. Другие агрегаты в том же SELECT продолжают видеть общий набор.",
+    "hint2": "Для процента сначала получи условный числитель, затем раздели на общее число заказов; NULLIF защитит нулевой знаменатель.",
     "hint3": "Каркас: ROUND(100 * COUNT(*) FILTER (WHERE status = 'delivered')::numeric / NULLIF(COUNT(*), 0), 2)"
   },
   {
@@ -9645,8 +9645,8 @@ export const exercises = [
     "task": "В учебной таблице customer_profiles есть поле attributes JSONB. Выведи customer_id и значение ключа segment как текст с помощью ->>.",
     "solution": "SELECT customer_id, attributes ->> 'segment' AS segment FROM customer_profiles;",
     "hint": "Оператор ->> извлекает JSONB-поле как текст. После него можно сравнивать значение с обычной строкой.",
-    "hint2": "Учитывай тип результата: извлечение JSON как текста, проверка массива и разворачивание массива в строки решают разные задачи.",
-    "hint3": "Каркас: WITH step_1 AS (...), step_2 AS (SELECT ... FROM step_1) SELECT ... FROM step_2;"
+    "hint2": "Оператор ->> извлекает значение ключа segment как text; результатом должен быть один текстовый столбец на профиль.",
+    "hint3": "Каркас: SELECT customer_id, attributes ->> 'segment' AS segment FROM customer_profiles;"
   },
   {
     "id": "e45",
@@ -9656,8 +9656,8 @@ export const exercises = [
     "task": "В таблице customer_profiles разверни массив tags в отдельные строки. Выведи customer_id и tag с помощью unnest.",
     "solution": "SELECT customer_id, unnest(tags) AS tag FROM customer_profiles;",
     "hint": "Массив разворачивается в набор строк через unnest. Каждому элементу массива соответствует отдельная строка результата.",
-    "hint2": "Учитывай тип результата: извлечение JSON как текста, проверка массива и разворачивание массива в строки решают разные задачи.",
-    "hint3": "Каркас: WITH step_1 AS (...), step_2 AS (SELECT ... FROM step_1) SELECT ... FROM step_2;"
+    "hint2": "unnest разворачивает каждый элемент tags в отдельную строку; customer_id нужно вывести рядом с полученным tag.",
+    "hint3": "Каркас: SELECT customer_id, unnest(tags) AS tag FROM customer_profiles;"
   },
   {
     "id": "e46",
@@ -9727,8 +9727,8 @@ export const exercises = [
     "task": "Сформируй количество заказов по каждому статусу и добавь отдельную строку с общим количеством. Используй GROUPING SETS.",
     "solution": "SELECT status, COUNT(*) AS orders_count, GROUPING(status) AS is_total FROM orders GROUP BY GROUPING SETS ((status), ());",
     "hint": "ROLLUP добавляет промежуточные итоги. Отличай строки итогов от настоящих значений группировки через GROUPING.",
-    "hint2": "Здесь результат содержит несколько уровней итогов. Отличай обычную группу от строки итога с помощью GROUPING.",
-    "hint3": "Каркас: SELECT ключ, агрегат(значение) FROM таблица GROUP BY ключ HAVING условие;"
+    "hint2": "GROUPING SETS ((status), ()) создаёт обычные строки статусов и отдельную строку общего итога; GROUPING(status) отличает её.",
+    "hint3": "Каркас: GROUP BY GROUPING SETS ((status), ());"
   },
   {
     "id": "e52",
@@ -9752,7 +9752,7 @@ export const exercises = [
     "solution": "SELECT DISTINCT ON (customer_id) customer_id, order_id, created_at FROM orders ORDER BY customer_id, created_at DESC, order_id DESC;",
     "hint": "Найди последнюю дату заказа внутри customer_id, затем выбери соответствующую строку, а не просто максимальную сумму.",
     "hint2": "DISTINCT ON оставляет первую строку каждой группы, поэтому порядок ORDER BY определяет, какая запись переживёт удаление повторов.",
-    "hint3": "Каркас: SELECT нужные_столбцы FROM таблица;"
+    "hint3": "Каркас: SELECT DISTINCT ON (customer_id) ... FROM orders ORDER BY customer_id, created_at DESC, order_id DESC;"
   },
   {
     "id": "e54",
@@ -9762,8 +9762,8 @@ export const exercises = [
     "task": "Найди клиентов, у которых в массиве тегов присутствует coffee. Выведи customer_id.",
     "solution": "SELECT customer_id FROM customer_profiles WHERE tags @> ARRAY['coffee']::text[];",
     "hint": "Тег хранится в массиве tags. Для поиска элемента проверь массив на наличие одного конкретного значения.",
-    "hint2": "Учитывай тип результата: извлечение JSON как текста, проверка массива и разворачивание массива в строки решают разные задачи.",
-    "hint3": "Каркас: WITH step_1 AS (...), step_2 AS (SELECT ... FROM step_1) SELECT ... FROM step_2;"
+    "hint2": "Проверь вхождение одного элемента через @>; справа передай массив text с единственным тегом coffee.",
+    "hint3": "Каркас: SELECT customer_id FROM customer_profiles WHERE tags @> ARRAY['coffee']::text[];"
   },
   {
     "id": "e55",
@@ -9773,8 +9773,8 @@ export const exercises = [
     "task": "Найди профили, у которых JSON-атрибут segment равен vip. Выведи customer_id.",
     "solution": "SELECT customer_id FROM customer_profiles WHERE attributes ->> 'segment' = 'vip';",
     "hint": "Сегмент клиента лежит в JSONB attributes. Извлеки его оператором ->> и сравни как текст.",
-    "hint2": "Учитывай тип результата: извлечение JSON как текста, проверка массива и разворачивание массива в строки решают разные задачи.",
-    "hint3": "Каркас: WITH step_1 AS (...), step_2 AS (SELECT ... FROM step_1) SELECT ... FROM step_2;"
+    "hint2": "Из JSONB достань segment как текст, а затем сравни его с vip; не сравнивай целый объект attributes.",
+    "hint3": "Каркас: SELECT customer_id FROM customer_profiles WHERE attributes ->> 'segment' = 'vip';"
   },
   {
     "id": "e56",
@@ -9796,8 +9796,8 @@ export const exercises = [
     "task": "Посчитай количество заказов по комбинациям магазина и статуса, итоги по магазинам и общий итог. Используй ROLLUP.",
     "solution": "SELECT store_id, status, COUNT(*) AS orders_count, GROUPING(store_id) AS all_stores, GROUPING(status) AS all_statuses FROM orders GROUP BY ROLLUP (store_id, status);",
     "hint": "Сводка по магазинам и статусам имеет зерно магазин × статус. В GROUP BY должны присутствовать оба измерения.",
-    "hint2": "Здесь результат содержит несколько уровней итогов. Отличай обычную группу от строки итога с помощью GROUPING.",
-    "hint3": "Каркас: SELECT ключ, агрегат(значение) FROM таблица GROUP BY ключ HAVING условие;"
+    "hint2": "ROLLUP(store_id, status) создаёт детальные пары, итог по каждому магазину и общий итог; порядок полей задаёт уровни свёртки.",
+    "hint3": "Каркас: GROUP BY ROLLUP (store_id, status);"
   },
   {
     "id": "e58",
@@ -9842,8 +9842,8 @@ export const exercises = [
     "mode": "mutation",
     "checkQuery": "SELECT c.column_name, c.data_type, c.is_nullable, EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_attribute a ON a.attrelid = con.conrelid AND a.attnum = ANY(con.conkey) WHERE con.conrelid = 'practice_categories'::regclass AND con.contype = 'p' AND a.attname = c.column_name) AS is_primary_key FROM information_schema.columns c WHERE c.table_name = 'practice_categories' ORDER BY c.ordinal_position;",
     "hint": "CREATE TABLE задаёт столбцы и ограничения. Проверь типы и первичный ключ до вставки строк.",
-    "hint2": "При создании таблицы проверь не только типы, но и ограничения целостности: ключи, обязательность и допустимые значения.",
-    "hint3": "Каркас: CREATE TABLE имя (id тип PRIMARY KEY, поле тип NOT NULL, CHECK (...));"
+    "hint2": "В practice_categories задай category_id как PRIMARY KEY, а category_name как NOT NULL; проверка смотрит именно на эти ограничения.",
+    "hint3": "Каркас: CREATE TEMP TABLE practice_categories (category_id integer PRIMARY KEY, category_name text NOT NULL);"
   },
   {
     "id": "e62",
@@ -9902,8 +9902,8 @@ export const exercises = [
     "mode": "mutation",
     "checkQuery": "SELECT conname, pg_get_constraintdef(oid) AS definition FROM pg_constraint WHERE conrelid = 'practice_discounts'::regclass ORDER BY conname;",
     "hint": "Ограничение CHECK должно описывать допустимое состояние строки. Проверь существующие данные перед добавлением правила.",
-    "hint2": "При создании таблицы проверь не только типы, но и ограничения целостности: ключи, обязательность и допустимые значения.",
-    "hint3": "Каркас: CREATE TABLE имя (id тип PRIMARY KEY, поле тип NOT NULL, CHECK (...));"
+    "hint2": "Для discount_percent задай CHECK между 0 и 100 включительно; NOT NULL — отдельное требование, оно не заменяет CHECK.",
+    "hint3": "Каркас: CREATE TEMP TABLE practice_discounts (discount_id integer PRIMARY KEY, discount_percent numeric NOT NULL CHECK (discount_percent BETWEEN 0 AND 100));"
   },
   {
     "id": "e67",
@@ -10945,7 +10945,7 @@ export const exercises = [
     ],
     "requirementsMessage": "Нужен JOIN orders и stores по store_id с выбором order_id/store_name и фильтром customer_id = 1.",
     "hint": "В плане найди узлы чтения обеих таблиц и узел соединения. Не путай INNER JOIN в SQL с конкретным алгоритмом Nested Loop, Hash Join или Merge Join.",
-    "hint2": "Перед соединением проверь ключ и кардинальность связи: несколько совпадений справа могут размножить строки слева.",
+    "hint2": "В EXPLAIN найди фильтр customer_id, оператор соединения и оценки числа строк; не делай вывод о скорости только по названию узла.",
     "hint3": "Каркас: EXPLAIN (ANALYZE, BUFFERS) SELECT ...; Сравни estimated и actual rows."
   }
 
