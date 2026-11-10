@@ -219,7 +219,7 @@ try {
   const darkTokens = await page.evaluate(() => {
     const root = getComputedStyle(document.documentElement);
     const button = document.querySelector('.btn');
-    const card = document.querySelector('.card');
+    const card = document.querySelector('.stat-card,.card');
     return {
       surface: root.getPropertyValue('--surface').trim(),
       accentSoft: root.getPropertyValue('--accent-soft').trim(),
@@ -253,7 +253,7 @@ try {
   const lightTokens = await page.evaluate(() => {
     const root = getComputedStyle(document.documentElement);
     const button = document.querySelector('.btn');
-    const card = document.querySelector('.card');
+    const card = document.querySelector('.stat-card,.card');
     return {
       surface: root.getPropertyValue('--surface').trim(),
       accentSoft: root.getPropertyValue('--accent-soft').trim(),
