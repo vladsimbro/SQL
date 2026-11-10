@@ -223,13 +223,13 @@ assert.ok(appSource.includes("const core=moduleLessons('core')")&&appSource.incl
 assert.equal(glossary.length, 72, 'Expected 72 glossary terms');
 assert.equal(reference.length, 13, 'Expected 13 reference groups');
 const allRandomTasks = sandboxTaskTopics.flatMap(topic => topic.tasks);
-const normalizeRandomTaskText = value => value.replace(/ Вариант №\\d+:.*$/, '').replace(/\\s+/g, ' ').trim();
+const normalizeRandomTaskText = value => value.replace(/ Вариант №\d+:.*$/, '').replace(/\s+/g, ' ').trim();
 assert.equal(new Set(allRandomTasks.map(task => task.id)).size, 350, 'Random task IDs must be globally unique');
 for (const topic of sandboxTaskTopics) {
   assert.equal(topic.tasks.length, 25, `Topic ${topic.id} must contain exactly 25 tasks`);
   assert.equal(new Set(topic.tasks.map(task => normalizeRandomTaskText(task.prompt))).size, 25, `Topic ${topic.id} must not disguise repeated prompts with a variant number`);
   assert.equal(new Set(topic.tasks.map(task => task.hint.trim())).size, 25, `Topic ${topic.id} must provide a task-specific hint`);
-  assert.equal(new Set(topic.tasks.map(task => task.solution.replace(/\\s+/g, ' ').trim().toLowerCase())).size, 25, `Topic ${topic.id} must not repeat reference SQL`);
+  assert.equal(new Set(topic.tasks.map(task => task.solution.replace(/\s+/g, ' ').trim().toLowerCase())).size, 25, `Topic ${topic.id} must not repeat reference SQL`);
 }
 const orderSensitiveRandomTasks = allRandomTasks.filter(task => task.orderMatters);
 assert.equal(orderSensitiveRandomTasks.length, 95, 'Random tasks that explicitly request result order must preserve row order during validation');
