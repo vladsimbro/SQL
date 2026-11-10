@@ -21,7 +21,7 @@ for (const track of learningTracks) {
     ...module.lessons.flatMap(lesson => lesson.quiz || []),
     ...(module.quiz || [])
   ]);
-  const normalizedQuestionText = question => question.question.replace(/\\s+/g, ' ').trim().toLowerCase();
+  const normalizedQuestionText = question => question.question.replace(/\s+/g, ' ').trim().toLowerCase();
   assert.equal(new Set(questions.map(normalizedQuestionText)).size, questions.length, `Quiz questions must not repeat within the ${track.id} learning route`);
   assert.ok(questions.every(question => new Set(question.options).size === question.options.length), `Quiz options must be distinct in the ${track.id} learning route`);
   const uniqueQuestions = [...new Map(questions.map(question => [quizOptionKey(question, track.id), question])).values()];
@@ -516,7 +516,7 @@ assert.ok(modules.every(module => module.sources?.length), 'Every module must li
 assert.ok(modules.every(module => module.quiz?.length >= 4), 'Every module must include a question bank');
 const quizQuestions = modules.flatMap(module => module.quiz);
 assert.equal(quizQuestions.length, 100, 'Expected 100 knowledge-check questions');
-assert.equal(new Set(quizQuestions.map(question => question.question.replace(/\\s+/g, ' ').trim().toLowerCase())).size, 100, 'The 100-question assessment bank must not repeat question wording');
+assert.equal(new Set(quizQuestions.map(question => question.question.replace(/\s+/g, ' ').trim().toLowerCase())).size, 100, 'The 100-question assessment bank must not repeat question wording');
 assert.ok(quizQuestions.every(question => question.question && question.options?.length === 4 && Number.isInteger(question.answer) && question.answer >= 0 && question.answer < 4 && question.explanation), 'Every quiz question must have four options, a valid answer and an explanation');
 const answerPositionCounts = [0,0,0,0];
 for (const question of quizQuestions) answerPositionCounts[question.answer]++;
