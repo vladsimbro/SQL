@@ -322,6 +322,14 @@ function renderProgress() {
     <div class="progress-project-grid">${projectCards}</div>
     <div class="callout progress-storage-note"><strong>Ваши данные сохраняются в этом браузере.</strong> Для переноса прогресса на другое устройство используйте резервную копию из раздела главного экрана.</div>`;
 }
+function renderCourseSubnav(activeView,trackId) {
+  const track=learningTracks.find(item=>item.id===trackId)||learningTracks[0];
+  const links=[['roadmap','Программа'],['study','Теория'],['practice','Практика'],['assessment','Контрольные']];
+  return `<nav class="course-subnav" aria-label="Разделы выбранного курса">
+    <div class="course-subnav-context"><span class="eyebrow">ВЫБРАННЫЙ КУРС</span><strong>${esc(track.title)}</strong></div>
+    <div class="course-subnav-links">${links.map(([view,title])=>`<button class="course-subnav-link ${activeView===view?'active':''}" data-course-nav="${view}" data-course-track="${track.id}" ${activeView===view?'aria-current="page"':''}>${title}</button>`).join('')}</div>
+  </nav>`;
+}
 function renderCourses() {
   const cards=learningTracks.map(track=>{
     const trackModules=moduleLessons(track.id);
@@ -469,6 +477,7 @@ function renderRoadmap() {
   const groups=new Map();
   selectedModules.forEach((module,index)=>{if(!groups.has(module.stage))groups.set(module.stage,[]);groups.get(module.stage).push({module,index});});
   return pageHead('ПРОГРАММА КУРСА',esc(selected.title),selected.description,'<button class="btn" data-nav="courses">← Все курсы</button>')+
+  renderCourseSubnav('roadmap',selected.id)+
   `<div class="track-intro"><div class="eyebrow">${esc(selected.courseLevel)}</div><p>${esc(selected.description)}</p><p><strong>Предварительные знания:</strong> ${esc(selected.coursePrerequisites)}</p></div>`+
   [...groups.entries()].map(([stage,items])=>`<section class="roadmap-stage"><div class="roadmap-stage-head"><span>${esc(stage)}</span><h2>${esc(stage.split(' · ')[1])}</h2><small>${items.reduce((sum,item)=>sum+item.module.lessons.length,0)} уроков</small></div><div class="module-list">${items.map(item=>moduleRow(item.module,item.index)).join('')}</div></section>`).join('');
 }
@@ -645,7 +654,7 @@ function renderStudy() {
  const sidebar=`<section class="lesson-track-group"><h3>${esc(activeTrack.title)}</h3><p>${esc(activeTrack.subtitle)}</p>${moduleLessons(m.track).map(mod=>`<div style="margin-bottom:13px"><h4>${String(mod.trackOrder).padStart(2,'0')} · ${esc(mod.title)}</h4>${mod.lessons.map((lesson,li)=>`<button class="lesson-nav-item ${mod.id===m.id&&li===state.lessonIndex?'active':''} ${state.completedLessons.has(lessonKey(mod.id,li))?'done':''}" data-lesson="${mod.id}:${li}"><span class="dot">${state.completedLessons.has(lessonKey(mod.id,li))?'✓':'○'}</span>${esc(lesson.title)}</button>`).join('')}</div>`).join('')}</section>`;
  const practice=(l.practiceIds||[]).map(id=>{const ex=exercises.find(e=>e.id===id);return ex?`<button class="btn" data-exercise="${ex.id}">Практика: ${esc(ex.title)} →</button>`:''}).join('');
  const outcomes=(l.outcomes||[]).length?`<div class="lesson-card"><div class="eyebrow">РЕЗУЛЬТАТ УРОКА</div><h2>Что ты должен уметь</h2><ul>${l.outcomes.map(item=>`<li>${esc(item)}</li>`).join('')}</ul></div>`:'';
- return `${pageHead(esc(activeTrack.title).toUpperCase()+' · МОДУЛЬ '+String(m.trackOrder).padStart(2,'0'),m.title,m.desc,'<button class="btn" data-nav="roadmap">← К программе курса</button>')}<div class="split-layout"><aside class="card lesson-sidebar"><h3>Содержание курса</h3>${sidebar}</aside><article class="lesson-content">
+ return `${pageHead(esc(activeTrack.title).toUpperCase()+' · МОДУЛЬ '+String(m.trackOrder).padStart(2,'0'),m.title,m.desc,'<button class="btn" data-nav="roadmap">← К программе курса</button>')}${renderCourseSubnav('study',m.track)}<div class="split-layout"><aside class="card lesson-sidebar"><h3>Содержание курса</h3>${sidebar}</aside><article class="lesson-content">
  <div class="lesson-card"><div class="eyebrow">${esc(m.stage)} · УРОК ${state.lessonIndex+1} ИЗ ${m.lessons.length}</div><h1>${esc(l.title)}</h1>${lessonBody(l,m)}${renderLessonQuiz(l)}${practice?`<div class="lesson-footer lesson-practice-links">${practice}</div>`:''}<div class="lesson-footer"><button class="btn primary" data-action="complete-lesson">${done?'✓ Урок завершён':'Отметить урок завершённым'}</button></div></div>${outcomes}
  <div class="lesson-card"><div class="lesson-footer"><button class="btn" data-action="prev-lesson" ${state.lessonIndex===0?'disabled':''}>← Предыдущий урок</button><button class="btn primary" data-action="next-lesson" ${trackEnd?'disabled':''}>${trackEnd?(m.track==='core'?'Курс SQL для аналитика завершён':'Курс PostgreSQL завершён'):state.lessonIndex===m.lessons.length-1?'Следующий модуль →':'Следующий урок →'}</button></div></div></article></div>`;
 }
@@ -654,7 +663,8 @@ function renderAssessment() {
   const selected=modules.find(module=>module.id===state.assessmentModuleId);
   if(!selected){
     return pageHead('ПРОВЕРКА ЗНАНИЙ','Контрольные работы','Проверь понимание целого модуля. Каждый тест содержит вопросы из отдельного банка; лучший результат сохраняется в браузере.') +
-      '<div class="assessment-track-tabs">' +
+      renderCourseSubnav('assessment',state.assessmentTrack) +
+      '<div class="assessment-track-tabs"> +
       '<button class="track-tab '+(state.assessmentTrack==='core'?'active':'')+'" data-assessment-track="core"><strong>SQL для аналитика данных</strong><span>Самостоятельный курс</span></button>' +
       '<button class="track-tab '+(state.assessmentTrack==='postgresql'?'active':'')+'" data-assessment-track="postgresql"><strong>PostgreSQL</strong><span>Самостоятельный курс</span></button></div>' +
       '<div class="assessment-grid">' + available.map(module=>{
@@ -667,6 +677,7 @@ function renderAssessment() {
   const score=bank.reduce((sum,q,index)=>sum+(state.assessmentAnswers[index]===q.answer?1:0),0);
   const passed=score>=Math.ceil(bank.length*0.75);
   let html=pageHead('КОНТРОЛЬНАЯ РАБОТА',esc(selected.title),'Ответь на все вопросы. Правильные ответы и объяснения откроются после отправки.','<button class="btn" data-action="assessment-back">← Все модули</button>');
+  html+=renderCourseSubnav('assessment',state.assessmentTrack);
   html+='<section class="card assessment-test"><div class="assessment-progress"><span>Ответы</span><strong>'+answered+' из '+bank.length+'</strong></div><div class="progress-track"><span style="width:'+(bank.length?answered/bank.length*100:0)+'%"></span></div>';
   html+=bank.map((question,index)=>{
     const chosen=state.assessmentAnswers[index],correct=chosen===question.answer;
@@ -715,6 +726,7 @@ function renderPractice() {
   const activeIndex=trackExercises.findIndex(exercise=>exercise.id===active.id);
   return `
   ${pageHead(`ПРАКТИКА · ${esc(activeTrack.title)}`,'Практика','Выбери курс. В списке остаются только задания, связанные с его модулями; результаты и прогресс сохраняются отдельно.')}
+  ${renderCourseSubnav('practice',state.practiceTrack)}
   <div class="track-switch practice-course-switch">${tabs}</div>
   ${engineNotice()}
   <div class="exercise-layout"><aside><input class="exercise-filter" id="exercise-search" placeholder="Найти задачу по названию…"><div class="exercise-list" id="exercise-list">${list}</div></aside>
@@ -1173,7 +1185,24 @@ document.addEventListener('input',event=>{
  saveProjectNote(field.dataset.projectConclusion,field.value);
 });
 document.addEventListener('click',event=>{
- const el=event.target.closest('[data-nav],[data-open-course],[data-open-project],[data-project-task],[data-project-review],[data-practice-track],[data-track],[data-module],[data-assessment-track],[data-assessment-module],[data-assessment-answer],[data-lesson],[data-exercise],[data-action],[data-copy-code],[data-sample],[data-quiz-answer],[data-exercise-quiz-answer]');if(!el)return;
+ const el=event.target.closest('[data-course-nav],[data-nav],[data-open-course],[data-open-project],[data-project-task],[data-project-review],[data-practice-track],[data-track],[data-module],[data-assessment-track],[data-assessment-module],[data-assessment-answer],[data-lesson],[data-exercise],[data-action],[data-copy-code],[data-sample],[data-quiz-answer],[data-exercise-quiz-answer]');if(!el)return;
+ if(el.dataset.courseNav){
+  const track=learningTracks.find(item=>item.id===el.dataset.courseTrack);
+  if(!track)return;
+  state.roadmapTrack=state.practiceTrack=state.assessmentTrack=track.id;
+  if(el.dataset.courseNav==='study'){
+    let targetModule=null;
+    if(state.view==='assessment'&&state.assessmentModuleId)targetModule=moduleById(state.assessmentModuleId);
+    else if(state.view==='practice')targetModule=moduleById(exercises.find(item=>item.id===state.exerciseId)?.m);
+    else targetModule=moduleById(state.moduleId);
+    if(targetModule?.track!==track.id)targetModule=moduleLessons(track.id)[0];
+    state.moduleId=targetModule.id;
+    state.lessonIndex=Math.min(state.lessonIndex,targetModule.lessons.length-1);
+  }
+  if(el.dataset.courseNav==='assessment')state.assessmentModuleId=null;
+  go(el.dataset.courseNav);
+  return;
+ }
  if(el.dataset.nav){event.preventDefault();go(el.dataset.nav);return;}
  if(el.dataset.openCourse){const track=learningTracks.find(item=>item.id===el.dataset.openCourse);if(track){state.roadmapTrack=track.id;go('roadmap');}return;}
  if(el.dataset.openProject){const project=projects.find(item=>item.id===el.dataset.openProject);if(project){state.projectId=project.id;state.projectTaskId=project.tasks[0].id;state.projectSolutionVisible=false;go('project');}return;}
