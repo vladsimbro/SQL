@@ -326,7 +326,7 @@ try {
   assert.equal(await page.locator('.progress-course-card').count(), 2, 'The progress screen must show both independent courses');
   assert.equal(await page.locator('.progress-project-card').count(), 3, 'The progress screen must show all three analytical projects');
   const projectProgressSummary = await page.locator('.progress-stats .stat-card').nth(3).innerText();
-  assert.match(projectProgressSummary, /9\\/9/, 'The progress screen must include all nine completed project tasks');
+  assert.match(projectProgressSummary, /9\/9/, 'The progress screen must include all nine completed project tasks');
   assert.match(projectProgressSummary, /3 из 3/, 'The progress screen must include all three completed project reviews');
   await captureUxScreen('25-progress-desktop-ready');
   await page.locator('#sidebar [data-nav="projects"]').click();
