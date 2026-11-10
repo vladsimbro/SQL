@@ -53,6 +53,10 @@ for (const track of learningTracks) {
   assert.ok(track.moduleIds.length > 0 && modules.some(module => module.track === track.id), 'Every listed course must have a real curriculum');
 }
 assert.ok(appSource.includes('function renderCourses()') && appSource.includes('data-open-course='), 'The app must render and open the standalone course catalog');
+assert.ok(htmlSource.includes('data-nav="progress"') && appSource.includes('function renderProgress()') && appSource.includes('progress:renderProgress'), 'Progress must be a dedicated top-level screen, not only a sidebar summary');
+assert.ok(appSource.includes("'progress'") && appSource.includes("progress:'Прогресс'"), 'Progress must support direct URL routing and display the correct navigation label');
+assert.ok(cssSource.includes('.progress-course-grid') && cssSource.includes('.progress-project-grid') && cssSource.includes('@media(max-width:560px)'), 'The progress screen must have dedicated responsive course and project layouts');
+
 assert.ok(appSource.includes('[data-open-course]'), 'Course catalog actions must be included in delegated click handling');
 assert.ok(appSource.includes('[data-practice-track]') && appSource.includes('state.practiceTrack=track.id'), 'Practice must allow selecting a separate course');
 assert.ok(appSource.includes('moduleById(exercise.m)?.track===state.practiceTrack'), 'Practice exercises must be filtered by the selected course');
