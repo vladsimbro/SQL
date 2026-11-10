@@ -664,7 +664,7 @@ function renderAssessment() {
   if(!selected){
     return pageHead('ПРОВЕРКА ЗНАНИЙ','Контрольные работы','Проверь понимание целого модуля. Каждый тест содержит вопросы из отдельного банка; лучший результат сохраняется в браузере.') +
       renderCourseSubnav('assessment',state.assessmentTrack) +
-      '<div class="assessment-track-tabs"> +
+      '<div class="assessment-track-tabs">' +
       '<button class="track-tab '+(state.assessmentTrack==='core'?'active':'')+'" data-assessment-track="core"><strong>SQL для аналитика данных</strong><span>Самостоятельный курс</span></button>' +
       '<button class="track-tab '+(state.assessmentTrack==='postgresql'?'active':'')+'" data-assessment-track="postgresql"><strong>PostgreSQL</strong><span>Самостоятельный курс</span></button></div>' +
       '<div class="assessment-grid">' + available.map(module=>{
