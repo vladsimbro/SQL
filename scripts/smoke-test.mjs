@@ -534,6 +534,8 @@ assert.ok(exercises.filter(exercise => exercise.orderMatters).every(exercise => 
 assert.ok(exercises.find(exercise => exercise.id === 'e59').solution.includes('ORDER BY n') && exercises.find(exercise => exercise.id === 'e59').task.includes('по возрастанию'), 'Recursive sequence task must state and implement ascending output order');
 assert.ok(exercises.find(exercise => exercise.id === 'e38').solution.trim().endsWith('ORDER BY created_at, order_id;'), 'Running-total task must define final output order in addition to the window calculation order');
 assert.equal(new Set(exercises.map(exercise => exercise.hint)).size, exercises.length, 'Every practical exercise must have a unique task-specific hint');
+assert.equal(new Set(exercises.map(exercise => exercise.hint2.trim())).size, exercises.length, 'Every practical exercise must have a unique reasoning hint');
+assert.equal(new Set(exercises.map(exercise => exercise.hint3.trim())).size, exercises.length, 'Every practical exercise must have a unique query-structure hint');
 const progressiveHintExercises = exercises.filter(exercise => exercise.hint2 || exercise.hint3);
 assert.equal(progressiveHintExercises.length, exercises.length, 'All practical tasks must expose three progressive hint levels');
 assert.ok(progressiveHintExercises.every(exercise => exercise.hint2?.trim() && exercise.hint3?.trim()), 'Every practical task must provide reasoning and a query-structure hint level');
