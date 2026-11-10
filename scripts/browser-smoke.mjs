@@ -116,6 +116,11 @@ try {
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.locator('#app-content .lesson-track-group').waitFor({ state: 'visible' });
   assert.match(await page.locator('.lesson-track-group h3').textContent(), /SQL для аналитика данных/);
+  await page.goto(baseURL + '#view=progress', { waitUntil: 'domcontentloaded' });
+  await page.locator('#app-content .progress-course-card').first().waitFor({ state: 'visible' });
+  assert.equal(await page.locator('#app-content .progress-project-card').count(), 3, 'Direct progress routes must restore the full progress screen');
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.locator('#app-content .progress-course-card').first().waitFor({ state: 'visible' });
   blockFirstPGliteRequest = true;
   await page.goto(baseURL, { waitUntil: 'domcontentloaded' });
   await page.locator('#app-content .hero').waitFor({ state: 'visible' });
