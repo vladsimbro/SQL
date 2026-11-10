@@ -120,6 +120,18 @@ assert.equal(exercises.filter(exercise => exercise.mode === 'mutation').length, 
 assert.equal(exercises.filter(exercise => exercise.mode === 'transaction').length, 4, 'Expected four transaction exercises');
 assert.equal(exercises.length, 130, 'Expected 130 total practice exercises');
 assert.ok(exercises.every(exercise => modules.some(module => module.id === exercise.m)), 'Every exercise must belong to a real module');
+const linkedPracticeExercises = modules.flatMap(module => module.lessons.flatMap(lesson =>
+  (lesson.practiceIds || []).map(id => ({ id, moduleId: module.id, lessonId: lesson.id }))
+));
+assert.equal(linkedPracticeExercises.length, exercises.length, 'Every runnable exercise must be linked from a lesson exactly once');
+assert.equal(new Set(linkedPracticeExercises.map(link => link.id)).size, exercises.length, 'A practice exercise must not be linked from multiple lessons');
+assert.deepEqual(
+  linkedPracticeExercises.map(link => link.id).sort(),
+  exercises.map(exercise => exercise.id).sort(),
+  'Every runnable exercise must be reachable from the lesson practice links'
+);
+assert.ok(linkedPracticeExercises.every(link => exercises.find(exercise => exercise.id === link.id)?.m === link.moduleId), 'A lesson must link only to exercises from its own module');
+
 const fanoutLesson = modules.find(module => module.id === 'joins')?.lessons.find(lesson => lesson.id === 'joins.fan-out-pochemu-join-umnozhaet-stroki');
 assert.deepEqual(fanoutLesson?.practiceIds, ['e103'], 'The fan-out lesson must link its dedicated practice exercise exactly once');
 assert.ok(exercises.some(exercise => exercise.id === 'e103' && exercise.m === 'joins'), 'Fan-out practice must be registered in the JOIN exercise bank');
