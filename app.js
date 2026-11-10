@@ -40,7 +40,7 @@ const lessonKey = (mid,idx)=>moduleById(mid)?.lessons[idx]?.id || mid+':'+idx;
 const quizKey = (mid,idx,questionIndex)=>lessonKey(mid,idx)+':'+questionIndex;
 const moduleLessons = trackId => modules.filter(module=>module.track===trackId);
 const esc = value => String(value ?? 'NULL').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#39;");
-const label = {dashboard:'Главная',courses:'Курсы',roadmap:'Программа курса',study:'Учебник',practice:'Практика',projects:'Проекты',project:'Проект',playground:'SQL-песочница',schema:'Учебная база',reference:'Шпаргалка',glossary:'Глоссарий',assessment:'Контрольные работы'};
+const label = {dashboard:'Главная',courses:'Курсы',roadmap:'Программа курса',study:'Учебник',practice:'Практика',projects:'Проекты',project:'Проект',playground:'SQL-песочница',schema:'Учебная база',reference:'Шпаргалка',glossary:'Глоссарий',assessment:'Контрольные работы',progress:'Прогресс'};
 const loadProgress = () => {
   try {
     const saved=JSON.parse(localStorage.getItem(STORE_KEY)||'{}');
@@ -135,7 +135,7 @@ const applyRoute = () => {
   const params=new URLSearchParams(location.hash.slice(1));
   if(!params.has('view'))return false;
   const view=params.get('view');
-  const allowed=['dashboard','courses','roadmap','study','practice','projects','project','assessment','playground','schema','reference','glossary'];
+  const allowed=['dashboard','courses','roadmap','study','practice','projects','project','assessment','progress','playground','schema','reference','glossary'];
   if(!allowed.includes(view)){state.view='dashboard';return false;}
   state.view=view;
   if(view==='roadmap'){
@@ -200,7 +200,7 @@ function render() {
   $$('.nav-item').forEach(b=>b.classList.toggle('active',b.dataset.nav===activeView));
   $('#breadcrumb-current').textContent=label[state.view]||'Учебник';
   updateProgress();
-  const pages={dashboard:renderDashboard,courses:renderCourses,roadmap:renderRoadmap,study:renderStudy,practice:renderPractice,projects:renderProjects,project:renderProject,assessment:renderAssessment,playground:renderPlayground,schema:renderSchema,reference:renderReference,glossary:renderGlossary};
+  const pages={dashboard:renderDashboard,courses:renderCourses,roadmap:renderRoadmap,study:renderStudy,practice:renderPractice,projects:renderProjects,project:renderProject,assessment:renderAssessment,progress:renderProgress,playground:renderPlayground,schema:renderSchema,reference:renderReference,glossary:renderGlossary};
   const engineError=state.engineError?'<div class="feedback fail" role="alert" style="margin-bottom:16px"><strong>Не удалось запустить PostgreSQL.</strong><p>Этап: '+esc(state.engineError.stage)+'</p><p>'+esc(state.engineError.message)+'</p><details><summary>Технические подробности</summary><pre>'+esc(state.engineError.detail)+'</pre></details><button class="btn primary" data-action="retry-engine">Повторить запуск</button></div>':'';
   host.innerHTML=engineError+(pages[state.view]||renderDashboard)();
   bindPage();
@@ -254,6 +254,73 @@ function renderDashboard() {
       <div class="backup-copy"><div class="eyebrow">СОХРАННОСТЬ ПРОГРЕССА</div><h2 id="backup-title">Резервная копия обучения</h2><p>Сохрани прогресс курсов, контрольные работы, SQL-черновики и результаты проектов в файл. Его можно восстановить в другом браузере.</p><small>Восстановление заменит текущие локальные данные. Перед этим экспортируй их, если хочешь сохранить обе версии.</small></div>
       <div class="backup-actions"><button class="btn primary" data-action="export-backup">Скачать копию</button><button class="btn" data-action="import-backup">Восстановить из файла</button><input id="backup-import-file" type="file" accept=".json,application/json" hidden></div>
     </section>`;
+}
+function renderProgress() {
+  const totalLessons=modules.reduce((sum,module)=>sum+module.lessons.length,0);
+  const completedLessons=state.completedLessons.size;
+  const totalAssessments=modules.filter(module=>module.quiz?.length).length;
+  const passedAssessments=modules.filter(module=>state.assessmentResults[module.id]?.passed).length;
+  const reviewedProjects=projects.filter(project=>Number.isInteger(state.projectReviews[project.id])).length;
+  const overallPercent=Math.round(completedLessons/totalLessons*100);
+  const courseCards=learningTracks.map(track=>{
+    const trackModules=moduleLessons(track.id);
+    const lessonProgress=getTrackProgress(modules,state.completedLessons,track.id);
+    const trackExercises=exercises.filter(exercise=>moduleById(exercise.m)?.track===track.id);
+    const completedTrackExercises=trackExercises.filter(exercise=>state.completedExercises.has(exercise.id)).length;
+    const trackAssessments=trackModules.filter(module=>module.quiz?.length);
+    const passedTrackAssessments=trackAssessments.filter(module=>state.assessmentResults[module.id]?.passed).length;
+    const moduleRows=trackModules.map((module,index)=>{
+      const lessonDone=progressForModule(module);
+      const moduleExercises=exercises.filter(exercise=>exercise.m===module.id);
+      const exerciseDone=moduleExercises.filter(exercise=>state.completedExercises.has(exercise.id)).length;
+      const assessment=state.assessmentResults[module.id];
+      return `<div class="progress-module-row">
+        <div class="progress-module-title"><span>${String(index+1).padStart(2,'0')}</span><strong>${esc(module.title)}</strong></div>
+        <div class="progress-module-meta"><span>${lessonDone}/${module.lessons.length} уроков</span><span>${exerciseDone}/${moduleExercises.length} практик</span><span>${assessment?.passed?'Контрольная сдана':assessment?'Лучшая попытка '+assessment.bestScore+'/'+module.quiz.length:'Контрольная не пройдена'}</span></div>
+        <div class="progress-module-bar"><span style="width:${modulePct(module)}%"></span></div>
+      </div>`;
+    }).join('');
+    return `<section class="progress-course-card">
+      <div class="progress-course-head">
+        <div><span class="eyebrow">${track.required?'ОСНОВНОЙ МАРШРУТ':'ДОПОЛНИТЕЛЬНЫЙ МАРШРУТ'}</span><h2>${esc(track.title)}</h2></div>
+        <strong class="progress-course-percent">${lessonProgress.percent}%</strong>
+      </div>
+      <div class="progress-course-bar"><span style="width:${lessonProgress.percent}%"></span></div>
+      <div class="progress-course-metrics">
+        <span><strong>${lessonProgress.completed}/${lessonProgress.total}</strong> уроков</span>
+        <span><strong>${completedTrackExercises}/${trackExercises.length}</strong> практик</span>
+        <span><strong>${passedTrackAssessments}/${trackAssessments.length}</strong> контрольных</span>
+      </div>
+      <details class="progress-course-details">
+        <summary>Показать прогресс по модулям <span>${trackModules.length} модулей</span></summary>
+        <div class="progress-module-list">${moduleRows}</div>
+      </details>
+      <button class="btn" data-nav="courses">Открыть программу курса</button>
+    </section>`;
+  }).join('');
+  const projectCards=projects.map(project=>{
+    const completed=project.tasks.filter(task=>state.completedProjectTasks.has(task.id)).length;
+    const percent=Math.round(completed/project.tasks.length*100);
+    const reviewDone=Number.isInteger(state.projectReviews[project.id]);
+    return `<article class="progress-project-card">
+      <div class="progress-project-head"><strong>${esc(project.title)}</strong><span>${percent}%</span></div>
+      <div class="progress-course-bar"><span style="width:${percent}%"></span></div>
+      <div class="progress-course-metrics"><span><strong>${completed}/${project.tasks.length}</strong> заданий</span><span>${reviewDone?'Итоговая оценка пройдена':'Итоговая оценка не пройдена'}</span></div>
+      <button class="btn small" data-open-project="${project.id}">Продолжить проект</button>
+    </article>`;
+  }).join('');
+  return pageHead('ЛИЧНЫЙ КАБИНЕТ','Прогресс','Здесь собраны результаты обучения, практики, контрольных работ и аналитических проектов.')+
+    `<div class="stats-grid progress-stats">
+      <div class="stat-card"><span class="stat-label">Уроки</span><strong>${completedLessons}/${totalLessons}</strong><small>${overallPercent}% основного и дополнительного обучения</small></div>
+      <div class="stat-card"><span class="stat-label">Практика</span><strong>${state.completedExercises.size}/${exercises.length}</strong><small>Решённых практических заданий</small></div>
+      <div class="stat-card"><span class="stat-label">Контрольные</span><strong>${passedAssessments}/${totalAssessments}</strong><small>Модульных зачётов получено</small></div>
+      <div class="stat-card"><span class="stat-label">Проекты</span><strong>${state.completedProjectTasks.size}/${projectTaskCount}</strong><small>${reviewedProjects} из ${projects.length} итоговых оценок</small></div>
+    </div>
+    <div class="section-row"><h2>Прогресс по курсам</h2><span>Уроки и задания учитываются отдельно</span></div>
+    <div class="progress-course-grid">${courseCards}</div>
+    <div class="section-row"><h2>Аналитические проекты</h2><span>Задания и итоговая оценка</span></div>
+    <div class="progress-project-grid">${projectCards}</div>
+    <div class="callout progress-storage-note"><strong>Ваши данные сохраняются в этом браузере.</strong> Для переноса прогресса на другое устройство используйте резервную копию из раздела главного экрана.</div>`;
 }
 function renderCourses() {
   const cards=learningTracks.map(track=>{
