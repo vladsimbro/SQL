@@ -240,7 +240,14 @@ assert.ok(allRandomTasks.every(task => typeof task.orderMatters === 'boolean'), 
 const baseRandomPrompts = allRandomTasks.map(task => task.prompt.replace(/ Вариант №\\d+: используй именно указанные в этом условии параметры\\.$/, ''));
 assert.equal(new Set(allRandomTasks.map(task => task.id)).size, 350, 'Random task IDs must be unique');
 assert.equal(new Set(baseRandomPrompts).size, 350, 'Random task prompts must remain distinct after removing the variant label');
-assert.equal(new Set(allRandomTasks.map(task => task.solution)).size, 350, 'Random task reference SQL must not contain duplicate solutions');
+const randomSolutionGroups = new Map();
+for (const task of allRandomTasks) {
+  const group = randomSolutionGroups.get(task.solution) || [];
+  group.push(task.id);
+  randomSolutionGroups.set(task.solution, group);
+}
+const duplicateRandomSolutions = [...randomSolutionGroups.values()].filter(ids => ids.length > 1);
+assert.equal(duplicateRandomSolutions.length, 0, `Random task reference SQL must not contain duplicate solutions: ${duplicateRandomSolutions.map(ids => ids.join(',')).join('; ')}`);
 
 const sortingTopTasks = sandboxTaskTopics.find(topic => topic.id === 'sorting').tasks.slice(0, 5);
 assert.deepEqual(sortingTopTasks.map(task => Number(task.solution.match(/\bLIMIT\s+(\d+)/i)?.[1])), [3,4,5,6,8], 'Top-order random variants must apply the exact row limit stated in each task');
