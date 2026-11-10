@@ -5,6 +5,7 @@ import { modules, learningTracks, exercises, schema, seedSQL, glossary, referenc
 import { migrateProgress, getTrackProgress, findNextLesson } from '../progress-utils.js';
 import { sandboxTaskTopics, sandboxTaskCount } from '../sandbox-tasks.js';
 import { projects, projectTaskCount } from '../projects.js';
+import { projectOracles } from './project-oracles.mjs';
 import { BACKUP_FORMAT, BACKUP_VERSION, BACKUP_STORAGE_KEYS, createBackup, parseBackup, restoreBackup } from '../backup-utils.js';
 import { buildQuizOptionOrders, quizOptionKey } from '../quiz-options.js';
 
@@ -1341,6 +1342,9 @@ try {
       const result = await db.query(task.solution);
       assert.ok(result && Array.isArray(result.rows) && result.fields?.length > 0, `Project task ${task.id} must execute and return a tabular result`);
       assert.ok(result.rows.length > 0, `Project task ${task.id} must return data from the project dataset`);
+      assert.ok(projectOracles[task.id], `Project task ${task.id} must have an independent result oracle`);
+      const expected = await db.query(projectOracles[task.id]);
+      assert.equal(resultMatches(normalize(result), normalize(expected), true), true, `Project task ${task.id} must match its independent analytical oracle`);
       projectTasksChecked++;
     }
   }
