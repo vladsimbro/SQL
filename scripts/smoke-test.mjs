@@ -217,6 +217,15 @@ assert.ok(cssSource.includes(':root.light .CodeMirror') && cssSource.includes(':
 
 const ids = new Set(modules.map(module => module.id));
 assert.equal(modules.reduce((sum, module) => sum + module.lessons.length, 0), 173, 'Expected 173 lessons');
+const lessonQuizQuestions = modules.flatMap(module => module.lessons.flatMap(lesson => lesson.quiz || []).map(question => ({track:module.track, question})));
+const moduleQuizQuestions = modules.flatMap(module => (module.quiz || []).map(question => ({track:module.track, question})));
+const allQuizQuestions = [...lessonQuizQuestions, ...moduleQuizQuestions];
+assert.equal(lessonQuizQuestions.length, 173, 'Expected one lesson-level quiz question per lesson');
+assert.equal(moduleQuizQuestions.length, 100, 'Expected 100 module assessment questions');
+assert.equal(allQuizQuestions.length, 273, 'Expected 273 lesson and module quiz questions in total');
+assert.equal(new Set(allQuizQuestions.map(item => `${item.track}::${item.question.question}`)).size, allQuizQuestions.length, 'Quiz question text must be unique within each learning route');
+assert.ok(allQuizQuestions.every(item => item.question.options.length === 4 && new Set(item.question.options).size === 4 && Number.isInteger(item.question.answer) && item.question.answer >= 0 && item.question.answer < 4 && item.question.explanation), 'Every quiz question must have four distinct options, a valid answer and an explanation');
+
 assert.equal(modules.filter(module=>module.track==='core').reduce((sum,module)=>sum+module.lessons.length,0),112,'Expected 112 lessons in the core analyst route');
 assert.equal(modules.filter(module=>module.track==='postgresql').reduce((sum,module)=>sum+module.lessons.length,0),61,'Expected 61 lessons in the optional PostgreSQL route');
 assert.ok(appSource.includes("const core=moduleLessons('core')")&&appSource.includes('const trackModules=moduleLessons(m.track)'), 'Continue and lesson navigation must stay inside the selected learning route');
@@ -228,6 +237,11 @@ assert.equal(orderSensitiveRandomTasks.length, 95, 'Random tasks that explicitly
 assert.equal(orderSensitiveRandomTasks.filter(task => task.topic === 'joins').length, 5, 'Alphabetically ordered JOIN tasks must preserve row order');
 assert.ok(orderSensitiveRandomTasks.every(task => /\bORDER\s+BY\b/i.test(task.solution)), 'Every random task with an explicit ordering requirement must define ORDER BY in its reference solution');
 assert.ok(allRandomTasks.every(task => typeof task.orderMatters === 'boolean'), 'Every random task must declare whether output row order matters');
+const baseRandomPrompts = allRandomTasks.map(task => task.prompt.replace(/ Вариант №\\d+: используй именно указанные в этом условии параметры\\.$/, ''));
+assert.equal(new Set(allRandomTasks.map(task => task.id)).size, 350, 'Random task IDs must be unique');
+assert.equal(new Set(baseRandomPrompts).size, 350, 'Random task prompts must remain distinct after removing the variant label');
+assert.equal(new Set(allRandomTasks.map(task => task.solution)).size, 350, 'Random task reference SQL must not contain duplicate solutions');
+
 const sortingTopTasks = sandboxTaskTopics.find(topic => topic.id === 'sorting').tasks.slice(0, 5);
 assert.deepEqual(sortingTopTasks.map(task => Number(task.solution.match(/\bLIMIT\s+(\d+)/i)?.[1])), [3,4,5,6,8], 'Top-order random variants must apply the exact row limit stated in each task');
 assert.ok(sortingTopTasks.every(task => task.orderMatters), 'Top-order random tasks must validate the requested row order');
@@ -587,6 +601,11 @@ assert.ok(appSource.includes('ex.requiredPatterns'), 'EXPLAIN exercises must val
 const db = new PGlite();
 try {
   await db.exec(seedSQL);
+  for (const task of allRandomTasks) {
+    const result = await db.query(task.solution);
+    assert.ok(result.fields.length > 0, `Random task ${task.id} must execute as a read-only query`);
+  }
+
   const fanOutExercise = exercises.find(exercise => exercise.id === 'e103');
   assert.ok(fanOutExercise && fanOutExercise.m === 'joins' && fanOutExercise.mode === 'select', 'The dedicated fan-out exercise must exist in the JOIN course');
   const baseFanOutMetrics = await db.query(fanOutExercise.solution);
