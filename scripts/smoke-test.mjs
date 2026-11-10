@@ -232,8 +232,8 @@ for (const topic of sandboxTaskTopics) {
   assert.equal(new Set(topic.tasks.map(task => task.solution.replace(/\s+/g, ' ').trim().toLowerCase())).size, 25, `Topic ${topic.id} must not repeat reference SQL`);
 }
 const orderSensitiveRandomTasks = allRandomTasks.filter(task => task.orderMatters);
-assert.equal(orderSensitiveRandomTasks.length, 95, 'Random tasks that explicitly request result order must preserve row order during validation');
-assert.equal(orderSensitiveRandomTasks.filter(task => task.topic === 'joins').length, 5, 'Alphabetically ordered JOIN tasks must preserve row order');
+assert.equal(orderSensitiveRandomTasks.length, 91, 'Random tasks that explicitly request result order must preserve row order during validation');
+assert.equal(orderSensitiveRandomTasks.filter(task => task.topic === 'joins').length, 1, 'Only the JOIN task that explicitly requests alphabetical city order must preserve row order');
 assert.ok(orderSensitiveRandomTasks.every(task => /\bORDER\s+BY\b/i.test(task.solution)), 'Every random task with an explicit ordering requirement must define ORDER BY in its reference solution');
 assert.ok(allRandomTasks.every(task => typeof task.orderMatters === 'boolean'), 'Every random task must declare whether output row order matters');
 const sortingTopTasks = sandboxTaskTopics.find(topic => topic.id === 'sorting').tasks.slice(0, 5);
