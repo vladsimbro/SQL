@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { mkdir, readFile } from 'node:fs/promises';
 import { chromium } from 'playwright';
 import { projects } from '../projects.js';
+import { cumulativeCheckpoints } from '../checkpoints.js';
 
 const baseURL = (process.env.PAGES_URL || process.argv[2] || '').trim().replace(/\/?$/, '/');
 if (!/^https:\/\//i.test(baseURL)) {
@@ -213,6 +214,30 @@ try {
   assert.equal(await readEditor(editor), draft, 'Resetting the database must preserve the SQL draft');
   await page.locator('[data-action="run-playground"]').click();
   await page.locator('#playground-results .result-table').waitFor({ state: 'visible', timeout: 30_000 });
+
+  // Cumulative checkpoints must accept real SQL, reject wrong filters, and save drafts and passes.
+  await page.locator('#sidebar .nav-item[data-nav="assessment"]').click();
+  assert.equal(await page.locator('.checkpoint-card').count(), 3, 'The core route must expose three cumulative checkpoints');
+  await page.locator('[data-checkpoint="core-foundation-check"]').click();
+  const checkpointEditor=page.locator('#checkpoint-editor');
+  await checkpointEditor.waitFor({state:'attached'});
+  await writeEditor(checkpointEditor,"SELECT order_id, created_at, total_amount FROM orders WHERE status = 'shipped' ORDER BY total_amount DESC, order_id LIMIT 5;");
+  await page.locator('[data-action="check-checkpoint-task"]').click();
+  await page.locator('#checkpoint-feedback .fail').waitFor({state:'visible'});
+  assert.equal(JSON.parse(await page.evaluate(()=>localStorage.getItem('sql-academy-progress-v1'))).checkpointTasks.length,0,'An incorrect query must not receive a cumulative exam credit');
+  await writeEditor(checkpointEditor,cumulativeCheckpoints[0].tasks[0].solution);
+  await page.locator('[data-action="check-checkpoint-task"]').click();
+  await page.locator('#checkpoint-feedback .success').waitFor({state:'visible'});
+  assert.ok(JSON.parse(await page.evaluate(()=>localStorage.getItem('sql-academy-progress-v1'))).checkpointTasks.includes('core-foundation-orders'),'A valid SQL report must persist checkpoint completion');
+  await page.locator('[data-checkpoint-task="core-foundation-customers"]').click();
+  await writeEditor(checkpointEditor,cumulativeCheckpoints[0].tasks[1].solution);
+  await page.locator('[data-action="check-checkpoint-task"]').click();
+  await page.locator('#checkpoint-feedback .success').waitFor({state:'visible'});
+  assert.match(await page.locator('#checkpoint-count').textContent(),/2\/2.*Зачёт получен/,'A complete checkpoint must show a confirmed pass');
+  await page.reload({waitUntil:'domcontentloaded'});
+  await page.locator('[data-checkpoint-task="core-foundation-orders"]').click();
+  assert.equal(await readEditor(page.locator('#checkpoint-editor')),cumulativeCheckpoints[0].tasks[0].solution,'Checkpoint SQL drafts must survive reload');
+  await captureUxScreen('05a-cumulative-sql-checkpoint');
 
   await page.locator('#sidebar .nav-item[data-nav="dashboard"]').click();
   await captureUxScreen('14-dashboard-desktop-ready-dark');

@@ -1,10 +1,11 @@
-import { modules, learningTracks, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261110-146';
-import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261110-146';
-import { firstSqlKeyword, explainStatementKeyword, explainStatementBody, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261110-146';
-import { migrateProgress, getTrackProgress, findNextLesson } from './progress-utils.js?v=20261110-146';
-import { projects, projectTaskCount } from './projects.js?v=20261110-146';
-import { createBackup, parseBackup, restoreBackup } from './backup-utils.js?v=20261110-146';
-import { buildQuizOptionOrders, quizOptionKey } from './quiz-options.js?v=20261110-146';
+import { modules, learningTracks, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261111-147';
+import { cumulativeCheckpoints } from './checkpoints.js?v=20261111-147';
+import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261111-147';
+import { firstSqlKeyword, explainStatementKeyword, explainStatementBody, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261111-147';
+import { migrateProgress, getTrackProgress, findNextLesson } from './progress-utils.js?v=20261111-147';
+import { projects, projectTaskCount } from './projects.js?v=20261111-147';
+import { createBackup, parseBackup, restoreBackup } from './backup-utils.js?v=20261111-147';
+import { buildQuizOptionOrders, quizOptionKey } from './quiz-options.js?v=20261111-147';
 
 const $ = (s, root=document) => root.querySelector(s);
 const $$ = (s, root=document) => [...root.querySelectorAll(s)];
@@ -33,7 +34,7 @@ const state = {
   completedLessons:new Set(), completedExercises:new Set(), practiceTrack:'core',
   projectId:'ecommerce', projectTaskId:'ecommerce-monthly-net-revenue', completedProjectTasks:new Set(), projectDrafts:{}, projectNotes:{}, projectReviews:{}, projectSolutionVisible:false,
   db:null, expected:new Map(), randomTask:null, randomTopics:new Set(sandboxTaskTopics.map(topic=>topic.id)),
-  engineReady:false, engineLoading:false, engineError:null, currentRows:[], quizAnswers:{}, exerciseQuizAnswers:{}, assessmentTrack:'core', assessmentModuleId:null, assessmentAnswers:{}, assessmentSubmitted:false, assessmentResults:{}, editors:new Map(), navigationScrollReset:false, theme:localStorage.getItem('sql-academy-theme') || 'dark'
+  engineReady:false, engineLoading:false, engineError:null, currentRows:[], quizAnswers:{}, exerciseQuizAnswers:{}, assessmentTrack:'core', assessmentModuleId:null, assessmentAnswers:{}, assessmentSubmitted:false, assessmentResults:{}, checkpointId:null, checkpointTaskIndex:0, completedCheckpointTasks:new Set(), checkpointDrafts:{}, editors:new Map(), navigationScrollReset:false, theme:localStorage.getItem('sql-academy-theme') || 'dark'
 };
 const moduleById = id => modules.find(m=>m.id===id);
 const lessonKey = (mid,idx)=>moduleById(mid)?.lessons[idx]?.id || mid+':'+idx;
@@ -51,13 +52,15 @@ const loadProgress = () => {
     state.quizAnswers=progress.quizAnswers;
     state.exerciseQuizAnswers=progress.exerciseQuizAnswers;
     state.assessmentResults=progress.assessmentResults;
+    state.completedCheckpointTasks=new Set(progress.checkpointTasks||[]);
+    state.checkpointDrafts=progress.checkpointDrafts||{};
     if(migrated.changed)localStorage.setItem(STORE_KEY,JSON.stringify(progress));
   } catch (error) {
     console.warn('Could not restore SQL Academy progress:',error);
   }
 };
 const saveProgress = () => {
-  localStorage.setItem(STORE_KEY,JSON.stringify({lessons:[...state.completedLessons],exercises:[...state.completedExercises],quizAnswers:state.quizAnswers,exerciseQuizAnswers:state.exerciseQuizAnswers,assessmentResults:state.assessmentResults}));
+  localStorage.setItem(STORE_KEY,JSON.stringify({lessons:[...state.completedLessons],exercises:[...state.completedExercises],quizAnswers:state.quizAnswers,exerciseQuizAnswers:state.exerciseQuizAnswers,assessmentResults:state.assessmentResults,checkpointTasks:[...state.completedCheckpointTasks],checkpointDrafts:state.checkpointDrafts}));
   updateProgress();
 };
 const loadProjectState = () => {
@@ -123,7 +126,8 @@ const routeUrl = () => {
   }
   if(state.view==='assessment'){
     params.set('track',state.assessmentTrack);
-    if(state.assessmentModuleId)params.set('module',state.assessmentModuleId);
+    if(state.checkpointId){params.set('checkpoint',state.checkpointId);params.set('task',cumulativeCheckpoints.find(item=>item.id===state.checkpointId)?.tasks[state.checkpointTaskIndex]?.id||'');}
+    else if(state.assessmentModuleId)params.set('module',state.assessmentModuleId);
   }
   if(state.view==='project'){
     params.set('project',state.projectId);
@@ -162,7 +166,10 @@ const applyRoute = () => {
     const track=learningTracks.find(item=>item.id===params.get('track'));
     if(track)state.assessmentTrack=track.id;
     const module=moduleById(params.get('module'));
-    state.assessmentModuleId=module?.track===state.assessmentTrack?module.id:null;
+    const checkpoint=cumulativeCheckpoints.find(item=>item.id===params.get('checkpoint')&&item.track===state.assessmentTrack);
+    state.checkpointId=checkpoint?.id||null;
+    state.checkpointTaskIndex=checkpoint?Math.max(0,checkpoint.tasks.findIndex(task=>task.id===params.get('task'))):0;
+    state.assessmentModuleId=checkpoint?null:module?.track===state.assessmentTrack?module.id:null;
   }
   if(view==='project'){
     const project=projects.find(item=>item.id===params.get('project'));
@@ -274,6 +281,8 @@ function renderProgress() {
     const completedTrackExercises=trackExercises.filter(exercise=>state.completedExercises.has(exercise.id)).length;
     const trackAssessments=trackModules.filter(module=>module.quiz?.length);
     const passedTrackAssessments=trackAssessments.filter(module=>state.assessmentResults[module.id]?.passed).length;
+    const trackCheckpoints=cumulativeCheckpoints.filter(item=>item.track===track.id);
+    const passedCheckpoints=trackCheckpoints.filter(item=>item.tasks.every(task=>state.completedCheckpointTasks.has(task.id))).length;
     const moduleRows=trackModules.map((module,index)=>{
       const lessonDone=progressForModule(module);
       const moduleExercises=exercises.filter(exercise=>exercise.m===module.id);
@@ -295,6 +304,7 @@ function renderProgress() {
         <span><strong>${lessonProgress.completed}/${lessonProgress.total}</strong> уроков</span>
         <span><strong>${completedTrackExercises}/${trackExercises.length}</strong> практик</span>
         <span><strong>${passedTrackAssessments}/${trackAssessments.length}</strong> контрольных</span>
+        ${trackCheckpoints.length?`<span><strong>${passedCheckpoints}/${trackCheckpoints.length}</strong> рубежных SQL-зачётов</span>`:''}
       </div>
       <details class="progress-course-details">
         <summary>Показать прогресс по модулям <span>${trackModules.length} модулей</span></summary>
@@ -663,12 +673,86 @@ function renderStudy() {
  <div class="lesson-card"><div class="eyebrow">${esc(m.stage)} · УРОК ${state.lessonIndex+1} ИЗ ${m.lessons.length}</div><h1>${esc(l.title)}</h1>${lessonBody(l,m)}${renderLessonQuiz(l)}${practice?`<div class="lesson-footer lesson-practice-links">${practice}</div>`:''}<div class="lesson-footer"><button class="btn primary" data-action="complete-lesson">${done?'✓ Урок завершён':'Отметить урок завершённым'}</button></div></div>${outcomes}
  <div class="lesson-card"><div class="lesson-footer"><button class="btn" data-action="prev-lesson" ${state.lessonIndex===0?'disabled':''}>← Предыдущий урок</button><button class="btn primary" data-action="next-lesson" ${trackEnd?'disabled':''}>${trackEnd?(m.track==='core'?'Курс SQL для аналитика завершён':'Курс PostgreSQL завершён'):state.lessonIndex===m.lessons.length-1?'Следующий модуль →':'Следующий урок →'}</button></div></div></article></div>`;
 }
+function renderCheckpointCards(trackId) {
+  const checkpoints=cumulativeCheckpoints.filter(item=>item.track===trackId);
+  if(!checkpoints.length)return '';
+  return `<section class="checkpoint-section" aria-label="Накопительные SQL-проверки">
+    <div class="section-row"><h2>Накопительные SQL-контрольные</h2><span>Зачёт только за выполненный SQL</span></div>
+    <p class="checkpoint-intro">Эти работы объединяют несколько пройденных тем. Выбирай способ решения сам: подсказок по синтаксису здесь нет. Прохождение не блокирует чтение следующих уроков.</p>
+    <div class="checkpoint-grid">${checkpoints.map(checkpoint=>{
+      const done=checkpoint.tasks.filter(task=>state.completedCheckpointTasks.has(task.id)).length;
+      const after=moduleById(checkpoint.afterModule);
+      return `<button type="button" class="checkpoint-card" data-checkpoint="${esc(checkpoint.id)}">
+        <span class="eyebrow">${done===checkpoint.tasks.length?'НАВЫК ПОДТВЕРЖДЁН':'ПРАКТИЧЕСКАЯ КОНТРОЛЬНАЯ'}</span>
+        <strong>${esc(checkpoint.title)}</strong>
+        <span>${esc(checkpoint.description)}</span>
+        <small>Рекомендуется после модуля «${esc(after?.title||checkpoint.afterModule)}»</small>
+        <span class="checkpoint-count">${done} из ${checkpoint.tasks.length} заданий · ${done===checkpoint.tasks.length?'Зачёт':'Открыть'}</span>
+      </button>`;
+    }).join('')}</div>
+  </section>`;
+}
+function renderCheckpoint(checkpoint) {
+  const index=Math.min(state.checkpointTaskIndex,checkpoint.tasks.length-1);
+  state.checkpointTaskIndex=index;
+  const task=checkpoint.tasks[index];
+  const done=checkpoint.tasks.filter(item=>state.completedCheckpointTasks.has(item.id)).length;
+  return pageHead('НАКОПИТЕЛЬНАЯ КОНТРОЛЬНАЯ',esc(checkpoint.title),esc(checkpoint.description),'<button class="btn" data-action="checkpoint-back">← К контрольным</button>')+
+    renderCourseSubnav('assessment',checkpoint.track)+
+    `<section class="checkpoint-work card">
+      <div class="checkpoint-work-header">
+        <span class="eyebrow">ПРАКТИЧЕСКОЕ ИСПЫТАНИЕ</span><h2>${esc(checkpoint.title)}</h2>
+        <p>Объединяй известные конструкции. Каждая задача проверяется по результату, а не по тексту запроса.</p>
+        <div class="checkpoint-skill-list">${checkpoint.skills.map(skill=>`<span>${esc(skill)}</span>`).join('')}</div>
+        <strong id="checkpoint-count">${done}/${checkpoint.tasks.length} SQL-задач подтверждено${done===checkpoint.tasks.length?' · Зачёт получен':''}</strong>
+      </div>
+      <div class="checkpoint-task-nav">${checkpoint.tasks.map((item,taskIndex)=>`<button type="button" class="btn checkpoint-task ${taskIndex===index?'primary':''}" data-checkpoint-task="${esc(item.id)}" ${taskIndex===index?'aria-current="step"':''}>${state.completedCheckpointTasks.has(item.id)?'✓ ':''}Задача ${taskIndex+1}</button>`).join('')}</div>
+      <div class="task-card"><div class="eyebrow">ЗАДАНИЕ ${index+1} ИЗ ${checkpoint.tasks.length}</div><h3>${esc(task.title)}</h3><p>${esc(task.prompt)}</p></div>
+      ${editor(state.checkpointDrafts[task.id]||'','checkpoint-editor','Напиши свой SQL-запрос. Черновик сохраняется автоматически.')}
+      <div class="editor-actions checkpoint-actions"><button class="btn primary" data-action="check-checkpoint-task" ${state.engineReady?'':'disabled'}>Проверить SQL</button><button class="btn" data-action="checkpoint-back">К списку контрольных</button></div>
+      <div id="checkpoint-feedback" role="status" aria-live="polite"></div>
+      <p class="checkpoint-note">Результаты независимы от отметок о чтении уроков и сохраняются в резервной копии.</p>
+    </section>`;
+}
+async function checkCheckpointTask() {
+  const checkpoint=cumulativeCheckpoints.find(item=>item.id===state.checkpointId);
+  const task=checkpoint?.tasks[state.checkpointTaskIndex];
+  const feedback=$('#checkpoint-feedback');
+  if(!task||!feedback)return;
+  if(!state.engineReady||!state.db){feedback.innerHTML='<div class="feedback fail">Сначала дождись запуска PostgreSQL.</div>';return;}
+  const sql=getEditorValue('checkpoint-editor').trim();
+  if(!sql){feedback.innerHTML='<div class="feedback fail">Сначала напиши SQL-запрос.</div>';return;}
+  try {
+    const parts=splitStatements(sql);
+    if(parts.length!==1||readOnlyQueryKeyword(parts[0])!=='SELECT')throw new Error('Нужен один читающий SELECT или WITH ... SELECT.');
+    const actual=normalizeResult(await state.db.query(parts[0]));
+    const expected=normalizeResult(await state.db.query(task.solution));
+    const passed=resultMatches(actual,expected,Boolean(task.orderMatters));
+    if(passed) {
+      state.completedCheckpointTasks.add(task.id);
+      saveProgress();
+      const button=$(`[data-checkpoint-task="${task.id}"]`);
+      if(button&&!button.textContent.trim().startsWith('✓'))button.textContent='✓ '+button.textContent.trim();
+      const count=checkpoint.tasks.filter(item=>state.completedCheckpointTasks.has(item.id)).length;
+      const counter=$('#checkpoint-count');
+      if(counter)counter.textContent=`${count}/${checkpoint.tasks.length} SQL-задач подтверждено${count===checkpoint.tasks.length?' · Зачёт получен':''}`;
+      feedback.innerHTML='<div class="feedback success"><strong>Верно.</strong><p>Столбцы, строки и значения результата соответствуют условию. Задача зачтена.</p></div>';
+    } else {
+      const sameColumns=JSON.stringify([...actual.columns].sort())===JSON.stringify([...expected.columns].sort());
+      const reason=!sameColumns?'Состав или названия столбцов не совпадают.':actual.rows.length!==expected.rows.length?`Количество строк отличается: ${actual.rows.length} вместо ${expected.rows.length}.`:'Число строк совпало, но значения, повторения или порядок строк отличаются.';
+      feedback.innerHTML=`<div class="feedback fail"><strong>Пока не совпало.</strong><p>${esc(reason)} Проверь требования задачи и зерно результата.</p></div>`;
+    }
+  } catch(error) {feedback.innerHTML='<div class="feedback fail"><strong>Ошибка SQL:</strong> '+esc(error.message)+'</div>';}
+}
 function renderAssessment() {
   const available=moduleLessons(state.assessmentTrack);
   const selected=modules.find(module=>module.id===state.assessmentModuleId);
+  const checkpoint=cumulativeCheckpoints.find(item=>item.id===state.checkpointId&&item.track===state.assessmentTrack);
+  if(checkpoint)return renderCheckpoint(checkpoint);
   if(!selected){
     return pageHead('ПРОВЕРКА ЗНАНИЙ','Контрольные работы','Проверь понимание целого модуля. Каждый тест содержит вопросы из отдельного банка; лучший результат сохраняется в браузере.') +
       renderCourseSubnav('assessment',state.assessmentTrack) +
+      renderCheckpointCards(state.assessmentTrack) +
       '<div class="assessment-track-tabs">' +
       '<button class="track-tab '+(state.assessmentTrack==='core'?'active':'')+'" data-assessment-track="core"><strong>SQL для аналитика данных</strong><span>Самостоятельный курс</span></button>' +
       '<button class="track-tab '+(state.assessmentTrack==='postgresql'?'active':'')+'" data-assessment-track="postgresql"><strong>PostgreSQL</strong><span>Самостоятельный курс</span></button></div>' +
@@ -803,16 +887,18 @@ function renderGlossary() {
 function bindPage(){
  $$('.sql-editor').forEach(textarea=>{
   if(window.CodeMirror){
-   const shortcut=textarea.id==='exercise-editor'?'run-exercise':textarea.id==='project-editor'?'check-project-task':'run-playground';
+   const shortcut=textarea.id==='exercise-editor'?'run-exercise':textarea.id==='project-editor'?'check-project-task':textarea.id==='checkpoint-editor'?'check-checkpoint-task':'run-playground';
    const cm=window.CodeMirror.fromTextArea(textarea,{mode:'text/x-pgsql',theme:'material-darker',lineNumbers:true,indentUnit:4,tabSize:4,indentWithTabs:false,lineWrapping:false,matchBrackets:true,viewportMargin:Infinity,extraKeys:{'Ctrl-Enter':()=>handleAction(shortcut),'Cmd-Enter':()=>handleAction(shortcut),'Tab':'indentMore','Shift-Tab':'indentLess'}});
    state.editors.set(textarea.id,cm);
    if(textarea.id==='playground-editor')cm.on('change',instance=>localStorage.setItem(EDITOR_KEY,instance.getValue()));
    if(textarea.id==='project-editor'){const taskId=state.projectTaskId;cm.on('change',instance=>saveProjectDraft(taskId,instance.getValue()));}
+   if(textarea.id==='checkpoint-editor'){const taskId=cumulativeCheckpoints.find(item=>item.id===state.checkpointId)?.tasks[state.checkpointTaskIndex]?.id;cm.on('change',instance=>{if(taskId){state.checkpointDrafts[taskId]=instance.getValue();saveProgress();}});}
    requestAnimationFrame(()=>cm.refresh());
   }else{
    textarea.addEventListener('keydown',editorKeys);
    if(textarea.id==='playground-editor')textarea.addEventListener('input',()=>localStorage.setItem(EDITOR_KEY,textarea.value));
    if(textarea.id==='project-editor'){const taskId=state.projectTaskId;textarea.addEventListener('input',()=>saveProjectDraft(taskId,textarea.value));}
+   if(textarea.id==='checkpoint-editor'){const taskId=cumulativeCheckpoints.find(item=>item.id===state.checkpointId)?.tasks[state.checkpointTaskIndex]?.id;textarea.addEventListener('input',()=>{if(taskId){state.checkpointDrafts[taskId]=textarea.value;saveProgress();}});}
   }
  });
  const exSearch=$('#exercise-search');if(exSearch)exSearch.addEventListener('input',()=>{$$('.exercise-item').forEach(b=>b.style.display=b.textContent.toLowerCase().includes(exSearch.value.toLowerCase())?'flex':'none');});
@@ -821,7 +907,7 @@ function bindPage(){
 }
 function editorKeys(e) {
   if(e.key==='Tab'){e.preventDefault();const a=e.target.selectionStart,b=e.target.selectionEnd;e.target.setRangeText('  ',a,b,'end');}
-  if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();handleAction(e.target.id==='exercise-editor'?'run-exercise':e.target.id==='project-editor'?'check-project-task':'run-playground');}
+  if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();handleAction(e.target.id==='exercise-editor'?'run-exercise':e.target.id==='project-editor'?'check-project-task':e.target.id==='checkpoint-editor'?'check-checkpoint-task':'run-playground');}
 }
 function downloadProgressBackup() {
   const backup = createBackup(localStorage);
@@ -892,7 +978,9 @@ function handleAction(action) {
     if(project.tasks[index+1]){state.projectTaskId=project.tasks[index+1].id;state.projectSolutionVisible=false;render();}
     return;
   }
-  if(action==='assessment-back'){state.assessmentModuleId=null;state.assessmentAnswers={};state.assessmentSubmitted=false;render();return;}
+  if(action==='check-checkpoint-task'){checkCheckpointTask();return;}
+  if(action==='checkpoint-back'){state.checkpointId=null;render();return;}
+  if(action==='assessment-back'){state.checkpointId=null;state.assessmentModuleId=null;state.assessmentAnswers={};state.assessmentSubmitted=false;render();return;}
   if(action==='assessment-retry'){state.assessmentAnswers={};state.assessmentSubmitted=false;render();return;}
   if(action==='assessment-submit'){
     const assessment=modules.find(module=>module.id===state.assessmentModuleId),bank=assessment?.quiz||[];
@@ -1138,7 +1226,7 @@ async function prepareExpected() {
   }
 }
 function rerenderPreservingEditor() {
-  const editorId=state.view==='practice'?'exercise-editor':state.view==='playground'?'playground-editor':null;
+  const editorId=state.view==='practice'?'exercise-editor':state.view==='playground'?'playground-editor':state.view==='assessment'&&state.checkpointId?'checkpoint-editor':null;
   const editorValue=editorId&&$('#'+editorId)?getEditorValue(editorId):null;
   render();
   if(editorId&&editorValue!==null)setEditorValue(editorId,editorValue);
@@ -1190,7 +1278,7 @@ document.addEventListener('input',event=>{
  saveProjectNote(field.dataset.projectConclusion,field.value);
 });
 document.addEventListener('click',event=>{
- const el=event.target.closest('[data-course-nav],[data-nav],[data-open-course],[data-open-project],[data-project-task],[data-project-review],[data-practice-track],[data-track],[data-module],[data-assessment-track],[data-assessment-module],[data-assessment-answer],[data-lesson],[data-exercise],[data-action],[data-copy-code],[data-sample],[data-quiz-answer],[data-exercise-quiz-answer]');if(!el)return;
+ const el=event.target.closest('[data-course-nav],[data-nav],[data-open-course],[data-open-project],[data-project-task],[data-project-review],[data-practice-track],[data-track],[data-module],[data-assessment-track],[data-assessment-module],[data-assessment-answer],[data-checkpoint],[data-checkpoint-task],[data-lesson],[data-exercise],[data-action],[data-copy-code],[data-sample],[data-quiz-answer],[data-exercise-quiz-answer]');if(!el)return;
  if(el.dataset.courseNav){
   const track=learningTracks.find(item=>item.id===el.dataset.courseTrack);
   if(!track)return;
@@ -1204,7 +1292,7 @@ document.addEventListener('click',event=>{
     state.moduleId=targetModule.id;
     state.lessonIndex=Math.min(state.lessonIndex,targetModule.lessons.length-1);
   }
-  if(el.dataset.courseNav==='assessment')state.assessmentModuleId=null;
+  if(el.dataset.courseNav==='assessment'){state.assessmentModuleId=null;state.checkpointId=null;}
   go(el.dataset.courseNav);
   return;
  }
@@ -1224,9 +1312,11 @@ document.addEventListener('click',event=>{
   }
   return;
  }
- if(el.dataset.practiceTrack){const track=learningTracks.find(item=>item.id===el.dataset.practiceTrack);if(track){state.practiceTrack=track.id;const first=exercises.find(exercise=>moduleById(exercise.m)?.track===track.id);if(first)state.exerciseId=first.id;render();}return;}
- if(el.dataset.track){state.roadmapTrack=el.dataset.track;render();return;} if(el.dataset.assessmentTrack){state.assessmentTrack=el.dataset.assessmentTrack;state.assessmentModuleId=null;render();return;}
- if(el.dataset.assessmentModule){state.assessmentModuleId=el.dataset.assessmentModule;state.assessmentAnswers={};state.assessmentSubmitted=false;go('assessment');return;}
+ if(el.dataset.checkpoint){const checkpoint=cumulativeCheckpoints.find(item=>item.id===el.dataset.checkpoint);if(checkpoint){state.checkpointId=checkpoint.id;state.checkpointTaskIndex=0;state.assessmentModuleId=null;state.assessmentTrack=checkpoint.track;go('assessment');}return;}
+  if(el.dataset.checkpointTask){const checkpoint=cumulativeCheckpoints.find(item=>item.id===state.checkpointId);const index=checkpoint?.tasks.findIndex(item=>item.id===el.dataset.checkpointTask)??-1;if(index>=0){state.checkpointTaskIndex=index;render();}return;}
+  if(el.dataset.practiceTrack){const track=learningTracks.find(item=>item.id===el.dataset.practiceTrack);if(track){state.practiceTrack=track.id;const first=exercises.find(exercise=>moduleById(exercise.m)?.track===track.id);if(first)state.exerciseId=first.id;render();}return;}
+ if(el.dataset.track){state.roadmapTrack=el.dataset.track;render();return;} if(el.dataset.assessmentTrack){state.assessmentTrack=el.dataset.assessmentTrack;state.checkpointId=null;state.assessmentModuleId=null;render();return;}
+ if(el.dataset.assessmentModule){state.checkpointId=null;state.assessmentModuleId=el.dataset.assessmentModule;state.assessmentAnswers={};state.assessmentSubmitted=false;go('assessment');return;}
  if(el.dataset.assessmentAnswer){if(!state.assessmentSubmitted){const [qi,oi]=el.dataset.assessmentAnswer.split(':').map(Number);state.assessmentAnswers[qi]=oi;render();}return;}
  if(el.dataset.module){state.moduleId=el.dataset.module;state.lessonIndex=0;go('study');return;}
  if(el.dataset.lesson){const [mid,li]=el.dataset.lesson.split(':');state.moduleId=mid;state.lessonIndex=Number(li);render();return;}

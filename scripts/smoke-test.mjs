@@ -43,9 +43,11 @@ for (const track of learningTracks) {
 assert.ok(appSource.includes('buildQuizOptionOrders(modules)') && appSource.includes('quizOptionKey(question,selected.track)'), 'Lesson and module assessments must use deterministic shuffled options while retaining original answer indexes');
 
 const importedAssetVersions = [...appSource.matchAll(/from\s+['"]\.\/[^'"]+\.js\?v=([^'"]+)['"]/g)].map(match => match[1]);
-assert.equal(importedAssetVersions.length, 7, 'Application must import the curriculum, sandbox, SQL, progress, projects, backup, and quiz option modules');
+assert.equal(importedAssetVersions.length, 8, 'Application must import curriculum, cumulative checkpoints, sandbox, SQL, progress, projects, backup, and quiz options');
 assert.ok(importedAssetVersions.every(version => version === buildVersion), 'Local JavaScript imports must use the current release build to avoid stale cached curriculum and SQL utilities');
 assert.ok(appSource.includes("from './backup-utils.js?v=" + buildVersion + "'"), 'The backup utility must be loaded from the current app build');
+assert.ok(appSource.includes("from './checkpoints.js?v=" + buildVersion + "'"), 'Cumulative SQL checkpoint bank must use the current app build');
+assert.ok(appSource.includes('checkCheckpointTask()') && appSource.includes('renderCheckpointCards(state.assessmentTrack)'), 'Checkpoint results must be integrated into the existing assessments route');
 assert.ok(appSource.includes('data-action="export-backup"') && appSource.includes('data-action="import-backup"'), 'The dashboard must expose both backup actions');
 assert.ok(appSource.includes('prepareImportedBackup(backup)') && appSource.includes('restoreBackup(localStorage'), 'Import must normalize legacy progress and restore supported local state');
 

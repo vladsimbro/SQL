@@ -26,14 +26,15 @@ function validateStorage(storage) {
   }
   const progress = parseJson(storage['sql-academy-progress-v1'], {}, 'прогресс курсов');
   if (!isRecord(progress)) throw new TypeError('Прогресс курсов должен быть объектом.');
-  for (const field of ['lessons', 'exercises']) {
+  for (const field of ['lessons', 'exercises', 'checkpointTasks']) {
     if (progress[field] !== undefined && (!Array.isArray(progress[field]) || !progress[field].every(item => typeof item === 'string'))) {
       throw new TypeError('Некорректный список ' + field + ' в прогрессе курсов.');
     }
   }
-  for (const field of ['quizAnswers', 'exerciseQuizAnswers', 'assessmentResults']) {
+  for (const field of ['quizAnswers', 'exerciseQuizAnswers', 'assessmentResults', 'checkpointDrafts']) {
     if (progress[field] !== undefined && !isRecord(progress[field])) throw new TypeError('Некорректный раздел ' + field + ' в прогрессе курсов.');
   }
+  if (progress.checkpointDrafts !== undefined && !isStringRecord(progress.checkpointDrafts)) throw new TypeError('SQL-черновики рубежных контрольных должны быть строками.');
   const projectProgress = parseJson(storage['sql-academy-project-progress-v1'], [], 'прогресс проектов');
   if (!Array.isArray(projectProgress) || !projectProgress.every(item => typeof item === 'string')) throw new TypeError('Прогресс проектов должен быть списком идентификаторов.');
   const drafts = parseJson(storage['sql-academy-project-drafts-v1'], {}, 'SQL-черновики проектов');

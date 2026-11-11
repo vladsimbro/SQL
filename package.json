@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test:curriculum": "node scripts/smoke-test.mjs",
+    "test:curriculum": "node scripts/smoke-test.mjs && node scripts/cumulative-checkpoints-test.mjs",
     "test:browser": "node scripts/browser-smoke.mjs"
   },
   "devDependencies": {
