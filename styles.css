@@ -417,3 +417,29 @@ body{font-size:var(--font-md)}
 .checkpoint-note{font-size:10px;color:var(--muted);line-height:1.6;margin:16px 0 0}
 @media(max-width:760px){.checkpoint-grid{grid-template-columns:1fr}.checkpoint-work{padding:15px}.checkpoint-task-nav .btn{flex:1}.checkpoint-actions .btn{flex:1}}
 @media(prefers-reduced-motion:reduce){.checkpoint-card{transition:none}.checkpoint-card:hover{transform:none}}
+
+
+/* Full textbook: early practice, readable lesson outcomes, experiments and self-check. */
+.lesson-outcomes{margin:16px 0 23px;padding:15px 18px;background:var(--panel2);border:1px solid var(--line);border-radius:var(--radius-md)}
+.lesson-outcomes strong{font-size:12px;color:var(--accent2)}
+.lesson-outcomes ul{margin:7px 0 0;padding-left:19px;color:var(--soft);font-size:12px}
+.lesson-explanation{max-width:78ch}
+.lesson-workshop{margin:27px 0 24px;padding:21px;background:var(--panel2);border:1px solid var(--line);border-radius:var(--radius-lg)}
+.lesson-workshop>.eyebrow{margin-bottom:5px}
+.lesson-workshop h2{margin:6px 0 8px;font-size:18px}
+.lesson-workshop .workshop-context{color:var(--soft);line-height:1.75;font-size:12px;margin:6px 0 14px}
+.workshop-prompt{margin:15px 0;padding:15px 17px;border-radius:var(--radius-md);background:var(--panel);border-left:3px solid var(--accent2)}
+.workshop-prompt strong{font-size:12px;color:var(--accent2)}
+.workshop-prompt p{font-size:13px;line-height:1.75;margin:6px 0 0;color:var(--text)}
+.workshop-safety{padding:14px 16px;border:1px solid var(--line);border-radius:var(--radius-md);background:var(--panel)}
+.workshop-safety strong{font-size:12px}.workshop-safety p{font-size:11px;line-height:1.7;color:var(--soft);margin:5px 0}
+.workshop-note-label{display:block;margin:17px 0 7px;font-weight:700;font-size:12px}
+.workshop-note{width:100%;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-md);padding:12px;resize:vertical;color:var(--text);font-size:12px;min-height:90px;line-height:1.6}
+.workshop-note:focus-visible{outline:2px solid var(--focus-ring);outline-offset:2px}
+.workshop-save-hint{display:block;margin-top:6px;color:var(--muted);font-size:10px;line-height:1.6}
+.workshop-reference{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
+.workshop-reference summary{cursor:pointer;color:var(--accent2);font-size:11px;font-weight:700}
+.workshop-reference p{margin:8px 0;font-size:11px;line-height:1.7}
+.lesson-workshop .editor-card{margin-top:12px}
+.lesson-workshop .result-panel{margin-top:12px}
+@media(max-width:760px){.lesson-workshop{padding:14px}.workshop-prompt{padding:12px}.lesson-outcomes{padding:13px}.lesson-workshop .editor-actions>.btn{flex:1}}
