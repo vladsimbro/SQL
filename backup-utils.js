@@ -31,10 +31,13 @@ function validateStorage(storage) {
       throw new TypeError('Некорректный список ' + field + ' в прогрессе курсов.');
     }
   }
-  for (const field of ['quizAnswers', 'exerciseQuizAnswers', 'assessmentResults', 'checkpointDrafts']) {
+  for (const field of ['quizAnswers', 'exerciseQuizAnswers', 'assessmentResults', 'checkpointDrafts', 'lessonLabDrafts', 'lessonLabNotes']) {
     if (progress[field] !== undefined && !isRecord(progress[field])) throw new TypeError('Некорректный раздел ' + field + ' в прогрессе курсов.');
   }
   if (progress.checkpointDrafts !== undefined && !isStringRecord(progress.checkpointDrafts)) throw new TypeError('SQL-черновики рубежных контрольных должны быть строками.');
+  for (const field of ['lessonLabDrafts', 'lessonLabNotes']) {
+    if (progress[field] !== undefined && !isStringRecord(progress[field])) throw new TypeError('Некорректный формат заметок или SQL-черновиков уроков: '+field);
+  }
   const projectProgress = parseJson(storage['sql-academy-project-progress-v1'], [], 'прогресс проектов');
   if (!Array.isArray(projectProgress) || !projectProgress.every(item => typeof item === 'string')) throw new TypeError('Прогресс проектов должен быть списком идентификаторов.');
   const drafts = parseJson(storage['sql-academy-project-drafts-v1'], {}, 'SQL-черновики проектов');
