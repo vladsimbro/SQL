@@ -281,6 +281,8 @@ function renderProgress() {
     const completedTrackExercises=trackExercises.filter(exercise=>state.completedExercises.has(exercise.id)).length;
     const trackAssessments=trackModules.filter(module=>module.quiz?.length);
     const passedTrackAssessments=trackAssessments.filter(module=>state.assessmentResults[module.id]?.passed).length;
+    const trackCheckpoints=cumulativeCheckpoints.filter(item=>item.track===track.id);
+    const passedCheckpoints=trackCheckpoints.filter(item=>item.tasks.every(task=>state.completedCheckpointTasks.has(task.id))).length;
     const moduleRows=trackModules.map((module,index)=>{
       const lessonDone=progressForModule(module);
       const moduleExercises=exercises.filter(exercise=>exercise.m===module.id);
@@ -302,6 +304,7 @@ function renderProgress() {
         <span><strong>${lessonProgress.completed}/${lessonProgress.total}</strong> уроков</span>
         <span><strong>${completedTrackExercises}/${trackExercises.length}</strong> практик</span>
         <span><strong>${passedTrackAssessments}/${trackAssessments.length}</strong> контрольных</span>
+        ${trackCheckpoints.length?`<span><strong>${passedCheckpoints}/${trackCheckpoints.length}</strong> рубежных SQL-зачётов</span>`:''}
       </div>
       <details class="progress-course-details">
         <summary>Показать прогресс по модулям <span>${trackModules.length} модулей</span></summary>
@@ -884,16 +887,18 @@ function renderGlossary() {
 function bindPage(){
  $$('.sql-editor').forEach(textarea=>{
   if(window.CodeMirror){
-   const shortcut=textarea.id==='exercise-editor'?'run-exercise':textarea.id==='project-editor'?'check-project-task':'run-playground';
+   const shortcut=textarea.id==='exercise-editor'?'run-exercise':textarea.id==='project-editor'?'check-project-task':textarea.id==='checkpoint-editor'?'check-checkpoint-task':'run-playground';
    const cm=window.CodeMirror.fromTextArea(textarea,{mode:'text/x-pgsql',theme:'material-darker',lineNumbers:true,indentUnit:4,tabSize:4,indentWithTabs:false,lineWrapping:false,matchBrackets:true,viewportMargin:Infinity,extraKeys:{'Ctrl-Enter':()=>handleAction(shortcut),'Cmd-Enter':()=>handleAction(shortcut),'Tab':'indentMore','Shift-Tab':'indentLess'}});
    state.editors.set(textarea.id,cm);
    if(textarea.id==='playground-editor')cm.on('change',instance=>localStorage.setItem(EDITOR_KEY,instance.getValue()));
    if(textarea.id==='project-editor'){const taskId=state.projectTaskId;cm.on('change',instance=>saveProjectDraft(taskId,instance.getValue()));}
+   if(textarea.id==='checkpoint-editor'){const taskId=cumulativeCheckpoints.find(item=>item.id===state.checkpointId)?.tasks[state.checkpointTaskIndex]?.id;cm.on('change',instance=>{if(taskId){state.checkpointDrafts[taskId]=instance.getValue();saveProgress();}});}
    requestAnimationFrame(()=>cm.refresh());
   }else{
    textarea.addEventListener('keydown',editorKeys);
    if(textarea.id==='playground-editor')textarea.addEventListener('input',()=>localStorage.setItem(EDITOR_KEY,textarea.value));
    if(textarea.id==='project-editor'){const taskId=state.projectTaskId;textarea.addEventListener('input',()=>saveProjectDraft(taskId,textarea.value));}
+   if(textarea.id==='checkpoint-editor'){const taskId=cumulativeCheckpoints.find(item=>item.id===state.checkpointId)?.tasks[state.checkpointTaskIndex]?.id;textarea.addEventListener('input',()=>{if(taskId){state.checkpointDrafts[taskId]=textarea.value;saveProgress();}});}
   }
  });
  const exSearch=$('#exercise-search');if(exSearch)exSearch.addEventListener('input',()=>{$$('.exercise-item').forEach(b=>b.style.display=b.textContent.toLowerCase().includes(exSearch.value.toLowerCase())?'flex':'none');});
@@ -902,7 +907,7 @@ function bindPage(){
 }
 function editorKeys(e) {
   if(e.key==='Tab'){e.preventDefault();const a=e.target.selectionStart,b=e.target.selectionEnd;e.target.setRangeText('  ',a,b,'end');}
-  if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();handleAction(e.target.id==='exercise-editor'?'run-exercise':e.target.id==='project-editor'?'check-project-task':'run-playground');}
+  if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();handleAction(e.target.id==='exercise-editor'?'run-exercise':e.target.id==='project-editor'?'check-project-task':e.target.id==='checkpoint-editor'?'check-checkpoint-task':'run-playground');}
 }
 function downloadProgressBackup() {
   const backup = createBackup(localStorage);
@@ -973,7 +978,9 @@ function handleAction(action) {
     if(project.tasks[index+1]){state.projectTaskId=project.tasks[index+1].id;state.projectSolutionVisible=false;render();}
     return;
   }
-  if(action==='assessment-back'){state.assessmentModuleId=null;state.assessmentAnswers={};state.assessmentSubmitted=false;render();return;}
+  if(action==='check-checkpoint-task'){checkCheckpointTask();return;}
+  if(action==='checkpoint-back'){state.checkpointId=null;render();return;}
+  if(action==='assessment-back'){state.checkpointId=null;state.assessmentModuleId=null;state.assessmentAnswers={};state.assessmentSubmitted=false;render();return;}
   if(action==='assessment-retry'){state.assessmentAnswers={};state.assessmentSubmitted=false;render();return;}
   if(action==='assessment-submit'){
     const assessment=modules.find(module=>module.id===state.assessmentModuleId),bank=assessment?.quiz||[];
@@ -1219,7 +1226,7 @@ async function prepareExpected() {
   }
 }
 function rerenderPreservingEditor() {
-  const editorId=state.view==='practice'?'exercise-editor':state.view==='playground'?'playground-editor':null;
+  const editorId=state.view==='practice'?'exercise-editor':state.view==='playground'?'playground-editor':state.view==='assessment'&&state.checkpointId?'checkpoint-editor':null;
   const editorValue=editorId&&$('#'+editorId)?getEditorValue(editorId):null;
   render();
   if(editorId&&editorValue!==null)setEditorValue(editorId,editorValue);
@@ -1271,7 +1278,7 @@ document.addEventListener('input',event=>{
  saveProjectNote(field.dataset.projectConclusion,field.value);
 });
 document.addEventListener('click',event=>{
- const el=event.target.closest('[data-course-nav],[data-nav],[data-open-course],[data-open-project],[data-project-task],[data-project-review],[data-practice-track],[data-track],[data-module],[data-assessment-track],[data-assessment-module],[data-assessment-answer],[data-lesson],[data-exercise],[data-action],[data-copy-code],[data-sample],[data-quiz-answer],[data-exercise-quiz-answer]');if(!el)return;
+ const el=event.target.closest('[data-course-nav],[data-nav],[data-open-course],[data-open-project],[data-project-task],[data-project-review],[data-practice-track],[data-track],[data-module],[data-assessment-track],[data-assessment-module],[data-assessment-answer],[data-checkpoint],[data-checkpoint-task],[data-lesson],[data-exercise],[data-action],[data-copy-code],[data-sample],[data-quiz-answer],[data-exercise-quiz-answer]');if(!el)return;
  if(el.dataset.courseNav){
   const track=learningTracks.find(item=>item.id===el.dataset.courseTrack);
   if(!track)return;
@@ -1285,7 +1292,7 @@ document.addEventListener('click',event=>{
     state.moduleId=targetModule.id;
     state.lessonIndex=Math.min(state.lessonIndex,targetModule.lessons.length-1);
   }
-  if(el.dataset.courseNav==='assessment')state.assessmentModuleId=null;
+  if(el.dataset.courseNav==='assessment'){state.assessmentModuleId=null;state.checkpointId=null;}
   go(el.dataset.courseNav);
   return;
  }
@@ -1305,9 +1312,11 @@ document.addEventListener('click',event=>{
   }
   return;
  }
- if(el.dataset.practiceTrack){const track=learningTracks.find(item=>item.id===el.dataset.practiceTrack);if(track){state.practiceTrack=track.id;const first=exercises.find(exercise=>moduleById(exercise.m)?.track===track.id);if(first)state.exerciseId=first.id;render();}return;}
- if(el.dataset.track){state.roadmapTrack=el.dataset.track;render();return;} if(el.dataset.assessmentTrack){state.assessmentTrack=el.dataset.assessmentTrack;state.assessmentModuleId=null;render();return;}
- if(el.dataset.assessmentModule){state.assessmentModuleId=el.dataset.assessmentModule;state.assessmentAnswers={};state.assessmentSubmitted=false;go('assessment');return;}
+ if(el.dataset.checkpoint){const checkpoint=cumulativeCheckpoints.find(item=>item.id===el.dataset.checkpoint);if(checkpoint){state.checkpointId=checkpoint.id;state.checkpointTaskIndex=0;state.assessmentModuleId=null;state.assessmentTrack=checkpoint.track;go('assessment');}return;}
+  if(el.dataset.checkpointTask){const checkpoint=cumulativeCheckpoints.find(item=>item.id===state.checkpointId);const index=checkpoint?.tasks.findIndex(item=>item.id===el.dataset.checkpointTask)??-1;if(index>=0){state.checkpointTaskIndex=index;render();}return;}
+  if(el.dataset.practiceTrack){const track=learningTracks.find(item=>item.id===el.dataset.practiceTrack);if(track){state.practiceTrack=track.id;const first=exercises.find(exercise=>moduleById(exercise.m)?.track===track.id);if(first)state.exerciseId=first.id;render();}return;}
+ if(el.dataset.track){state.roadmapTrack=el.dataset.track;render();return;} if(el.dataset.assessmentTrack){state.assessmentTrack=el.dataset.assessmentTrack;state.checkpointId=null;state.assessmentModuleId=null;render();return;}
+ if(el.dataset.assessmentModule){state.checkpointId=null;state.assessmentModuleId=el.dataset.assessmentModule;state.assessmentAnswers={};state.assessmentSubmitted=false;go('assessment');return;}
  if(el.dataset.assessmentAnswer){if(!state.assessmentSubmitted){const [qi,oi]=el.dataset.assessmentAnswer.split(':').map(Number);state.assessmentAnswers[qi]=oi;render();}return;}
  if(el.dataset.module){state.moduleId=el.dataset.module;state.lessonIndex=0;go('study');return;}
  if(el.dataset.lesson){const [mid,li]=el.dataset.lesson.split(':');state.moduleId=mid;state.lessonIndex=Number(li);render();return;}
