@@ -443,3 +443,16 @@ body{font-size:var(--font-md)}
 .lesson-workshop .editor-card{margin-top:12px}
 .lesson-workshop .result-panel{margin-top:12px}
 @media(max-width:760px){.lesson-workshop{padding:14px}.workshop-prompt{padding:12px}.lesson-outcomes{padding:13px}.lesson-workshop .editor-actions>.btn{flex:1}}
+
+
+/* In-lesson automatically graded tasks, sharing the existing SQL practice engine. */
+.lesson-inline-practice{margin:24px 0;padding:20px;border:1px solid var(--line);border-radius:var(--radius-lg);background:var(--panel)}
+.lesson-inline-practice h2{font-size:18px;margin:7px 0 8px}
+.lesson-inline-practice>p{font-size:12px;line-height:1.7;color:var(--soft)}
+.lesson-inline-practice>.task-card{margin-top:14px;background:var(--panel2)}
+.lesson-inline-practice>.task-card strong{font-size:14px}
+.lesson-inline-practice>.task-card p{margin:8px 0}
+.lesson-inline-practice>.task-card .hint{font-size:12px}
+.lesson-inline-tabs{display:flex;gap:7px;flex-wrap:wrap;margin-top:14px}
+.lesson-inline-practice>small{display:block;color:var(--muted);font-size:10px;line-height:1.6;margin-top:10px}
+@media(max-width:760px){.lesson-inline-practice{padding:13px}.lesson-inline-tabs .btn{flex:1}.lesson-inline-practice .editor-actions>.btn{flex:1}}
