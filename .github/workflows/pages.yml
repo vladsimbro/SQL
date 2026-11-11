@@ -27,7 +27,7 @@ jobs:
       - name: Install test dependency
         run: npm install --no-package-lock
       - name: Check browser JavaScript syntax
-        run: node --check app.js && node --check backup-utils.js && node --check curriculum.js && node --check sandbox-tasks.js && node --check sql-utils.js && node --check progress-utils.js
+        run: node --check app.js && node --check checkpoints.js && node --check backup-utils.js && node --check curriculum.js && node --check sandbox-tasks.js && node --check sql-utils.js && node --check progress-utils.js
       - name: Validate curriculum and run all exercise solutions
         run: npm run test:curriculum
   deploy:
