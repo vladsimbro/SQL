@@ -733,6 +733,32 @@ function renderLessonQuiz(l) {
  return `<div class="quiz-question"><div class="quiz-question-title"><span>ВОПРОС ${index+1} ИЗ ${bank.length}</span><strong>${esc(q.question)}</strong></div><div class="quiz-options">${order.map((oi,displayIndex)=>`<button class="quiz-option ${answered&&oi===selected?(correct?'correct':'incorrect'):''} ${answered&&correct&&oi===q.answer?'answer-key':''}" data-quiz-answer="${index}:${oi}" ${answered&&correct?'disabled':''}><span class="quiz-radio">${String.fromCharCode(65+displayIndex)}</span><span>${esc(q.options[oi])}</span></button>`).join('')}</div>${answered?`<div class="quiz-feedback ${correct?'correct':'incorrect'}"><strong>${correct?'Верно!':'Пока нет.'}</strong> ${esc(q.explanation)}${!correct?' Попробуй ещё раз, опираясь на объяснение выше.':''}</div>`:''}</div>`;}).join('')}
  <div class="quiz-summary">${bank.every((q,index)=>state.quizAnswers[quizKey(state.moduleId,state.lessonIndex,index)]===q.answer)?'<strong>Проверка пройдена.</strong>':'Ответь на вопрос, чтобы закрепить материал.'}</div></section>`;
 }
+function renderLessonMastery(l,m,index) {
+  const read=state.completedLessons.has(lessonKey(m.id,index));
+  const questions=l.quiz||[];
+  const correct=questions.filter((q,qi)=>state.quizAnswers[quizKey(m.id,index,qi)]===q.answer).length;
+  const taskIds=l.practiceIds||[];
+  const passed=taskIds.filter(id=>state.completedExercises.has(id)).length;
+  const quizDone=questions.length>0&&correct===questions.length;
+  const practiceDone=taskIds.length>0&&passed===taskIds.length;
+  const summary=practiceDone&&quizDone?'Теория и практика пройдены на учебных заданиях':practiceDone?'SQL-практика пройдена, проверь понимание':taskIds.length?'Продолжай: теория и самостоятельный SQL':'В этом уроке пока нет автоматически проверяемых SQL-задач';
+  const indicators=[
+    {title:'Материал',value:read?'Прочитан':'Не отмечен',ready:read},
+    {title:'Понимание',value:questions.length?`${correct}/${questions.length} вопросов`:'Нет вопросов',ready:quizDone},
+    {title:'SQL-практика',value:taskIds.length?`${passed}/${taskIds.length} задач`:'Нет проверяемых задач',ready:practiceDone}
+  ];
+  return `<section class="lesson-mastery" id="lesson-mastery" aria-label="Статус освоения урока">
+    <div class="lesson-mastery-header"><strong>Освоение темы</strong><span>${esc(summary)}</span></div>
+    <div class="lesson-mastery-grid">${indicators.map(item=>`<div class="lesson-mastery-item ${item.ready?'ready':''}"><span>${esc(item.title)}</span><strong>${item.ready?'✓ ':''}${esc(item.value)}</strong></div>`).join('')}</div>
+    <small>Пройденная практика — не то же самое, что независимое подтверждение навыка. Его проверяют накопительные контрольные.</small>
+  </section>`;
+}
+function refreshLessonMastery() {
+  if(state.view!=='study')return;
+  const target=$('#lesson-mastery'),module=moduleById(state.moduleId),lesson=module?.lessons[state.lessonIndex];
+  if(target&&module&&lesson)target.outerHTML=renderLessonMastery(lesson,module,state.lessonIndex);
+}
+
 function renderStudy() {
  const m=moduleById(state.moduleId)||modules[0];state.lessonIndex=Math.max(0,Math.min(state.lessonIndex,m.lessons.length-1));
  const l=m.lessons[state.lessonIndex],done=state.completedLessons.has(lessonKey(m.id,state.lessonIndex)),trackEnd=moduleLessons(m.track).at(-1)?.id===m.id&&state.lessonIndex===m.lessons.length-1;
@@ -741,7 +767,7 @@ function renderStudy() {
  const linkedCheckpoints=cumulativeCheckpoints.filter(item=>item.afterModule===m.id&&state.lessonIndex===m.lessons.length-1);
  const outcomes=(l.outcomes||[]).length?`<div class="lesson-outcomes"><strong>После урока ты сможешь</strong><ul>${l.outcomes.map(item=>`<li>${esc(item)}</li>`).join('')}</ul></div>`:'';
  return `${pageHead(esc(activeTrack.title).toUpperCase()+' · МОДУЛЬ '+String(m.trackOrder).padStart(2,'0'),m.title,m.desc,'<button class="btn" data-nav="roadmap">← К программе курса</button>')}${renderCourseSubnav('study',m.track)}<div class="split-layout"><aside class="card lesson-sidebar"><h3>Содержание курса</h3>${sidebar}</aside><article class="lesson-content">
- <div class="lesson-card"><div class="eyebrow">${esc(m.stage)} · УРОК ${state.lessonIndex+1} ИЗ ${m.lessons.length}</div><h1>${esc(l.title)}</h1>${outcomes}${lessonBody(l,m)}${renderLessonWorkshop(l,m,state.lessonIndex)}${renderLessonQuiz(l)}${renderLessonInlinePractice(l)}${linkedCheckpoints.length?`<div class="lesson-checkpoint-links"><strong>Проверка знаний из нескольких модулей</strong><p>После этого блока проверь, как используешь темы вместе, без подсказок.</p>${linkedCheckpoints.map(item=>`<button class="btn primary" data-checkpoint="${esc(item.id)}">Перейти к накопительной контрольной</button>`).join('')}</div>`:''}<div class="lesson-reading-status"><small>Отметка чтения не заменяет сдачу SQL-практики и контрольных.</small><button class="btn" data-action="complete-lesson">${done?'✓ Материал прочитан':'Отметить материал прочитанным'}</button></div></div>
+ <div class="lesson-card"><div class="eyebrow">${esc(m.stage)} · УРОК ${state.lessonIndex+1} ИЗ ${m.lessons.length}</div><h1>${esc(l.title)}</h1>${outcomes}${renderLessonMastery(l,m,state.lessonIndex)}${lessonBody(l,m)}${renderLessonWorkshop(l,m,state.lessonIndex)}${renderLessonQuiz(l)}${renderLessonInlinePractice(l)}${linkedCheckpoints.length?`<div class="lesson-checkpoint-links"><strong>Проверка знаний из нескольких модулей</strong><p>После этого блока проверь, как используешь темы вместе, без подсказок.</p>${linkedCheckpoints.map(item=>`<button class="btn primary" data-checkpoint="${esc(item.id)}">Перейти к накопительной контрольной</button>`).join('')}</div>`:''}<div class="lesson-reading-status"><small>Отметка чтения не заменяет сдачу SQL-практики и контрольных.</small><button class="btn" data-action="complete-lesson">${done?'✓ Материал прочитан':'Отметить материал прочитанным'}</button></div></div>
  <div class="lesson-card"><div class="lesson-footer"><button class="btn" data-action="prev-lesson" ${state.lessonIndex===0?'disabled':''}>← Предыдущий урок</button><button class="btn primary" data-action="next-lesson" ${trackEnd?'disabled':''}>${trackEnd?(m.track==='core'?'Курс SQL для аналитика завершён':'Курс PostgreSQL завершён'):state.lessonIndex===m.lessons.length-1?'Следующий модуль →':'Следующий урок →'}</button></div></div></article></div>`;
 }
 function renderCheckpointCards(trackId) {
@@ -1167,7 +1193,7 @@ async function checkExercise(options={}) {
       if((ex.requiredPatterns||[]).some(pattern=>!new RegExp(pattern,'i').test(explainQuery))) throw new Error(ex.requirementsMessage||'Запрос не соответствует условию задания. Проверь таблицы, выбранные поля и фильтры.');
       const plan=await state.db.query(parts[0]);
       const elapsed=Math.round(performance.now()-started);
-      state.completedExercises.add(ex.id);saveProgress();
+      state.completedExercises.add(ex.id);saveProgress();refreshLessonMastery();
       results.innerHTML=renderResult(plan,elapsed);
       feedback.innerHTML='<div class="feedback success"><strong>План построен!</strong> EXPLAIN успешно разобрал заданный запрос. Изучи тип узла, оценку строк и стоимость выполнения.</div>';
       return;
@@ -1202,7 +1228,7 @@ async function checkExercise(options={}) {
     }
     const elapsed=Math.round(performance.now()-started);
     results.innerHTML=renderResult(result,elapsed)+((ex.mode==='mutation'||ex.mode==='transaction')?renderResult(observed,elapsed):'');
-    if(passed){state.completedExercises.add(ex.id);saveProgress();feedback.innerHTML='<div class="feedback success"><strong>Верно!</strong> Результат соответствует условию. Изменения проверялись в отдельной временной базе, поэтому основная учебная база не затронута.</div>';}
+    if(passed){state.completedExercises.add(ex.id);saveProgress();refreshLessonMastery();feedback.innerHTML='<div class="feedback success"><strong>Верно!</strong> Результат соответствует условию. Изменения проверялись в отдельной временной базе, поэтому основная учебная база не затронута.</div>';}
     else{feedback.innerHTML='<div class="feedback fail"><strong>Пока не совпало.</strong> Запрос выполнился, но фактический результат отличается от ожидаемого. Проверь условия, столбцы, ограничения, порядок команд и итоговое состояние таблиц.</div>';}
   }catch(err){feedback.innerHTML='<div class="feedback fail"><strong>Ошибка SQL:</strong> '+esc(err.message)+'</div>';results.innerHTML='';}
 }
