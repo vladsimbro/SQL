@@ -35,7 +35,7 @@ const state = {
   completedLessons:new Set(), completedExercises:new Set(), practiceTrack:'core',
   projectId:'ecommerce', projectTaskId:'ecommerce-monthly-net-revenue', completedProjectTasks:new Set(), projectDrafts:{}, projectNotes:{}, projectReviews:{}, projectSolutionVisible:false,
   db:null, expected:new Map(), randomTask:null, randomTopics:new Set(sandboxTaskTopics.map(topic=>topic.id)),
-  engineReady:false, engineLoading:false, engineError:null, currentRows:[], quizAnswers:{}, exerciseQuizAnswers:{}, assessmentTrack:'core', assessmentModuleId:null, assessmentAnswers:{}, assessmentSubmitted:false, assessmentResults:{}, checkpointId:null, checkpointTaskIndex:0, completedCheckpointTasks:new Set(), checkpointDrafts:{}, lessonLabDrafts:{}, lessonLabNotes:{}, editors:new Map(), navigationScrollReset:false, theme:localStorage.getItem('sql-academy-theme') || 'dark'
+  engineReady:false, engineLoading:false, engineError:null, currentRows:[], quizAnswers:{}, exerciseQuizAnswers:{}, assessmentTrack:'core', assessmentModuleId:null, assessmentAnswers:{}, assessmentSubmitted:false, assessmentResults:{}, checkpointId:null, checkpointTaskIndex:0, completedCheckpointTasks:new Set(), checkpointDrafts:{}, lessonLabDrafts:{}, lessonLabNotes:{}, lessonPracticeId:null, lessonPracticeDrafts:{}, editors:new Map(), navigationScrollReset:false, theme:localStorage.getItem('sql-academy-theme') || 'dark'
 };
 const moduleById = id => modules.find(m=>m.id===id);
 const lessonKey = (mid,idx)=>moduleById(mid)?.lessons[idx]?.id || mid+':'+idx;
@@ -57,13 +57,14 @@ const loadProgress = () => {
     state.checkpointDrafts=progress.checkpointDrafts||{};
     state.lessonLabDrafts=progress.lessonLabDrafts||{};
     state.lessonLabNotes=progress.lessonLabNotes||{};
+    state.lessonPracticeDrafts=progress.lessonPracticeDrafts||{};
     if(migrated.changed)localStorage.setItem(STORE_KEY,JSON.stringify(progress));
   } catch (error) {
     console.warn('Could not restore SQL Academy progress:',error);
   }
 };
 const saveProgress = () => {
-  localStorage.setItem(STORE_KEY,JSON.stringify({lessons:[...state.completedLessons],exercises:[...state.completedExercises],quizAnswers:state.quizAnswers,exerciseQuizAnswers:state.exerciseQuizAnswers,assessmentResults:state.assessmentResults,checkpointTasks:[...state.completedCheckpointTasks],checkpointDrafts:state.checkpointDrafts,lessonLabDrafts:state.lessonLabDrafts,lessonLabNotes:state.lessonLabNotes}));
+  localStorage.setItem(STORE_KEY,JSON.stringify({lessons:[...state.completedLessons],exercises:[...state.completedExercises],quizAnswers:state.quizAnswers,exerciseQuizAnswers:state.exerciseQuizAnswers,assessmentResults:state.assessmentResults,checkpointTasks:[...state.completedCheckpointTasks],checkpointDrafts:state.checkpointDrafts,lessonLabDrafts:state.lessonLabDrafts,lessonLabNotes:state.lessonLabNotes,lessonPracticeDrafts:state.lessonPracticeDrafts}));
   updateProgress();
 };
 const loadProjectState = () => {
@@ -701,6 +702,27 @@ async function runLessonLab() {
  }catch(error){host.innerHTML='';feedback.innerHTML='<div class="feedback fail"><strong>Ошибка SQL:</strong> '+esc(error.message)+'</div>';}
 }
 
+
+function renderLessonInlinePractice(l) {
+ const options=(l.practiceIds||[]).map(id=>exercises.find(item=>item.id===id)).filter(Boolean);
+ if(!options.length)return '';
+ const active=options.find(item=>item.id===state.lessonPracticeId)||options[0];
+ state.lessonPracticeId=active.id;
+ const readOnly=!['mutation','transaction'].includes(active.mode);
+ return `<section class="lesson-inline-practice" aria-label="SQL-практика урока">
+   <div class="eyebrow">ПРАКТИКА ВНУТРИ УРОКА</div><h2>Теперь реши самостоятельно</h2>
+   <p>В отличие от эксперимента выше, здесь нужно написать запрос, который вернёт правильный результат. Эквивалентные решения принимаются.</p>
+   ${options.length>1?`<div class="lesson-inline-tabs">${options.map((item,i)=>`<button class="btn ${item.id===active.id?'primary':''}" data-inline-exercise="${esc(item.id)}">${state.completedExercises.has(item.id)?'✓ ':''}Задача ${i+1}</button>`).join('')}</div>`:''}
+   <div class="task-card"><strong>${esc(active.title)}</strong><p>${esc(active.task)}</p>${renderExerciseHints(active)}</div>
+   ${editor(state.lessonPracticeDrafts[active.id]||'','lesson-practice-editor','Напиши решение с нуля — оно сохранится автоматически.')}
+   <div class="editor-actions" style="margin:11px 0"><button class="btn primary" data-action="check-inline-exercise" ${state.engineReady?'':'disabled'}>Проверить решение</button>
+   ${readOnly?`<button class="btn" data-action="run-inline-exercise" ${state.engineReady?'':'disabled'}>Выполнить SQL</button>`:''}
+   <button class="btn" data-action="show-inline-solution">Показать решение</button></div>
+   <div id="lesson-practice-feedback" role="status" aria-live="polite"></div><div id="lesson-practice-results"></div>
+   <small>Отметка выполнения синхронизируется с общей вкладкой «Практика».</small>
+ </section>`;
+}
+
 function renderLessonQuiz(l) {
  const bank=l.quiz||[];if(!bank.length)return '';
  return `<section class="quiz-panel"><div class="eyebrow">МИНИ-ТЕСТ · ПОСЛЕ ОБЪЯСНЕНИЯ</div><h2>Проверь понимание</h2><p class="quiz-intro">Вопрос относится к материалу этого урока. Сначала изучи объяснение и пример, затем отвечай.</p>
@@ -716,7 +738,7 @@ function renderStudy() {
  const practice=(l.practiceIds||[]).map(id=>{const ex=exercises.find(e=>e.id===id);return ex?`<button class="btn" data-exercise="${ex.id}">Практика: ${esc(ex.title)} →</button>`:''}).join('');
  const outcomes=(l.outcomes||[]).length?`<div class="lesson-outcomes"><strong>После урока ты сможешь</strong><ul>${l.outcomes.map(item=>`<li>${esc(item)}</li>`).join('')}</ul></div>`:'';
  return `${pageHead(esc(activeTrack.title).toUpperCase()+' · МОДУЛЬ '+String(m.trackOrder).padStart(2,'0'),m.title,m.desc,'<button class="btn" data-nav="roadmap">← К программе курса</button>')}${renderCourseSubnav('study',m.track)}<div class="split-layout"><aside class="card lesson-sidebar"><h3>Содержание курса</h3>${sidebar}</aside><article class="lesson-content">
- <div class="lesson-card"><div class="eyebrow">${esc(m.stage)} · УРОК ${state.lessonIndex+1} ИЗ ${m.lessons.length}</div><h1>${esc(l.title)}</h1>${outcomes}${lessonBody(l,m)}${renderLessonWorkshop(l,m,state.lessonIndex)}${renderLessonQuiz(l)}${practice?`<div class="lesson-footer lesson-practice-links">${practice}</div>`:''}<div class="lesson-footer"><button class="btn primary" data-action="complete-lesson">${done?'✓ Урок завершён':'Отметить урок завершённым'}</button></div></div>
+ <div class="lesson-card"><div class="eyebrow">${esc(m.stage)} · УРОК ${state.lessonIndex+1} ИЗ ${m.lessons.length}</div><h1>${esc(l.title)}</h1>${outcomes}${lessonBody(l,m)}${renderLessonWorkshop(l,m,state.lessonIndex)}${renderLessonQuiz(l)}${renderLessonInlinePractice(l)}<div class="lesson-footer"><button class="btn primary" data-action="complete-lesson">${done?'✓ Урок завершён':'Отметить урок завершённым'}</button></div></div>
  <div class="lesson-card"><div class="lesson-footer"><button class="btn" data-action="prev-lesson" ${state.lessonIndex===0?'disabled':''}>← Предыдущий урок</button><button class="btn primary" data-action="next-lesson" ${trackEnd?'disabled':''}>${trackEnd?(m.track==='core'?'Курс SQL для аналитика завершён':'Курс PostgreSQL завершён'):state.lessonIndex===m.lessons.length-1?'Следующий модуль →':'Следующий урок →'}</button></div></div></article></div>`;
 }
 function renderCheckpointCards(trackId) {
@@ -1121,10 +1143,10 @@ async function checkRandomTask(){
   feedback.innerHTML=passed?'<div class="feedback success"><strong>Верно!</strong> Результат совпадает с эталоном.</div>':'<div class="feedback fail"><strong>Пока не совпало.</strong> Запрос выполнился, но набор столбцов, значения или порядок строк отличаются. Проверь зерно результата и условия задачи.</div>';
  }catch(error){feedback.innerHTML='<div class="feedback fail"><strong>Ошибка:</strong> '+esc(error.message)+'</div>';}
 }
-async function checkExercise() {
+async function checkExercise(options={}) {
   if(!state.engineReady||!state.db){toast('PostgreSQL ещё подготавливает учебную базу и эталонные результаты.');return;}
-  const ex=exercises.find(x=>x.id===state.exerciseId),sql=getEditorValue('exercise-editor').trim();
-  const feedback=$('#exercise-feedback'),results=$('#exercise-results');
+  const ex=exercises.find(x=>x.id===(options.exerciseId||state.exerciseId)),sql=getEditorValue(options.editorId||'exercise-editor').trim();
+  const feedback=$(options.feedbackSelector||'#exercise-feedback'),results=$(options.resultsSelector||'#exercise-results');
   if(!sql){feedback.innerHTML='<div class="feedback fail">Напиши SQL-запрос перед проверкой.</div>';return;}
   try{
     const parts=splitStatements(sql);
