@@ -63,7 +63,8 @@ export function migrateProgress(saved, modules) {
     checkpointTasks,
     checkpointDrafts,
     lessonLabDrafts: Object.fromEntries(Object.entries(isRecord(source.lessonLabDrafts) ? source.lessonLabDrafts : {}).filter(([key,value])=>stableIds.has(key)&&typeof value==='string')),
-    lessonLabNotes: Object.fromEntries(Object.entries(isRecord(source.lessonLabNotes) ? source.lessonLabNotes : {}).filter(([key,value])=>stableIds.has(key)&&typeof value==='string'))
+    lessonLabNotes: Object.fromEntries(Object.entries(isRecord(source.lessonLabNotes) ? source.lessonLabNotes : {}).filter(([key,value])=>stableIds.has(key)&&typeof value==='string')),
+    lessonPracticeDrafts: Object.fromEntries(Object.entries(isRecord(source.lessonPracticeDrafts) ? source.lessonPracticeDrafts : {}).filter(([,value])=>typeof value==='string'))
   };
   const original = {
     lessons: Array.isArray(source.lessons) ? source.lessons : [],
@@ -74,7 +75,8 @@ export function migrateProgress(saved, modules) {
     checkpointTasks: Array.isArray(source.checkpointTasks) ? source.checkpointTasks : [],
     checkpointDrafts: isRecord(source.checkpointDrafts) ? source.checkpointDrafts : {},
     lessonLabDrafts: isRecord(source.lessonLabDrafts) ? source.lessonLabDrafts : {},
-    lessonLabNotes: isRecord(source.lessonLabNotes) ? source.lessonLabNotes : {}
+    lessonLabNotes: isRecord(source.lessonLabNotes) ? source.lessonLabNotes : {},
+    lessonPracticeDrafts: isRecord(source.lessonPracticeDrafts) ? source.lessonPracticeDrafts : {}
   };
 
   return { progress, changed: JSON.stringify(original) !== JSON.stringify(progress) };
