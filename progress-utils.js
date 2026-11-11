@@ -52,19 +52,25 @@ export function migrateProgress(saved, modules) {
     }
   }
 
+  const checkpointTasks = [...new Set((Array.isArray(source.checkpointTasks) ? source.checkpointTasks : []).filter(value => typeof value === 'string' && value))];
+  const checkpointDrafts = Object.fromEntries(Object.entries(isRecord(source.checkpointDrafts) ? source.checkpointDrafts : {}).filter(([, value]) => typeof value === 'string'));
   const progress = {
     lessons,
     exercises,
     quizAnswers,
     exerciseQuizAnswers: isRecord(source.exerciseQuizAnswers) ? source.exerciseQuizAnswers : {},
-    assessmentResults: isRecord(source.assessmentResults) ? source.assessmentResults : {}
+    assessmentResults: isRecord(source.assessmentResults) ? source.assessmentResults : {},
+    checkpointTasks,
+    checkpointDrafts
   };
   const original = {
     lessons: Array.isArray(source.lessons) ? source.lessons : [],
     exercises: Array.isArray(source.exercises) ? source.exercises : [],
     quizAnswers: savedQuizAnswers,
     exerciseQuizAnswers: isRecord(source.exerciseQuizAnswers) ? source.exerciseQuizAnswers : {},
-    assessmentResults: isRecord(source.assessmentResults) ? source.assessmentResults : {}
+    assessmentResults: isRecord(source.assessmentResults) ? source.assessmentResults : {},
+    checkpointTasks: Array.isArray(source.checkpointTasks) ? source.checkpointTasks : [],
+    checkpointDrafts: isRecord(source.checkpointDrafts) ? source.checkpointDrafts : {}
   };
 
   return { progress, changed: JSON.stringify(original) !== JSON.stringify(progress) };
