@@ -456,3 +456,10 @@ body{font-size:var(--font-md)}
 .lesson-inline-tabs{display:flex;gap:7px;flex-wrap:wrap;margin-top:14px}
 .lesson-inline-practice>small{display:block;color:var(--muted);font-size:10px;line-height:1.6;margin-top:10px}
 @media(max-width:760px){.lesson-inline-practice{padding:13px}.lesson-inline-tabs .btn{flex:1}.lesson-inline-practice .editor-actions>.btn{flex:1}}
+
+
+.lesson-reading-status{display:flex;align-items:center;justify-content:space-between;gap:14px;padding-top:16px;margin-top:20px;border-top:1px solid var(--line)}
+.lesson-reading-status small{color:var(--muted);font-size:10px;line-height:1.6;max-width:50ch}
+.lesson-checkpoint-links{margin:18px 0;padding:17px;background:var(--panel2);border:1px solid var(--line);border-radius:var(--radius-md)}
+.lesson-checkpoint-links strong{font-size:13px}.lesson-checkpoint-links p{font-size:11px;line-height:1.6;margin:7px 0 13px}
+@media(max-width:760px){.lesson-reading-status{flex-direction:column;align-items:stretch}.lesson-reading-status .btn,.lesson-checkpoint-links .btn{width:100%}}
