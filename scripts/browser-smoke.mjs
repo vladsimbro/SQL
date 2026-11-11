@@ -234,6 +234,9 @@ try {
   await page.locator('#lesson-practice-feedback .success').waitFor({state:'visible'});
   assert.ok(JSON.parse(await page.evaluate(()=>localStorage.getItem('sql-academy-progress-v1'))).exercises.includes(ex.id),'In-lesson graded SQL must share completion with main practice');
   await captureUxScreen('05c-inline-graded-sql-practice');
+  // Return to the playground before continuing its original reset regression.
+  await page.locator('#sidebar .nav-item[data-nav="playground"]').click();
+  await page.locator('[data-action="reset-db"]').waitFor({state:'visible'});
 
   const resetStartedAt = Date.now();
   await page.locator('[data-action="reset-db"]').click();
