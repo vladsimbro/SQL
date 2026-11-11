@@ -933,27 +933,30 @@ function renderGlossary() {
 function bindPage(){
  $$('.sql-editor').forEach(textarea=>{
   if(window.CodeMirror){
-   const shortcut=textarea.id==='exercise-editor'?'run-exercise':textarea.id==='project-editor'?'check-project-task':textarea.id==='checkpoint-editor'?'check-checkpoint-task':'run-playground';
+   const shortcut=textarea.id==='exercise-editor'?'run-exercise':textarea.id==='project-editor'?'check-project-task':textarea.id==='checkpoint-editor'?'check-checkpoint-task':textarea.id==='lesson-lab-editor'?'run-lesson-lab':'run-playground';
    const cm=window.CodeMirror.fromTextArea(textarea,{mode:'text/x-pgsql',theme:'material-darker',lineNumbers:true,indentUnit:4,tabSize:4,indentWithTabs:false,lineWrapping:false,matchBrackets:true,viewportMargin:Infinity,extraKeys:{'Ctrl-Enter':()=>handleAction(shortcut),'Cmd-Enter':()=>handleAction(shortcut),'Tab':'indentMore','Shift-Tab':'indentLess'}});
    state.editors.set(textarea.id,cm);
    if(textarea.id==='playground-editor')cm.on('change',instance=>localStorage.setItem(EDITOR_KEY,instance.getValue()));
    if(textarea.id==='project-editor'){const taskId=state.projectTaskId;cm.on('change',instance=>saveProjectDraft(taskId,instance.getValue()));}
    if(textarea.id==='checkpoint-editor'){const taskId=cumulativeCheckpoints.find(item=>item.id===state.checkpointId)?.tasks[state.checkpointTaskIndex]?.id;cm.on('change',instance=>{if(taskId){state.checkpointDrafts[taskId]=instance.getValue();saveProgress();}});}
+   if(textarea.id==='lesson-lab-editor'){const key=lessonKey(state.moduleId,state.lessonIndex);cm.on('change',instance=>{state.lessonLabDrafts[key]=instance.getValue();saveProgress();});}
    requestAnimationFrame(()=>cm.refresh());
   }else{
    textarea.addEventListener('keydown',editorKeys);
    if(textarea.id==='playground-editor')textarea.addEventListener('input',()=>localStorage.setItem(EDITOR_KEY,textarea.value));
    if(textarea.id==='project-editor'){const taskId=state.projectTaskId;textarea.addEventListener('input',()=>saveProjectDraft(taskId,textarea.value));}
    if(textarea.id==='checkpoint-editor'){const taskId=cumulativeCheckpoints.find(item=>item.id===state.checkpointId)?.tasks[state.checkpointTaskIndex]?.id;textarea.addEventListener('input',()=>{if(taskId){state.checkpointDrafts[taskId]=textarea.value;saveProgress();}});}
+   if(textarea.id==='lesson-lab-editor'){const key=lessonKey(state.moduleId,state.lessonIndex);textarea.addEventListener('input',()=>{state.lessonLabDrafts[key]=textarea.value;saveProgress();});}
   }
  });
+ const lessonNote=$('#lesson-lab-note');if(lessonNote)lessonNote.addEventListener('input',()=>{state.lessonLabNotes[lessonKey(state.moduleId,state.lessonIndex)]=lessonNote.value;saveProgress();});
  const exSearch=$('#exercise-search');if(exSearch)exSearch.addEventListener('input',()=>{$$('.exercise-item').forEach(b=>b.style.display=b.textContent.toLowerCase().includes(exSearch.value.toLowerCase())?'flex':'none');});
  const glSearch=$('#glossary-search');if(glSearch)glSearch.addEventListener('input',()=>{$$('.glossary-item').forEach(b=>b.style.display=b.dataset.term.includes(glSearch.value.toLowerCase())?'grid':'none');});
  $$('[data-random-topic]').forEach(input=>input.addEventListener('change',()=>{if(input.checked)state.randomTopics.add(input.dataset.randomTopic);else state.randomTopics.delete(input.dataset.randomTopic);render();}));
 }
 function editorKeys(e) {
   if(e.key==='Tab'){e.preventDefault();const a=e.target.selectionStart,b=e.target.selectionEnd;e.target.setRangeText('  ',a,b,'end');}
-  if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();handleAction(e.target.id==='exercise-editor'?'run-exercise':e.target.id==='project-editor'?'check-project-task':e.target.id==='checkpoint-editor'?'check-checkpoint-task':'run-playground');}
+  if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();handleAction(e.target.id==='exercise-editor'?'run-exercise':e.target.id==='project-editor'?'check-project-task':e.target.id==='checkpoint-editor'?'check-checkpoint-task':e.target.id==='lesson-lab-editor'?'run-lesson-lab':'run-playground');}
 }
 function downloadProgressBackup() {
   const backup = createBackup(localStorage);
@@ -1024,6 +1027,8 @@ function handleAction(action) {
     if(project.tasks[index+1]){state.projectTaskId=project.tasks[index+1].id;state.projectSolutionVisible=false;render();}
     return;
   }
+  if(action==='run-lesson-lab'){runLessonLab();return;}
+  if(action==='reset-lesson-lab'){const lesson=m.lessons[state.lessonIndex];if(lesson){state.lessonLabDrafts[lessonKey(m.id,state.lessonIndex)]=lesson.example;saveProgress();setEditorValue('lesson-lab-editor',lesson.example);}return;}
   if(action==='check-checkpoint-task'){checkCheckpointTask();return;}
   if(action==='checkpoint-back'){state.checkpointId=null;render();return;}
   if(action==='assessment-back'){state.checkpointId=null;state.assessmentModuleId=null;state.assessmentAnswers={};state.assessmentSubmitted=false;render();return;}
@@ -1272,7 +1277,7 @@ async function prepareExpected() {
   }
 }
 function rerenderPreservingEditor() {
-  const editorId=state.view==='practice'?'exercise-editor':state.view==='playground'?'playground-editor':state.view==='assessment'&&state.checkpointId?'checkpoint-editor':null;
+  const editorId=state.view==='practice'?'exercise-editor':state.view==='playground'?'playground-editor':state.view==='assessment'&&state.checkpointId?'checkpoint-editor':state.view==='study'?'lesson-lab-editor':null;
   const editorValue=editorId&&$('#'+editorId)?getEditorValue(editorId):null;
   render();
   if(editorId&&editorValue!==null)setEditorValue(editorId,editorValue);
