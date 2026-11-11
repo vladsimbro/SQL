@@ -211,6 +211,7 @@ try {
   const firstLesson=modules.find(module=>module.id==='foundations').lessons[0];
   await page.goto(baseURL+'#view=study&module=foundations&lesson='+firstLesson.id,{waitUntil:'domcontentloaded'});
   await page.locator('.lesson-workshop').waitFor({state:'visible'});
+  assert.match(await page.locator('#lesson-mastery').textContent(),/Нет проверяемых задач/,'The first lesson must clearly admit that no auto-graded SQL task exists');
   await waitForEngine();
   assert.match(await page.locator('.workshop-prompt').textContent(),/строк/,'The first lesson must have a specific reasoning task');
   await writeEditor(page.locator('#lesson-lab-editor'),'SELECT 7 AS observed_value;');
@@ -232,6 +233,7 @@ try {
   await writeEditor(page.locator('#lesson-practice-editor'),ex.solution);
   await page.locator('[data-action="check-inline-exercise"]').click();
   await page.locator('#lesson-practice-feedback .success').waitFor({state:'visible'});
+  assert.match(await page.locator('#lesson-mastery').textContent(),/1\/2 задач/,'Completing one of two linked SQL tasks must update mastery immediately');
   assert.ok(JSON.parse(await page.evaluate(()=>localStorage.getItem('sql-academy-progress-v1'))).exercises.includes(ex.id),'In-lesson graded SQL must share completion with main practice');
   await captureUxScreen('05c-inline-graded-sql-practice');
   // Return to the playground before continuing its original reset regression.
