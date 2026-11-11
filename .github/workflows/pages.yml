@@ -27,7 +27,7 @@ jobs:
       - name: Install test dependency
         run: npm install --no-package-lock
       - name: Check browser JavaScript syntax
-        run: node --check app.js && node --check checkpoints.js && node --check backup-utils.js && node --check curriculum.js && node --check sandbox-tasks.js && node --check sql-utils.js && node --check progress-utils.js
+        run: node --check app.js && node --check checkpoints.js && node --check lesson-workshops.js && node --check lesson-insights.js && node --check backup-utils.js && node --check curriculum.js && node --check sandbox-tasks.js && node --check sql-utils.js && node --check progress-utils.js
       - name: Validate curriculum and run all exercise solutions
         run: npm run test:curriculum
   deploy:
@@ -71,7 +71,7 @@ jobs:
       - name: Install browser test dependency
         run: npm install --no-package-lock
       - name: Install Chromium
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install chromium
       - name: Test the deployed GitHub Pages site
         env:
           PAGES_URL: ${{ needs.deploy.outputs.page_url }}

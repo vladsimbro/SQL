@@ -1,11 +1,13 @@
-import { modules, learningTracks, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261111-147';
-import { cumulativeCheckpoints } from './checkpoints.js?v=20261111-147';
-import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261111-147';
-import { firstSqlKeyword, explainStatementKeyword, explainStatementBody, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261111-147';
-import { migrateProgress, getTrackProgress, findNextLesson } from './progress-utils.js?v=20261111-147';
-import { projects, projectTaskCount } from './projects.js?v=20261111-147';
-import { createBackup, parseBackup, restoreBackup } from './backup-utils.js?v=20261111-147';
-import { buildQuizOptionOrders, quizOptionKey } from './quiz-options.js?v=20261111-147';
+import { modules, learningTracks, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261112-148';
+import { cumulativeCheckpoints } from './checkpoints.js?v=20261112-148';
+import { getWorkshopPrompt } from './lesson-workshops.js?v=20261112-148';
+import { getLessonInsight } from './lesson-insights.js?v=20261112-148';
+import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261112-148';
+import { firstSqlKeyword, explainStatementKeyword, explainStatementBody, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261112-148';
+import { migrateProgress, getTrackProgress, findNextLesson } from './progress-utils.js?v=20261112-148';
+import { projects, projectTaskCount } from './projects.js?v=20261112-148';
+import { createBackup, parseBackup, restoreBackup } from './backup-utils.js?v=20261112-148';
+import { buildQuizOptionOrders, quizOptionKey } from './quiz-options.js?v=20261112-148';
 
 const $ = (s, root=document) => root.querySelector(s);
 const $$ = (s, root=document) => [...root.querySelectorAll(s)];
@@ -34,7 +36,7 @@ const state = {
   completedLessons:new Set(), completedExercises:new Set(), practiceTrack:'core',
   projectId:'ecommerce', projectTaskId:'ecommerce-monthly-net-revenue', completedProjectTasks:new Set(), projectDrafts:{}, projectNotes:{}, projectReviews:{}, projectSolutionVisible:false,
   db:null, expected:new Map(), randomTask:null, randomTopics:new Set(sandboxTaskTopics.map(topic=>topic.id)),
-  engineReady:false, engineLoading:false, engineError:null, currentRows:[], quizAnswers:{}, exerciseQuizAnswers:{}, assessmentTrack:'core', assessmentModuleId:null, assessmentAnswers:{}, assessmentSubmitted:false, assessmentResults:{}, checkpointId:null, checkpointTaskIndex:0, completedCheckpointTasks:new Set(), checkpointDrafts:{}, editors:new Map(), navigationScrollReset:false, theme:localStorage.getItem('sql-academy-theme') || 'dark'
+  engineReady:false, engineLoading:false, engineError:null, currentRows:[], quizAnswers:{}, exerciseQuizAnswers:{}, assessmentTrack:'core', assessmentModuleId:null, assessmentAnswers:{}, assessmentSubmitted:false, assessmentResults:{}, checkpointId:null, checkpointTaskIndex:0, completedCheckpointTasks:new Set(), checkpointDrafts:{}, lessonLabDrafts:{}, lessonLabNotes:{}, lessonPracticeId:null, lessonPracticeDrafts:{}, editors:new Map(), navigationScrollReset:false, theme:localStorage.getItem('sql-academy-theme') || 'dark'
 };
 const moduleById = id => modules.find(m=>m.id===id);
 const lessonKey = (mid,idx)=>moduleById(mid)?.lessons[idx]?.id || mid+':'+idx;
@@ -54,13 +56,16 @@ const loadProgress = () => {
     state.assessmentResults=progress.assessmentResults;
     state.completedCheckpointTasks=new Set(progress.checkpointTasks||[]);
     state.checkpointDrafts=progress.checkpointDrafts||{};
+    state.lessonLabDrafts=progress.lessonLabDrafts||{};
+    state.lessonLabNotes=progress.lessonLabNotes||{};
+    state.lessonPracticeDrafts=progress.lessonPracticeDrafts||{};
     if(migrated.changed)localStorage.setItem(STORE_KEY,JSON.stringify(progress));
   } catch (error) {
     console.warn('Could not restore SQL Academy progress:',error);
   }
 };
 const saveProgress = () => {
-  localStorage.setItem(STORE_KEY,JSON.stringify({lessons:[...state.completedLessons],exercises:[...state.completedExercises],quizAnswers:state.quizAnswers,exerciseQuizAnswers:state.exerciseQuizAnswers,assessmentResults:state.assessmentResults,checkpointTasks:[...state.completedCheckpointTasks],checkpointDrafts:state.checkpointDrafts}));
+  localStorage.setItem(STORE_KEY,JSON.stringify({lessons:[...state.completedLessons],exercises:[...state.completedExercises],quizAnswers:state.quizAnswers,exerciseQuizAnswers:state.exerciseQuizAnswers,assessmentResults:state.assessmentResults,checkpointTasks:[...state.completedCheckpointTasks],checkpointDrafts:state.checkpointDrafts,lessonLabDrafts:state.lessonLabDrafts,lessonLabNotes:state.lessonLabNotes,lessonPracticeDrafts:state.lessonPracticeDrafts}));
   updateProgress();
 };
 const loadProjectState = () => {
@@ -650,11 +655,77 @@ function renderWorkedExample(w) {
   return '<section class="worked-example"><div class="eyebrow">РАЗОБРАННЫЙ СЦЕНАРИЙ</div><h3>'+esc(w.title||'Пройдём пример по шагам')+'</h3><p class="worked-scenario">'+esc(w.scenario)+'</p><ol class="worked-steps">'+w.steps.map(step=>'<li>'+esc(step)+'</li>').join('')+'</ol><div class="worked-result"><strong>Что должно получиться</strong><p>'+esc(w.result||'')+'</p></div>'+(w.pitfall?'<div class="worked-pitfall"><strong>Типичная ошибка</strong><p>'+esc(w.pitfall)+'</p></div>':'')+'</section>';
 }
 function lessonBody(l,m) {
-  const simple=l.showSimple&&l.simple?`<div class="plain-language"><strong>Коротко</strong><p>${esc(l.simple)}</p></div>`:'';
+  const simple=l.simple?`<div class="plain-language"><strong>Коротко</strong><p>${esc(l.simple)}</p></div>`:'';
   const explanation=(l.body||'').split(/\n\s*\n/).filter(Boolean).map(paragraph=>`<p>${esc(paragraph)}</p>`).join('');
+  const insight=getLessonInsight(m.id,m.lessons.findIndex(item=>item.id===l.id));
+  const deepDive=insight?`<section class="lesson-deep-dive"><div class="eyebrow">ГЛУБЖЕ В ЛОГИКУ</div><h2>Почему это работает и где ошибаются</h2><p>${esc(insight)}</p></section>`:'';
   const sources=(m.sources||[]).map((url,i)=>`<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">Документация PostgreSQL ${i+1} ↗</a>`).join(' · ');
-  return `<div class="lesson-explanation">${explanation}</div>${simple}${renderWorkedExample(l.walkthrough)}<h2>Разберём на примере</h2><div class="code-block"><div class="code-head"><span>POSTGRESQL</span><button class="btn small" data-copy-code>Копировать</button></div><pre>${renderAnnotatedSql(l.example,l)}</pre></div>${renderExampleResult(l)}${l.note?`<div class="note-box"><strong>Важно:</strong> ${esc(l.note)}</div>`:''}${sources?`<div class="lesson-sources"><strong>Первоисточники:</strong> ${sources}</div>`:''}`;
+  return `<div class="lesson-explanation">${explanation}</div>${simple}${deepDive}${renderWorkedExample(l.walkthrough)}<h2>Разберём на примере</h2><div class="code-block"><div class="code-head"><span>POSTGRESQL</span><button class="btn small" data-copy-code>Копировать</button></div><pre>${renderAnnotatedSql(l.example,l)}</pre></div>${renderExampleResult(l)}${(l.walkthrough||['aggregates','joins','cte','datetime','windows','analytics','workflow','performance'].includes(m.id))?renderExampleBreakdown(l.example,l):''}${l.note?`<div class="note-box"><strong>Важно:</strong> ${esc(l.note)}</div>`:''}${sources?`<div class="lesson-sources"><strong>Первоисточники:</strong> ${sources}</div>`:''}`;
 }
+
+function renderLessonWorkshop(l,m,lessonIndex) {
+ const prompt=getWorkshopPrompt(m.id,lessonIndex);
+ if(!prompt)return '';
+ const key=lessonKey(m.id,lessonIndex);
+ const statements=splitStatements(l.example||'');
+ const runnable=statements.length===1&&readOnlyQueryKeyword(statements[0])==='SELECT';
+ const savedSQL=Object.hasOwn(state.lessonLabDrafts,key)?state.lessonLabDrafts[key]:l.example;
+ const notes=state.lessonLabNotes[key]||'';
+ const reference=l.walkthrough?.pitfall||l.note||l.quiz?.[0]?.explanation||'Сравни наблюдение с тем, что означает одна строка результата.';
+ return `<section class="lesson-workshop" aria-label="Исследование темы">
+  <div class="eyebrow">ПРАКТИЧЕСКАЯ ЛАБОРАТОРИЯ</div>
+  <h2>Исследуй поведение данных</h2>
+  <p class="workshop-context">Это самостоятельный эксперимент, а не проверка знания названия SQL-функции.</p>
+  <div class="workshop-prompt"><strong>Что выяснить</strong><p>${esc(prompt)}</p></div>
+  ${runnable?`
+    <p class="workshop-context">Ниже открыт разобранный запрос. Измени его, выполни и сравни строки, столбцы и значения. Редактор не разрешает менять данные.</p>
+    ${editor(savedSQL||'','lesson-lab-editor','Измени SQL-пример и посмотри результат')}
+    <div class="editor-actions" style="margin-top:10px"><button class="btn primary" data-action="run-lesson-lab" ${state.engineReady?'':'disabled'}>Выполнить SQL</button><button class="btn" data-action="reset-lesson-lab">Вернуть пример</button></div>
+    <div id="lesson-lab-feedback" role="status" aria-live="polite"></div><div id="lesson-lab-results"></div>
+  `:`<div class="workshop-safety"><strong>Разбор без выполнения изменяющего SQL</strong><p>Пример содержит операции изменения данных или структуры либо серверные команды. Разбери их здесь, а безопасное выполнение — в специально предназначенной практике.</p></div>`}
+  <label for="lesson-lab-note" class="workshop-note-label">Что ты понял и как это проверил?</label>
+  <textarea id="lesson-lab-note" class="workshop-note" rows="3" placeholder="Объясни, как изменился результат и почему.">${esc(notes)}</textarea>
+  <small class="workshop-save-hint">Заметка сохраняется в браузере и резервной копии. Это самостоятельный разбор, не автоматически проверенный зачёт.</small>
+  <details class="workshop-reference"><summary>Ориентир для самопроверки</summary><p>${esc(reference)}</p></details>
+ </section>`;
+}
+async function runLessonLab() {
+ const feedback=$('#lesson-lab-feedback'),host=$('#lesson-lab-results');
+ if(!feedback||!host)return;
+ if(!state.engineReady||!state.db){feedback.innerHTML='<div class="feedback fail">PostgreSQL ещё загружается.</div>';return;}
+ const sql=getEditorValue('lesson-lab-editor').trim();
+ if(!sql){feedback.innerHTML='<div class="feedback fail">Сначала напиши запрос.</div>';return;}
+ try {
+  const statements=splitStatements(sql);
+  if(statements.length!==1||readOnlyQueryKeyword(statements[0])!=='SELECT')throw new Error('Здесь разрешён только читающий SELECT или WITH ... SELECT без изменения данных.');
+  const started=performance.now();
+  const result=await state.db.query(statements[0]);
+  host.innerHTML=renderResult(result,Math.round(performance.now()-started));
+  feedback.innerHTML='<div class="feedback success">SQL выполнен. Теперь проверь свою гипотезу и объясни результат.</div>';
+ }catch(error){host.innerHTML='';feedback.innerHTML='<div class="feedback fail"><strong>Ошибка SQL:</strong> '+esc(error.message)+'</div>';}
+}
+
+
+function renderLessonInlinePractice(l) {
+ const options=(l.practiceIds||[]).map(id=>exercises.find(item=>item.id===id)).filter(Boolean);
+ if(!options.length)return '';
+ const active=options.find(item=>item.id===state.lessonPracticeId)||options[0];
+ state.lessonPracticeId=active.id;
+ const readOnly=!['mutation','transaction'].includes(active.mode);
+ return `<section class="lesson-inline-practice" aria-label="SQL-практика урока">
+   <div class="eyebrow">ПРАКТИКА ВНУТРИ УРОКА</div><h2>Теперь реши самостоятельно</h2>
+   <p>В отличие от эксперимента выше, здесь нужно написать запрос, который вернёт правильный результат. Эквивалентные решения принимаются.</p>
+   ${options.length>1?`<div class="lesson-inline-tabs">${options.map((item,i)=>`<button class="btn ${item.id===active.id?'primary':''}" data-inline-exercise="${esc(item.id)}">${state.completedExercises.has(item.id)?'✓ ':''}Задача ${i+1}</button>`).join('')}</div>`:''}
+   <div class="task-card"><strong>${esc(active.title)}</strong><p>${esc(active.task)}</p>${renderExerciseHints(active)}</div>
+   ${editor(state.lessonPracticeDrafts[active.id]||'','lesson-practice-editor','Напиши решение с нуля — оно сохранится автоматически.')}
+   <div class="editor-actions" style="margin:11px 0"><button class="btn primary" data-action="check-inline-exercise" ${state.engineReady?'':'disabled'}>Проверить решение</button>
+   ${readOnly?`<button class="btn" data-action="run-inline-exercise" ${state.engineReady?'':'disabled'}>Выполнить SQL</button>`:''}
+   <button class="btn" data-action="show-inline-solution">Показать решение</button></div>
+   <div id="lesson-practice-feedback" role="status" aria-live="polite"></div><div id="lesson-practice-results"></div>
+   <small>Отметка выполнения синхронизируется с общей вкладкой «Практика».</small>
+ </section>`;
+}
+
 function renderLessonQuiz(l) {
  const bank=l.quiz||[];if(!bank.length)return '';
  return `<section class="quiz-panel"><div class="eyebrow">МИНИ-ТЕСТ · ПОСЛЕ ОБЪЯСНЕНИЯ</div><h2>Проверь понимание</h2><p class="quiz-intro">Вопрос относится к материалу этого урока. Сначала изучи объяснение и пример, затем отвечай.</p>
@@ -667,10 +738,10 @@ function renderStudy() {
  const l=m.lessons[state.lessonIndex],done=state.completedLessons.has(lessonKey(m.id,state.lessonIndex)),trackEnd=moduleLessons(m.track).at(-1)?.id===m.id&&state.lessonIndex===m.lessons.length-1;
  const activeTrack=learningTracks.find(track=>track.id===m.track)||learningTracks[0];
  const sidebar=`<section class="lesson-track-group"><h3>${esc(activeTrack.title)}</h3><p>${esc(activeTrack.subtitle)}</p>${moduleLessons(m.track).map(mod=>`<div style="margin-bottom:13px"><h4>${String(mod.trackOrder).padStart(2,'0')} · ${esc(mod.title)}</h4>${mod.lessons.map((lesson,li)=>`<button class="lesson-nav-item ${mod.id===m.id&&li===state.lessonIndex?'active':''} ${state.completedLessons.has(lessonKey(mod.id,li))?'done':''}" data-lesson="${mod.id}:${li}"><span class="dot">${state.completedLessons.has(lessonKey(mod.id,li))?'✓':'○'}</span>${esc(lesson.title)}</button>`).join('')}</div>`).join('')}</section>`;
- const practice=(l.practiceIds||[]).map(id=>{const ex=exercises.find(e=>e.id===id);return ex?`<button class="btn" data-exercise="${ex.id}">Практика: ${esc(ex.title)} →</button>`:''}).join('');
- const outcomes=(l.outcomes||[]).length?`<div class="lesson-card"><div class="eyebrow">РЕЗУЛЬТАТ УРОКА</div><h2>Что ты должен уметь</h2><ul>${l.outcomes.map(item=>`<li>${esc(item)}</li>`).join('')}</ul></div>`:'';
+ const linkedCheckpoints=cumulativeCheckpoints.filter(item=>item.afterModule===m.id&&state.lessonIndex===m.lessons.length-1);
+ const outcomes=(l.outcomes||[]).length?`<div class="lesson-outcomes"><strong>После урока ты сможешь</strong><ul>${l.outcomes.map(item=>`<li>${esc(item)}</li>`).join('')}</ul></div>`:'';
  return `${pageHead(esc(activeTrack.title).toUpperCase()+' · МОДУЛЬ '+String(m.trackOrder).padStart(2,'0'),m.title,m.desc,'<button class="btn" data-nav="roadmap">← К программе курса</button>')}${renderCourseSubnav('study',m.track)}<div class="split-layout"><aside class="card lesson-sidebar"><h3>Содержание курса</h3>${sidebar}</aside><article class="lesson-content">
- <div class="lesson-card"><div class="eyebrow">${esc(m.stage)} · УРОК ${state.lessonIndex+1} ИЗ ${m.lessons.length}</div><h1>${esc(l.title)}</h1>${lessonBody(l,m)}${renderLessonQuiz(l)}${practice?`<div class="lesson-footer lesson-practice-links">${practice}</div>`:''}<div class="lesson-footer"><button class="btn primary" data-action="complete-lesson">${done?'✓ Урок завершён':'Отметить урок завершённым'}</button></div></div>${outcomes}
+ <div class="lesson-card"><div class="eyebrow">${esc(m.stage)} · УРОК ${state.lessonIndex+1} ИЗ ${m.lessons.length}</div><h1>${esc(l.title)}</h1>${outcomes}${lessonBody(l,m)}${renderLessonWorkshop(l,m,state.lessonIndex)}${renderLessonQuiz(l)}${renderLessonInlinePractice(l)}${linkedCheckpoints.length?`<div class="lesson-checkpoint-links"><strong>Проверка знаний из нескольких модулей</strong><p>После этого блока проверь, как используешь темы вместе, без подсказок.</p>${linkedCheckpoints.map(item=>`<button class="btn primary" data-checkpoint="${esc(item.id)}">Перейти к накопительной контрольной</button>`).join('')}</div>`:''}<div class="lesson-reading-status"><small>Отметка чтения не заменяет сдачу SQL-практики и контрольных.</small><button class="btn" data-action="complete-lesson">${done?'✓ Материал прочитан':'Отметить материал прочитанным'}</button></div></div>
  <div class="lesson-card"><div class="lesson-footer"><button class="btn" data-action="prev-lesson" ${state.lessonIndex===0?'disabled':''}>← Предыдущий урок</button><button class="btn primary" data-action="next-lesson" ${trackEnd?'disabled':''}>${trackEnd?(m.track==='core'?'Курс SQL для аналитика завершён':'Курс PostgreSQL завершён'):state.lessonIndex===m.lessons.length-1?'Следующий модуль →':'Следующий урок →'}</button></div></div></article></div>`;
 }
 function renderCheckpointCards(trackId) {
@@ -887,27 +958,32 @@ function renderGlossary() {
 function bindPage(){
  $$('.sql-editor').forEach(textarea=>{
   if(window.CodeMirror){
-   const shortcut=textarea.id==='exercise-editor'?'run-exercise':textarea.id==='project-editor'?'check-project-task':textarea.id==='checkpoint-editor'?'check-checkpoint-task':'run-playground';
+   const shortcut=textarea.id==='exercise-editor'?'run-exercise':textarea.id==='project-editor'?'check-project-task':textarea.id==='checkpoint-editor'?'check-checkpoint-task':textarea.id==='lesson-lab-editor'?'run-lesson-lab':textarea.id==='lesson-practice-editor'?'check-inline-exercise':'run-playground';
    const cm=window.CodeMirror.fromTextArea(textarea,{mode:'text/x-pgsql',theme:'material-darker',lineNumbers:true,indentUnit:4,tabSize:4,indentWithTabs:false,lineWrapping:false,matchBrackets:true,viewportMargin:Infinity,extraKeys:{'Ctrl-Enter':()=>handleAction(shortcut),'Cmd-Enter':()=>handleAction(shortcut),'Tab':'indentMore','Shift-Tab':'indentLess'}});
    state.editors.set(textarea.id,cm);
    if(textarea.id==='playground-editor')cm.on('change',instance=>localStorage.setItem(EDITOR_KEY,instance.getValue()));
    if(textarea.id==='project-editor'){const taskId=state.projectTaskId;cm.on('change',instance=>saveProjectDraft(taskId,instance.getValue()));}
    if(textarea.id==='checkpoint-editor'){const taskId=cumulativeCheckpoints.find(item=>item.id===state.checkpointId)?.tasks[state.checkpointTaskIndex]?.id;cm.on('change',instance=>{if(taskId){state.checkpointDrafts[taskId]=instance.getValue();saveProgress();}});}
+   if(textarea.id==='lesson-lab-editor'){const key=lessonKey(state.moduleId,state.lessonIndex);cm.on('change',instance=>{state.lessonLabDrafts[key]=instance.getValue();saveProgress();});}
+   if(textarea.id==='lesson-practice-editor'){const id=state.lessonPracticeId;cm.on('change',instance=>{if(id){state.lessonPracticeDrafts[id]=instance.getValue();saveProgress();}});}
    requestAnimationFrame(()=>cm.refresh());
   }else{
    textarea.addEventListener('keydown',editorKeys);
    if(textarea.id==='playground-editor')textarea.addEventListener('input',()=>localStorage.setItem(EDITOR_KEY,textarea.value));
    if(textarea.id==='project-editor'){const taskId=state.projectTaskId;textarea.addEventListener('input',()=>saveProjectDraft(taskId,textarea.value));}
    if(textarea.id==='checkpoint-editor'){const taskId=cumulativeCheckpoints.find(item=>item.id===state.checkpointId)?.tasks[state.checkpointTaskIndex]?.id;textarea.addEventListener('input',()=>{if(taskId){state.checkpointDrafts[taskId]=textarea.value;saveProgress();}});}
+   if(textarea.id==='lesson-lab-editor'){const key=lessonKey(state.moduleId,state.lessonIndex);textarea.addEventListener('input',()=>{state.lessonLabDrafts[key]=textarea.value;saveProgress();});}
+   if(textarea.id==='lesson-practice-editor'){const id=state.lessonPracticeId;textarea.addEventListener('input',()=>{if(id){state.lessonPracticeDrafts[id]=textarea.value;saveProgress();}});}
   }
  });
+ const lessonNote=$('#lesson-lab-note');if(lessonNote)lessonNote.addEventListener('input',()=>{state.lessonLabNotes[lessonKey(state.moduleId,state.lessonIndex)]=lessonNote.value;saveProgress();});
  const exSearch=$('#exercise-search');if(exSearch)exSearch.addEventListener('input',()=>{$$('.exercise-item').forEach(b=>b.style.display=b.textContent.toLowerCase().includes(exSearch.value.toLowerCase())?'flex':'none');});
  const glSearch=$('#glossary-search');if(glSearch)glSearch.addEventListener('input',()=>{$$('.glossary-item').forEach(b=>b.style.display=b.dataset.term.includes(glSearch.value.toLowerCase())?'grid':'none');});
  $$('[data-random-topic]').forEach(input=>input.addEventListener('change',()=>{if(input.checked)state.randomTopics.add(input.dataset.randomTopic);else state.randomTopics.delete(input.dataset.randomTopic);render();}));
 }
 function editorKeys(e) {
   if(e.key==='Tab'){e.preventDefault();const a=e.target.selectionStart,b=e.target.selectionEnd;e.target.setRangeText('  ',a,b,'end');}
-  if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();handleAction(e.target.id==='exercise-editor'?'run-exercise':e.target.id==='project-editor'?'check-project-task':e.target.id==='checkpoint-editor'?'check-checkpoint-task':'run-playground');}
+  if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();handleAction(e.target.id==='exercise-editor'?'run-exercise':e.target.id==='project-editor'?'check-project-task':e.target.id==='checkpoint-editor'?'check-checkpoint-task':e.target.id==='lesson-lab-editor'?'run-lesson-lab':e.target.id==='lesson-practice-editor'?'check-inline-exercise':'run-playground');}
 }
 function downloadProgressBackup() {
   const backup = createBackup(localStorage);
@@ -978,6 +1054,11 @@ function handleAction(action) {
     if(project.tasks[index+1]){state.projectTaskId=project.tasks[index+1].id;state.projectSolutionVisible=false;render();}
     return;
   }
+  if(action==='check-inline-exercise'){checkExercise({exerciseId:state.lessonPracticeId,editorId:'lesson-practice-editor',feedbackSelector:'#lesson-practice-feedback',resultsSelector:'#lesson-practice-results'});return;}
+  if(action==='run-inline-exercise'){runEditorQuery(getEditorValue('lesson-practice-editor'),'lesson-practice-results');return;}
+  if(action==='show-inline-solution'){const task=exercises.find(item=>item.id===state.lessonPracticeId);if(task)setEditorValue('lesson-practice-editor',task.solution);return;}
+  if(action==='run-lesson-lab'){runLessonLab();return;}
+  if(action==='reset-lesson-lab'){const lesson=m.lessons[state.lessonIndex];if(lesson){state.lessonLabDrafts[lessonKey(m.id,state.lessonIndex)]=lesson.example;saveProgress();setEditorValue('lesson-lab-editor',lesson.example);}return;}
   if(action==='check-checkpoint-task'){checkCheckpointTask();return;}
   if(action==='checkpoint-back'){state.checkpointId=null;render();return;}
   if(action==='assessment-back'){state.checkpointId=null;state.assessmentModuleId=null;state.assessmentAnswers={};state.assessmentSubmitted=false;render();return;}
@@ -1070,10 +1151,10 @@ async function checkRandomTask(){
   feedback.innerHTML=passed?'<div class="feedback success"><strong>Верно!</strong> Результат совпадает с эталоном.</div>':'<div class="feedback fail"><strong>Пока не совпало.</strong> Запрос выполнился, но набор столбцов, значения или порядок строк отличаются. Проверь зерно результата и условия задачи.</div>';
  }catch(error){feedback.innerHTML='<div class="feedback fail"><strong>Ошибка:</strong> '+esc(error.message)+'</div>';}
 }
-async function checkExercise() {
+async function checkExercise(options={}) {
   if(!state.engineReady||!state.db){toast('PostgreSQL ещё подготавливает учебную базу и эталонные результаты.');return;}
-  const ex=exercises.find(x=>x.id===state.exerciseId),sql=getEditorValue('exercise-editor').trim();
-  const feedback=$('#exercise-feedback'),results=$('#exercise-results');
+  const ex=exercises.find(x=>x.id===(options.exerciseId||state.exerciseId)),sql=getEditorValue(options.editorId||'exercise-editor').trim();
+  const feedback=$(options.feedbackSelector||'#exercise-feedback'),results=$(options.resultsSelector||'#exercise-results');
   if(!sql){feedback.innerHTML='<div class="feedback fail">Напиши SQL-запрос перед проверкой.</div>';return;}
   try{
     const parts=splitStatements(sql);
@@ -1226,7 +1307,7 @@ async function prepareExpected() {
   }
 }
 function rerenderPreservingEditor() {
-  const editorId=state.view==='practice'?'exercise-editor':state.view==='playground'?'playground-editor':state.view==='assessment'&&state.checkpointId?'checkpoint-editor':null;
+  const editorId=state.view==='practice'?'exercise-editor':state.view==='playground'?'playground-editor':state.view==='assessment'&&state.checkpointId?'checkpoint-editor':state.view==='study'?'lesson-lab-editor':null;
   const editorValue=editorId&&$('#'+editorId)?getEditorValue(editorId):null;
   render();
   if(editorId&&editorValue!==null)setEditorValue(editorId,editorValue);
@@ -1278,7 +1359,7 @@ document.addEventListener('input',event=>{
  saveProjectNote(field.dataset.projectConclusion,field.value);
 });
 document.addEventListener('click',event=>{
- const el=event.target.closest('[data-course-nav],[data-nav],[data-open-course],[data-open-project],[data-project-task],[data-project-review],[data-practice-track],[data-track],[data-module],[data-assessment-track],[data-assessment-module],[data-assessment-answer],[data-checkpoint],[data-checkpoint-task],[data-lesson],[data-exercise],[data-action],[data-copy-code],[data-sample],[data-quiz-answer],[data-exercise-quiz-answer]');if(!el)return;
+ const el=event.target.closest('[data-course-nav],[data-nav],[data-open-course],[data-open-project],[data-project-task],[data-project-review],[data-practice-track],[data-track],[data-module],[data-assessment-track],[data-assessment-module],[data-assessment-answer],[data-checkpoint],[data-checkpoint-task],[data-lesson],[data-exercise],[data-inline-exercise],[data-action],[data-copy-code],[data-sample],[data-quiz-answer],[data-exercise-quiz-answer]');if(!el)return;
  if(el.dataset.courseNav){
   const track=learningTracks.find(item=>item.id===el.dataset.courseTrack);
   if(!track)return;
@@ -1320,6 +1401,7 @@ document.addEventListener('click',event=>{
  if(el.dataset.assessmentAnswer){if(!state.assessmentSubmitted){const [qi,oi]=el.dataset.assessmentAnswer.split(':').map(Number);state.assessmentAnswers[qi]=oi;render();}return;}
  if(el.dataset.module){state.moduleId=el.dataset.module;state.lessonIndex=0;go('study');return;}
  if(el.dataset.lesson){const [mid,li]=el.dataset.lesson.split(':');state.moduleId=mid;state.lessonIndex=Number(li);render();return;}
+ if(el.dataset.inlineExercise){const lesson=moduleById(state.moduleId)?.lessons[state.lessonIndex];if(lesson?.practiceIds?.includes(el.dataset.inlineExercise)){state.lessonPracticeId=el.dataset.inlineExercise;render();}return;}
  if(el.dataset.exercise){const exercise=exercises.find(item=>item.id===el.dataset.exercise);state.exerciseId=el.dataset.exercise;if(exercise)state.practiceTrack=moduleById(exercise.m)?.track||'core';if(state.view!=='practice')go('practice');else render();return;}
  if(el.dataset.exerciseQuizAnswer!==undefined){
   const option=Number(el.dataset.exerciseQuizAnswer),ex=exercises.find(x=>x.id===state.exerciseId),q=ex?.quiz;
