@@ -1,10 +1,11 @@
-import { modules, learningTracks, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261110-146';
-import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261110-146';
-import { firstSqlKeyword, explainStatementKeyword, explainStatementBody, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261110-146';
-import { migrateProgress, getTrackProgress, findNextLesson } from './progress-utils.js?v=20261110-146';
-import { projects, projectTaskCount } from './projects.js?v=20261110-146';
-import { createBackup, parseBackup, restoreBackup } from './backup-utils.js?v=20261110-146';
-import { buildQuizOptionOrders, quizOptionKey } from './quiz-options.js?v=20261110-146';
+import { modules, learningTracks, exercises, glossary, reference, schema, seedSQL } from './curriculum.js?v=20261111-147';
+import { cumulativeCheckpoints } from './checkpoints.js?v=20261111-147';
+import { sandboxTaskTopics, sandboxTaskCount } from './sandbox-tasks.js?v=20261111-147';
+import { firstSqlKeyword, explainStatementKeyword, explainStatementBody, splitStatements, readOnlyQueryKeyword } from './sql-utils.js?v=20261111-147';
+import { migrateProgress, getTrackProgress, findNextLesson } from './progress-utils.js?v=20261111-147';
+import { projects, projectTaskCount } from './projects.js?v=20261111-147';
+import { createBackup, parseBackup, restoreBackup } from './backup-utils.js?v=20261111-147';
+import { buildQuizOptionOrders, quizOptionKey } from './quiz-options.js?v=20261111-147';
 
 const $ = (s, root=document) => root.querySelector(s);
 const $$ = (s, root=document) => [...root.querySelectorAll(s)];
@@ -33,7 +34,7 @@ const state = {
   completedLessons:new Set(), completedExercises:new Set(), practiceTrack:'core',
   projectId:'ecommerce', projectTaskId:'ecommerce-monthly-net-revenue', completedProjectTasks:new Set(), projectDrafts:{}, projectNotes:{}, projectReviews:{}, projectSolutionVisible:false,
   db:null, expected:new Map(), randomTask:null, randomTopics:new Set(sandboxTaskTopics.map(topic=>topic.id)),
-  engineReady:false, engineLoading:false, engineError:null, currentRows:[], quizAnswers:{}, exerciseQuizAnswers:{}, assessmentTrack:'core', assessmentModuleId:null, assessmentAnswers:{}, assessmentSubmitted:false, assessmentResults:{}, editors:new Map(), navigationScrollReset:false, theme:localStorage.getItem('sql-academy-theme') || 'dark'
+  engineReady:false, engineLoading:false, engineError:null, currentRows:[], quizAnswers:{}, exerciseQuizAnswers:{}, assessmentTrack:'core', assessmentModuleId:null, assessmentAnswers:{}, assessmentSubmitted:false, assessmentResults:{}, checkpointId:null, checkpointTaskIndex:0, completedCheckpointTasks:new Set(), checkpointDrafts:{}, editors:new Map(), navigationScrollReset:false, theme:localStorage.getItem('sql-academy-theme') || 'dark'
 };
 const moduleById = id => modules.find(m=>m.id===id);
 const lessonKey = (mid,idx)=>moduleById(mid)?.lessons[idx]?.id || mid+':'+idx;
@@ -51,13 +52,15 @@ const loadProgress = () => {
     state.quizAnswers=progress.quizAnswers;
     state.exerciseQuizAnswers=progress.exerciseQuizAnswers;
     state.assessmentResults=progress.assessmentResults;
+    state.completedCheckpointTasks=new Set(progress.checkpointTasks||[]);
+    state.checkpointDrafts=progress.checkpointDrafts||{};
     if(migrated.changed)localStorage.setItem(STORE_KEY,JSON.stringify(progress));
   } catch (error) {
     console.warn('Could not restore SQL Academy progress:',error);
   }
 };
 const saveProgress = () => {
-  localStorage.setItem(STORE_KEY,JSON.stringify({lessons:[...state.completedLessons],exercises:[...state.completedExercises],quizAnswers:state.quizAnswers,exerciseQuizAnswers:state.exerciseQuizAnswers,assessmentResults:state.assessmentResults}));
+  localStorage.setItem(STORE_KEY,JSON.stringify({lessons:[...state.completedLessons],exercises:[...state.completedExercises],quizAnswers:state.quizAnswers,exerciseQuizAnswers:state.exerciseQuizAnswers,assessmentResults:state.assessmentResults,checkpointTasks:[...state.completedCheckpointTasks],checkpointDrafts:state.checkpointDrafts}));
   updateProgress();
 };
 const loadProjectState = () => {
@@ -123,7 +126,8 @@ const routeUrl = () => {
   }
   if(state.view==='assessment'){
     params.set('track',state.assessmentTrack);
-    if(state.assessmentModuleId)params.set('module',state.assessmentModuleId);
+    if(state.checkpointId){params.set('checkpoint',state.checkpointId);params.set('task',cumulativeCheckpoints.find(item=>item.id===state.checkpointId)?.tasks[state.checkpointTaskIndex]?.id||'');}
+    else if(state.assessmentModuleId)params.set('module',state.assessmentModuleId);
   }
   if(state.view==='project'){
     params.set('project',state.projectId);
@@ -162,7 +166,10 @@ const applyRoute = () => {
     const track=learningTracks.find(item=>item.id===params.get('track'));
     if(track)state.assessmentTrack=track.id;
     const module=moduleById(params.get('module'));
-    state.assessmentModuleId=module?.track===state.assessmentTrack?module.id:null;
+    const checkpoint=cumulativeCheckpoints.find(item=>item.id===params.get('checkpoint')&&item.track===state.assessmentTrack);
+    state.checkpointId=checkpoint?.id||null;
+    state.checkpointTaskIndex=checkpoint?Math.max(0,checkpoint.tasks.findIndex(task=>task.id===params.get('task'))):0;
+    state.assessmentModuleId=checkpoint?null:module?.track===state.assessmentTrack?module.id:null;
   }
   if(view==='project'){
     const project=projects.find(item=>item.id===params.get('project'));
@@ -663,12 +670,86 @@ function renderStudy() {
  <div class="lesson-card"><div class="eyebrow">${esc(m.stage)} · УРОК ${state.lessonIndex+1} ИЗ ${m.lessons.length}</div><h1>${esc(l.title)}</h1>${lessonBody(l,m)}${renderLessonQuiz(l)}${practice?`<div class="lesson-footer lesson-practice-links">${practice}</div>`:''}<div class="lesson-footer"><button class="btn primary" data-action="complete-lesson">${done?'✓ Урок завершён':'Отметить урок завершённым'}</button></div></div>${outcomes}
  <div class="lesson-card"><div class="lesson-footer"><button class="btn" data-action="prev-lesson" ${state.lessonIndex===0?'disabled':''}>← Предыдущий урок</button><button class="btn primary" data-action="next-lesson" ${trackEnd?'disabled':''}>${trackEnd?(m.track==='core'?'Курс SQL для аналитика завершён':'Курс PostgreSQL завершён'):state.lessonIndex===m.lessons.length-1?'Следующий модуль →':'Следующий урок →'}</button></div></div></article></div>`;
 }
+function renderCheckpointCards(trackId) {
+  const checkpoints=cumulativeCheckpoints.filter(item=>item.track===trackId);
+  if(!checkpoints.length)return '';
+  return `<section class="checkpoint-section" aria-label="Накопительные SQL-проверки">
+    <div class="section-row"><h2>Накопительные SQL-контрольные</h2><span>Зачёт только за выполненный SQL</span></div>
+    <p class="checkpoint-intro">Эти работы объединяют несколько пройденных тем. Выбирай способ решения сам: подсказок по синтаксису здесь нет. Прохождение не блокирует чтение следующих уроков.</p>
+    <div class="checkpoint-grid">${checkpoints.map(checkpoint=>{
+      const done=checkpoint.tasks.filter(task=>state.completedCheckpointTasks.has(task.id)).length;
+      const after=moduleById(checkpoint.afterModule);
+      return `<button type="button" class="checkpoint-card" data-checkpoint="${esc(checkpoint.id)}">
+        <span class="eyebrow">${done===checkpoint.tasks.length?'НАВЫК ПОДТВЕРЖДЁН':'ПРАКТИЧЕСКАЯ КОНТРОЛЬНАЯ'}</span>
+        <strong>${esc(checkpoint.title)}</strong>
+        <span>${esc(checkpoint.description)}</span>
+        <small>Рекомендуется после модуля «${esc(after?.title||checkpoint.afterModule)}»</small>
+        <span class="checkpoint-count">${done} из ${checkpoint.tasks.length} заданий · ${done===checkpoint.tasks.length?'Зачёт':'Открыть'}</span>
+      </button>`;
+    }).join('')}</div>
+  </section>`;
+}
+function renderCheckpoint(checkpoint) {
+  const index=Math.min(state.checkpointTaskIndex,checkpoint.tasks.length-1);
+  state.checkpointTaskIndex=index;
+  const task=checkpoint.tasks[index];
+  const done=checkpoint.tasks.filter(item=>state.completedCheckpointTasks.has(item.id)).length;
+  return pageHead('НАКОПИТЕЛЬНАЯ КОНТРОЛЬНАЯ',esc(checkpoint.title),esc(checkpoint.description),'<button class="btn" data-action="checkpoint-back">← К контрольным</button>')+
+    renderCourseSubnav('assessment',checkpoint.track)+
+    `<section class="checkpoint-work card">
+      <div class="checkpoint-work-header">
+        <span class="eyebrow">ПРАКТИЧЕСКОЕ ИСПЫТАНИЕ</span><h2>${esc(checkpoint.title)}</h2>
+        <p>Объединяй известные конструкции. Каждая задача проверяется по результату, а не по тексту запроса.</p>
+        <div class="checkpoint-skill-list">${checkpoint.skills.map(skill=>`<span>${esc(skill)}</span>`).join('')}</div>
+        <strong id="checkpoint-count">${done}/${checkpoint.tasks.length} SQL-задач подтверждено${done===checkpoint.tasks.length?' · Зачёт получен':''}</strong>
+      </div>
+      <div class="checkpoint-task-nav">${checkpoint.tasks.map((item,taskIndex)=>`<button type="button" class="btn checkpoint-task ${taskIndex===index?'primary':''}" data-checkpoint-task="${esc(item.id)}" ${taskIndex===index?'aria-current="step"':''}>${state.completedCheckpointTasks.has(item.id)?'✓ ':''}Задача ${taskIndex+1}</button>`).join('')}</div>
+      <div class="task-card"><div class="eyebrow">ЗАДАНИЕ ${index+1} ИЗ ${checkpoint.tasks.length}</div><h3>${esc(task.title)}</h3><p>${esc(task.prompt)}</p></div>
+      ${editor(state.checkpointDrafts[task.id]||'','checkpoint-editor','Напиши свой SQL-запрос. Черновик сохраняется автоматически.')}
+      <div class="editor-actions checkpoint-actions"><button class="btn primary" data-action="check-checkpoint-task" ${state.engineReady?'':'disabled'}>Проверить SQL</button><button class="btn" data-action="checkpoint-back">К списку контрольных</button></div>
+      <div id="checkpoint-feedback" role="status" aria-live="polite"></div>
+      <p class="checkpoint-note">Результаты независимы от отметок о чтении уроков и сохраняются в резервной копии.</p>
+    </section>`;
+}
+async function checkCheckpointTask() {
+  const checkpoint=cumulativeCheckpoints.find(item=>item.id===state.checkpointId);
+  const task=checkpoint?.tasks[state.checkpointTaskIndex];
+  const feedback=$('#checkpoint-feedback');
+  if(!task||!feedback)return;
+  if(!state.engineReady||!state.db){feedback.innerHTML='<div class="feedback fail">Сначала дождись запуска PostgreSQL.</div>';return;}
+  const sql=getEditorValue('checkpoint-editor').trim();
+  if(!sql){feedback.innerHTML='<div class="feedback fail">Сначала напиши SQL-запрос.</div>';return;}
+  try {
+    const parts=splitStatements(sql);
+    if(parts.length!==1||readOnlyQueryKeyword(parts[0])!=='SELECT')throw new Error('Нужен один читающий SELECT или WITH ... SELECT.');
+    const actual=normalizeResult(await state.db.query(parts[0]));
+    const expected=normalizeResult(await state.db.query(task.solution));
+    const passed=resultMatches(actual,expected,Boolean(task.orderMatters));
+    if(passed) {
+      state.completedCheckpointTasks.add(task.id);
+      saveProgress();
+      const button=$(`[data-checkpoint-task="${task.id}"]`);
+      if(button&&!button.textContent.trim().startsWith('✓'))button.textContent='✓ '+button.textContent.trim();
+      const count=checkpoint.tasks.filter(item=>state.completedCheckpointTasks.has(item.id)).length;
+      const counter=$('#checkpoint-count');
+      if(counter)counter.textContent=`${count}/${checkpoint.tasks.length} SQL-задач подтверждено${count===checkpoint.tasks.length?' · Зачёт получен':''}`;
+      feedback.innerHTML='<div class="feedback success"><strong>Верно.</strong><p>Столбцы, строки и значения результата соответствуют условию. Задача зачтена.</p></div>';
+    } else {
+      const sameColumns=JSON.stringify([...actual.columns].sort())===JSON.stringify([...expected.columns].sort());
+      const reason=!sameColumns?'Состав или названия столбцов не совпадают.':actual.rows.length!==expected.rows.length?`Количество строк отличается: ${actual.rows.length} вместо ${expected.rows.length}.`:'Число строк совпало, но значения, повторения или порядок строк отличаются.';
+      feedback.innerHTML=`<div class="feedback fail"><strong>Пока не совпало.</strong><p>${esc(reason)} Проверь требования задачи и зерно результата.</p></div>`;
+    }
+  } catch(error) {feedback.innerHTML='<div class="feedback fail"><strong>Ошибка SQL:</strong> '+esc(error.message)+'</div>';}
+}
 function renderAssessment() {
   const available=moduleLessons(state.assessmentTrack);
   const selected=modules.find(module=>module.id===state.assessmentModuleId);
+  const checkpoint=cumulativeCheckpoints.find(item=>item.id===state.checkpointId&&item.track===state.assessmentTrack);
+  if(checkpoint)return renderCheckpoint(checkpoint);
   if(!selected){
     return pageHead('ПРОВЕРКА ЗНАНИЙ','Контрольные работы','Проверь понимание целого модуля. Каждый тест содержит вопросы из отдельного банка; лучший результат сохраняется в браузере.') +
       renderCourseSubnav('assessment',state.assessmentTrack) +
+      renderCheckpointCards(state.assessmentTrack) +
       '<div class="assessment-track-tabs">' +
       '<button class="track-tab '+(state.assessmentTrack==='core'?'active':'')+'" data-assessment-track="core"><strong>SQL для аналитика данных</strong><span>Самостоятельный курс</span></button>' +
       '<button class="track-tab '+(state.assessmentTrack==='postgresql'?'active':'')+'" data-assessment-track="postgresql"><strong>PostgreSQL</strong><span>Самостоятельный курс</span></button></div>' +
