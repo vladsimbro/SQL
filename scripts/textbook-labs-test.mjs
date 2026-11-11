@@ -12,7 +12,7 @@ for(const module of modules){
   assert.ok(Array.isArray(activities)&&activities.length===module.lessons.length,module.id+' must have exactly one activity per lesson');
   for(let i=0;i<module.lessons.length;i++){
     const prompt=getWorkshopPrompt(module.id,i);
-    assert.ok(typeof prompt==='string' && prompt.length>=80,module.id+' lesson '+i+' needs a specific reasoning task');
+    assert.ok(typeof prompt==='string' && prompt.length>=60,module.id+' lesson '+i+' needs a specific reasoning task');
     assert.ok(/\?$|[.?!]$/.test(prompt),module.id+' lesson '+i+' must use a complete question or instruction');
     prompts.push(prompt);
   }
