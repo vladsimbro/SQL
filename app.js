@@ -657,7 +657,7 @@ function lessonBody(l,m) {
   const simple=l.simple?`<div class="plain-language"><strong>Коротко</strong><p>${esc(l.simple)}</p></div>`:'';
   const explanation=(l.body||'').split(/\n\s*\n/).filter(Boolean).map(paragraph=>`<p>${esc(paragraph)}</p>`).join('');
   const sources=(m.sources||[]).map((url,i)=>`<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">Документация PostgreSQL ${i+1} ↗</a>`).join(' · ');
-  return `<div class="lesson-explanation">${explanation}</div>${simple}${renderWorkedExample(l.walkthrough)}<h2>Разберём на примере</h2><div class="code-block"><div class="code-head"><span>POSTGRESQL</span><button class="btn small" data-copy-code>Копировать</button></div><pre>${renderAnnotatedSql(l.example,l)}</pre></div>${renderExampleResult(l)}${renderExampleBreakdown(l.example,l)}${l.note?`<div class="note-box"><strong>Важно:</strong> ${esc(l.note)}</div>`:''}${sources?`<div class="lesson-sources"><strong>Первоисточники:</strong> ${sources}</div>`:''}`;
+  return `<div class="lesson-explanation">${explanation}</div>${simple}${renderWorkedExample(l.walkthrough)}<h2>Разберём на примере</h2><div class="code-block"><div class="code-head"><span>POSTGRESQL</span><button class="btn small" data-copy-code>Копировать</button></div><pre>${renderAnnotatedSql(l.example,l)}</pre></div>${renderExampleResult(l)}${(l.walkthrough||['aggregates','joins','cte','datetime','windows','analytics','workflow','performance'].includes(m.id))?renderExampleBreakdown(l.example,l):''}${l.note?`<div class="note-box"><strong>Важно:</strong> ${esc(l.note)}</div>`:''}${sources?`<div class="lesson-sources"><strong>Первоисточники:</strong> ${sources}</div>`:''}`;
 }
 
 function renderLessonWorkshop(l,m,lessonIndex) {
