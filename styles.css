@@ -463,3 +463,10 @@ body{font-size:var(--font-md)}
 .lesson-checkpoint-links{margin:18px 0;padding:17px;background:var(--panel2);border:1px solid var(--line);border-radius:var(--radius-md)}
 .lesson-checkpoint-links strong{font-size:13px}.lesson-checkpoint-links p{font-size:11px;line-height:1.6;margin:7px 0 13px}
 @media(max-width:760px){.lesson-reading-status{flex-direction:column;align-items:stretch}.lesson-reading-status .btn,.lesson-checkpoint-links .btn{width:100%}}
+
+
+/* Lesson-specific conceptual deep dives, one per existing lesson. */
+.lesson-deep-dive{margin:20px 0 24px;padding:17px 19px;background:color-mix(in srgb,var(--accent) 6%,var(--panel2));border:1px solid color-mix(in srgb,var(--accent) 24%,var(--line));border-radius:var(--radius-lg)}
+.lesson-deep-dive h2{font-size:16px;margin:8px 0 10px}
+.lesson-deep-dive p{max-width:82ch;color:var(--soft);line-height:1.85;font-size:13px;margin:0}
+@media(max-width:760px){.lesson-deep-dive{padding:14px}.lesson-deep-dive p{font-size:13px}}
