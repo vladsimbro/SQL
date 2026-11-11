@@ -668,22 +668,22 @@ function renderLessonWorkshop(l,m,lessonIndex) {
  const savedSQL=Object.hasOwn(state.lessonLabDrafts,key)?state.lessonLabDrafts[key]:l.example;
  const notes=state.lessonLabNotes[key]||'';
  const reference=l.walkthrough?.pitfall||l.note||l.quiz?.[0]?.explanation||'Сравни наблюдение с тем, что означает одна строка результата.';
- return \`<section class="lesson-workshop" aria-label="Исследование темы">
+ return `<section class="lesson-workshop" aria-label="Исследование темы">
   <div class="eyebrow">ПРАКТИЧЕСКАЯ ЛАБОРАТОРИЯ</div>
   <h2>Исследуй поведение данных</h2>
   <p class="workshop-context">Это самостоятельный эксперимент, а не проверка знания названия SQL-функции.</p>
-  <div class="workshop-prompt"><strong>Что выяснить</strong><p>\${esc(prompt)}</p></div>
-  \${runnable?\`
+  <div class="workshop-prompt"><strong>Что выяснить</strong><p>${esc(prompt)}</p></div>
+  ${runnable?`
     <p class="workshop-context">Ниже открыт разобранный запрос. Измени его, выполни и сравни строки, столбцы и значения. Редактор не разрешает менять данные.</p>
-    \${editor(savedSQL||'','lesson-lab-editor','Измени SQL-пример и посмотри результат')}
-    <div class="editor-actions" style="margin-top:10px"><button class="btn primary" data-action="run-lesson-lab" \${state.engineReady?'':'disabled'}>Выполнить SQL</button><button class="btn" data-action="reset-lesson-lab">Вернуть пример</button></div>
+    ${editor(savedSQL||'','lesson-lab-editor','Измени SQL-пример и посмотри результат')}
+    <div class="editor-actions" style="margin-top:10px"><button class="btn primary" data-action="run-lesson-lab" ${state.engineReady?'':'disabled'}>Выполнить SQL</button><button class="btn" data-action="reset-lesson-lab">Вернуть пример</button></div>
     <div id="lesson-lab-feedback" role="status" aria-live="polite"></div><div id="lesson-lab-results"></div>
-  \`:\`<div class="workshop-safety"><strong>Разбор без выполнения изменяющего SQL</strong><p>Пример содержит операции изменения данных или структуры либо серверные команды. Разбери их здесь, а безопасное выполнение — в специально предназначенной практике.</p></div>\`}
+  `:`<div class="workshop-safety"><strong>Разбор без выполнения изменяющего SQL</strong><p>Пример содержит операции изменения данных или структуры либо серверные команды. Разбери их здесь, а безопасное выполнение — в специально предназначенной практике.</p></div>`}
   <label for="lesson-lab-note" class="workshop-note-label">Что ты понял и как это проверил?</label>
-  <textarea id="lesson-lab-note" class="workshop-note" rows="3" placeholder="Объясни, как изменился результат и почему.">\${esc(notes)}</textarea>
+  <textarea id="lesson-lab-note" class="workshop-note" rows="3" placeholder="Объясни, как изменился результат и почему.">${esc(notes)}</textarea>
   <small class="workshop-save-hint">Заметка сохраняется в браузере и резервной копии. Это самостоятельный разбор, не автоматически проверенный зачёт.</small>
-  <details class="workshop-reference"><summary>Ориентир для самопроверки</summary><p>\${esc(reference)}</p></details>
- </section>\`;
+  <details class="workshop-reference"><summary>Ориентир для самопроверки</summary><p>${esc(reference)}</p></details>
+ </section>`;
 }
 async function runLessonLab() {
  const feedback=$('#lesson-lab-feedback'),host=$('#lesson-lab-results');
