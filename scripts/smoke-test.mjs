@@ -51,6 +51,7 @@ assert.ok(appSource.includes("from './lesson-workshops.js?v=" + buildVersion + "
 assert.ok(appSource.includes("from './lesson-insights.js?v=" + buildVersion + "'"), 'All individual deep-dives must use matching version');
 assert.ok(appSource.includes('getLessonInsight(m.id,m.lessons.findIndex'), 'Lesson explanations must include course-specific reasoning beyond the short intro');
 assert.ok(appSource.includes('renderLessonWorkshop(l,m,state.lessonIndex)') && appSource.includes('renderLessonInlinePractice(l)'), 'All lessons must render a reasoning lab and their linked graded SQL tasks in context');
+assert.ok(appSource.includes('renderLessonMastery(l,m,state.lessonIndex)') && appSource.includes('refreshLessonMastery()'), 'Every lesson must distinguish reading, understanding and verified SQL practice instead of claiming instant mastery');
 assert.ok(appSource.includes('checkCheckpointTask()') && appSource.includes('renderCheckpointCards(state.assessmentTrack)'), 'Checkpoint results must be integrated into the existing assessments route');
 assert.ok(appSource.includes('data-action="export-backup"') && appSource.includes('data-action="import-backup"'), 'The dashboard must expose both backup actions');
 assert.ok(appSource.includes('prepareImportedBackup(backup)') && appSource.includes('restoreBackup(localStorage'), 'Import must normalize legacy progress and restore supported local state');
