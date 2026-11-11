@@ -211,6 +211,7 @@ try {
   const firstLesson=modules.find(module=>module.id==='foundations').lessons[0];
   await page.goto(baseURL+'#view=study&module=foundations&lesson='+firstLesson.id,{waitUntil:'domcontentloaded'});
   await page.locator('.lesson-workshop').waitFor({state:'visible'});
+  await waitForEngine();
   assert.match(await page.locator('.workshop-prompt').textContent(),/строк/,'The first lesson must have a specific reasoning task');
   await writeEditor(page.locator('#lesson-lab-editor'),'SELECT 7 AS observed_value;');
   await page.locator('[data-action="run-lesson-lab"]').click();
@@ -227,6 +228,7 @@ try {
   const ex=exercises.find(item=>item.id===lesson.practiceIds[0]);
   await page.goto(baseURL+'#view=study&module=select&lesson='+lesson.id,{waitUntil:'domcontentloaded'});
   await page.locator('#lesson-practice-editor').waitFor({state:'attached'});
+  await waitForEngine();
   await writeEditor(page.locator('#lesson-practice-editor'),ex.solution);
   await page.locator('[data-action="check-inline-exercise"]').click();
   await page.locator('#lesson-practice-feedback .success').waitFor({state:'visible'});
