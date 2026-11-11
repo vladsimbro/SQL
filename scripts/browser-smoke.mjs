@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { mkdir, readFile } from 'node:fs/promises';
 import { chromium } from 'playwright';
 import { projects } from '../projects.js';
+import { modules, exercises } from '../curriculum.js';
 import { cumulativeCheckpoints } from '../checkpoints.js';
 
 const baseURL = (process.env.PAGES_URL || process.argv[2] || '').trim().replace(/\/?$/, '/');
@@ -206,6 +207,31 @@ try {
   const queryHeaders = await page.locator('#playground-results .result-table thead th').allTextContents();
   assert.deepEqual(queryHeaders, ['status', 'orders_count'], 'The playground must execute a real query against the seeded PostgreSQL database');
   await captureUxScreen('05-playground-desktop-dark');
+  // Textbook research activity: first contact with SQL is interactive, notes and code survive reload.
+  const firstLesson=modules.find(module=>module.id==='foundations').lessons[0];
+  await page.goto(baseURL+'#view=study&module=foundations&lesson='+firstLesson.id,{waitUntil:'domcontentloaded'});
+  await page.locator('.lesson-workshop').waitFor({state:'visible'});
+  assert.match(await page.locator('.workshop-prompt').textContent(),/строк/,'The first lesson must have a specific reasoning task');
+  await writeEditor(page.locator('#lesson-lab-editor'),'SELECT 7 AS observed_value;');
+  await page.locator('[data-action="run-lesson-lab"]').click();
+  await page.locator('#lesson-lab-results .result-table').waitFor({state:'visible'});
+  assert.deepEqual(await page.locator('#lesson-lab-results tbody tr td').allTextContents(),['7'],'The first lesson must let the student execute a real read-only query');
+  await page.locator('#lesson-lab-note').fill('Проверил значение, которое вернул SELECT без FROM.');
+  await page.reload({waitUntil:'domcontentloaded'});
+  await page.locator('#lesson-lab-editor').waitFor({state:'attached'});
+  assert.equal(await readEditor(page.locator('#lesson-lab-editor')),'SELECT 7 AS observed_value;','Lesson SQL experiments must preserve drafts');
+  assert.match(await page.locator('#lesson-lab-note').inputValue(),/Проверил значение/,'Reasoning notes must survive reload');
+  await captureUxScreen('05b-first-lesson-workshop');
+  // Graded SQL practice lives in the textbook and reuses the standard result-based validator.
+  const lesson=modules.find(module=>module.id==='select').lessons.find(item=>item.practiceIds.length);
+  const ex=exercises.find(item=>item.id===lesson.practiceIds[0]);
+  await page.goto(baseURL+'#view=study&module=select&lesson='+lesson.id,{waitUntil:'domcontentloaded'});
+  await page.locator('#lesson-practice-editor').waitFor({state:'attached'});
+  await writeEditor(page.locator('#lesson-practice-editor'),ex.solution);
+  await page.locator('[data-action="check-inline-exercise"]').click();
+  await page.locator('#lesson-practice-feedback .success').waitFor({state:'visible'});
+  assert.ok(JSON.parse(await page.evaluate(()=>localStorage.getItem('sql-academy-progress-v1'))).exercises.includes(ex.id),'In-lesson graded SQL must share completion with main practice');
+  await captureUxScreen('05c-inline-graded-sql-practice');
 
   const resetStartedAt = Date.now();
   await page.locator('[data-action="reset-db"]').click();
